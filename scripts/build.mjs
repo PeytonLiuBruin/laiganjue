@@ -90,7 +90,7 @@ export async function buildAll({ out = outDir, min = minify, only = null } = {})
 
   const full = fill(template.replace('<!--BODY-START-->', '').replace('<!--BODY-END-->', ''));
   const artifact = fill(
-    `<title>来感觉 · 玄学占卜</title>\n` +
+    `<title>来感觉</title>\n` +
       `<meta name="theme-color" content="#0b0b10">\n` +
       `<meta name="apple-mobile-web-app-capable" content="yes">\n` +
       `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n` +
