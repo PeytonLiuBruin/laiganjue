@@ -8,7 +8,7 @@ import { MODULES } from '../modules/registry.js';
 import { createZen } from './zen.js';
 
 export const APP_NAME = '来感觉';
-export const APP_TAGLINE = 'ORACLE · 玄学占卜';
+export const APP_TAGLINE = 'ORACLE · 日常灵感';
 export const THEMES = [
   { id: 'ink', name: '玄墨', swatch: 'radial-gradient(circle at 30% 30%, #d4af5a, #0b0b10 65%)' },
   { id: 'cinnabar', name: '朱砂', swatch: 'radial-gradient(circle at 30% 30%, #e2b04a, #3a1414 40%, #1a0a0a 75%)' },
@@ -25,8 +25,8 @@ export function startApp(root) {
 
   /* ---------------- 皮肤 ---------------- */
   const themeListeners = new Set();
-  let theme = storage.get('theme', 'ink');
-  if (!THEMES.some((t) => t.id === theme)) theme = 'ink';
+  let theme = storage.get('theme', 'paper');
+  if (!THEMES.some((t) => t.id === theme)) theme = 'paper';
   const applyTheme = (id) => {
     theme = id;
     document.documentElement.dataset.theme = id;
@@ -252,7 +252,7 @@ export function startApp(root) {
     if (!pm.supported || pm.state === 'granted') return document.createComment('motion ok');
     if (pm.state === 'denied' || pm.state === 'unsupported') return document.createComment('motion unavailable');
     const wrap = h('div', { class: 'motion-banner' });
-    const btn = button('开启', {
+    const btn = button('开启体感', {
       variant: 'primary',
       size: 'small',
       onClick: async () => {
@@ -267,7 +267,7 @@ export function startApp(root) {
         }
       },
     });
-    wrap.append(h('span', { class: 'grow' }, '开启体感后可以摇动、甩动手机来操作。'), btn);
+    wrap.append(h('span', { class: 'grow' }, '摇动手机，也能与器物互动'), btn);
     return wrap;
   }
   async function ensureMotion() {
@@ -279,7 +279,7 @@ export function startApp(root) {
   /* ---------------- 首页 ---------------- */
   function renderHome() {
     const el = h('section', { class: 'view view-home', dataset: { view: 'home' } });
-    el.append(renderHero());
+    el.append(h('div', { class: 'home-intro' }, h('span', { class: 'home-eyebrow' }, '片刻留白 · 一点灵感'), h('h1', null, '此刻，想问什么？')), renderHero());
     for (const region of REGIONS) {
       const mods = MODULE_LIST.filter((m) => m.region === region.id);
       if (!mods.length) continue;
@@ -293,13 +293,14 @@ export function startApp(root) {
             {
               type: 'button',
               class: ['tile', wide && 'wide'],
+              dataset: { ritual: m.id },
               onClick: () => {
                 platform.haptic.tap();
                 platform.sound.play('pop');
                 navigate('#/m/' + m.id);
               },
             },
-            h('span', { class: 'tile-head' }, h('span', { class: 'medal' }, m.glyph), h('span', { class: 'tile-gest' }, m.gestures.slice(0, 2).map((g) => GESTURE_LABEL[g]).join(' · '))),
+            h('span', { class: 'tile-head' }, h('span', { class: 'medal' }, m.glyph), h('span', { class: 'tile-gest' }, m.gestures.slice(0, 1).map((g) => GESTURE_LABEL[g]).join(' · '))),
             h('span', { class: 'col grow', style: { gap: '4px' } }, h('span', { class: 'tile-title' }, m.title), h('span', { class: 'tile-sub' }, m.subtitle)),
           ),
         );
@@ -324,35 +325,12 @@ export function startApp(root) {
       console.error('[almanac]', e);
       return h('div', { class: 'hero' }, h('div', { class: 't-display' }, '今日'));
     }
-    const yi = a.yi.slice(0, 5).join(' ');
-    const ji = a.ji.slice(0, 5).join(' ');
     const today = new Date();
-    return h(
-      'button',
-      { type: 'button', class: 'hero corners', style: { width: '100%', textAlign: 'left', display: 'block' }, onClick: () => navigate('#/m/almanac') },
-      h('span', { class: 'corner-b' }),
-      h('div', { class: 'hero-glyph' }, a.zodiac),
-      h('div', { class: 't-kicker' }, `${a.solarText.replace(/年.*/, '年')} · ${a.week}${a.festivals.length ? ' · ' + a.festivals[0] : ''}${a.jieqi ? ' · ' + a.jieqi : ''}`),
-      h(
-        'div',
-        { class: 'hero-date mt-2' },
-        h('div', { class: 'hero-day gold-text' }, String(today.getDate())),
-        h(
-          'div',
-          { class: 'hero-meta' },
-          h('b', null, `${a.yearGanZhi}年 ${a.lunarText}`),
-          h('span', null, `${a.monthGanZhi}月 · ${a.dayGanZhi}日 · ${a.xiu}`),
-          h('span', null, `冲${a.chong} 煞${a.sha} · 值${a.zhiXing}`),
-        ),
-      ),
-      h(
-        'div',
-        { class: 'hero-yiji' },
-        h('div', { class: 'yiji' }, h('span', { class: 'yiji-mark' }, '宜'), h('span', { class: 'yiji-text' }, yi || '诸事皆可')),
-        h('div', { class: 'yiji ji' }, h('span', { class: 'yiji-mark' }, '忌'), h('span', { class: 'yiji-text' }, ji || '无')),
-      ),
-      h('div', { class: 't-faint mt-3', style: { fontSize: '12px', letterSpacing: '0.1em' } }, '点开看完整黄历 →'),
-    );
+    return h('button', { type: 'button', class: 'home-calendar', onClick: () => navigate('#/m/almanac'), attrs: { 'aria-label': '查看今日黄历' } },
+      h('span', { class: 'home-calendar-day' }, String(today.getDate()).padStart(2, '0')),
+      h('span', { class: 'home-calendar-date' }, h('b', null, `${today.getMonth() + 1}月 · ${a.week}`), h('small', null, `${a.yearGanZhi}年 ${a.lunarText}`)),
+      h('span', { class: 'home-calendar-yi' }, h('i', null, '宜'), a.yi.slice(0, 2).join(' · ') || '从容度日'),
+      icon('chevron', { size: 18 }));
   }
 
   /* ---------------- 皮肤抽屉 ---------------- */
@@ -392,7 +370,7 @@ export function startApp(root) {
     const motionDesc = h('div', { class: 'setting-desc' }, motionState());
     const motionControl =
       pm.state === 'idle' && pm.supported
-        ? button('开启', {
+        ? button('开启体感', {
             variant: 'primary',
             size: 'small',
             onClick: async () => {

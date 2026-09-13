@@ -1,274 +1,124 @@
-// 筊杯 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 import { throwJiaobei, initSession, reduceSession, OUTCOME } from './core.js';
-import { OUTCOMES, MODES, QUESTION_PLACEHOLDER, THREE_MODE_INTRO, SESSION_TEXT, STREAK_LABELS } from './data.js';
+import { OUTCOMES, MODES, SESSION_TEXT } from './data.js';
+import { createJiaobeiScene, clamp } from './model.js';
+import { createRitual } from '../../ui/ritual.js';
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
-  const { h, button, chips, stage, hint, resultCard, sheet, input, toast, wait, confetti, historyBar } = kit;
-
-  /* ---------- 状态 ---------- */
+  const { h, button, chips, stage, resultCard, sheet, input, toast } = kit;
   let mode = storage.get('mode', 'single');
-  let session = initSession();
-  let busy = false;
-  let question = '';
-  let history = storage.get('history', []); // 最近 12 次 outcome
+  if (!MODES.some((m) => m.value === mode)) mode = 'single';
+  let session = initSession(), busy = false, question = '', lastResult = null, resultSheet = null;
+  let history = storage.get('history', []);
+  let held = false;
+  const qInput = input({ placeholder: '此刻想问什么？（选填）', maxlength: 40, onInput: (v) => { question = v.trim(); } });
+  qInput.setAttribute('aria-label', '想问筊杯的问题');
+  const modeChips = chips(MODES, { value: mode, onChange(v) {
+    if (busy) { modeChips.set(mode); return; }
+    mode = v; storage.set('mode', v); reset();
+  } });
+  const st = stage({ cls: 'jb-stage', hint: '按住筊杯向上滑，松手掷出', badge: '单掷问事' });
+  const ritual = createRitual(ctx, st, ['问事', '掷筊', '见筊', '解读']);
+  const canvas = h('canvas', { class: 'jb-canvas', attrs: { role: 'img', 'aria-label': '两枚朱红色月牙筊杯，平面与弧面组成完整立体木块' } });
+  const faceLabels = h('div', { class: 'jb-face-labels', hidden: true }, h('span'), h('span'));
+  st.scene.append(canvas, faceLabels);
+  const model = createJiaobeiScene(canvas, ctx);
+  st.el.append(ritual.energy);
+  const streak = h('div', { class: 'jb-streak', hidden: mode !== 'three' });
+  const tossBtn = button('掷筊', { variant: 'primary', size: 'large', primary: true, onClick: () => doThrow(22) });
+  const resetBtn = button('重新问事', { variant: 'ghost', onClick: reset });
+  const histEl = h('div', { class: 'jb-history' });
+  container.append(ritual.progress, h('div', { class: 'jb-top' }, qInput, modeChips.el), st.el, streak, kit.actionBar(tossBtn, resetBtn), ritual.receipt, histEl);
+  renderStreak(); renderHistory();
+  st.setBadge(mode === 'three' ? '连掷三圣杯 · 第 1 掷' : '单掷问事');
 
-  /* ---------- 头部：问题 + 模式 ---------- */
-  const qInput = input({ placeholder: QUESTION_PLACEHOLDER, maxlength: 40, onInput: (v) => (question = v.trim()) });
-  const modeChips = chips(MODES, {
-    value: mode,
-    onChange: (v) => {
-      mode = v;
-      storage.set('mode', v);
-      session = initSession();
-      renderStreak();
-      st.setBadge(mode === 'three' ? '连掷三圣杯 · 第 1 掷' : '单掷问事');
-      st.setHint(mode === 'three' ? THREE_MODE_INTRO : '心中默念所求之事');
-      haptic.tap();
+  ctx.motion.onToss((e) => { if (!resultSheet) doThrow(e.intensity); });
+  ctx.motion.onTilt(({ gamma }) => { if (!ctx.platform.prefersReducedMotion) model.tilt((gamma || 0) / 160); });
+  ctx.motion.onMotion(({ mag, ax }) => {
+    if (busy || held || lastResult || resultSheet || ctx.platform.prefersReducedMotion) return;
+    model.preview(clamp(ax || 0, -8, 8) * 2, -clamp(mag || 0, 0, 16));
+    ritual.power(clamp((mag || 0) / 30, 0, 1), '向上轻甩，掷出筊杯');
+  });
+  ctx.gesture.drag(canvas, {
+    onStart() { if (busy || session.done || resultSheet) return; held = true; haptic.tap(); ritual.clear(); faceLabels.hidden = true; ritual.step(0); },
+    onMove(g) {
+      if (!held) return;
+      model.preview(g.dx, g.dy);
+      ritual.power(clamp(-g.dy / 160, 0, 1), -g.dy > 42 ? '松手掷出' : '向上滑动');
+    },
+    onEnd(g) {
+      if (!held) return;
+      held = false;
+      if (!g.cancelled && g.dy < -32) doThrow(clamp(12 + Math.max(-g.vy * 12, -g.dy / 9), 12, 38));
+      else { model.rest(); ritual.power(0, '按住向上滑'); restoreResult(); }
     },
   });
 
-  /* ---------- 舞台：两枚筊杯 ---------- */
-  const st = stage({ cls: 'jb-stage', hint: mode === 'three' ? THREE_MODE_INTRO : '心中默念所求之事', badge: mode === 'three' ? '连掷三圣杯 · 第 1 掷' : '单掷问事', minHeight: 320 });
-  const blockA = makeBlock('a');
-  const blockB = makeBlock('b');
-  const altar = h('div', { class: 'jb-altar' });
-  const incense = h('div', { class: 'jb-incense' }, h('span', { class: 'jb-smoke' }), h('span', { class: 'jb-smoke s2' }), h('span', { class: 'jb-smoke s3' }));
-  st.scene.append(altar, incense, blockA.el, blockB.el);
-
-  const streakEl = h('div', { class: 'jb-streak', hidden: mode !== 'three' });
-  const renderStreak = () => {
-    streakEl.hidden = mode !== 'three';
-    streakEl.textContent = STREAK_LABELS[Math.min(3, session.streak)];
-  };
-  renderStreak();
-
-  /* ---------- 操作 ---------- */
-  const tossBtn = button('掷 筊', { variant: 'primary', size: 'large', primary: true, onClick: () => doThrow(22) });
-  const resetBtn = button('重来', { variant: 'ghost', icon: 'refresh', onClick: () => reset() });
-  const histEl = h('div', { class: 'jb-history' });
-  const renderHistory = () => {
-    kit.clear(histEl);
-    if (history.length) histEl.append(historyBar(history.slice(-10), (o) => OUTCOMES[o].name));
-  };
-  renderHistory();
-
-  container.append(
-    h('div', { class: 'jb-top' }, qInput, h('div', { class: 'mt-3' }, modeChips.el)),
-    h('div', { class: 'mt-4' }, st.el),
-    streakEl,
-    hint('toss', '向上甩动手机，或在筊杯上向上快滑'),
-    kit.actionBar(tossBtn, resetBtn),
-    histEl,
-  );
-
-  /* ---------- 体感 / 手势 ---------- */
-  ctx.motion.onToss((e) => doThrow(e.intensity));
-  ctx.gesture.flick(st.el, (g) => doThrow(g.intensity), { minSpeed: 0.5 });
-  // 轻微倾斜视差：让香烟与筊杯有一点"空间"
-  const par = kit.parallax(incense, { max: 6 });
-  ctx.motion.onTilt(par);
-
-  /* ---------- 投掷 ---------- */
+  function setBusy(value) {
+    busy = value; tossBtn.disabled = value; resetBtn.disabled = value; qInput.disabled = value;
+    modeChips.el.querySelectorAll('button').forEach((b) => { b.disabled = value; });
+  }
   async function doThrow(intensity = 20) {
-    if (busy) return;
-    if (session.done) {
-      toast(session.success ? '已得三圣杯，点"重来"再问' : '今日不允，点"重来"改日再问');
-      return;
-    }
-    busy = true;
-    tossBtn.disabled = true;
-    st.setHint('');
-    haptic.light();
-    sound.play('whoosh');
-    if (mode === 'three') st.setBadge(`连掷三圣杯 · 第 ${session.throws.length + 1} 掷`);
-
-    const result = throwJiaobei();
-    const power = Math.max(0.7, Math.min(1.5, intensity / 20));
-    // 两枚各自飞行，落地时间略有先后
-    await Promise.all([blockA.fly(result.a, power, 0), blockB.fly(result.b, power, 90)]);
-    haptic.heavy();
-
-    // 落地判定
+    if (busy || !ritual.alive || resultSheet) return;
+    if (session.done) { toast('本次问事已完成，可以查看解读或重新问事'); return; }
+    setBusy(true); lastResult = null; ritual.clear(); faceLabels.hidden = true;
+    if (!await ritual.focus()) return;
+    ritual.step(1); st.setHint(''); ritual.power(intensity / 40, intensity > 26 ? '翻转 · 回弹 · 落定' : '腾空 · 落定');
+    st.setBadge(mode === 'three' ? `连掷三圣杯 · 第 ${session.throws.length + 1} 掷` : '筊杯已掷出');
+    sound.play('whoosh'); haptic.light();
+    const result = throwJiaobei(ctx.rng.random);
+    if (!await model.toss(result, intensity) || !ritual.alive) return;
+    ritual.step(2); ritual.power(0, '筊杯已落定');
     const o = OUTCOMES[result.outcome];
-    if (result.outcome === OUTCOME.LI) {
-      sound.play('gong');
-      haptic.success();
-      confetti(st.el, { count: 60, origin: { x: 0.5, y: 0.45 } });
-    } else if (result.outcome === OUTCOME.SHENG) {
-      sound.play('chime', { delay: 0.05 });
-      haptic.success();
-    } else if (result.outcome === OUTCOME.XIAO) {
-      sound.play('pop', { delay: 0.05 });
-    } else {
-      sound.play('low', { delay: 0.05 });
-    }
-
-    history = history.concat([result.outcome]).slice(-12);
-    storage.set('history', history);
-    renderHistory();
-
-    if (mode === 'three') {
-      session = reduceSession(session, result);
-      renderStreak();
-      await wait(350);
-      showResult(result, o);
-    } else {
-      await wait(350);
-      showResult(result, o);
-    }
-    busy = false;
-    tossBtn.disabled = false;
-  }
-
-  function showResult(result, o) {
-    const verse = o.verses[Math.floor(Math.random() * o.verses.length)];
-    const sections = [
-      { label: '解曰', text: o.meaning },
-      { label: '建议', text: o.advice },
-    ];
-    if (question) sections.unshift({ label: '所问', text: question });
-    let kicker = o.kicker;
-    let title = o.name;
-    let sub = o.alias;
-    if (mode === 'three') {
-      if (session.done) {
-        const t = session.miracle ? SESSION_TEXT.miracle : session.success ? SESSION_TEXT.success : SESSION_TEXT.fail;
-        kicker = `第 ${session.throws.length} 掷 · ${o.name}`;
-        title = t.title;
-        sub = t.sub;
-        sections.unshift({ label: '结论', text: t.meaning });
-      } else {
-        kicker = `第 ${session.throws.length} 掷 · ${o.kicker}`;
-        sub = `${o.alias} · 已连得 ${session.streak} 圣杯，还需 ${3 - session.streak} 次`;
-      }
-    }
-    const card = resultCard({ kicker, title, sub, badge: o.badge, seal: o.seal, verse, sections, footer: '仅供娱乐 · 心诚则灵' });
-    const actions = [];
-    if (mode === 'three' && !session.done) {
-      actions.push(
-        button('继续掷', {
-          variant: 'primary',
-          onClick: () => {
-            sh.close();
-            wait(380).then(() => doThrow(22));
-          },
-        }),
-      );
-    } else {
-      actions.push(
-        button('再问一次', {
-          variant: 'primary',
-          onClick: () => {
-            sh.close();
-            if (mode === 'three') reset(true);
-          },
-        }),
-      );
-    }
-    actions.push(
-      button('分享', {
-        variant: 'ghost',
-        icon: 'share',
-        onClick: async () => {
-          const text = `【筊杯】${question ? '问：' + question + '\n' : ''}得「${title}」— ${verse}\n${o.meaning}\n—— 来感觉 · 玄学占卜`;
-          const r = await ctx.share(text);
-          toast(r === 'shared' ? '已分享' : r === 'copied' ? '已复制到剪贴板' : '分享失败');
-        },
-      }),
-    );
-    const sh = sheet({ title: '筊杯启示', content: card, actions });
-    sh.open();
-  }
-
-  function reset(silent = false) {
-    session = initSession();
+    canvas.setAttribute('aria-label', `筊杯落地：${o.kicker}，${o.name}`);
+    [result.a, result.b].forEach((face, i) => { faceLabels.children[i].textContent = face === 'flat' ? '平面 · 阳' : face === 'round' ? '弧面 · 阴' : '直立'; });
+    faceLabels.hidden = false;
+    sound.play(result.outcome === OUTCOME.LI ? 'gong' : result.outcome === OUTCOME.SHENG ? 'chime' : 'pop');
+    haptic.success();
+    if (mode === 'three') session = reduceSession(session, result);
     renderStreak();
-    blockA.rest();
-    blockB.rest();
-    st.setBadge(mode === 'three' ? '连掷三圣杯 · 第 1 掷' : '单掷问事');
-    st.setHint(mode === 'three' ? THREE_MODE_INTRO : '心中默念所求之事');
-    if (!silent) {
-      haptic.tap();
-      sound.play('flip');
-    }
+    lastResult = { result, o, question, verse: o.verses[Math.floor(ctx.rng.random() * o.verses.length)] };
+    st.setBadge(o.name + ' · ' + o.kicker);
+    st.setHint('看看两枚筊杯朝上的一面');
+    history = history.concat(result.outcome).slice(-12); storage.set('history', history); renderHistory();
+    // Always leave time to see the final face before any reading control appears.
+    if (!await ritual.pause(ctx.platform.prefersReducedMotion ? 180 : 850)) return;
+    restoreResult(); setBusy(false);
+    tossBtn.setLabel(mode === 'three' ? (session.done ? '问事已完成' : '继续掷筊') : '再掷一次');
+    tossBtn.disabled = session.done;
   }
-
-  /* ---------- 筊杯元素 ---------- */
-  function makeBlock(which) {
-    // 一枚筊杯：3D 翻转体，flat 面朝上 = 平；round 面朝上 = 凸
-    const el = h(
-      'div',
-      { class: ['jb-block', 'jb-' + which] },
-      h('div', { class: 'jb-body' }, h('div', { class: 'jb-face jb-flat' }, h('span', { class: 'jb-grain' })), h('div', { class: 'jb-face jb-round' }, h('span', { class: 'jb-shine' }))),
-      h('div', { class: 'jb-shadow' }),
-    );
-    const body = el.querySelector('.jb-body');
-    const shadow = el.querySelector('.jb-shadow');
-    let anim = null;
-    const restPose = which === 'a' ? 'translateX(-58px) rotateZ(-10deg)' : 'translateX(58px) rotateZ(12deg)';
-    el.style.transform = restPose;
-    body.style.transform = 'rotateX(0deg)';
-
-    const faceRot = (face) => (face === 'flat' ? 0 : face === 'round' ? 180 : 90);
-
-    async function fly(face, power = 1, delay = 0) {
-      if (delay) await wait(delay);
-      if (anim) anim.cancel();
-      const reduce = ctx.platform.prefersReducedMotion;
-      const height = -(180 + 120 * power);
-      const spins = (2 + Math.round(power * 2)) * 360;
-      const endX = (which === 'a' ? -1 : 1) * (40 + Math.random() * 40);
-      const endZ = (Math.random() - 0.5) * 60;
-      const dur = reduce ? 10 : 900 + power * 220;
-      // 外层位移 + 内层翻转分开做，落地带一点弹跳
-      el.animate(
-        [
-          { transform: restPose, offset: 0 },
-          { transform: `translate(${endX * 0.5}px, ${height}px) rotateZ(${endZ * 0.5}deg)`, offset: 0.45, easing: 'cubic-bezier(.2,.9,.4,1)' },
-          { transform: `translate(${endX}px, 0px) rotateZ(${endZ}deg)`, offset: 0.82, easing: 'cubic-bezier(.6,0,.9,.4)' },
-          { transform: `translate(${endX}px, -14px) rotateZ(${endZ}deg)`, offset: 0.9 },
-          { transform: `translate(${endX}px, 0px) rotateZ(${endZ}deg)`, offset: 1 },
-        ],
-        { duration: dur, fill: 'forwards' },
-      );
-      shadow.animate(
-        [
-          { transform: 'scale(1)', opacity: 0.55 },
-          { transform: 'scale(0.4)', opacity: 0.15, offset: 0.45 },
-          { transform: 'scale(1.05)', opacity: 0.55, offset: 0.82 },
-          { transform: 'scale(1)', opacity: 0.55 },
-        ],
-        { duration: dur, fill: 'forwards' },
-      );
-      const finalRot = faceRot(face);
-      anim = body.animate(
-        [{ transform: 'rotateX(0deg) rotateY(0deg)' }, { transform: `rotateX(${spins + finalRot}deg) rotateY(${(Math.random() - 0.5) * 40}deg)`, offset: 0.82, easing: 'cubic-bezier(.3,.7,.5,1)' }, { transform: `rotateX(${spins + finalRot}deg) rotateY(0deg)` }],
-        { duration: dur, fill: 'forwards' },
-      );
-      await wait(dur * 0.82);
-      sound.play('clack');
-      haptic.medium();
-      await wait(dur * 0.18 + 20);
-      el.dataset.face = face;
-      if (face === 'stand') el.classList.add('standing');
-    }
-    function rest() {
-      if (anim) anim.cancel();
-      el.getAnimations().forEach((a) => a.cancel());
-      shadow.getAnimations().forEach((a) => a.cancel());
-      body.getAnimations().forEach((a) => a.cancel());
-      el.style.transform = restPose;
-      body.style.transform = 'rotateX(0deg)';
-      el.classList.remove('standing');
-      delete el.dataset.face;
-    }
-    return { el, fly, rest };
+  function restoreResult() {
+    if (!lastResult) return;
+    const { o } = lastResult;
+    faceLabels.hidden = false;
+    const t = mode === 'three' && session.done ? (session.miracle ? SESSION_TEXT.miracle : session.success ? SESSION_TEXT.success : SESSION_TEXT.fail) : null;
+    const brief = { sheng: '把心中的计划，化成一个具体行动。', xiao: '把问题想清楚，再听一次回应。', yin: '留一点时间，重新看看事情的方向。', li: '这一刻的心念，值得认真记下。' };
+    ritual.reveal({ kicker: o.kicker, title: t?.title || o.name, text: t?.sub || brief[lastResult.result.outcome], onRead: showResult });
   }
-
-  return () => {
-    // 所有 motion/gesture 订阅由 ctx 自动清理；这里清理动画即可
-    blockA.rest();
-    blockB.rest();
-  };
+  function showResult() {
+    if (!lastResult || busy || resultSheet || !ritual.alive) return;
+    ritual.step(3);
+    const { o, verse, question: q } = lastResult;
+    const sections = [{ label: '解曰', text: o.meaning }, { label: '建议', text: o.advice }];
+    if (q) sections.unshift({ label: '所问', text: q });
+    if (mode === 'three' && session.done) sections.unshift({ label: '本次问事', text: (session.miracle ? SESSION_TEXT.miracle : session.success ? SESSION_TEXT.success : SESSION_TEXT.fail).meaning });
+    const card = resultCard({ kicker: o.kicker, title: o.name, sub: o.alias, badge: o.badge, seal: o.seal, verse, sections, footer: '传统文化演绎 · 仅供娱乐与自我觉察' });
+    resultSheet = sheet({ title: '筊杯解读', content: card, actions: [
+      button('回到筊杯', { variant: 'primary', onClick: () => resultSheet.close() }),
+      button('分享', { variant: 'ghost', icon: 'share', onClick: async () => { const r = await ctx.share(`【筊杯】${q ? q + '\n' : ''}${o.name} · ${o.kicker}\n${verse}\n${o.meaning}`); toast(r === 'shared' ? '已分享' : r === 'copied' ? '已复制' : '分享已取消'); } }),
+    ], onClose: () => { resultSheet = null; if (ritual.alive) ritual.step(2); } });
+    resultSheet.open();
+  }
+  function renderStreak() {
+    streak.hidden = mode !== 'three'; kit.clear(streak);
+    for (let i = 0; i < 3; i++) streak.append(h('span', { class: i < session.streak ? 'earned' : '', attrs: { 'aria-label': `第${i + 1}圣杯${i < session.streak ? '已获得' : '待获得'}` } }, i < session.streak ? '圣' : '—'));
+    if (mode === 'three') streak.append(h('small', null, `已得 ${session.streak} / 3 圣杯`));
+  }
+  function renderHistory() { kit.clear(histEl); if (history.length) histEl.append(kit.historyBar(history.slice(-6), (o) => OUTCOMES[o]?.name || '')); }
+  function reset() {
+    if (busy) return;
+    session = initSession(); lastResult = null; faceLabels.hidden = true; model.reset(); ritual.clear(); ritual.step(0); ritual.power(0, '轻触或上滑'); renderStreak();
+    st.setBadge(mode === 'three' ? '连掷三圣杯 · 第 1 掷' : '单掷问事'); st.setHint('按住筊杯向上滑，松手掷出'); tossBtn.setLabel('掷筊'); tossBtn.disabled = false; haptic.tap();
+  }
+  return () => { model.dispose(); resultSheet?.close(); };
 }

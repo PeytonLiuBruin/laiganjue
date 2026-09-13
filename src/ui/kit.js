@@ -361,7 +361,7 @@ export function sheet({ title = '', content = null, actions = null, onClose, dis
   const closeBtn = h('button', { type: 'button', class: 'icon-btn', attrs: { 'aria-label': '关闭' }, onClick: () => api.close() }, icon('close'));
   const el = h(
     'div',
-    { class: 'sheet', attrs: { role: 'dialog', 'aria-modal': 'true' } },
+    { class: 'sheet', attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-label': title } },
     h('div', { class: 'sheet-grip' }),
     h('div', { class: 'sheet-head' }, h('div', { class: 'sheet-title' }, title), closeBtn),
     body,
@@ -369,6 +369,15 @@ export function sheet({ title = '', content = null, actions = null, onClose, dis
   );
   const backdrop = h('div', { class: 'sheet-backdrop', onClick: () => dismissible && api.close() });
   let opened = false;
+  let previousFocus = null;
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && dismissible) { e.preventDefault(); api.close(); }
+    if (e.key !== 'Tab') return;
+    const controls = [...el.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]')].filter((node) => !node.hidden);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+  });
   // 下拉关闭
   let startY = null;
   el.addEventListener(
@@ -407,10 +416,13 @@ export function sheet({ title = '', content = null, actions = null, onClose, dis
     open() {
       if (opened) return api;
       opened = true;
+      previousFocus = document.activeElement;
       document.body.append(backdrop, el);
       requestAnimationFrame(() => {
+        if (!opened) return;
         backdrop.classList.add('open');
         el.classList.add('open');
+        closeBtn.focus({ preventScroll: true });
       });
       return api;
     },
@@ -419,6 +431,7 @@ export function sheet({ title = '', content = null, actions = null, onClose, dis
       opened = false;
       backdrop.classList.remove('open');
       el.classList.remove('open');
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
       setTimeout(() => {
         backdrop.remove();
         el.remove();
@@ -486,6 +499,7 @@ export function countUp(el, to, { duration = 800, decimals = 0 } = {}) {
 
 /** 五彩纸屑爆发（容器需 position:relative 或 absolute 子元素可见） */
 export function confetti(container, { count = 36, colors = null, origin = { x: 0.5, y: 0.5 }, spread = 220 } = {}) {
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const cs = colors || ['var(--accent)', 'var(--accent-2)', 'var(--seal)', '#fff', 'var(--success)'];
   const rect = container.getBoundingClientRect();
   const ox = rect.width * origin.x;

@@ -235,8 +235,10 @@ function createGesture() {
     };
     const up = (e) => {
       if (e.pointerId !== id) return;
+      const cancelled = e.type === 'pointercancel';
       id = null;
       const t = now();
+      samples.push({ t, x: e.clientX, y: e.clientY });
       const recent = samples.filter((s) => t - s.t <= 110);
       const a = recent[0] || samples[0];
       const b = samples[samples.length - 1];
@@ -253,6 +255,7 @@ function createGesture() {
           vy,
           speed: Math.hypot(vx, vy),
           duration: t - start.t,
+          cancelled,
           event: e,
           start,
         });
@@ -278,7 +281,7 @@ function createGesture() {
         const dist = axis === 'y' ? -g.dy : g.dx;
         const v = axis === 'y' ? -g.vy : g.vx;
         const okDir = direction === 'any' ? Math.abs(dist) >= minDist : direction === 'up' || direction === 'right' ? dist >= minDist : -dist >= minDist;
-        if (okDir && Math.abs(v) >= minSpeed) {
+        if (!g.cancelled && okDir && Math.abs(v) >= minSpeed) {
           cb({
             direction: axis === 'y' ? (g.dy < 0 ? 'up' : 'down') : g.dx > 0 ? 'right' : 'left',
             speed: Math.abs(v),
@@ -326,7 +329,8 @@ function createGesture() {
         lastT = t;
         onMove && onMove(d);
       },
-      onEnd: () => {
+      onEnd: (g) => {
+        if (g.cancelled) return;
         const t = now();
         const recent = omegaSamples.filter((s) => t - s.t < 120);
         const w = recent.length ? recent.reduce((s, x) => s + x.w, 0) / recent.length : 0;
@@ -365,7 +369,7 @@ function createGesture() {
   function tap(el, cb) {
     return track(el, {
       onEnd: (g) => {
-        if (Math.hypot(g.dx, g.dy) < 10 && g.duration < 400) cb(g);
+        if (!g.cancelled && Math.hypot(g.dx, g.dy) < 10 && g.duration < 400) cb(g);
       },
       prevent: false,
     });
