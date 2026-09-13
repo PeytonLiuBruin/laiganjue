@@ -123,7 +123,7 @@ export function mount(container, ctx) {
   }
   function renderHistory() {
     kit.clear(hist);
-    if (history.length) hist.append(h('span', { class: 't-kicker' }, '最近的签'), history.slice(-5).reverse().map((x) => button(lotLabel(x.no), { variant: 'ghost', size: 'small', onClick: () => read(getLot(x.no), x.question) })));
+    if (history.length) hist.append(h('span', { class: 't-kicker' }, '最近的签'), ...history.slice(-5).reverse().map((x) => button(lotLabel(x.no), { variant: 'ghost', size: 'small', onClick: () => read(getLot(x.no), x.question) })));
   }
   return () => { reading?.close(); st.el.getAnimations({ subtree: true }).forEach((a) => a.cancel()); };
 }

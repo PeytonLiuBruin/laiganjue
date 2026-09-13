@@ -322,7 +322,7 @@ export function mount(container, ctx) {
     recentEl.hidden = false;
     recentEl.append(
       h('span', { class: 'al-recent-label' }, TEXT.recentLabel),
-      recent.map((k) => {
+      ...recent.map((k) => {
         const d = fromKey(k);
         return h(
           'button',
