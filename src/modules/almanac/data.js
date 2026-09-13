@@ -518,8 +518,8 @@ export const GLOSSARY = {
 
 /* ------------------------------ 界面文案 ------------------------------ */
 export const TEXT = {
-  stageHint: '在纸上向上快滑撕一页看明天，向下翻回昨天',
-  hint: '向上甩手机 = 明天 · 摇一摇 = 回到今天',
+  stageHint: '一日一页 · 宜忌有序',
+  hint: '点日期选择日子，点宜忌查看释义',
   backToday: '回到今天',
   alreadyToday: '今天就在眼前',
   sheetTitle: '黄历详解',

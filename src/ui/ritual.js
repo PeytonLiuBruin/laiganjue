@@ -9,12 +9,44 @@ export function createRitual(ctx, stage, labels) {
   const energyFill = h('i');
   const energyText = h('span', null, '轻触或上滑');
   const energy = h('div', { class: 'ritual-energy', attrs: { 'aria-hidden': 'true' } }, h('span', { class: 'ritual-energy-track' }, energyFill), energyText);
-  const pending = new Map();
+  const pending = new Set();
+  const animations = new Set();
+  const pausedAnimations = new Set();
   const pause = (ms) => new Promise((resolve) => {
     if (!alive) return resolve(false);
-    const id = setTimeout(() => { pending.delete(id); resolve(alive); }, ms);
-    pending.set(id, resolve);
+    let remaining = ms, started = 0, timer = null;
+    const finish = (ok) => { clearTimeout(timer); pending.delete(cancel); document.removeEventListener('visibilitychange', visibility); resolve(ok); };
+    const cancel = () => finish(false);
+    const visibility = () => {
+      if (timer !== null) { clearTimeout(timer); remaining -= performance.now() - started; timer = null; }
+      if (!document.hidden) { started = performance.now(); timer = setTimeout(() => finish(alive), Math.max(0, remaining)); }
+    };
+    pending.add(cancel);
+    document.addEventListener('visibilitychange', visibility);
+    visibility();
   });
+  const visibility = () => {
+    animations.forEach((a) => {
+      if (document.hidden && a.playState === 'running') { a.pause(); pausedAnimations.add(a); }
+      else if (!document.hidden && pausedAnimations.delete(a)) a.play();
+    });
+  };
+  document.addEventListener('visibilitychange', visibility);
+  function track(a) {
+    if (!alive) { a.cancel(); return a; }
+    animations.add(a); visibility();
+    a.finished.catch(() => {}).then(() => { animations.delete(a); pausedAnimations.delete(a); });
+    return a;
+  }
+  async function animate(el, keyframes, options = {}) {
+    if (!alive) return null;
+    const a = el.animate(keyframes, { fill: 'forwards', easing: 'cubic-bezier(.2,.8,.2,1)', ...options, duration: ctx.platform.prefersReducedMotion ? 1 : options.duration ?? 300 });
+    track(a);
+    await a.finished.catch(() => {});
+    animations.delete(a); pausedAnimations.delete(a);
+    if (!alive) { a.cancel(); return null; }
+    return a;
+  }
   function step(index) {
     steps.forEach((el, i) => { el.classList.toggle('current', i === index); el.classList.toggle('complete', i < index); el.setAttribute('aria-current', i === index ? 'step' : 'false'); });
     stage.el.dataset.step = String(index);
@@ -45,9 +77,11 @@ export function createRitual(ctx, stage, labels) {
   function clearResult() { receipt.hidden = true; clear(receipt); }
   ctx.addCleanup(() => {
     alive = false;
-    pending.forEach((resolve, id) => { clearTimeout(id); resolve(false); });
+    pending.forEach((cancel) => cancel());
     pending.clear();
+    animations.forEach((a) => a.cancel()); animations.clear(); pausedAnimations.clear();
+    document.removeEventListener('visibilitychange', visibility);
   });
   step(0);
-  return { progress, receipt, energy, step, power, focus, pause, reveal, clear: clearResult, get alive() { return alive; } };
+  return { progress, receipt, energy, step, power, focus, pause, animate, track, reveal, clear: clearResult, get alive() { return alive; } };
 }

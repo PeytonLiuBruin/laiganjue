@@ -1,6 +1,6 @@
 // 黄历 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 舞台里挂着一本老黄历：木条挂板 + 铁环 + 带孔的纸头 + 可撕的日历纸。
-// 三条入口做同一件事（翻页）：向上甩手机 / 在纸上上下快滑 / 「明天」主按钮；摇一摇回到今天。
+// 日期仅由明确的按钮和日期选择器切换，纸面保留原生阅读与滚动。
 import {
   buildDay,
   shiftDay,
@@ -36,7 +36,7 @@ export function mount(container, ctx) {
   let current = new Date();
   let day = buildDay(current);
   let quote = dailyQuote(current);
-  let busy = false;
+  let busy = false, alive = true;
   let pageEl = null;
   let detailSheet = null;
   let heightTimer = null;
@@ -50,7 +50,7 @@ export function mount(container, ctx) {
     attrs: { min: `${MIN_YEAR}-01-01`, max: `${MAX_YEAR}-12-31`, 'aria-label': '选择日期' },
     onChange: (e) => {
       const d = fromKey(e.target.value);
-      if (!d) return;
+      if (!d || busy) { dateInput.value = toKey(current); return; }
       goTo(d);
     },
   });
@@ -63,7 +63,6 @@ export function mount(container, ctx) {
     size: 'small',
     cls: 'al-today',
     onClick: () => {
-      ctx.ensureMotion();
       goToday();
     },
   });
@@ -78,71 +77,44 @@ export function mount(container, ctx) {
   const stack = h('div', { class: 'al-stack' }, h('i', { class: 'al-sheet s2' }), h('i', { class: 'al-sheet s1' }));
   const holder = h('div', { class: 'al-holder' }, stack);
   const wall = h('div', { class: 'al-wall' }, board, ringL, ringR, h('div', { class: 'al-hang' }, stub, holder));
+  st.scene.remove();
   st.el.append(wall);
 
   pageEl = renderPage(day, quote);
   holder.append(pageEl);
 
   /* ---------- 操作 ---------- */
-  const tomorrowBtn = button('明 天', {
-    variant: 'primary',
-    size: 'large',
-    primary: true,
+  const tomorrowBtn = button('后一天', {
+    variant: 'ghost',
     onClick: () => {
-      ctx.ensureMotion();
-      ceremony(1);
+      flip(1);
     },
   });
-  const detailBtn = button('详解', { variant: 'ghost', icon: 'info', onClick: () => openDetail() });
+  const detailBtn = button('查看这一天', { variant: 'primary', size: 'large', primary: true, onClick: () => openDetail() });
   const recentEl = h('div', { class: 'al-recent' });
 
   container.append(
     dateBar,
     h('div', { class: 'mt-3' }, st.el),
-    hint('flick', TEXT.hint),
-    kit.actionBar(tomorrowBtn, detailBtn),
+    hint('tap', TEXT.hint),
+    kit.actionBar(detailBtn, tomorrowBtn),
     recentEl,
   );
   renderRecent();
   ctx.setTitle(`黄历 · ${day.lunar.text}`);
 
-  /* ---------- 体感 / 手势 ---------- */
-  ctx.motion.onToss(() => flip(1));
-  ctx.motion.onShake(() => goToday(true));
-  ctx.gesture.flick(
-    st.el,
-    (g) => {
-      if (g.direction === 'up') flip(1, null, g.intensity);
-      else flip(-1, null, g.intensity);
-    },
-    { minSpeed: 0.45, axis: 'y', direction: 'any' },
-  );
-  ctx.gesture.tap(st.el, (g) => {
-    const target = document.elementFromPoint(g.x, g.y);
-    if (!target || busy) return;
-    const chip = target.closest('.al-chip');
-    if (chip && chip.dataset.term) return explain(chip.dataset.term, chip.dataset.kind);
-    const hr = target.closest('.al-hour');
+  // Native clicks preserve scrolling, text selection and keyboard activation.
+  wall.addEventListener('click', (e) => {
+    if (busy || !alive) return;
+    const chip = e.target.closest('.al-chip[data-term]');
+    if (chip) return explain(chip.dataset.term, chip.dataset.kind);
+    const hr = e.target.closest('.al-hour');
     if (hr) return explainHour(Number(hr.dataset.index));
-    const pos = target.closest('.al-pos-item');
+    const pos = e.target.closest('.al-pos-item');
     if (pos) return explainPos(pos.dataset.key);
-    const cell = target.closest('.al-cell');
-    if (cell && cell.dataset.term) return explainCell(cell.dataset.term);
-    if (target.closest('.al-page')) openDetail();
+    const cell = e.target.closest('.al-cell');
+    if (cell?.dataset.term) explainCell(cell.dataset.term);
   });
-  ctx.gesture.longPress(st.el, () => {
-    // 长按纸面：直接打开系统日期选择器
-    haptic.light();
-    try {
-      if (typeof dateInput.showPicker === 'function') dateInput.showPicker();
-      else dateInput.focus();
-    } catch {
-      dateInput.focus();
-    }
-  });
-  // 轻微倾斜视差：后面几张纸微动，显出厚度
-  const par = kit.parallax(stack, { max: 3 });
-  ctx.motion.onTilt(par);
 
   // 每分钟刷新一次"当前时辰"高亮
   const tickNow = () => {
@@ -159,7 +131,7 @@ export function mount(container, ctx) {
    * dir>0 撕掉当前页看后一天；dir<0 从上方翻回前一天；target 指定则按日期差决定方向。
    */
   async function flip(dir, target = null, intensity = 20) {
-    if (busy) return false;
+    if (busy || !alive || detailSheet?.opened) return false;
     const to = target || shiftDay(current, dir);
     if (!inRange(to)) {
       toast(dir > 0 ? TEXT.edgeMax : TEXT.edgeMin);
@@ -189,6 +161,7 @@ export function mount(container, ctx) {
     holder.append(next);
     const newH = next.offsetHeight;
     await kit.nextFrame();
+    if (!alive) return false;
     holder.style.height = newH + 'px';
 
     sound.play('paper');
@@ -216,6 +189,7 @@ export function mount(container, ctx) {
         { duration: dur, fill: 'forwards', easing: 'cubic-bezier(.2,.8,.2,1)' },
       );
       await wait(dur * 0.78);
+      if (!alive) return false;
       sound.play('flip');
       haptic.medium();
       await wait(dur * 0.22 + 20);
@@ -235,11 +209,13 @@ export function mount(container, ctx) {
       );
       old.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(6px) scale(0.985)' }], { duration: dur * 0.6, delay: dur * 0.3, fill: 'forwards' });
       await wait(dur * 0.7);
+      if (!alive) return false;
       sound.play('flip');
       haptic.medium();
       await wait(dur * 0.3 + 20);
     }
 
+    if (!alive) return false;
     // 落定
     old.remove();
     next.getAnimations().forEach((a) => a.cancel());
@@ -257,6 +233,7 @@ export function mount(container, ctx) {
 
     // 揭：盖印 + 彩蛋
     await wait(D(90));
+    if (!alive) return false;
     stampIn(next);
     const rating = dayRating(day);
     if (day.festivals.length) {
@@ -273,14 +250,6 @@ export function mount(container, ctx) {
     busy = false;
     setBusy(false);
     return true;
-  }
-
-  /** 主按钮的仪式：撕页 → 揭示详解 */
-  async function ceremony(dir) {
-    const ok = await flip(dir);
-    if (!ok) return;
-    await wait(D(240));
-    openDetail();
   }
 
   function goTo(date) {
@@ -312,6 +281,7 @@ export function mount(container, ctx) {
 
   function setBusy(b) {
     tomorrowBtn.disabled = b;
+    detailBtn.disabled = b;
     prevBtn.disabled = b;
     nextBtn.disabled = b;
     todayBtn.disabled = b;
@@ -413,10 +383,10 @@ export function mount(container, ctx) {
       h(
         'div',
         { class: 'al-chips' },
-        items.length ? items.map((t) => h('button', { type: 'button', class: ['al-chip', kind], dataset: { term: t, kind }, attrs: { tabindex: '-1' } }, t)) : h('span', { class: 'al-chip empty' }, '无'),
+        items.length ? items.map((t) => h('button', { type: 'button', class: ['al-chip', kind], dataset: { term: t, kind } }, t)) : h('span', { class: 'al-chip empty' }, '无'),
       );
     const col = (label, items, kind) => h('div', { class: ['al-col', kind] }, h('span', { class: 'al-mark' }, label), chipList(items, kind));
-    const cell = (label, value, tone = '', cls = '') => h('div', { class: ['al-cell', tone === '吉' && 'good', tone === '凶' && 'bad', cls], dataset: { term: label } }, h('i', null, label), h('b', null, value));
+    const cell = (label, value, tone = '', cls = '') => h('button', { type: 'button', class: ['al-cell', tone === '吉' && 'good', tone === '凶' && 'bad', cls], dataset: { term: label } }, h('i', null, label), h('b', null, value));
     const posVal = (key) => {
       const p = dd.positions[key];
       if (key === 'tai') return p.desc.split(' ').pop();
@@ -459,12 +429,12 @@ export function mount(container, ctx) {
       h(
         'div',
         { class: 'al-pos' },
-        POSITIONS.map((p) => h('div', { class: 'al-pos-item', dataset: { key: p.key } }, h('i', null, p.name), h('b', null, posVal(p.key)))),
+        POSITIONS.map((p) => h('button', { type: 'button', class: 'al-pos-item', dataset: { key: p.key } }, h('i', null, p.name), h('b', null, posVal(p.key)))),
       ),
       h(
         'div',
         { class: 'al-hours' },
-        dd.hours.map((hr) => h('div', { class: ['al-hour', hr.luck === '吉' ? 'good' : 'bad'], dataset: { index: hr.index } }, h('b', null, hr.zhi), h('i', null, hr.luck))),
+        dd.hours.map((hr) => h('button', { type: 'button', class: ['al-hour', hr.luck === '吉' ? 'good' : 'bad'], dataset: { index: hr.index } }, h('b', null, hr.zhi), h('i', null, hr.luck))),
       ),
       h('div', { class: 'al-quote' }, h('span', null, `「${q.text}」`), h('small', null, q.source)),
     );
@@ -472,7 +442,7 @@ export function mount(container, ctx) {
 
   /* ---------- 黄历详解抽屉 ---------- */
   function openDetail() {
-    if (detailSheet && detailSheet.opened) return;
+    if (busy || !alive || detailSheet?.opened) return;
     const rating = dayRating(day);
     const isToday = isSameDay(current, new Date());
     const nowIdx = hourIndex(new Date());
@@ -550,11 +520,10 @@ export function mount(container, ctx) {
     });
 
     const actions = [
-      button('翻到明天', {
+      button('回到黄历', {
         variant: 'primary',
         onClick: () => {
           detailSheet.close();
-          wait(D(420)).then(() => ceremony(1));
         },
       }),
       button('分享', {
@@ -567,7 +536,7 @@ export function mount(container, ctx) {
       }),
     ];
     // 抽屉挂在 body 上，用 .m-almanac 包一层，让模块样式作用到抽屉内容
-    detailSheet = sheet({ title: TEXT.sheetTitle, content: h('div', { class: 'm-almanac al-sheet' }, card), actions });
+    detailSheet = sheet({ title: TEXT.sheetTitle, content: h('div', { class: 'm-almanac al-reading' }, card), actions, onClose: () => { detailSheet = null; } });
     detailSheet.open();
     sound.play('pop');
   }
@@ -700,6 +669,8 @@ export function mount(container, ctx) {
 
   /* ---------- 卸载 ---------- */
   return () => {
+    alive = false; clearTimeout(heightTimer);
+    holder.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     if (pageEl) pageEl.getAnimations().forEach((a) => a.cancel());
     if (detailSheet && detailSheet.opened) detailSheet.close();
   };

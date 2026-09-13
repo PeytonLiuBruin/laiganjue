@@ -2,6 +2,7 @@
 // wooden back; both use the same vertices. No WebGL dependency or external model.
 export const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const TAU = Math.PI * 2;
+export const FIRST_IMPACT = 0.4;
 
 export function createBlockMesh(segments = 36, bands = 12) {
   const faces = [];
@@ -28,17 +29,23 @@ export function createBlockMesh(segments = 36, bands = 12) {
 export function tossPose(t, { side = 1, power = 1, face = 'flat', spread = 68, height = 145, start = null } = {}) {
   const endRot = face === 'round' ? Math.PI : face === 'stand' ? Math.PI / 2 : 0;
   const f = clamp(t, 0, 1);
-  const flight = Math.min(f / 0.73, 1);
-  const bounce = f < 0.73 ? 0 : Math.sin((f - 0.73) / 0.27 * Math.PI * 2) * Math.exp(-(f - 0.73) * 10) * 18;
-  const settle = clamp((f - 0.73) / 0.27, 0, 1);
+  const flight = Math.min(f / FIRST_IMPACT, 1);
+  const roll = clamp((f - FIRST_IMPACT) / (1 - FIRST_IMPACT), 0, 1);
+  const decay = (1 - roll) ** 2;
   const startRot = start?.rx ?? 0.18;
   const finishRot = TAU * (Math.floor(startRot / TAU) + 2 + Math.round(power)) + endRot;
+  const landingRot = finishRot - TAU * 0.75;
+  // Two smaller parabolic hops, followed by a long, diminishing roll on the floor.
+  const hop = roll < 0.18 ? [roll / 0.18, 0.15] : roll < 0.32 ? [(roll - 0.18) / 0.14, 0.045] : [0, 0];
+  const lift = f < FIRST_IMPACT ? 4 * height * flight * (1 - flight) : 4 * height * hop[1] * hop[0] * (1 - hop[0]);
+  const impactX = side * Math.max(0, spread - 18);
+  const rocking = Math.sin(roll * Math.PI * 8) * decay;
   return {
-    x: (start?.x ?? side * 61) * (1 - flight) + side * spread * flight,
-    y: (start?.y ?? 0) * (1 - flight) - 4 * height * flight * (1 - flight) - Math.abs(bounce),
-    rx: startRot * (1 - flight) + finishRot * flight + Math.sin(settle * Math.PI * 4) * (1 - settle) * 0.14,
-    rz: (start?.rz ?? side * 0.3) * (1 - flight) - side * 0.3 * flight + Math.sin(flight * Math.PI) * side * 0.9,
-    ry: (start?.ry ?? 0) * (1 - flight) + Math.sin(flight * Math.PI) * side * 0.55,
+    x: f < FIRST_IMPACT ? (start?.x ?? side * 61) * (1 - flight) + impactX * flight : impactX * decay + side * spread * (1 - decay),
+    y: (start?.y ?? 0) * (1 - flight) - lift - Math.abs(rocking) * 3,
+    rx: f < FIRST_IMPACT ? startRot * (1 - flight) + landingRot * flight : finishRot - TAU * 0.75 * decay + rocking * 0.38,
+    rz: (start?.rz ?? side * 0.3) * (1 - flight) - side * 0.3 * flight + Math.sin(flight * Math.PI) * side * 0.9 + rocking * side * 0.26,
+    ry: (start?.ry ?? 0) * (1 - flight) + Math.sin(flight * Math.PI) * side * 0.55 + rocking * side * 0.22,
   };
 }
 
@@ -108,10 +115,10 @@ export function createJiaobeiScene(canvas, ctx) {
   function toss(result, intensity) {
     active = true;
     const power = clamp(intensity / 20, 0.65, 1.65);
-    const total = ctx.platform.prefersReducedMotion ? 160 : 1450 + power * 180;
+    const total = ctx.platform.prefersReducedMotion ? 160 : 3400 + power * 360;
     const starts = poses.map((p) => ({ ...p }));
     let elapsed = 0, previous = null;
-    const hit = [false, false];
+    const impacts = [0, 0];
     canvas.dataset.power = power.toFixed(2);
     return new Promise((resolve) => {
       pending = resolve;
@@ -121,13 +128,15 @@ export function createJiaobeiScene(canvas, ctx) {
         if (previous !== null && !document.hidden) elapsed += Math.min(40, now - previous);
         previous = now;
         poses = [result.a, result.b].map((face, i) => {
-          const delay = ctx.platform.prefersReducedMotion ? 0 : i * 110;
+          const delay = ctx.platform.prefersReducedMotion ? 0 : i * 180;
           const t = ctx.platform.prefersReducedMotion ? 1 : clamp((elapsed - delay) / total, 0, 1);
-          if (t >= 0.73 && !hit[i]) { hit[i] = true; ctx.sound.play('clack'); ctx.haptic.medium(); }
+          const thresholds = [FIRST_IMPACT, 0.508, 0.592, 0.76];
+          if (t >= thresholds[impacts[i]]) { ctx.sound.play(impacts[i] ? 'tick' : 'clack'); if (!impacts[i]) ctx.haptic.medium(); impacts[i]++; }
+          if (i === 0) canvas.dataset.phase = t < FIRST_IMPACT ? 'flight' : t < 0.95 ? 'rolling' : 'settled';
           return tossPose(t, { side: i ? 1 : -1, face, power, start: starts[i], spread: Math.min(width * 0.22, 82), height: ctx.platform.prefersReducedMotion ? 0 : Math.max(30, height * 0.70 - scaleClearance()) * (0.68 + power * 0.16) });
         });
         render();
-        if (elapsed < total + (ctx.platform.prefersReducedMotion ? 0 : 110)) frame = requestAnimationFrame(tick);
+        if (elapsed < total + (ctx.platform.prefersReducedMotion ? 0 : 180)) frame = requestAnimationFrame(tick);
         else { active = false; landed = poses.map((p) => ({ ...p })); pending = null; canvas.dataset.faces = `${result.a},${result.b}`; resolve(true); }
       }
       frame = requestAnimationFrame(tick);

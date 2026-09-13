@@ -11,7 +11,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
-  const { h, button, stage, hint, resultCard, sheet, toast, wait, confetti, historyBar } = kit;
+  const { h, button, stage, hint, resultCard, sheet, toast, confetti, historyBar } = kit;
   const reduce = !!ctx.platform.prefersReducedMotion;
   const dur = (ms) => (reduce ? 1 : ms);
   const cancelAnims = (el) => el.getAnimations && el.getAnimations().forEach((a) => a.cancel());
@@ -32,6 +32,7 @@ export function mount(container, ctx) {
   /* ---------- 舞台 ---------- */
   const st = stage({ cls: 'ok-stage', hint: TEXT.hintIdle, badge: badgeText(), minHeight: 420 });
   const ritual = createRitual(ctx, st, ['摇签', '取签', '展签', '结缘']);
+  const wait = ritual.pause;
 
   // 四季飘落物（春樱 / 夏萤 / 秋叶 / 冬雪）
   const month = new Date().getMonth() + 1;
@@ -251,9 +252,10 @@ export function mount(container, ctx) {
     const power = clamp(intensity / 20, 0.7, 1.6);
     const lvl = power < 0.95 ? 1 : power < 1.25 ? 2 : 3;
     tubeAnim.classList.add('ok-shaking', 'ok-s' + lvl);
+    tubeAnim.getAnimations().forEach((a) => ritual.track(a));
     sound.play('shake');
     haptic.rattle();
-    const total = dur(1150 + lvl * 90);
+    const total = dur(2300 + lvl * 160);
     for (let t = 260; t < total - 80; t += 280) {
       ctx.setTimeout(() => {
         sound.play('rattle');
@@ -271,11 +273,11 @@ export function mount(container, ctx) {
     // 提起签筒，签棒从底部小口滑出
     tubeAnim.classList.add('ok-lift');
     sound.play('tick', { delay: 0.05 });
-    await wait(dur(200));
+    await wait(dur(380));
     if (!ritual.alive) return;
     await slideOutStick();
     tubeAnim.classList.remove('ok-lift');
-    await wait(dur(160));
+    await wait(dur(420));
     if (!ritual.alive) return;
     haptic.light();
     if (!ritual.alive) return;
@@ -286,8 +288,8 @@ export function mount(container, ctx) {
 
   async function slideOutStick() {
     cancelAnims(stick);
-    const d = dur(760);
-    stick.animate(
+    const d = dur(1450);
+    ritual.animate(stick,
       [
         { transform: STICK_IN, offset: 0 },
         { transform: 'translate(3px, 54px) rotate(86deg)', offset: 0.48, easing: 'cubic-bezier(.3,.8,.5,1)' },
@@ -321,11 +323,11 @@ export function mount(container, ctx) {
     slip.hidden = false;
     tubeWrap.classList.add('ok-dim');
     stick.classList.add('ok-dim');
-    const d = dur(640);
-    slip.animate(
+    const d = dur(1600);
+    ritual.animate(slip,
       [
-        { transform: 'translateY(-30px) scaleY(0.04)', opacity: 0 },
-        { transform: 'translateY(-10px) scaleY(0.5)', opacity: 1, offset: 0.45 },
+        { transform: 'perspective(800px) translateY(-24px) rotateX(-70deg) scaleY(0.12)', opacity: 0 },
+        { transform: 'perspective(800px) translateY(-12px) rotateX(-24deg) scaleY(0.65)', opacity: 1, offset: 0.45 },
         { transform: 'translateY(0) scaleY(1.02)', offset: 0.85 },
         { transform: 'translateY(0) scaleY(1)' },
       ],
@@ -408,11 +410,11 @@ export function mount(container, ctx) {
     st.scene.append(folded);
     const from = slip.style.transform || 'translateY(45px) scale(.68)';
     sound.play('paper');
-    await kit.animate(slip, [{ transform: from, opacity: 1 }, { transform: from + ' scaleX(.16) scaleY(.62)', opacity: .15 }], { duration: dur(380) });
+    await ritual.animate(slip, [{ transform: from, opacity: 1 }, { transform: from + ' scaleX(.16) scaleY(.62)', opacity: .15 }], { duration: dur(380) });
     if (!ritual.alive) return;
     slip.hidden = true; folded.classList.add('visible'); haptic.light();
     const tx = targetX - (sr.left + sr.width / 2), ty = targetY - (sr.top + sr.height / 2);
-    await kit.animate(folded, [{ transform: 'translate(-50%, -50%) rotate(-4deg)' }, { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) rotate(0deg)` }], { duration: dur(620), easing: 'cubic-bezier(.22,.8,.3,1)' });
+    await ritual.animate(folded, [{ transform: 'translate(-50%, -50%) rotate(-4deg)' }, { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) rotate(0deg)` }], { duration: dur(620), easing: 'cubic-bezier(.22,.8,.3,1)' });
     if (!ritual.alive) return;
     folded.classList.add('wrapped'); sound.play('paper'); haptic.double();
     if (!await ritual.pause(dur(600))) return;
@@ -436,7 +438,7 @@ export function mount(container, ctx) {
     confetti(st.el, { count: 48, origin: { x: 0.5, y: 0.5 } });
     const d = dur(660);
     cancelAnims(slip);
-    slip.animate(
+    ritual.animate(slip,
       [
         { transform: 'translate(0,0) rotate(0) scale(1)', opacity: 1 },
         { transform: 'translate(0,-24px) rotate(-3deg) scale(0.96)', offset: 0.3, easing: 'cubic-bezier(.2,.8,.3,1)' },
@@ -482,7 +484,7 @@ export function mount(container, ctx) {
     if (phase !== PHASE.IDLE) {
       const d = dur(440);
       cancelAnims(stick);
-      stick.animate(
+      ritual.animate(stick,
         [
           { transform: STICK_OUT, opacity: 1 },
           { transform: 'translate(0px, 40px) rotate(70deg)', opacity: 0.5, offset: 0.6 },

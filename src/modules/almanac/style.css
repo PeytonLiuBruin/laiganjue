@@ -2,6 +2,8 @@
    纸面（.al-page / .al-stub）在五套皮肤下都是暖白纸 + 墨字（--paper / --paper-ink），
    纸上印刷的红绿金是"材质色"，固定在下面这几个模块变量里；纸面以外一律用皮肤变量。 */
 .m-almanac {
+  --paper: #f4dc94;
+  --paper-ink: #493722;
   --al-red: #b5352b;
   --al-green: #2f7a58;
   --al-gold: #8d6b22;
@@ -157,7 +159,7 @@
   pointer-events: none;
   transition: transform 0.45s var(--ease-out);
 }
-.m-almanac .al-sheet {
+.m-almanac .al-stack > .al-sheet {
   position: absolute;
   inset: 0;
   border-radius: 0 0 4px 4px;
@@ -215,7 +217,7 @@
   font-size: 11px;
   letter-spacing: 0.06em;
   opacity: 0.78;
-  white-space: nowrap;
+  flex-wrap: wrap;
 }
 .m-almanac .al-tags {
   display: inline-flex;
@@ -452,7 +454,7 @@
   font-size: 12px;
   letter-spacing: 0.05em;
   color: var(--al-gold);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* 时辰吉凶 */

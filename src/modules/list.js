@@ -14,7 +14,7 @@ export const MODULE_LIST = [
   { id: 'jiaobei', title: '筊杯', glyph: '筊', region: 'east', gestures: ['toss', 'flick'], subtitle: '向上一甩，圣杯笑杯阴杯见分晓' },
   { id: 'qian', title: '灵签', glyph: '签', region: 'east', gestures: ['shake'], subtitle: '摇动签筒，一支灵签跃然而出' },
   { id: 'liuyao', title: '六爻', glyph: '卦', region: 'east', gestures: ['toss', 'shake'], subtitle: '三枚铜钱掷六次，成卦解卦' },
-  { id: 'almanac', title: '黄历', glyph: '历', region: 'east', gestures: ['flick'], subtitle: '今日宜忌、冲煞、吉神方位，撕一页看明天' },
+  { id: 'almanac', title: '黄历', glyph: '历', region: 'east', gestures: ['tap'], subtitle: '今日宜忌、冲煞、吉神方位，撕一页看明天' },
   { id: 'bazi', title: '八字', glyph: '命', region: 'east', gestures: ['tap'], subtitle: '生辰四柱、五行强弱、日主性情' },
   { id: 'fengshui', title: '风水', glyph: '风', region: 'east', gestures: ['tilt'], subtitle: '手机当罗盘，本命卦吉凶方位一望即知' },
   { id: 'wheel', title: '转盘', glyph: '转', region: 'play', gestures: ['spin', 'shake'], subtitle: '拨一下转起来，吃什么做什么去哪儿' },
