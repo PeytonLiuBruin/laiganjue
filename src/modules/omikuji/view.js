@@ -196,7 +196,7 @@ export function mount(container, ctx) {
     },
   });
   slip.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && tying && !busy) { tying = false; delete st.el.dataset.tie; slip.style.transform = ''; showPaperReceipt(); }
+    if (e.key === 'Escape' && tying && !busy) { tying = false; delete st.el.dataset.tie; rackEl.classList.remove('ok-over'); slip.style.transform = ''; syncUI(); showPaperReceipt(); }
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (busy || phase !== PHASE.PAPER) return; tying ? tieToRack() : showResult(lot); }
   });
   rackEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!busy) openRackSheet(); } });
@@ -601,7 +601,7 @@ export function mount(container, ctx) {
     });
     const wrap = h('div', { class: ['m-omikuji', 'ok-sheet-wrap', 'ok-tone-' + level.tone] }, card);
     const actions = [
-      resolved ? button('回到签绳', { variant: 'primary', onClick: () => sh.close() }) : bad
+      resolved ? button('回到抽签', { variant: 'primary', onClick: () => sh.close() }) : bad
         ? button(TEXT.btnTie, {
             variant: 'primary',
             onClick: () => {
