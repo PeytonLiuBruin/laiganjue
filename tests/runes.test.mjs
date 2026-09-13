@@ -141,6 +141,7 @@ test('SPREADS: 四种牌阵、槽位与位名一致、今日符文走 daily', ()
     assert.equal(s.layout.length, s.n, s.id);
     assert.ok(s.keyIndex >= 0 && s.keyIndex < s.n);
     for (const p of s.positions) assert.ok(p.label && p.hint);
+    assert.ok((s.short || s.kicker).length <= 12, `${s.id} 抽屉 kicker 过长会撞印章`);
     for (const l of s.layout) assert.ok(l.x >= 0 && l.x <= 100 && l.y >= 0 && l.y <= 100);
   }
   assert.equal(getSpread('five').n, 5);

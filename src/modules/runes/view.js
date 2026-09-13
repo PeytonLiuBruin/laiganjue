@@ -29,7 +29,8 @@ export function mount(container, ctx) {
   spreadId = spread.id;
   let state = initState(spread.id);
   let busy = false;
-  let stones = []; // { el, body, shadow, rune, reversed, tilt, flipped, off }
+  let revealing = false; // 防止两枚石头几乎同时翻完时重复揭示
+  let stones = []; // { el, body, shadow, rune, reversed, tilt, flipped, flipAnim, off }
   let history = storage.get('history', []);
   container.dataset.rnTheme = ctx.theme;
   ctx.onTheme((t) => {
@@ -216,6 +217,7 @@ export function mount(container, ctx) {
 
   function buildStones(draw) {
     clearStones();
+    revealing = false;
     draw.forEach((d, i) => {
       const p = spread.layout[i];
       const shadow = h('div', { class: 'rn-stone-shadow' });
@@ -227,7 +229,7 @@ export function mount(container, ctx) {
       );
       const label = h('div', { class: 'rn-stone-label' }, d.rune.zh, d.reversed ? h('i', null, UI_TEXT.reversed) : null);
       const el = h('div', { class: ['rn-stone', 'rn-shape-' + (i % 5)], style: { left: p.x + '%', top: p.y + '%' }, attrs: { role: 'button', 'aria-label': `符石 ${i + 1}` } }, shadow, body, label);
-      const stone = { el, body, shadow, rune: d.rune, reversed: d.reversed, tilt: (Math.random() - 0.5) * 22, flipped: false, off: null };
+      const stone = { el, body, shadow, rune: d.rune, reversed: d.reversed, tilt: (Math.random() - 0.5) * 22, flipped: false, flipAnim: null, off: null };
       stone.off = ctx.gesture.tap(el, () => onStoneTap(i));
       stoneLayer.append(el);
       stones.push(stone);
@@ -359,14 +361,14 @@ export function mount(container, ctx) {
     s.flipped = true;
     state = reduceState(state, { type: 'flip', index: i });
     sound.play('flip');
-    const a = s.body.animate(
+    const a = (s.flipAnim = s.body.animate(
       [
         { transform: 'rotateY(0deg) translateZ(0px)' },
         { transform: 'rotateY(90deg) translateZ(34px)', offset: 0.5 },
         { transform: 'rotateY(180deg) translateZ(0px)' },
       ],
       { duration: T(560), fill: 'forwards', easing: 'cubic-bezier(.45,0,.2,1)' },
-    );
+    ));
     await wait(T(280));
     haptic.light();
     sound.play('tick');
@@ -387,9 +389,13 @@ export function mount(container, ctx) {
   }
 
   async function reveal() {
+    if (revealing) return;
+    revealing = true;
     busy = true;
     setButtons();
     st.setHint('');
+    // 等所有仍在翻转的石头停下
+    await Promise.all(stones.map((s) => (s.flipAnim ? s.flipAnim.finished.catch(() => {}) : null)));
     await wait(T(260));
     sound.play('shimmer');
     haptic.success();
@@ -450,6 +456,7 @@ export function mount(container, ctx) {
     setShakeClass(1);
     ctx.setTimeout(() => setShakeClass(0), 320);
     clearStones();
+    revealing = false;
     state = reduceState(state, { type: 'reset' });
     busy = false;
     setPhaseUI();
