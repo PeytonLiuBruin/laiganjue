@@ -4,7 +4,7 @@
 //   dist/artifact.html —— 无 <html><head><body> 外壳的片段（供 Artifact 平台发布）
 // 用法：node scripts/build.mjs [--out <dir>] [--no-minify] [--only tarot,runes]
 import { build } from 'esbuild';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
@@ -92,6 +92,12 @@ export async function buildAll({ out = outDir, min = minify, only = null } = {})
   const artifact = fill(
     `<title>来感觉 · 玄学占卜</title>\n` +
       `<meta name="theme-color" content="#0b0b10">\n` +
+      `<meta name="apple-mobile-web-app-capable" content="yes">\n` +
+      `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n` +
+      `<meta name="apple-mobile-web-app-title" content="来感觉">\n` +
+      `<link rel="apple-touch-icon" href="icon-180.png">\n` +
+      `<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">\n` +
+      `<link rel="manifest" href="manifest.webmanifest">\n` +
       `<link rel="preconnect" href="https://fonts.googleapis.com">\n` +
       `<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">\n` +
       `<!--CSS-->\n` +
@@ -99,9 +105,27 @@ export async function buildAll({ out = outDir, min = minify, only = null } = {})
       `\n<!--JS-->\n`,
   );
 
+  const manifest = {
+    name: '来感觉 · 玄学占卜',
+    short_name: '来感觉',
+    description: '筊杯、灵签、六爻、黄历、八字、风水、转盘、塔罗、卢恩、星座、水晶球、御神签、硬币骰子。摇一摇、甩一甩。',
+    start_url: './',
+    scope: './',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#0b0b10',
+    theme_color: '#0b0b10',
+    lang: 'zh-CN',
+    icons: [
+      { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+    ],
+  };
   await Promise.all([
     writeFile(path.join(out, 'index.html'), full),
     writeFile(path.join(out, 'artifact.html'), artifact),
+    writeFile(path.join(out, 'manifest.webmanifest'), JSON.stringify(manifest, null, 2)),
+    ...[180, 192, 512].map((s) => copyFile(path.join(root, `assets/icon-${s}.png`), path.join(out, `icon-${s}.png`)).catch(() => {})),
   ]);
   return {
     out,

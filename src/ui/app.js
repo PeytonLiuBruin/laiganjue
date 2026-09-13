@@ -5,6 +5,7 @@ import * as rng from '../core/rng.js';
 import { almanacSummary } from '../core/lunar.js';
 import { MODULE_LIST, REGIONS, GESTURE_LABEL, getModuleMeta } from '../modules/list.js';
 import { MODULES } from '../modules/registry.js';
+import { createZen } from './zen.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 玄学占卜';
@@ -36,13 +37,45 @@ export function startApp(root) {
   };
   applyTheme(theme);
 
+  /* ---------------- 屏保 · 静观 ---------------- */
+  const zen = createZen({
+    platform,
+    getAccent: () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#d4af5a',
+    onExit: () => {
+      if (location.hash.startsWith('#/zen')) history.replaceState(null, '', '#/');
+    },
+  });
+  let lastActive = performance.now();
+  const bump = () => {
+    lastActive = performance.now();
+  };
+  for (const ev of ['pointerdown', 'keydown', 'wheel', 'touchstart']) window.addEventListener(ev, bump, { passive: true });
+  setInterval(() => {
+    const auto = storage.get('zen.auto', true);
+    const mins = Number(storage.get('zen.minutes', 3)) || 3;
+    if (auto && !zen.active && document.visibilityState === 'visible' && performance.now() - lastActive > mins * 60000) zen.enter({ fullscreen: false });
+  }, 10000);
+
   /* ---------------- 骨架 ---------------- */
   clear(root);
   const backBtn = h('button', { type: 'button', class: 'icon-btn', attrs: { 'aria-label': '返回' }, onClick: () => navigate('#/') }, icon('back'));
+  const zenBtn = h(
+    'button',
+    {
+      type: 'button',
+      class: 'icon-btn',
+      attrs: { 'aria-label': '屏保 · 静观' },
+      onClick: () => {
+        platform.haptic.tap();
+        zen.enter({ fullscreen: true });
+      },
+    },
+    icon('moon'),
+  );
   const titleEl = h('div', { class: 'hd-title' });
   const themeBtn = h('button', { type: 'button', class: 'icon-btn', attrs: { 'aria-label': '换皮肤' }, onClick: openThemeSheet }, icon('palette'));
   const settingsBtn = h('button', { type: 'button', class: 'icon-btn', attrs: { 'aria-label': '设置' }, onClick: openSettings }, icon('settings'));
-  const header = h('header', { class: 'app-header' }, backBtn, titleEl, themeBtn, settingsBtn);
+  const header = h('header', { class: 'app-header' }, backBtn, zenBtn, titleEl, themeBtn, settingsBtn);
   const views = h('main', { class: 'views' });
   root.append(header, views);
 
@@ -56,6 +89,16 @@ export function startApp(root) {
 
   async function render() {
     const hash = location.hash || '#/';
+    if (hash.startsWith('#/zen')) {
+      if (!current) {
+        const el = renderHome();
+        views.append(el);
+        current = { id: 'home', el, unmount: null };
+        setHeader(null);
+      }
+      zen.enter({ fullscreen: false });
+      return;
+    }
     const m = hash.match(/^#\/m\/([a-z0-9_-]+)/i);
     const target = m ? m[1] : 'home';
     if (current && current.id === target) return;
@@ -103,10 +146,12 @@ export function startApp(root) {
   function setHeader(meta) {
     clear(titleEl);
     if (!meta) {
-      backBtn.style.visibility = 'hidden';
+      backBtn.hidden = true;
+      zenBtn.hidden = false;
       titleEl.append(h('span', null, APP_NAME), h('small', null, APP_TAGLINE));
     } else {
-      backBtn.style.visibility = 'visible';
+      backBtn.hidden = false;
+      zenBtn.hidden = true;
       titleEl.append(h('span', null, meta.title), h('small', null, meta.gestures.map((g) => GESTURE_LABEL[g]).join(' · ')));
     }
   }
@@ -363,11 +408,46 @@ export function startApp(root) {
       row('震动反馈', platform.haptic.supported ? '落地、揭晓时轻微震动' : '此设备不支持震动', toggle(platform.haptic.enabled, (v) => platform.haptic.setEnabled(v))),
       h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '体感（摇一摇 / 甩一甩）'), motionDesc), motionControl),
       h('div', { class: 'mt-4' }, gestureHint('shake', '摇动手机 = 洗牌 / 摇签'), gestureHint('toss', '向上甩手机 = 掷筊 / 掷钱'), gestureHint('flick', '屏幕上快速上滑 = 同样效果'), gestureHint('tilt', '倾斜或转动 = 罗盘 / 灵摆')),
+      h(
+        'div',
+        { class: 'setting-row' },
+        h('div', null, h('div', { class: 'setting-label' }, '屏保 · 静观'), h('div', { class: 'setting-desc' }, '闲置后自动进入：大字时间、农历宜忌、一句古语，屏幕保持常亮')),
+        toggle(storage.get('zen.auto', true), (v) => storage.set('zen.auto', v)),
+      ),
+      h(
+        'div',
+        { class: 'setting-row' },
+        h('div', null, h('div', { class: 'setting-label' }, '闲置几分钟后进入')),
+        kit.chips(
+          [
+            { value: 1, label: '1' },
+            { value: 3, label: '3' },
+            { value: 5, label: '5' },
+            { value: 10, label: '10' },
+          ],
+          { value: Number(storage.get('zen.minutes', 3)) || 3, onChange: (v) => storage.set('zen.minutes', v) },
+        ).el,
+      ),
+      h(
+        'div',
+        { class: 'mt-3' },
+        button('现在进入屏保', {
+          variant: 'soft',
+          block: true,
+          icon: 'moon',
+          onClick: () => {
+            sh.close();
+            setTimeout(() => zen.enter({ fullscreen: true }), 200);
+          },
+        }),
+      ),
+      h('p', { class: 't-faint mt-3', style: { fontSize: '12px', lineHeight: '1.8' } }, 'iPhone：在 Safari 里点「分享 → 添加到主屏幕」，从主屏幕打开即为全屏、无地址栏，屏保效果最佳。安卓 Chrome：菜单 → 添加到主屏幕。'),
       h('div', { class: 'ornament' }, icon('sparkle', { size: 18 })),
       h('p', { class: 't-faint', style: { fontSize: '12px', lineHeight: '1.8' } }, `${APP_NAME} · 玄学占卜合集。所有结果均由随机算法与传统文化文本生成，仅供娱乐与自我觉察，请勿据此做出医疗、财务、法律等重要决定。`),
       h('p', { class: 't-faint mt-2', style: { fontSize: '11px' } }, `构建时间 ${typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__.slice(0, 16).replace('T', ' ') : '开发模式'}`),
     );
-    sheet({ title: '设置', content }).open();
+    const sh = sheet({ title: '设置', content });
+    sh.open();
   }
 
   /* ---------------- 调试 / 自动化钩子 ---------------- */
@@ -375,6 +455,7 @@ export function startApp(root) {
     navigate,
     platform,
     kit,
+    zen,
     simulate: (type, payload) => platform.motion.simulate(type, payload),
     setTheme: applyTheme,
     get current() {

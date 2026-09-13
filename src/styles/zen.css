@@ -1,0 +1,213 @@
+/* 静观 · 屏保模式 */
+.zen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  cursor: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  overflow: hidden;
+}
+.zen.show {
+  opacity: 1;
+}
+.zen-active,
+.zen-active body {
+  overflow: hidden;
+}
+.zen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--stage-bg);
+  opacity: 0.9;
+}
+.zen-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.zen-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(92vw, 92vh, 620px);
+  height: min(92vw, 92vh, 620px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.zen-dial {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.zen-circle {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 0.35;
+}
+.zen-circle.faint {
+  stroke: var(--line);
+  stroke-width: 0.25;
+}
+.zen-tick {
+  stroke: var(--line);
+  stroke-width: 0.3;
+}
+.zen-tick.major {
+  stroke: var(--line-strong);
+  stroke-width: 0.4;
+}
+.zen-branch {
+  font-family: var(--font-display);
+  font-size: 3.6px;
+  fill: var(--text-3);
+  letter-spacing: 0;
+  transition: fill 1s;
+}
+.zen-branch.active {
+  fill: var(--accent);
+}
+.zen-trigram {
+  font-size: 3.2px;
+  fill: var(--text-3);
+}
+.zen-bagua {
+  transform-origin: 50px 50px;
+  transform-box: view-box;
+  animation: zen-rotate 600s linear infinite;
+}
+.zen-taiji {
+  animation: zen-breathe 7s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.zen-taiji-bg {
+  fill: var(--text);
+  opacity: 0.9;
+}
+.zen-taiji-dark {
+  fill: var(--bg);
+}
+.zen-taiji-light {
+  fill: var(--text);
+}
+.zen-now {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 2px var(--glow));
+}
+@keyframes zen-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes zen-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+.zen-center {
+  position: relative;
+  text-align: center;
+  transition: transform 2s ease;
+  padding: 0 24px;
+}
+.zen-time {
+  font-family: var(--font-latin-display);
+  font-weight: 500;
+  font-size: clamp(64px, 19vw, 132px);
+  line-height: 1;
+  letter-spacing: 0.06em;
+  background: linear-gradient(160deg, var(--text) 20%, var(--accent-2) 60%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.zen-date {
+  margin-top: 14px;
+  font-family: var(--font-display);
+  font-size: clamp(13px, 3.6vw, 17px);
+  letter-spacing: 0.3em;
+  color: var(--text-2);
+}
+.zen-lunar {
+  margin-top: 8px;
+  font-size: clamp(11px, 3vw, 13px);
+  letter-spacing: 0.22em;
+  color: var(--text-3);
+}
+.zen-yiji {
+  margin-top: 18px;
+  font-family: var(--font-display);
+  font-size: clamp(12px, 3.2vw, 14px);
+  letter-spacing: 0.28em;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.zen-line {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: calc(12vh + var(--safe-bottom));
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: clamp(14px, 3.8vw, 18px);
+  letter-spacing: 0.2em;
+  color: var(--text-2);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 1.4s ease, transform 1.4s ease;
+  text-wrap: balance;
+}
+.zen-line.show {
+  opacity: 1;
+  transform: none;
+}
+.zen-hint {
+  position: absolute;
+  bottom: calc(24px + var(--safe-bottom));
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--text-3);
+  transition: opacity 1.2s;
+}
+.zen-hint.fade {
+  opacity: 0;
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  .zen-ring {
+    width: min(92vh, 620px);
+    height: min(92vh, 620px);
+  }
+  .zen-time {
+    font-size: clamp(48px, 14vh, 96px);
+  }
+  .zen-line {
+    bottom: calc(6vh + var(--safe-bottom));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zen-bagua,
+  .zen-taiji {
+    animation: none;
+  }
+}

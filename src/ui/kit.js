@@ -85,6 +85,7 @@ const ICONS = {
   motion: '<path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="5"/><path d="M19 5l-1.5 1.5M5 19l1.5-1.5M5 5l1.5 1.5M19 19l-1.5-1.5"/>',
   history: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/>',
   home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+  moon: '<path d="M20 14.6A8.6 8.6 0 0 1 9.4 4a8.6 8.6 0 1 0 10.6 10.6z"/><path d="M17 3l.6 1.6L19.2 5.2l-1.6.6L17 7.4l-.6-1.6-1.6-.6 1.6-.6z"/>',
   // 手势
   'g-shake': '<rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8" stroke-dasharray="1 2"/>',
   'g-toss': '<rect x="8" y="9" width="8" height="12" rx="2"/><path d="M12 6V1M9.5 3.5L12 1l2.5 2.5"/>',

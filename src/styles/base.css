@@ -292,3 +292,18 @@ svg {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* 添加到主屏幕后的独立模式：禁止橡皮筋回弹，去掉长按弹出菜单 */
+@media (display-mode: standalone) {
+  html,
+  body {
+    overscroll-behavior: none;
+  }
+  .app-header {
+    padding-top: max(var(--safe-top), 12px);
+    height: calc(var(--header-h) + max(var(--safe-top), 12px));
+  }
+}
+body {
+  -webkit-touch-callout: none;
+}
