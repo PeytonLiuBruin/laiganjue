@@ -1,0 +1,189 @@
+/* 皮肤系统：一切颜色只能来自这里的变量。切换皮肤 = 改 <html data-theme="…">。
+   微信小程序 WXSS 同样支持 CSS 变量，可整段搬运。
+   每个皮肤必须定义完整的一组变量。 */
+
+/* —— 玄墨（默认）：夜色墨黑 + 鎏金 —— */
+:root,
+[data-theme='ink'] {
+  color-scheme: dark;
+  --bg: #0b0b10;
+  --bg-2: #13131a;
+  --bg-3: #1b1b24;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.08);
+  --surface-strong: #1a1a22;
+  --text: #ece6d8;
+  --text-2: rgba(236, 230, 216, 0.68);
+  --text-3: rgba(236, 230, 216, 0.42);
+  --accent: #d4af5a;
+  --accent-2: #f2d78a;
+  --accent-3: #9a7a32;
+  --accent-ink: #1a1408;
+  --line: rgba(212, 175, 90, 0.22);
+  --line-strong: rgba(212, 175, 90, 0.5);
+  --glow: rgba(212, 175, 90, 0.35);
+  --seal: #b8342b;
+  --danger: #d9534f;
+  --success: #6dbf8a;
+  --stage-bg: radial-gradient(120% 80% at 50% 0%, #1d1a22 0%, #0f0e14 60%, #0b0b10 100%);
+  --stage-floor: radial-gradient(60% 40% at 50% 50%, rgba(212, 175, 90, 0.16), rgba(0, 0, 0, 0) 70%);
+  --sheet-bg: #15151d;
+  --header-bg: rgba(11, 11, 16, 0.72);
+  --card-back-1: #2a1f3d;
+  --card-back-2: #14101f;
+  --wood-1: #5a2a1c;
+  --wood-2: #3a1a12;
+  --paper: #f3ead6;
+  --paper-ink: #2b2118;
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 12px 40px rgba(0, 0, 0, 0.55);
+  --noise-opacity: 0.06;
+}
+
+/* —— 朱砂：庙宇朱红 + 金 —— */
+[data-theme='cinnabar'] {
+  color-scheme: dark;
+  --bg: #1a0a0a;
+  --bg-2: #241010;
+  --bg-3: #2f1616;
+  --surface: rgba(255, 220, 200, 0.06);
+  --surface-2: rgba(255, 220, 200, 0.1);
+  --surface-strong: #2a1212;
+  --text: #f6e7d2;
+  --text-2: rgba(246, 231, 210, 0.7);
+  --text-3: rgba(246, 231, 210, 0.45);
+  --accent: #e2b04a;
+  --accent-2: #f7d982;
+  --accent-3: #a67a25;
+  --accent-ink: #2a1400;
+  --line: rgba(226, 176, 74, 0.26);
+  --line-strong: rgba(226, 176, 74, 0.55);
+  --glow: rgba(226, 176, 74, 0.35);
+  --seal: #f0c060;
+  --danger: #ff7a70;
+  --success: #8fd4a2;
+  --stage-bg: radial-gradient(120% 80% at 50% 0%, #3a1414 0%, #200c0c 60%, #1a0a0a 100%);
+  --stage-floor: radial-gradient(60% 40% at 50% 50%, rgba(226, 176, 74, 0.18), rgba(0, 0, 0, 0) 70%);
+  --sheet-bg: #221010;
+  --header-bg: rgba(26, 10, 10, 0.75);
+  --card-back-1: #4a1616;
+  --card-back-2: #200a0a;
+  --wood-1: #6a2a1c;
+  --wood-2: #3d1710;
+  --paper: #f7ead2;
+  --paper-ink: #2c1a10;
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 12px 40px rgba(0, 0, 0, 0.6);
+  --noise-opacity: 0.07;
+}
+
+/* —— 星穹：深靛紫 + 银白星光（西方神秘感）—— */
+[data-theme='nebula'] {
+  color-scheme: dark;
+  --bg: #090a18;
+  --bg-2: #10122a;
+  --bg-3: #181b3a;
+  --surface: rgba(180, 190, 255, 0.06);
+  --surface-2: rgba(180, 190, 255, 0.11);
+  --surface-strong: #151833;
+  --text: #e9ecff;
+  --text-2: rgba(233, 236, 255, 0.7);
+  --text-3: rgba(233, 236, 255, 0.45);
+  --accent: #b9a7ff;
+  --accent-2: #e6dcff;
+  --accent-3: #7a67c9;
+  --accent-ink: #12102a;
+  --line: rgba(185, 167, 255, 0.24);
+  --line-strong: rgba(185, 167, 255, 0.55);
+  --glow: rgba(185, 167, 255, 0.4);
+  --seal: #ff6b9d;
+  --danger: #ff7a90;
+  --success: #7fe0c0;
+  --stage-bg: radial-gradient(120% 80% at 50% 0%, #1c1f4a 0%, #0e1030 60%, #090a18 100%);
+  --stage-floor: radial-gradient(60% 40% at 50% 50%, rgba(185, 167, 255, 0.18), rgba(0, 0, 0, 0) 70%);
+  --sheet-bg: #10122a;
+  --header-bg: rgba(9, 10, 24, 0.75);
+  --card-back-1: #2b2470;
+  --card-back-2: #0f0d2e;
+  --wood-1: #3a2f6a;
+  --wood-2: #221b45;
+  --paper: #eeeaff;
+  --paper-ink: #201c40;
+  --shadow-1: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 12px 40px rgba(0, 0, 20, 0.6);
+  --noise-opacity: 0.05;
+}
+
+/* —— 宣纸：米白纸面 + 墨色 + 朱印（浅色皮肤）—— */
+[data-theme='paper'] {
+  color-scheme: light;
+  --bg: #f4ecdc;
+  --bg-2: #ece2cd;
+  --bg-3: #e3d7bf;
+  --surface: rgba(60, 40, 20, 0.05);
+  --surface-2: rgba(60, 40, 20, 0.09);
+  --surface-strong: #fbf6ea;
+  --text: #2a2118;
+  --text-2: rgba(42, 33, 24, 0.7);
+  --text-3: rgba(42, 33, 24, 0.48);
+  --accent: #8a5a1c;
+  --accent-2: #c08a3a;
+  --accent-3: #5c3b10;
+  --accent-ink: #fff8ea;
+  --line: rgba(80, 55, 25, 0.22);
+  --line-strong: rgba(80, 55, 25, 0.5);
+  --glow: rgba(192, 138, 58, 0.3);
+  --seal: #c8342a;
+  --danger: #b8302a;
+  --success: #2f7d4f;
+  --stage-bg: radial-gradient(120% 80% at 50% 0%, #fbf6ea 0%, #f1e7d3 60%, #ece1c9 100%);
+  --stage-floor: radial-gradient(60% 40% at 50% 50%, rgba(138, 90, 28, 0.14), rgba(0, 0, 0, 0) 70%);
+  --sheet-bg: #fbf6ea;
+  --header-bg: rgba(244, 236, 220, 0.8);
+  --card-back-1: #6b3f26;
+  --card-back-2: #3d2415;
+  --wood-1: #8a4a2c;
+  --wood-2: #5a2e1a;
+  --paper: #fffaf0;
+  --paper-ink: #2a2118;
+  --shadow-1: 0 2px 8px rgba(60, 40, 20, 0.12);
+  --shadow-2: 0 12px 40px rgba(60, 40, 20, 0.2);
+  --noise-opacity: 0.1;
+}
+
+/* —— 青瓷：釉青 + 石墨（浅色皮肤，清雅）—— */
+[data-theme='celadon'] {
+  color-scheme: light;
+  --bg: #e6efe8;
+  --bg-2: #d9e6dc;
+  --bg-3: #cbdccf;
+  --surface: rgba(20, 60, 45, 0.06);
+  --surface-2: rgba(20, 60, 45, 0.1);
+  --surface-strong: #f2f8f3;
+  --text: #17302a;
+  --text-2: rgba(23, 48, 42, 0.7);
+  --text-3: rgba(23, 48, 42, 0.48);
+  --accent: #2f7d68;
+  --accent-2: #5fae95;
+  --accent-3: #1f5546;
+  --accent-ink: #f3fff9;
+  --line: rgba(47, 125, 104, 0.25);
+  --line-strong: rgba(47, 125, 104, 0.55);
+  --glow: rgba(95, 174, 149, 0.35);
+  --seal: #c04a3a;
+  --danger: #b8302a;
+  --success: #2f7d4f;
+  --stage-bg: radial-gradient(120% 80% at 50% 0%, #f2f8f3 0%, #e1ece4 60%, #d8e6db 100%);
+  --stage-floor: radial-gradient(60% 40% at 50% 50%, rgba(47, 125, 104, 0.14), rgba(0, 0, 0, 0) 70%);
+  --sheet-bg: #f2f8f3;
+  --header-bg: rgba(230, 239, 232, 0.8);
+  --card-back-1: #2f5a52;
+  --card-back-2: #1a3630;
+  --wood-1: #6a4a34;
+  --wood-2: #45301f;
+  --paper: #fbfffc;
+  --paper-ink: #17302a;
+  --shadow-1: 0 2px 8px rgba(20, 60, 45, 0.12);
+  --shadow-2: 0 12px 40px rgba(20, 60, 45, 0.18);
+  --noise-opacity: 0.08;
+}

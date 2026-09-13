@@ -1,0 +1,14 @@
+/* 各模块样式（每个模块只允许在自己的 .m-<id> 作用域内写样式） */
+@import './jiaobei/style.css';
+@import './qian/style.css';
+@import './liuyao/style.css';
+@import './almanac/style.css';
+@import './bazi/style.css';
+@import './fengshui/style.css';
+@import './wheel/style.css';
+@import './tarot/style.css';
+@import './runes/style.css';
+@import './zodiac/style.css';
+@import './crystal/style.css';
+@import './omikuji/style.css';
+@import './coin/style.css';

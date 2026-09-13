@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "base": "http://127.0.0.1:34069/",
+  "modules": {
+    "home": {
+      "errors": []
+    },
+    "jiaobei": {
+      "ready": true,
+      "acted": false,
+      "errors": []
+    }
+  }
+}

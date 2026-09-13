@@ -1,0 +1,6 @@
+/* 样式入口（esbuild 会把 @import 合并）。顺序：设计令牌 → 皮肤 → 基础 → 组件 → 各模块 */
+@import './tokens.css';
+@import './themes.css';
+@import './base.css';
+@import './components.css';
+@import '../modules/index.css';
