@@ -1,3 +1,5 @@
+import { createRitual } from '../../ui/ritual.js';
+import { coinPose, COIN_IMPACTS } from './motion.js';
 // 硬币骰子 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 三个标签页共用一座舞台：硬币 / 骰子托盘 两组实物按模式切换显示。
 import {
@@ -59,7 +61,7 @@ const DIE_SIZE = 52;
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage, rng } = ctx;
-  const { h, button, chips, tabs, stage, hint, resultCard, sheet, input, toast, wait, confetti, historyBar, fromHTML } = kit;
+  const { h, button, chips, tabs, stage, hint, resultCard, sheet, input, toast, confetti, historyBar, fromHTML } = kit;
   const reduce = !!ctx.platform.prefersReducedMotion;
   let alive = true;
 
@@ -201,6 +203,8 @@ export function mount(container, ctx) {
 
   /* ---------- 舞台 ---------- */
   const st = stage({ cls: 'cn-stage', minHeight: 380 });
+  const ritual = createRitual(ctx, st, ['心念', '抛出', '落定', '揭晓']);
+  const wait = ritual.pause;
   const ambient = h('div', { class: 'cn-ambient' });
   const jitter = h('div', { class: 'cn-jitter' });
   const coin = makeCoin();
@@ -223,6 +227,7 @@ export function mount(container, ctx) {
   const histEl = h('div', { class: 'cn-history' });
 
   container.append(
+    ritual.progress,
     h('div', { class: 'cn-head' }, tabsUI.el, h('div', { class: 'cn-panels mt-3' }, coinPanel, dicePanel, choicePanel)),
     h('div', { class: 'mt-4' }, st.el),
     resultEl,
@@ -301,6 +306,7 @@ export function mount(container, ctx) {
     primaryBtn.disabled = b;
     detailBtn.disabled = b || !last;
     container.classList.toggle('cn-busy', b);
+    inA.disabled = b; inB.disabled = b; resetBtn.disabled = b;
   }
 
   function showResult({ big, badge, sub, seq = false }) {
@@ -317,7 +323,7 @@ export function mount(container, ctx) {
   }
 
   function act(intensity = 20) {
-    if (busy || !alive) return;
+    if (busy || !alive || openSheetRef?.opened) return;
     if (mode === 'coin') return burst > 1 ? doBurst(burst, intensity) : doFlip(intensity);
     if (mode === 'dice') return doRoll(intensity);
     return doChoice(intensity);
@@ -329,9 +335,14 @@ export function mount(container, ctx) {
     lock(true);
     hideResult();
     st.setHint('');
+    if (!await ritual.focus()) return;
+    ritual.step(1);
     const face = flipCoin(rng.random, { edgeChance: EDGE_CHANCE });
     await coin.fly(face, intensity);
     if (!alive) return;
+    ritual.step(2); st.setHint('硬币已停住，看看朝上的一面');
+    if (!await wait(reduce ? 80 : 850)) return;
+    ritual.step(3);
     totalFlips++;
     tally[face] = (tally[face] || 0) + 1;
     coinHistory = pushHistory(coinHistory, face, 20);
@@ -369,6 +380,8 @@ export function mount(container, ctx) {
     lock(true);
     hideResult();
     st.setHint('');
+    if (!await ritual.focus()) return;
+    ritual.step(1);
     const results = [];
     for (let i = 0; i < n; i++) {
       st.setBadge(`连抛 ${n} · 第 ${i + 1} 抛`);
@@ -382,7 +395,7 @@ export function mount(container, ctx) {
       showResult({ big: results.map((r) => FACES[r].dot).join(' '), badge: `第 ${i + 1} / ${n} 抛`, sub: '', seq: true });
       renderStats();
       renderHistory();
-      await wait(reduce ? 0 : 150);
+      if (!await wait(reduce ? 0 : 500)) return;
     }
     persistCoin();
     const m = majority(results);
@@ -403,8 +416,7 @@ export function mount(container, ctx) {
     }
     busy = false;
     lock(false);
-    await wait(reduce ? 0 : 520);
-    if (alive) openSheet();
+    ritual.step(3); st.setHint('这一轮已完成，可点详情回看');
   }
 
   function persistCoin() {
@@ -435,6 +447,8 @@ export function mount(container, ctx) {
     lock(true);
     hideResult();
     st.setHint('');
+    if (!await ritual.focus()) return;
+    ritual.step(1);
     const values = rollDice(diceCount, diceSides, rng.random);
     sound.play('shake');
     haptic.rattle();
@@ -466,8 +480,7 @@ export function mount(container, ctx) {
     }
     busy = false;
     lock(false);
-    await wait(reduce ? 0 : 720);
-    if (alive) openSheet();
+    ritual.step(3); st.setHint('骰子已落定，可点详情查看');
   }
 
   function diceFlavor(values, sides) {
@@ -487,12 +500,17 @@ export function mount(container, ctx) {
     lock(true);
     hideResult();
     st.setHint('');
+    if (!await ritual.focus()) return;
+    ritual.step(1);
     inA.blur();
     inB.blur();
     coin.setChoice(optA, optB);
     const face = flipCoin(rng.random);
     await coin.fly(face, intensity);
     if (!alive) return;
+    ritual.step(2); st.setHint('硬币已停住，看看朝上的一面');
+    if (!await wait(reduce ? 80 : 850)) return;
+    ritual.step(3);
     const { winner, loser } = pickOption(face, optA, optB);
     const verdict = fillTemplate(rng.pick(CHOICE_VERDICTS), { w: winner, l: loser });
     choiceHistory = choiceHistory.concat([winner]).slice(-8);
@@ -504,8 +522,7 @@ export function mount(container, ctx) {
     renderHistory();
     busy = false;
     lock(false);
-    await wait(reduce ? 0 : 600);
-    if (alive) openSheet();
+    st.setHint('选择已揭晓，可点详情查看');
   }
 
   /* ---------- 结果抽屉 ---------- */
@@ -719,62 +736,44 @@ export function mount(container, ctx) {
     };
     setBase();
 
-    /** 起—飞—落—揭：上抛 + 多圈翻转 + 两次弹跳 */
+    /** Airborne tumble, rebound, then a long roll before the face settles. */
     async function fly(face, intensity = 20, { quick = false, spins: forced } = {}) {
       cancelAll();
       el.classList.remove('standing');
       const power = powerOf(intensity);
-      const spins = forced ?? spinsForIntensity(intensity);
-      const dur = reduce ? 10 : quick ? 640 : Math.round(1150 + power * 300);
-      const height = quick ? 120 : Math.round(150 + 20 * power);
+      const spins = forced ?? Math.max(3, Math.round(spinsForIntensity(intensity) * 0.65));
+      const dur = reduce ? 1 : quick ? 2400 : Math.round(3300 + power * 420);
+      const clearance = st.el.clientHeight - 46 - el.offsetHeight - 68;
+      const height = Math.max(26, Math.min(quick ? 85 : 100 + power * 16, clearance));
       const target = flipAngle(face, spins);
-      const nextWob = (rng.random() - 0.5) * 14;
-      const LAND = 0.8;
-      sound.play('coin');
-      sound.play('whoosh', { delay: 0.02 });
-      haptic.light();
-      anims.push(
-        wrap.animate(
-          [
-            { transform: 'translateY(0) scale(1)', easing: 'cubic-bezier(.3,.9,.55,1)', offset: 0 },
-            { transform: `translateY(${-height}px) scale(1.12)`, easing: 'cubic-bezier(.45,0,.85,.55)', offset: 0.42 },
-            { transform: 'translateY(0) scale(1)', easing: 'cubic-bezier(.3,.9,.55,1)', offset: LAND },
-            { transform: `translateY(${-height * 0.1}px) scale(1.01)`, easing: 'cubic-bezier(.45,0,.85,.55)', offset: 0.87 },
-            { transform: 'translateY(0) scale(1)', easing: 'ease-out', offset: 0.93 },
-            { transform: 'translateY(-4px) scale(1)', easing: 'ease-in', offset: 0.965 },
-            { transform: 'translateY(0) scale(1)', offset: 1 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-        shadow.animate(
-          [
-            { transform: 'scale(1)', opacity: 0.6, offset: 0 },
-            { transform: 'scale(0.55)', opacity: 0.18, offset: 0.42 },
-            { transform: 'scale(1.06)', opacity: 0.62, offset: LAND },
-            { transform: 'scale(0.96)', opacity: 0.5, offset: 0.87 },
-            { transform: 'scale(1)', opacity: 0.6, offset: 1 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-        body.animate(
-          [
-            { transform: `rotateX(${angle}deg) rotateZ(${wob}deg)`, easing: 'cubic-bezier(.25,.7,.35,1)', offset: 0 },
-            { transform: `rotateX(${target}deg) rotateZ(${nextWob}deg)`, offset: LAND },
-            { transform: `rotateX(${target}deg) rotateZ(${nextWob}deg)`, offset: 1 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-      );
-      await wait(dur * LAND);
-      sound.play('coin');
-      haptic.medium();
-      await wait(dur * (0.93 - LAND));
-      sound.play('tick');
-      await wait(dur * 0.07 + 20);
-      angle = restAngle(face);
-      wob = nextWob;
-      cancelAll();
-      setBase();
+      const nextWob = (rng.random() - 0.5) * 12;
+      const wrapFrames = [], bodyFrames = [], shadowFrames = [];
+      for (let i = 0; i <= 100; i++) {
+        const t = reduce ? 1 : i / 100;
+        const p = coinPose(t, { start: angle, target, height, wobble: wob, endWobble: nextWob });
+        wrapFrames.push({ transform: `translate(${p.x}px,${p.y}px)`, offset: i / 100 });
+        bodyFrames.push({ transform: `rotateX(${p.rx}deg) rotateY(${p.ry}deg) rotateZ(${p.rz}deg)`, offset: i / 100 });
+        shadowFrames.push({ transform: `translateX(${p.x}px) scale(${p.shadowScale})`, opacity: p.shadowOpacity, offset: i / 100 });
+      }
+      sound.play('coin'); sound.play('whoosh', { delay: 0.02 }); haptic.light();
+      anims = [
+        ritual.track(wrap.animate(wrapFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
+        ritual.track(body.animate(bodyFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
+        ritual.track(shadow.animate(shadowFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
+      ];
+      let previous = 0;
+      for (const impact of COIN_IMPACTS) {
+        if (!await wait(dur * (impact - previous))) return;
+        sound.play(previous ? 'tick' : 'coin');
+        if (!previous) { haptic.medium(); st.setHint('轻弹，翻滚，慢慢停下来'); }
+        previous = impact;
+      }
+      if (!await wait(dur * (1 - previous) + 30)) return;
+      await Promise.all(anims.map((a) => a.finished.catch(() => {})));
+      if (!alive) return;
+      angle = restAngle(face); wob = nextWob;
+      cancelAll(); setBase();
+      el.dataset.face = face;
       if (face === EDGE) el.classList.add('standing');
     }
 
@@ -950,7 +949,7 @@ export function mount(container, ctx) {
     /** 全部骰子先后落盘：起—飞—落—停 */
     async function roll(values, intensity = 20) {
       const power = powerOf(intensity);
-      const dur = reduce ? 10 : Math.round(900 + power * 260);
+      const dur = reduce ? 10 : Math.round(1900 + power * 320);
       const stagger = reduce ? 0 : 85;
       await Promise.all(dice.map((d, i) => rollOne(d, values[i] ?? values[0], power, dur, 0.62, i * stagger)));
     }

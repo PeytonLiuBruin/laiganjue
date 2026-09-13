@@ -12,7 +12,7 @@ const HEAVY = new Set(['M16', 'M15', 'M13']); // 高塔 恶魔 死神：正位�
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage, rng } = ctx;
-  const { h, button, chips, stage, hint, resultCard, sheet, input, toast, wait, confetti } = kit;
+  const { h, button, chips, stage, hint, resultCard, sheet, input, toast, confetti } = kit;
   const reduce = ctx.platform.prefersReducedMotion;
   const D = (ms) => (reduce ? 1 : ms);
   const { backArt, frontArt, makeCard, slotOrnament } = createCardArt(kit);
@@ -72,6 +72,7 @@ export function mount(container, ctx) {
   const layer = h('div', { class: 'tr-layer' });
   st.scene.append(table, layer);
   const ritual = createRitual(ctx, st, ['洗牌', '抽牌', '翻牌', '解读']);
+  const wait = ritual.pause;
   qInput.placeholder = '想从牌中了解什么？（选填）';
   qInput.setAttribute('aria-label', '想问塔罗的问题');
   applyPileRest();
@@ -206,7 +207,7 @@ export function mount(container, ctx) {
     const anims = pileCards.map((pc, i) => {
       const s1 = scatter(power, i);
       const s2 = scatter(power * 0.7, i);
-      return kit.animate(
+      return ritual.animate(
         pc,
         [
           { transform: pileRest(i, before), offset: 0 },
@@ -214,7 +215,7 @@ export function mount(container, ctx) {
           { transform: `translate(${s2.x}px, ${s2.y}px) rotate(${s2.r}deg)`, offset: 0.62, easing: 'cubic-bezier(.4,0,.6,1)' },
           { transform: pileRest(i, pileJitter), offset: 1 },
         ],
-        { duration: D(880 + i * 28), easing: 'cubic-bezier(.3,.6,.3,1)' },
+        { duration: D(1450 + i * 45), easing: 'cubic-bezier(.3,.6,.3,1)' },
       );
     });
     sound.play('rattle', { delay: 0.42 });
@@ -246,7 +247,7 @@ export function mount(container, ctx) {
     const half = Math.floor(PILE_N / 2);
     const shift = 62;
     const shifted = pileCards.map((_, i) => `translate(${i < half ? -shift : shift}px, ${i < half ? 6 : -6}px) rotate(${i < half ? -4 : 4}deg)`);
-    await Promise.all(pileCards.map((pc, i) => kit.animate(pc, [{ transform: pileRest(i, pileJitter) }, { transform: shifted[i] }], { duration: D(260) })));
+    await Promise.all(pileCards.map((pc, i) => ritual.animate(pc, [{ transform: pileRest(i, pileJitter) }, { transform: shifted[i] }], { duration: D(440) })));
     if (!ritual.alive) return;
     pileCards.forEach((pc, i) => {
       pc.getAnimations().forEach((a) => a.cancel());
@@ -256,7 +257,7 @@ export function mount(container, ctx) {
     for (let i = 0; i < half; i++) pile.append(pileCards[i]);
     pileCards.push(...pileCards.splice(0, half));
     pileJitter = makeJitter(0.8);
-    await Promise.all(pileCards.map((pc, i) => kit.animate(pc, [{ transform: pc.style.transform }, { transform: pileRest(i, pileJitter) }], { duration: D(300), easing: 'cubic-bezier(.2,.9,.3,1)' })));
+    await Promise.all(pileCards.map((pc, i) => ritual.animate(pc, [{ transform: pc.style.transform }, { transform: pileRest(i, pileJitter) }], { duration: D(520), easing: 'cubic-bezier(.2,.9,.3,1)' })));
     if (!ritual.alive) return;
     applyPileRest();
     sound.play('clack');
@@ -284,11 +285,12 @@ export function mount(container, ctx) {
       return;
     }
     const c = makeCard(draw.card);
+    if (draw.reversed) c.spin.style.transform = 'rotate(180deg)';
     cardEls[idx] = c;
     sound.play('whoosh');
     haptic.light();
     // 牌堆被"抽走一张"：轻轻一沉
-    kit.animate(pile, [{ transform: 'translateY(0)' }, { transform: 'translateY(3px) scale(.985)' }, { transform: 'translateY(0)' }], { duration: D(320) }).then((a) => a && a.cancel());
+    ritual.animate(pile, [{ transform: 'translateY(0)' }, { transform: 'translateY(3px) scale(.985)' }, { transform: 'translateY(0)' }], { duration: D(320) }).then((a) => a && a.cancel());
     await flyTo(c, slots[idx].slot, intensity);
     if (!ritual.alive) return;
     sound.play('paper');
@@ -299,7 +301,7 @@ export function mount(container, ctx) {
       onStart() { draggingCard = !busy; if (draggingCard) haptic.tap(); },
       onMove(g) {
         if (!draggingCard || session.draws[idx]?.flipped) return;
-        c.inner.style.transform = `rotateY(${Math.min(125, Math.abs(g.dx) * 1.1 + Math.max(0, -g.dy) * 0.6)}deg)`;
+        c.inner.style.transform = `rotateY(${Math.min(78, Math.abs(g.dx) * 1.1 + Math.max(0, -g.dy) * 0.6)}deg)`;
       },
       onEnd(g) {
         if (!draggingCard) return; draggingCard = false;
@@ -333,14 +335,14 @@ export function mount(container, ctx) {
     const dy = to.top - from.top;
     const power = Math.max(.7, Math.min(1.5, intensity / 20));
     const rot = (rng.random() - 0.5) * 18 * power;
-    await kit.animate(
+    await ritual.animate(
       el,
       [
         { transform: 'translate(0,0) rotate(0deg) scale(1)', offset: 0 },
         { transform: `translate(${dx * 0.42}px, ${dy * 0.5 - 30 * power}px) rotate(${rot}deg) scale(1.07)`, offset: 0.5, easing: 'cubic-bezier(.3,.7,.4,1)' },
         { transform: `translate(${dx}px, ${dy}px) rotate(${rot * 0.25}deg) scale(1)`, offset: 1 },
       ],
-      { duration: D(620 + 100 * power), easing: 'cubic-bezier(.45,0,.2,1)' },
+      { duration: D(1100 + 180 * power), easing: 'cubic-bezier(.45,0,.2,1)' },
     );
     if (!ritual.alive) return;
     // 落地：归位到牌位内，由布局接管
@@ -348,7 +350,7 @@ export function mount(container, ctx) {
     el.style.cssText = '';
     slotEl.append(el);
     el.classList.add('placed');
-    if (!reduce) kit.animate(el, [{ transform: 'translateY(-3px) scale(1.02)' }, { transform: 'translateY(0) scale(1)' }], { duration: 180 }).then((a) => a && a.cancel());
+    if (!reduce) ritual.animate(el, [{ transform: 'translateY(-3px) scale(1.02)' }, { transform: 'translateY(0) scale(1)' }], { duration: 180 }).then((a) => a && a.cancel());
   }
 
   /* ---------- 翻牌 ---------- */
@@ -370,30 +372,22 @@ export function mount(container, ctx) {
     if (!await ritual.focus()) return;
     ritual.step(2);
     session = flipCard(session, idx);
+    if (d.reversed) { c.spin.style.transform = 'rotate(180deg)'; c.el.classList.add('reversed'); }
     sound.play('flip');
     haptic.light();
-    await kit.animate(
+    await ritual.animate(
       c.inner,
-      [{ transform: c.inner.style.transform || 'rotateY(0deg) translateZ(0)' }, { transform: 'rotateY(90deg) translateZ(46px)', offset: 0.5 }, { transform: 'rotateY(180deg) translateZ(0)' }],
-      { duration: D(560), easing: 'cubic-bezier(.35,.6,.3,1)' },
+      [{ transform: c.inner.style.transform || 'rotateY(0deg) translateZ(0)' }, { transform: 'rotateY(78deg) translateZ(28px)', offset: 0.4 }, { transform: 'rotateY(100deg) translateZ(28px)', offset: 0.6 }, { transform: 'rotateY(180deg) translateZ(0)' }],
+      { duration: D(1700), easing: 'cubic-bezier(.32,.2,.25,1)' },
     );
     if (!ritual.alive) return;
     c.inner.getAnimations().forEach((a) => a.cancel());
     c.inner.style.transform = 'rotateY(180deg)';
     c.el.classList.add('flipped');
-    if (d.reversed) {
-      await wait(D(110));
-      if (!ritual.alive) return;
-      sound.play('tick');
-      haptic.tap();
-      await kit.animate(c.spin, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(180deg)' }], { duration: D(420), easing: 'cubic-bezier(.34,1.25,.64,1)' });
-      c.spin.getAnimations().forEach((a) => a.cancel());
-      c.spin.style.transform = 'rotate(180deg)';
-      c.el.classList.add('reversed');
-    }
     if (!ritual.alive) return;
     c.el.setAttribute('aria-label', `${d.card.name}，${d.reversed ? '逆位' : '正位'}，点击查看解读`);
-    slots[idx].label.textContent = `${d.card.name} · ${d.reversed ? '逆位' : '正位'}`;
+    slots[idx].label.textContent = `${getSpread(spreadId).positions[idx].label} · ${d.reversed ? '逆位' : '正位'}`;
+    haptic.tap();
     omen(d);
     if (isDone(session)) await onAllFlipped();
     busy = false;
@@ -408,7 +402,7 @@ export function mount(container, ctx) {
       if (!ritual.alive) return;
       if (session.draws[i].flipped) continue;
       await doFlip(i);
-      if (!isDone(session)) await wait(D(120));
+      if (!isDone(session)) await wait(D(650));
     }
     flippingAll = false;
     setButtons();
@@ -443,7 +437,7 @@ export function mount(container, ctx) {
     if (!await ritual.pause(reduce ? 180 : 1000)) return;
     table.classList.add('unveiled');
     const d = session.draws[0];
-    ritual.reveal({ kicker: session.draws.length === 1 ? keywordsOf(d).join(' · ') : '牌阵已展开', title: session.draws.length === 1 ? `${d.card.name} · ${d.reversed ? TEXT.reversed : TEXT.upright}` : getSpread(spreadId).name, text: session.draws.length === 1 ? meaningOf(d).split('。')[0] + '。' : synthesize(spreadId, session.draws).split('。')[0] + '。' });
+    ritual.reveal({ kicker: session.draws.length === 1 ? keywordsOf(d).join(' · ') : '牌阵已展开', title: session.draws.length === 1 ? '这一刻的提示' : getSpread(spreadId).name, text: session.draws.length === 1 ? meaningOf(d).split('。')[0] + '。' : synthesize(spreadId, session.draws).split('。')[0] + '。' });
     st.setHint('牌面会留在这里，准备好后再展开解读');
     setButtons();
   }
@@ -588,7 +582,7 @@ export function mount(container, ctx) {
       await Promise.all(
         cards.map((c, i) => {
           const r = c.el.getBoundingClientRect();
-          return kit.animate(
+          return ritual.animate(
             c.el,
             [{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${pr.left - r.left}px, ${pr.top - r.top}px) scale(.96) rotate(${(i - 1) * 6}deg)`, opacity: 0 }],
             { duration: 360 + i * 40, easing: 'cubic-bezier(.5,0,.3,1)' },

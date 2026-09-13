@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createBlockMesh, tossPose } from '../src/modules/jiaobei/model.js';
+import { createBlockMesh, tossPose, FIRST_IMPACT } from '../src/modules/jiaobei/model.js';
+import { coinPose, COIN_IMPACTS } from '../src/modules/coin/motion.js';
 import { overRope } from '../src/modules/omikuji/interaction.js';
 import { buildDeck } from '../src/modules/tarot/core.js';
 import { readFile } from 'node:fs/promises';
@@ -48,6 +49,46 @@ test('重复掷筊依然完整翻转，起始姿态连续且最终面向正确',
     assert(Math.abs(Math.cos(end.rx) + 1) < 1e-8);
     start = end;
   }
+});
+
+test('筊杯首次触地后持续翻滚，最终朝向只在滚动结束时固定', () => {
+  for (const face of ['flat', 'round', 'stand']) {
+    const impact = tossPose(FIRST_IMPACT, { face });
+    const rolling = tossPose(0.7, { face });
+    const final = tossPose(1, { face });
+    assert(final.rx - impact.rx > Math.PI);
+    assert(Math.abs(rolling.rx - final.rx) > 0.5);
+    const at = tossPose(FIRST_IMPACT - 1e-8, { face });
+    for (const key of ['x', 'y', 'rx', 'ry', 'rz']) assert(Math.abs(at[key] - impact[key]) < 1e-4, key);
+    assert(Math.abs(final.ry) < 1e-8);
+  }
+});
+
+test('硬币保留三维滚动过程，头尾立三种结果均准确停在抽取的面上', () => {
+  for (const start of [0, 90, 180]) for (const face of [0, 90, 180]) {
+    const target = 1080 + face;
+    const opts = { start, target, height: 90, wobble: -3, endWobble: 4 };
+    const first = coinPose(0, opts), end = coinPose(1, opts);
+    assert.equal(first.rx, start); assert.equal(first.rz, -3);
+    assert.equal(end.rx, target); assert.equal(end.rz, 4);
+    assert(Math.abs(end.x) < 1e-8 && Math.abs(end.y) < 1e-8 && Math.abs(end.ry) < 1e-8);
+    assert(target - coinPose(COIN_IMPACTS[0], opts).rx > 180);
+    for (let i = 0; i <= 200; i++) {
+      const pose = coinPose(i / 200, opts);
+      assert(Object.values(pose).every(Number.isFinite));
+      assert(pose.y >= -90.0001 && pose.y <= 0.0001);
+      assert(Math.abs(pose.x) <= 20.0001);
+    }
+  }
+});
+
+test('硬币弹跳的轨迹连续，弹跳高度和最终晃动逐次减小', () => {
+  for (const impact of COIN_IMPACTS) {
+    const before = coinPose(impact - 1e-8), after = coinPose(impact + 1e-8);
+    for (const key of ['x', 'y', 'rx', 'ry', 'rz']) assert(Math.abs(before[key] - after[key]) < 0.001, key);
+  }
+  assert(Math.abs(coinPose(0.475).y) > Math.abs(coinPose(0.615).y));
+  assert(Math.abs(coinPose(0.9).rx - 1440) > Math.abs(coinPose(0.99).rx - 1440));
 });
 
 test('图集覆盖 78 张牌且映射唯一，力量与正义沿用经典牌号', async () => {

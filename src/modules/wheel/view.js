@@ -1,4 +1,5 @@
 // 转盘 · 界面（Web DOM）。逻辑在 core.js，文案在 data.js。
+import { createRitual } from '../../ui/ritual.js';
 import { segmentAt, simulateSpin, boundaryCrossings, omegaFromIntensity, randomOmega, normalizeFlick, fitLabel, paletteFor, parsePreset, isSpinnable, remaining, pushHistory, streakOf, normalizeDeg, DEG, CUSTOM_MAX } from './core.js';
 import { PRESETS, CUSTOM, CUSTOM_TEMPLATES, PALETTES, REASONS, VERSES, LAST_ONE, TRIPLE, FLAPPER_LINES, CAP_LINES, WEAK_FLICK, BUSY_LINES, MILESTONES, SHARE_SIGN, FOOTER, getPreset } from './data.js';
 
@@ -13,7 +14,7 @@ const RADIAL = 112;
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
-  const { h, button, chips, stage, hint, resultCard, sheet, input, toast, wait, confetti, historyBar, fromHTML, clear } = kit;
+  const { h, button, chips, stage, hint, resultCard, sheet, input, toast, confetti, historyBar, fromHTML, clear } = kit;
   const reduce = !!ctx.platform.prefersReducedMotion;
   const pick = (arr) => ctx.rng.pick(arr);
 
@@ -33,9 +34,10 @@ export function mount(container, ctx) {
   let segEls = [];
   let labelEls = [];
   let svgEl = null;
+  let activeSheet = null;
 
   /* ---------- 预设切换 ---------- */
-  const presetChips = chips([...PRESETS.map((p) => ({ value: p.id, label: p.name })), { value: CUSTOM.id, label: CUSTOM.name }], {
+  const presetChips = chips([{ value: CUSTOM.id, label: '自己填写' }, ...PRESETS.map((p) => ({ value: p.id, label: p.name }))], {
     value: presetId,
     scroll: true,
     onChange: (v) => {
@@ -44,6 +46,7 @@ export function mount(container, ctx) {
         toast('转完再换');
         return;
       }
+      ritual.clear(); ritual.step(0);
       presetId = v;
       preset = getPreset(v);
       storage.set('preset', v);
@@ -60,7 +63,9 @@ export function mount(container, ctx) {
   });
 
   /* ---------- 舞台：转盘实物 ---------- */
-  const st = stage({ cls: 'wh-stage', hint: preset.hint, badge: '', minHeight: 428 });
+  const st = stage({ cls: 'wh-stage', hint: preset.hint, badge: '' });
+  const ritual = createRitual(ctx, st, ['写选项', '转动', '落定', '揭晓']);
+  const wait = ritual.pause;
   const halo = h('div', { class: 'wh-halo' });
   const bezel = h('div', { class: 'wh-bezel' });
   const rotor = h('div', { class: 'wh-rotor' });
@@ -95,6 +100,8 @@ export function mount(container, ctx) {
     clearTimeout(typeTimer);
     typeTimer = setTimeout(onCustomTextChanged, 260);
   });
+  nameInput.setAttribute('aria-label', '转盘名称');
+  textarea.setAttribute('aria-label', '转盘选项，每行一项');
   const countEl = h('span', { class: 'wh-count' });
   const templateBtn = button('用个模板', { variant: 'ghost', size: 'small', onClick: useTemplate });
   const saveBtn = button('保存并使用', { variant: 'primary', size: 'small', onClick: saveCustom });
@@ -106,6 +113,7 @@ export function mount(container, ctx) {
     h('div', { class: 'wh-custom-head' }, h('span', { class: 't-kicker' }, 'MY WHEEL'), h('span', { class: 'wh-custom-title' }, '我的转盘')),
     savedWrap,
     h('div', { class: 'mt-3' }, nameInput),
+    h('p', { class: 'wh-editor-tip' }, `每行一个选项，也可用逗号分隔，支持 2–${CUSTOM_MAX} 项。`),
     h('div', { class: 'mt-2' }, textarea),
     h('div', { class: 'wh-custom-meta' }, countEl, templateBtn),
     h('div', { class: 'wh-custom-actions' }, saveBtn, deleteBtn),
@@ -120,6 +128,7 @@ export function mount(container, ctx) {
   }
   function onCustomTextChanged() {
     if (presetId !== CUSTOM.id) return;
+    ritual.clear(); ritual.step(0);
     removed.clear();
     if (busy) {
       dirty = true;
@@ -147,6 +156,7 @@ export function mount(container, ctx) {
           const c = customs.find((x) => x.id === v);
           cur = { id: c.id, name: c.name, text: c.text };
         }
+        ritual.clear(); ritual.step(0);
         nameInput.value = cur.name;
         textarea.value = cur.text;
         saveDraft();
@@ -163,6 +173,8 @@ export function mount(container, ctx) {
     savedWrap.append(sc.el);
   }
   function saveCustom() {
+    if (busy) return;
+    clearTimeout(typeTimer);
     const parsed = parsePreset(cur.text);
     if (!isSpinnable(parsed)) {
       toast('至少写两项才能转');
@@ -187,10 +199,11 @@ export function mount(container, ctx) {
     renderHistory();
     haptic.success();
     sound.play('pop');
-    toast(`已保存「${cur.name}」，拨一下试试`);
+    toast(`已保存「${cur.name}」`);
+    ritual.clear(); ritual.focus();
   }
   function deleteCustom() {
-    if (!cur.id) return;
+    if (busy || !cur.id) return;
     customs = customs.filter((c) => c.id !== cur.id);
     storage.set('customs', customs);
     storage.remove('hist:custom:' + cur.id);
@@ -238,17 +251,35 @@ export function mount(container, ctx) {
       spin(randomOmega(), 'button');
     },
   });
+  const editBtn = button('编辑选项', { variant: 'soft', onClick: editOptions });
   const candBtn = button('候选', { variant: 'ghost', onClick: openCandidates });
   const histEl = h('div', { class: 'wh-history' });
 
   container.append(
+    ritual.progress,
     h('div', { class: 'wh-top' }, presetChips.el),
-    h('div', { class: 'mt-3' }, st.el),
+    h('div', { class: 'wh-editbar' }, h('span', null, '每一个选项，都由你决定'), editBtn),
     customPanel,
+    h('div', { class: 'mt-3' }, st.el),
     hint('spin', '在转盘上拨一下，或摇一摇手机'),
     kit.actionBar(spinBtn, candBtn),
+    ritual.receipt,
     histEl,
   );
+
+  function editOptions() {
+    if (busy) return;
+    if (presetId !== CUSTOM.id) {
+      cur = { id: null, name: preset.name, text: items.map((x) => x.label).join('\n') };
+      presetId = CUSTOM.id; preset = getPreset(CUSTOM.id);
+      storage.set('preset', presetId); presetChips.set(presetId);
+      nameInput.value = cur.name; textarea.value = cur.text; saveDraft();
+      deleteBtn.hidden = true; removed.clear(); renderSaved(); refreshItems(); rebuildWheel(false); updateBadge();
+    }
+    ritual.clear(); customPanel.hidden = false;
+    customPanel.scrollIntoView({ block: 'start', behavior: reduce ? 'instant' : 'smooth' });
+    textarea.focus({ preventScroll: true });
+  }
 
   /* ---------- 三入口：体感 / 手势 / 按钮 ---------- */
   ctx.motion.onShake((e) => spin(omegaFromIntensity(e.intensity), 'motion'));
@@ -410,6 +441,7 @@ export function mount(container, ctx) {
     templateBtn.disabled = v;
     presetChips.el.classList.toggle('locked', v);
     savedWrap.classList.toggle('locked', v);
+    [editBtn, deleteBtn, nameInput, textarea].forEach((el) => { el.disabled = v; });
   }
 
   /* ---------- 历史 ---------- */
@@ -421,26 +453,33 @@ export function mount(container, ctx) {
   }
 
   /* ---------- 旋转：起 → 飞 → 落 → 揭 ---------- */
-  function spin(omega0, source) {
+  async function spin(omega0, source) {
+    if (!ritual.alive || activeSheet?.opened) return;
     if (busy) {
       if (source === 'button') toast(pick(BUSY_LINES));
       return;
     }
+    clearTimeout(typeTimer);
+    if (presetId === CUSTOM.id) { refreshItems(); rebuildWheel(false); }
     if (!items.length || items[0].placeholder) {
-      if (source !== 'motion') toast('先在下面写两项以上');
+      if (source !== 'motion') toast('请先填写至少两个选项');
       haptic.double();
       return;
     }
     busy = true;
     lock(true);
+    ritual.clear();
+    if (!await ritual.focus()) return;
+    ritual.step(1);
     clearReveal();
     st.setHint('');
     const n = items.length;
-    const plan = simulateSpin(omega0);
+    const speed = Math.sign(omega0) * Math.max(8, Math.min(22, Math.abs(omega0) * 0.62));
+    const plan = simulateSpin(speed, { k: 0.48, c: 0.3 });
     const start = angle;
     const sign = omega0 < 0 ? -1 : 1;
     const PULL = reduce ? 0 : 7 * sign; // 起：先往反方向拉一点，像拉弓
-    const PRE = reduce ? 0 : 130;
+    const PRE = reduce ? 0 : 280;
     const finalAngle = start - PULL + plan.angle;
     sound.play('whoosh');
     haptic.light();
@@ -453,14 +492,17 @@ export function mount(container, ctx) {
       ctx.setTimeout(() => land(), 80);
       return;
     }
-    const t0 = performance.now();
+    let elapsed = 0, previous = null;
     let prev = start;
     let lastTick = 0;
     let lastHap = 0;
     let laps = 0;
     const total = PRE + plan.duration;
     const frame = (now) => {
-      const t = now - t0;
+      if (!ritual.alive) return;
+      if (previous !== null && !document.hidden) elapsed += Math.min(50, now - previous);
+      previous = now;
+      const t = elapsed;
       let a;
       if (t < PRE) {
         const p = t / PRE;
@@ -513,7 +555,8 @@ export function mount(container, ctx) {
     const n = items.length;
     const idx = segmentAt(angle, n);
     const item = items[idx];
-    await wait(reduce ? 0 : 340);
+    ritual.step(2); st.setHint('指针停住了，看看它选中了什么');
+    if (!await wait(reduce ? 80 : 800)) return;
     await reveal(idx, item);
   }
 
@@ -537,7 +580,7 @@ export function mount(container, ctx) {
     }
     haptic.success();
     st.setBadge(`${preset.name} · ${item.label}`);
-    st.setHint(pick(CAP_LINES));
+    st.setHint('选择已揭晓，详细内容可以稍后展开');
 
     // 记录
     const key = histKey();
@@ -549,8 +592,9 @@ export function mount(container, ctx) {
     storage.set('spins', spins);
     renderHistory();
 
-    await wait(reduce ? 60 : 460);
-    showResult(item, idx, { streak });
+    if (!await wait(reduce ? 80 : 850)) return;
+    ritual.step(3);
+    ritual.reveal({ kicker: `${preset.name} · ${nLabel()}`, title: item.label, text: presetId === 'truth' ? item.text : (item.note || '这一轮，就选它。'), onRead: () => showResult(item, idx, { streak }) });
     if (spins % 10 === 0) ctx.setTimeout(() => toast(MILESTONES[Math.min(MILESTONES.length - 1, spins / 10 - 1)]), 900);
     busy = false;
     lock(false);
@@ -560,8 +604,11 @@ export function mount(container, ctx) {
     }
   }
 
+  const nLabel = () => `${items.length} 选 1`;
+
   /* ---------- 结果抽屉 ---------- */
   function showResult(item, idx, { streak = 1 } = {}) {
+    if (busy || !ritual.alive || activeSheet?.opened) return;
     const n = items.length;
     const isTruth = presetId === 'truth';
     const triple = streak >= 3;
@@ -639,6 +686,7 @@ export function mount(container, ctx) {
       }),
     ];
     const sh = sheet({ title: triple ? '又是它' : '转盘停下了', content: card, actions });
+    activeSheet = sh;
     sh.el.classList.add('m-wheel');
     sh.open();
   }
@@ -651,7 +699,7 @@ export function mount(container, ctx) {
     }
     const all = presetId === CUSTOM.id ? customAllItems() : preset.items;
     if (!isSpinnable(all)) {
-      toast('先在下面写两项以上');
+      toast('请先填写至少两个选项');
       return;
     }
     const listEl = h('div', { class: 'wh-cands' });
@@ -686,6 +734,8 @@ export function mount(container, ctx) {
     };
     render();
     const apply = () => {
+      if (!ritual.alive) return;
+      ritual.clear();
       refreshItems();
       rebuildWheel(true);
       updateBadge();
@@ -706,6 +756,7 @@ export function mount(container, ctx) {
       ],
       onClose: apply,
     });
+    activeSheet = sh;
     sh.el.classList.add('m-wheel');
     sh.open();
   }
@@ -717,6 +768,7 @@ export function mount(container, ctx) {
   renderHistory();
 
   return () => {
+    activeSheet?.close();
     if (raf) cancelAnimationFrame(raf);
     clearTimeout(typeTimer);
     rotor.getAnimations?.().forEach((a) => a.cancel());

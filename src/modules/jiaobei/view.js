@@ -63,7 +63,7 @@ export function mount(container, ctx) {
     if (session.done) { toast('本次问事已完成，可以查看解读或重新问事'); return; }
     setBusy(true); lastResult = null; ritual.clear(); faceLabels.hidden = true;
     if (!await ritual.focus()) return;
-    ritual.step(1); st.setHint(''); ritual.power(intensity / 40, intensity > 26 ? '翻转 · 回弹 · 落定' : '腾空 · 落定');
+    ritual.step(1); st.setHint(''); ritual.power(intensity / 40, '腾空 · 弹跳 · 滚动 · 落定');
     st.setBadge(mode === 'three' ? `连掷三圣杯 · 第 ${session.throws.length + 1} 掷` : '筊杯已掷出');
     sound.play('whoosh'); haptic.light();
     const result = throwJiaobei(ctx.rng.random);
