@@ -32,6 +32,28 @@
 - 皮肤：右上角调色盘图标 → 玄墨 / 朱砂 / 星穹 / 宣纸 / 青瓷。
 - 设置：右上角齿轮 → 音效、震动、体感权限说明。
 
+## 屏保模式「静观」
+
+- 首页左上角的月亮按钮，或设置里的「现在进入屏保」，或直接打开网址后加 `#/zen`。
+- 大字时间、农历干支、今日一宜一忌、缓慢轮换的古语，十二时辰日晷环上一颗金点标记此刻；八卦环慢转，微尘轻浮。
+- 进入后屏幕保持常亮（需浏览器支持 Wake Lock），每分钟微移防烙印；轻触任意处返回。
+- 默认闲置 3 分钟自动进入，可在设置里改成 1 / 5 / 10 分钟或关闭。
+
+## 装到 iPhone / 安卓主屏幕
+
+1. 用手机浏览器打开网址（Safari / Chrome）。
+2. iPhone：点底部「分享」→「添加到主屏幕」；安卓 Chrome：右上菜单 →「添加到主屏幕」。
+3. 从主屏幕图标打开：全屏、无地址栏，体感与屏保体验最佳。首次进入需要体感的玩法时，点「开启」允许访问运动与方向。
+
+## 发布到 GitHub Pages（一次性设置）
+
+仓库已带自动发布流程（`.github/workflows/pages.yml`）：每次推送都会自动测试、构建并发布。只需在 GitHub 上开一次开关：
+
+1. 打开 `https://github.com/PeytonLiuBruin/laiganjue/settings/pages`
+2. 「Build and deployment」→「Source」选 **GitHub Actions**，保存。
+3. 到 Actions 页签点开「Deploy to GitHub Pages」→「Run workflow」，或随便再推送一次。
+4. 网址：`https://peytonliubruin.github.io/laiganjue/`
+
 ## 目录结构（给工程师）
 
 ```
