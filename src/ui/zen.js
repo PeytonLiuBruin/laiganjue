@@ -77,7 +77,15 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
     const lineEl = h('div', { class: 'zen-line' });
     const hintEl = h('div', { class: 'zen-hint' }, '轻触任意处返回');
     const center = h('div', { class: 'zen-center' }, timeEl, dateEl, lunarEl, yijiEl);
-    el = h('div', { class: 'zen', attrs: { role: 'dialog', 'aria-label': '屏保' } }, canvas, ring.el, center, lineEl, hintEl);
+    const emblem = fromHTML(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 20 20" class="zen-emblem" aria-hidden="true"><g class="zen-taiji">
+        <circle r="9" class="zen-taiji-bg"/>
+        <path d="M0,-9 A9,9 0 0 1 0,9 A4.5,4.5 0 0 1 0,0 A4.5,4.5 0 0 0 0,-9 Z" class="zen-taiji-dark"/>
+        <circle cx="0" cy="-4.5" r="1.5" class="zen-taiji-dark"/>
+        <circle cx="0" cy="4.5" r="1.5" class="zen-taiji-light"/>
+      </g></svg>`,
+    );
+    el = h('div', { class: 'zen', attrs: { role: 'dialog', 'aria-label': '屏保' } }, canvas, ring.el, emblem, center, lineEl, hintEl);
     el.__refs = { timeEl, dateEl, lunarEl, yijiEl, lineEl, hintEl, center, ring };
     // 退出：轻触（进入后 400ms 内忽略，避免进入手势立刻触发退出）
     el.addEventListener('pointerdown', (e) => {
@@ -120,12 +128,6 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
         <circle cx="${c}" cy="${c}" r="${rOuter - 12}" class="zen-circle faint"/>
         ${inner}
         <g class="zen-bagua">${bagua}<circle cx="${c}" cy="${c}" r="${rInner - 5.5}" class="zen-circle faint"/></g>
-        <g transform="translate(${c} ${c})"><g class="zen-taiji">
-          <circle r="9" class="zen-taiji-bg"/>
-          <path d="M0,-9 A9,9 0 0 1 0,9 A4.5,4.5 0 0 1 0,0 A4.5,4.5 0 0 0 0,-9 Z" class="zen-taiji-dark"/>
-          <circle cx="0" cy="-4.5" r="1.5" class="zen-taiji-dark"/>
-          <circle cx="0" cy="4.5" r="1.5" class="zen-taiji-light"/>
-        </g></g>
         <circle class="zen-now" r="1.6" cx="${c}" cy="${c + rOuter}"/>
       </svg>`,
     );
