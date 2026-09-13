@@ -97,14 +97,14 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
     let inner = '';
     // 外圈刻度与时辰
     for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * Math.PI * 2 + Math.PI; // 0h 在底部
+      const a = (i / 24) * Math.PI * 2 + Math.PI / 2; // 0h 在底部
       const isHour = i % 2 === 0;
       const r1 = rOuter - (isHour ? 3 : 1.6);
       inner += `<line x1="${c + Math.cos(a) * r1}" y1="${c + Math.sin(a) * r1}" x2="${c + Math.cos(a) * rOuter}" y2="${c + Math.sin(a) * rOuter}" class="zen-tick${isHour ? ' major' : ''}"/>`;
     }
     for (let i = 0; i < 12; i++) {
       // 子时 23:00–01:00，中心在 0h → 底部
-      const a = (i / 12) * Math.PI * 2 + Math.PI;
+      const a = (i / 12) * Math.PI * 2 + Math.PI / 2;
       const r = rOuter - 8.5;
       inner += `<text x="${c + Math.cos(a) * r}" y="${c + Math.sin(a) * r}" class="zen-branch" data-i="${i}" text-anchor="middle" dominant-baseline="central">${BRANCHES[i]}</text>`;
     }
@@ -120,12 +120,12 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
         <circle cx="${c}" cy="${c}" r="${rOuter - 12}" class="zen-circle faint"/>
         ${inner}
         <g class="zen-bagua">${bagua}<circle cx="${c}" cy="${c}" r="${rInner - 5.5}" class="zen-circle faint"/></g>
-        <g class="zen-taiji" transform="translate(${c} ${c})">
+        <g transform="translate(${c} ${c})"><g class="zen-taiji">
           <circle r="9" class="zen-taiji-bg"/>
           <path d="M0,-9 A9,9 0 0 1 0,9 A4.5,4.5 0 0 1 0,0 A4.5,4.5 0 0 0 0,-9 Z" class="zen-taiji-dark"/>
           <circle cx="0" cy="-4.5" r="1.5" class="zen-taiji-dark"/>
           <circle cx="0" cy="4.5" r="1.5" class="zen-taiji-light"/>
-        </g>
+        </g></g>
         <circle class="zen-now" r="1.6" cx="${c}" cy="${c + rOuter}"/>
       </svg>`,
     );
@@ -156,7 +156,7 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
     timeEl.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
     try {
       const a = almanacSummary(now);
-      dateEl.textContent = `${now.getMonth() + 1} 月 ${now.getDate()} 日 · ${a.week}${a.jieqi ? ' · ' + a.jieqi : ''}`;
+      dateEl.textContent = `${now.getMonth() + 1}月${now.getDate()}日 · ${a.week}${a.jieqi ? ' · ' + a.jieqi : ''}`;
       lunarEl.textContent = `${a.yearGanZhi}年 ${a.lunarText} · ${a.dayGanZhi}日 · ${BRANCHES[Math.floor(((now.getHours() + 1) % 24) / 2)]}时`;
       const yi = a.yi.find((x) => x !== '诸事不宜') || '静坐';
       const ji = a.ji.find((x) => x !== '诸事不宜') || '躁进';
