@@ -5,6 +5,7 @@
 //   node scripts/smoke.mjs --act                 额外模拟一次"摇/甩/点主按钮"并截结果图
 //   node scripts/smoke.mjs --theme paper         指定皮肤
 //   node scripts/smoke.mjs --shots dist/shots    截图目录（默认 dist/shots）
+//   node scripts/smoke.mjs --module tarot --full 指定模块但仍全量打包（默认只打包指定模块，其余占位）
 // 退出码：有 console.error / pageerror / 模块未就绪 → 1，否则 0。
 import path from 'node:path';
 import os from 'node:os';
@@ -62,7 +63,8 @@ async function launchBrowser() {
 }
 
 await rm(tmpOut, { recursive: true, force: true });
-await buildAll({ out: tmpOut, min: false });
+// 指定 --module 时默认只打包这些模块（其余为占位），避免别人正在改的模块拖垮构建；--full 强制全量
+await buildAll({ out: tmpOut, min: false, only: only.length && !flag('--full') ? only : null });
 await mkdir(shotsDir, { recursive: true });
 
 const server = createStaticServer(tmpOut);

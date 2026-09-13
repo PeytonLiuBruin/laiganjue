@@ -2,7 +2,7 @@
 // 产物：
 //   dist/index.html    —— 可直接双击打开 / 部署到任意静态服务器的完整页面
 //   dist/artifact.html —— 无 <html><head><body> 外壳的片段（供 Artifact 平台发布）
-// 用法：node scripts/build.mjs [--out <dir>] [--no-minify] [--sourcemap]
+// 用法：node scripts/build.mjs [--out <dir>] [--no-minify] [--only tarot,runes]
 import { build } from 'esbuild';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -18,8 +18,37 @@ const opt = (name, def) => {
 const outDir = path.resolve(root, opt('--out', 'dist'));
 const minify = !flag('--no-minify');
 
-export async function buildAll({ out = outDir, min = minify } = {}) {
+// --only a,b ：只真正打包这些模块，其余模块替换为占位（多人并行开发时互不影响）
+const onlyModulesPlugin = (allowed) => ({
+  name: 'only-modules',
+  setup(b) {
+    b.onLoad({ filter: /[\\/]src[\\/]modules[\\/][a-z0-9_-]+[\\/]index\.js$/ }, (args) => {
+      const id = path.basename(path.dirname(args.path));
+      if (allowed.has(id)) return null;
+      const list = JSON.stringify([...allowed].join(', '));
+      return {
+        loader: 'js',
+        resolveDir: path.dirname(args.path),
+        contents:
+          `import { getModuleMeta } from '../list.js';\n` +
+          `export default { id: ${JSON.stringify(id)}, mount(c, ctx) { const m = getModuleMeta(${JSON.stringify(id)}); ` +
+          `c.append(ctx.kit.placeholder(m.glyph, m.title + ' · 未纳入本次构建', '本次仅构建：' + ${list})); return () => {}; } };\n`,
+      };
+    });
+    b.onLoad({ filter: /[\\/]src[\\/]modules[\\/]index\.css$/ }, async (args) => {
+      const src = await readFile(args.path, 'utf8');
+      const kept = src.split('\n').filter((line) => {
+        const m = line.match(/@import\s+['"]\.\/([a-z0-9_-]+)\/style\.css['"]/);
+        return !m || allowed.has(m[1]);
+      });
+      return { loader: 'css', resolveDir: path.dirname(args.path), contents: kept.join('\n') };
+    });
+  },
+});
+
+export async function buildAll({ out = outDir, min = minify, only = null } = {}) {
   await mkdir(out, { recursive: true });
+  const plugins = only && only.length ? [onlyModulesPlugin(new Set(only))] : [];
   const [js, css] = await Promise.all([
     build({
       entryPoints: [path.join(root, 'src/main.js')],
@@ -32,6 +61,7 @@ export async function buildAll({ out = outDir, min = minify } = {}) {
       charset: 'utf8',
       logLevel: 'error',
       define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString()) },
+      plugins,
     }),
     build({
       entryPoints: [path.join(root, 'src/styles/index.css')],
@@ -41,6 +71,7 @@ export async function buildAll({ out = outDir, min = minify } = {}) {
       charset: 'utf8',
       logLevel: 'error',
       loader: { '.svg': 'dataurl', '.png': 'dataurl', '.woff2': 'dataurl' },
+      plugins,
     }),
   ]);
   const jsText = js.outputFiles[0].text;
@@ -82,7 +113,11 @@ export async function buildAll({ out = outDir, min = minify } = {}) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const t0 = Date.now();
-  const r = await buildAll();
+  const only = opt('--only', '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const r = await buildAll({ only: only.length ? only : null });
   const kb = (n) => (n / 1024).toFixed(1) + ' KB';
   console.log(
     `built → ${path.relative(root, r.out)}/index.html  js ${kb(r.jsBytes)}  css ${kb(r.cssBytes)}  html ${kb(r.htmlBytes)}  (${Date.now() - t0}ms)`,

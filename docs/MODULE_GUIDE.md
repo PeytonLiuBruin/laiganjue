@@ -105,14 +105,18 @@ svg(innerPaths, {viewBox, size, stroke, fill, strokeWidth})   fromHTML('<svg ...
 ## 4. 本地验证
 
 ```bash
-npm test                                   # 全部单测（node:test）
-node --test tests/<id>.test.mjs            # 单个模块
-node scripts/smoke.mjs --module <id> --act # 构建 + 无头手机浏览器打开模块 + 模拟摇/甩 + 点主按钮 + 截图（dist/shots/<id>.png, <id>-2.png）
-node scripts/smoke.mjs --module <id> --theme paper   # 浅色皮肤下检查
-node scripts/build.mjs                     # 产出 dist/index.html（单文件）
+node --test tests/<id>.test.mjs            # 只跑自己模块的单测（别跑 npm test，其他模块可能正在开发中）
+node scripts/smoke.mjs --module <id> --act --shots dist/shots-<id>
+#   ↑ 只打包你的模块（其余模块自动占位，别人的半成品不会拖垮你的构建）+ 无头手机浏览器打开
+#     + 模拟"摇一摇"(截图 <id>-shake.png) + 模拟"向上甩"或点主按钮(截图 <id>-2.png) + 初始截图 <id>.png
+node scripts/smoke.mjs --module <id> --act --theme paper --shots dist/shots-<id>-paper   # 浅色皮肤下再看一遍
+#   可选皮肤：ink(默认) cinnabar nebula paper celadon
+node scripts/build.mjs --only <id>         # 只打包自己模块到 dist/index.html 自己看
 ```
 
-冒烟测试通过标准：无 console.error / pageerror，`data-ready="1"` 出现，两张截图看起来正确（打开 PNG 检查！）。
+多人同时开发时：只改 `src/modules/<id>/` 与 `tests/<id>.test.mjs`；截图目录用 `--shots dist/shots-<id>` 避免互相覆盖。
+
+冒烟测试通过标准：无 console.error / pageerror，`data-ready="1"` 出现，三张截图看起来正确（**必须用 Read 工具打开 PNG 亲眼检查**：布局、文字、对比度、有没有溢出）。
 
 ## 5. 参考实现
 
