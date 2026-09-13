@@ -1,8 +1,4 @@
 node_modules/
-dist/*.html
-dist/*.js
-dist/*.css
-dist/*.map
-dist/shots/
+dist/
 .DS_Store
 *.log
