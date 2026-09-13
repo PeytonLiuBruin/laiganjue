@@ -230,12 +230,11 @@ export function mount(container, ctx) {
     variant: 'primary',
     size: 'large',
     primary: true,
-    onClick: async () => {
+    onClick: () => {
       if (busy) {
         toast(pick(BUSY_LINES));
         return;
       }
-      ctx.ensureMotion().catch(() => {});
       spin(randomOmega(), 'button');
     },
   });
@@ -317,15 +316,14 @@ export function mount(container, ctx) {
       items = remaining(all, removed);
       if (!items.length) items = all.slice();
     }
-    updateCount(all);
+    updateCount();
     candBtn.setLabel(removed.size ? `候选 ${items.length}/${all.length}` : '候选');
   }
-  function updateCount(all) {
+  function updateCount() {
     if (presetId !== CUSTOM.id) return;
     const k = parsePreset(cur.text).length;
     countEl.textContent = k === 0 ? '每行写一项' : k < 2 ? '还差 1 项就能转' : k >= CUSTOM_MAX ? `已满 ${CUSTOM_MAX} 项，多的不算` : `已识别 ${k} 项`;
     countEl.classList.toggle('ok', k >= 2);
-    void all;
   }
 
   function buildSvg(list) {
@@ -340,7 +338,8 @@ export function mount(container, ctx) {
     let labels = '';
     let dots = '';
     for (let i = 0; i < n; i++) {
-      const sw = pal[colors[i]];
+      // 占位（自定义还没写够两项）用最安静的一档底色，看起来像一张空盘
+      const sw = list[i].placeholder ? pal[1] : pal[colors[i]];
       const a0 = i * step - half;
       const a1 = i * step + half;
       const style = `fill:${sw.fill};fill-opacity:${sw.op}`;
@@ -640,6 +639,7 @@ export function mount(container, ctx) {
       }),
     ];
     const sh = sheet({ title: triple ? '又是它' : '转盘停下了', content: card, actions });
+    sh.el.classList.add('m-wheel');
     sh.open();
   }
 
@@ -706,6 +706,7 @@ export function mount(container, ctx) {
       ],
       onClose: apply,
     });
+    sh.el.classList.add('m-wheel');
     sh.open();
   }
 

@@ -1,1 +1,711 @@
-/* omikuji 模块样式：所有选择器必须以 .m-omikuji 开头 */
+/* 御神签 模块样式：所有选择器以 .m-omikuji 开头 */
+.m-omikuji {
+  /* 等级色（界面用，随皮肤明暗自适应：与文字色混合） */
+  --ok-gold: var(--accent);
+  --ok-red: color-mix(in srgb, #c8362b 70%, var(--text));
+  --ok-ink: var(--text);
+  --ok-indigo: color-mix(in srgb, #3b5fa0 66%, var(--text));
+  /* 等级色（印在白和纸上，固定） */
+  --ok-gold-p: #b3862a;
+  --ok-gold-p2: #ddb65e;
+  --ok-red-p: #b5322a;
+  --ok-ink-p: #2a2118;
+  --ok-indigo-p: #2b4b7e;
+  /* 材质：红漆 / 描金 / 竹木 / 和纸墨线 */
+  --ok-lacquer: #a8291f;
+  --ok-lacquer-2: #d24d3e;
+  --ok-gilt: #e8c872;
+  --ok-bamboo: #dcc09a;
+  --ok-bamboo-2: #b48f5f;
+  --ok-paper-line: rgba(80, 55, 25, 0.35);
+  --ok-petal: color-mix(in srgb, var(--seal) 40%, var(--paper));
+}
+@supports not (color: color-mix(in srgb, red, blue)) {
+  .m-omikuji {
+    --ok-red: #d0574a;
+    --ok-indigo: #8fa9dc;
+    --ok-petal: var(--seal);
+  }
+}
+
+/* —— 顶部一行 —— */
+.m-omikuji .ok-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  font-family: var(--font-serif);
+  font-size: var(--fs-s);
+  letter-spacing: 0.24em;
+  color: var(--text-2);
+}
+.m-omikuji .ok-top::before,
+.m-omikuji .ok-top::after {
+  content: '';
+  width: 36px;
+  height: var(--hairline);
+  background: linear-gradient(90deg, transparent, var(--line-strong));
+}
+.m-omikuji .ok-top::after {
+  background: linear-gradient(90deg, var(--line-strong), transparent);
+}
+
+/* —— 舞台 —— */
+.m-omikuji .ok-stage {
+  min-height: 400px;
+}
+.m-omikuji .ok-stage.ok-glory {
+  animation: ok-glory 2.4s ease-out both;
+}
+@keyframes ok-glory {
+  0% { box-shadow: var(--shadow-1), inset 0 0 0 0 var(--glow); }
+  25% { box-shadow: var(--shadow-1), inset 0 0 90px 10px var(--glow); }
+  100% { box-shadow: var(--shadow-1), inset 0 0 80px rgba(0, 0, 0, 0.25); }
+}
+
+/* 四季飘落物 */
+.m-omikuji .ok-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.m-omikuji .ok-petal {
+  position: absolute;
+  top: -14px;
+  left: var(--x, 50%);
+  width: 7px;
+  height: 9px;
+  border-radius: 60% 60% 60% 60% / 80% 80% 40% 40%;
+  background: var(--ok-petal);
+  opacity: 0;
+  animation: ok-fall var(--d, 9s) linear var(--delay, 0s) infinite;
+}
+@keyframes ok-fall {
+  0% { transform: translate(0, 0) rotate(0); opacity: 0; }
+  10% { opacity: 0.5; }
+  90% { opacity: 0.3; }
+  100% { transform: translate(var(--dx, 30px), 440px) rotate(420deg); opacity: 0; }
+}
+.m-omikuji .ok-season-autumn .ok-petal {
+  --ok-petal: var(--accent-3);
+  border-radius: 20% 80% 20% 80%;
+}
+.m-omikuji .ok-season-winter .ok-petal {
+  --ok-petal: var(--text-3);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.m-omikuji .ok-season-summer .ok-petal {
+  --ok-petal: var(--accent-2);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  top: auto;
+  bottom: -6px;
+  box-shadow: 0 0 6px 2px var(--glow);
+  animation-name: ok-rise;
+}
+@keyframes ok-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 0.7; }
+  50% { opacity: 0.2; }
+  70% { opacity: 0.6; }
+  100% { transform: translate(var(--dx, 30px), -420px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-omikuji .ok-petal {
+    display: none;
+  }
+}
+
+/* 结绳架 */
+.m-omikuji .ok-rack {
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  top: 34px;
+  height: 64px;
+  z-index: 4;
+  cursor: pointer;
+  transition: transform 0.4s ease-out;
+}
+.m-omikuji .ok-rack-post {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--wood-2), var(--wood-1) 55%, var(--wood-2));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+.m-omikuji .ok-rack-post.l {
+  left: 0;
+}
+.m-omikuji .ok-rack-post.r {
+  right: 0;
+}
+.m-omikuji .ok-rack-rod,
+.m-omikuji .ok-rack-rod2 {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--wood-2), var(--wood-1) 30%, var(--wood-1) 70%, var(--wood-2));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.m-omikuji .ok-rack-rod2 {
+  top: 44px;
+  height: 2px;
+  opacity: 0.85;
+}
+.m-omikuji .ok-rack-knots {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 11px;
+  height: 34px;
+}
+.m-omikuji .ok-knot {
+  position: absolute;
+  top: 0;
+  width: 9px;
+  height: 27px;
+  margin-left: -4.5px;
+  transform-origin: 50% 0;
+  transform: rotate(var(--r, 0deg));
+  background: var(--paper);
+  border-radius: 1px 1px 2px 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 0 0 1px var(--ok-paper-line);
+  animation: ok-sway 3.8s ease-in-out infinite;
+}
+.m-omikuji .ok-knot::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 0 0 1.5px var(--ok-paper-line);
+}
+.m-omikuji .ok-knot::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 13px;
+  height: 1px;
+  background: var(--ok-paper-line);
+  box-shadow: 0 4px 0 var(--ok-paper-line), 0 8px 0 var(--ok-paper-line);
+}
+.m-omikuji .ok-knot.ok-knot-indigo {
+  border-bottom: 3px solid var(--ok-indigo-p);
+}
+.m-omikuji .ok-knot.ok-knot-red {
+  border-bottom: 3px solid var(--ok-red-p);
+}
+.m-omikuji .ok-knot.ok-knot-new {
+  animation: ok-knot-in 0.55s var(--ease-bounce) both, ok-sway 3.8s ease-in-out 0.55s infinite;
+}
+@keyframes ok-sway {
+  0%, 100% { transform: rotate(calc(var(--r, 0deg) - 3deg)); }
+  50% { transform: rotate(calc(var(--r, 0deg) + 3deg)); }
+}
+@keyframes ok-knot-in {
+  0% { transform: scale(0.2) rotate(36deg); opacity: 0; }
+  100% { transform: scale(1) rotate(var(--r, 0deg)); opacity: 1; }
+}
+
+/* 原点：实物都相对它定位 */
+.m-omikuji .ok-set {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 10px);
+  width: 0;
+  height: 0;
+}
+
+/* 案几 */
+.m-omikuji .ok-shelf {
+  position: absolute;
+  left: -150px;
+  top: 86px;
+  width: 300px;
+  height: 36px;
+  z-index: 1;
+}
+.m-omikuji .ok-shelf::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 9px;
+  clip-path: polygon(7% 0, 93% 0, 100% 100%, 0 100%);
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 9px), linear-gradient(180deg, var(--wood-1), var(--wood-2));
+}
+.m-omikuji .ok-shelf::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 9px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(180deg, var(--wood-2), rgba(0, 0, 0, 0.55));
+}
+
+/* 签筒：wrap 管拖拽/轻晃，anim 管摇动/提起，tube 是外观 */
+.m-omikuji .ok-tube-wrap {
+  position: absolute;
+  left: -52px;
+  top: -88px;
+  width: 104px;
+  height: 176px;
+  z-index: 3;
+  transform-origin: 50% 90%;
+  transition: transform 0.28s var(--ease-out), opacity 0.45s, filter 0.45s;
+  cursor: grab;
+}
+.m-omikuji .ok-tube-wrap.ok-grab {
+  transition: opacity 0.45s, filter 0.45s;
+  cursor: grabbing;
+}
+.m-omikuji .ok-tube-anim {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 60%;
+  transition: transform 0.38s var(--ease-out);
+  will-change: transform;
+}
+.m-omikuji .ok-tube-anim.ok-lift {
+  transform: translateY(-40px) rotate(3deg);
+}
+.m-omikuji .ok-tube-anim.ok-shaking {
+  transition: none;
+}
+.m-omikuji .ok-tube-anim.ok-shaking.ok-s1 {
+  animation: ok-shake-1 0.46s ease-in-out infinite;
+}
+.m-omikuji .ok-tube-anim.ok-shaking.ok-s2 {
+  animation: ok-shake-2 0.36s ease-in-out infinite;
+}
+.m-omikuji .ok-tube-anim.ok-shaking.ok-s3 {
+  animation: ok-shake-3 0.3s ease-in-out infinite;
+}
+@keyframes ok-shake-1 {
+  0%, 100% { transform: translateY(-24px) rotate(0); }
+  25% { transform: translate(-3px, -28px) rotate(-6deg); }
+  50% { transform: translateY(-22px) rotate(5deg); }
+  75% { transform: translate(3px, -30px) rotate(-4deg); }
+}
+@keyframes ok-shake-2 {
+  0%, 100% { transform: translateY(-28px) rotate(0); }
+  25% { transform: translate(-6px, -34px) rotate(-10deg); }
+  50% { transform: translateY(-24px) rotate(9deg); }
+  75% { transform: translate(6px, -36px) rotate(-7deg); }
+}
+@keyframes ok-shake-3 {
+  0%, 100% { transform: translateY(-32px) rotate(0); }
+  25% { transform: translate(-9px, -40px) rotate(-15deg); }
+  50% { transform: translateY(-26px) rotate(13deg); }
+  75% { transform: translate(9px, -42px) rotate(-11deg); }
+}
+.m-omikuji .ok-tube {
+  position: absolute;
+  inset: 0;
+}
+.m-omikuji .ok-tube-shadow {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: -7px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  filter: blur(4px);
+}
+.m-omikuji .ok-tube-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 17px;
+  bottom: 0;
+  border-radius: 4px 4px 3px 3px;
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.48) 0, rgba(0, 0, 0, 0.3) 23.5%, rgba(0, 0, 0, 0.3) 24%, rgba(255, 255, 255, 0.07) 24.5%, rgba(255, 255, 255, 0.13) 50%, rgba(255, 255, 255, 0.04) 75.5%, rgba(0, 0, 0, 0.34) 76%, rgba(0, 0, 0, 0.52) 100%),
+    repeating-linear-gradient(90deg, var(--wood-1) 0 4px, var(--wood-2) 4px 5px, var(--wood-1) 5px 11px, var(--wood-2) 11px 12px);
+  box-shadow: inset 0 -16px 22px rgba(0, 0, 0, 0.38), inset 0 2px 0 rgba(255, 255, 255, 0.08), 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+.m-omikuji .ok-tube-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 12px;
+  height: 9px;
+  background: linear-gradient(90deg, #6e1a12 0, #8f2419 24%, var(--ok-lacquer-2) 45%, var(--ok-lacquer) 76%, #5e150e 100%);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.m-omikuji .ok-tube-band.b2 {
+  top: auto;
+  bottom: 16px;
+}
+.m-omikuji .ok-tube-label {
+  position: absolute;
+  left: 24%;
+  width: 52%;
+  top: 30px;
+  bottom: 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+/* 竖排文字：逐字堆叠（不依赖 writing-mode，任何字体下都稳定） */
+.m-omikuji .ok-tube-kanji,
+.m-omikuji .ok-tube-kana {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.m-omikuji .ok-tube-kanji i,
+.m-omikuji .ok-tube-kana i {
+  display: block;
+  font-style: normal;
+  line-height: 1;
+}
+.m-omikuji .ok-tube-kanji {
+  gap: 5px;
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 21px;
+  color: var(--ok-gilt);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65), 0 0 8px rgba(232, 200, 114, 0.28);
+}
+.m-omikuji .ok-tube-kana {
+  gap: 2px;
+  font-size: 8px;
+  color: rgba(232, 200, 114, 0.78);
+}
+.m-omikuji .ok-tube-hole {
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 18px;
+  height: 7px;
+  margin-left: -9px;
+  border-radius: 4px;
+  background: #150a06;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.m-omikuji .ok-tube-cap {
+  position: absolute;
+  left: -5px;
+  right: -5px;
+  top: 0;
+  height: 34px;
+  clip-path: polygon(24% 0, 76% 0, 100% 50%, 76% 100%, 24% 100%, 0 50%);
+  background: linear-gradient(180deg, var(--wood-1) 0, var(--wood-2) 100%);
+}
+.m-omikuji .ok-tube-cap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 5px);
+}
+.m-omikuji .ok-tube-cap::after {
+  content: '';
+  position: absolute;
+  inset: 4px 9px;
+  clip-path: polygon(24% 0, 76% 0, 100% 50%, 76% 100%, 24% 100%, 0 50%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.12));
+}
+
+/* 签棒 */
+.m-omikuji .ok-stick {
+  position: absolute;
+  left: -64px;
+  top: -7px;
+  width: 128px;
+  height: 14px;
+  z-index: 2;
+  border-radius: 7px;
+  transform: translate(0px, -4px) rotate(90deg);
+  background: linear-gradient(180deg, #ead3ad, var(--ok-bamboo) 45%, var(--ok-bamboo-2));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -1px 0 rgba(0, 0, 0, 0.25), 0 3px 6px rgba(0, 0, 0, 0.4);
+  will-change: transform;
+  transition: opacity 0.45s, filter 0.45s;
+  cursor: pointer;
+}
+.m-omikuji .ok-stick::after {
+  /* 放大触摸区域 */
+  content: '';
+  position: absolute;
+  inset: -16px -8px;
+}
+.m-omikuji .ok-stick-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  border-radius: 7px 3px 3px 7px;
+  background: linear-gradient(180deg, var(--ok-lacquer-2), var(--ok-lacquer) 70%, #6e1a12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.m-omikuji .ok-stick-label {
+  position: absolute;
+  left: 30px;
+  right: 8px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 9.5px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  color: #3a2814;
+  white-space: nowrap;
+}
+.m-omikuji .ok-stick.ok-stick-glow {
+  animation: ok-glow 1.6s ease-in-out infinite;
+}
+@keyframes ok-glow {
+  0%, 100% { filter: drop-shadow(0 0 3px var(--glow)); }
+  50% { filter: drop-shadow(0 0 12px var(--glow)); }
+}
+.m-omikuji .ok-dim {
+  opacity: 0.38;
+  filter: blur(0.6px) saturate(0.7);
+}
+
+/* 签纸（和纸） */
+.m-omikuji .ok-slip {
+  position: absolute;
+  left: -113px;
+  top: -180px;
+  width: 226px;
+  min-height: 300px;
+  z-index: 6;
+  padding: 12px 14px 12px;
+  border-radius: 3px;
+  transform-origin: 50% 0;
+  text-align: center;
+  cursor: pointer;
+  background-image:
+    radial-gradient(circle at 50% 100%, transparent 62%, rgba(120, 90, 40, 0.07) 63%, rgba(120, 90, 40, 0.07) 66%, transparent 67%),
+    radial-gradient(circle at 50% 100%, transparent 62%, rgba(120, 90, 40, 0.07) 63%, rgba(120, 90, 40, 0.07) 66%, transparent 67%);
+  background-size: 28px 14px;
+  background-position: 0 0, 14px 7px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.42), 0 2px 4px rgba(0, 0, 0, 0.28), inset 0 0 0 1px rgba(120, 90, 40, 0.16), inset 0 0 40px rgba(120, 90, 40, 0.1);
+  will-change: transform;
+}
+.m-omikuji .ok-slip-edge {
+  height: 2px;
+  margin: 0 10px;
+  background: linear-gradient(90deg, transparent, var(--ok-gold-p) 18%, var(--ok-gold-p) 82%, transparent);
+  opacity: 0.75;
+}
+.m-omikuji .ok-slip-edge.top {
+  margin-bottom: 8px;
+}
+.m-omikuji .ok-slip-edge.bottom {
+  margin-top: 10px;
+}
+.m-omikuji .ok-slip-no {
+  font-family: var(--font-serif);
+  font-size: 10px;
+  letter-spacing: 0.34em;
+  color: var(--ok-red-p);
+}
+.m-omikuji .ok-slip-level {
+  font-family: var(--font-serif);
+  font-weight: 900;
+  font-size: 44px;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
+  margin-top: 2px;
+  opacity: 0;
+  transform: scale(2) rotate(-6deg);
+}
+.m-omikuji .ok-slip-level.ok-stamp {
+  animation: ok-stamp 0.55s var(--ease-bounce) both;
+}
+@keyframes ok-stamp {
+  0% { opacity: 0; transform: scale(2.2) rotate(-8deg); }
+  60% { opacity: 1; transform: scale(0.94) rotate(0); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+.m-omikuji .ok-tone-gold .ok-slip-level {
+  background: linear-gradient(120deg, var(--ok-gold-p), var(--ok-gold-p2) 45%, var(--ok-gold-p) 70%, var(--ok-gold-p2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.m-omikuji .ok-tone-red .ok-slip-level {
+  color: var(--ok-red-p);
+}
+.m-omikuji .ok-tone-ink .ok-slip-level {
+  color: var(--ok-ink-p);
+}
+.m-omikuji .ok-tone-indigo .ok-slip-level {
+  color: var(--ok-indigo-p);
+}
+.m-omikuji .ok-slip-kana {
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  color: rgba(42, 33, 24, 0.55);
+  margin-top: 2px;
+}
+.m-omikuji .ok-slip-waka {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+  font-family: var(--font-serif);
+  font-size: 13px;
+  line-height: 1.8;
+  letter-spacing: 0.1em;
+  color: var(--ok-ink-p);
+}
+.m-omikuji .ok-slip-rule {
+  height: 1px;
+  margin: 8px 24px 8px;
+  background: rgba(120, 90, 40, 0.3);
+}
+.m-omikuji .ok-slip-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 10px;
+  text-align: left;
+}
+.m-omikuji .ok-slip-item {
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+  font-size: 9.5px;
+  line-height: 1.45;
+  color: rgba(42, 33, 24, 0.86);
+}
+.m-omikuji .ok-slip-item b {
+  flex: none;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ok-red-p);
+}
+.m-omikuji .ok-slip-item i {
+  font-style: normal;
+}
+
+/* —— 历史 —— */
+.m-omikuji .ok-history {
+  min-height: 24px;
+}
+.m-omikuji .ok-history-kicker {
+  margin-top: var(--sp-4);
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--text-3);
+}
+.m-omikuji .ok-history .history {
+  margin-top: var(--sp-2);
+}
+
+/* —— 抽屉内容（用 .m-omikuji 包裹以复用变量） —— */
+.m-omikuji .ok-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 14px;
+  margin-top: 2px;
+}
+.m-omikuji .ok-item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 0 8px;
+  border-top: var(--hairline) solid var(--line);
+}
+.m-omikuji .ok-item-k {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+.m-omikuji .ok-item-v {
+  font-size: var(--fs-s);
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.m-omikuji .ok-sheet-wrap .result-kicker {
+  font-family: var(--font-serif);
+  letter-spacing: 0.28em;
+}
+.m-omikuji .ok-tone-red .result-title {
+  color: var(--ok-red);
+}
+.m-omikuji .ok-tone-ink .result-title {
+  color: var(--ok-ink);
+}
+.m-omikuji .ok-tone-indigo .result-title {
+  color: var(--ok-indigo);
+}
+.m-omikuji .ok-p {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-m);
+  line-height: 1.8;
+}
+.m-omikuji .ok-rack-hero {
+  text-align: center;
+  padding: var(--sp-2) 0 var(--sp-3);
+}
+.m-omikuji .ok-rack-num {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 64px;
+  line-height: 1;
+}
+.m-omikuji .ok-rack-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin: 0 0 var(--sp-3);
+}
+.m-omikuji .ok-howto {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.m-omikuji .ok-howto li {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: var(--sp-3);
+  align-items: center;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+.m-omikuji .ok-howto b {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: var(--hairline) solid var(--line-strong);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: var(--fs-s);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}

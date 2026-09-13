@@ -1,11 +1,4 @@
-// 占位实现：待开发。真正实现请按 docs/MODULE_GUIDE.md 的约定编写 core.js / data.js / view.js。
-import { getModuleMeta } from '../list.js';
+// 六爻 · 模块入口。元数据见 ../list.js。
+import { mount } from './view.js';
 
-export default {
-  id: 'liuyao',
-  mount(container, ctx) {
-    const meta = getModuleMeta('liuyao');
-    container.append(ctx.kit.placeholder(meta.glyph, meta.title + ' · 建设中', meta.subtitle));
-    return () => {};
-  },
-};
+export default { id: 'liuyao', mount };

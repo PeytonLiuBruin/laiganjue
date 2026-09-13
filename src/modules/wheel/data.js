@@ -46,7 +46,7 @@ export const PRESETS = [
     id: 'fortune',
     name: '今日运势',
     seal: null, // 用每项自己的印
-    hint: '摇一摇手机，或在转盘上拨一下',
+    hint: '心里想着今天，拨一下',
     palette: 'gold',
     items: [
       { label: '大吉', seal: '大吉', tone: 'good', note: '万事顺遂之象。今天遇见的好运不必客气，笑着接住就是；别忘了顺手也分一点给身边的人。' },

@@ -1,1 +1,373 @@
-/* wheel 模块样式：所有选择器必须以 .m-wheel 开头 */
+/* 转盘 模块样式：所有选择器以 .m-wheel 开头（抽屉元素也会被加上 .m-wheel 类） */
+.m-wheel .wh-top .chips {
+  padding: 2px 2px 6px;
+  -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 88%, transparent 100%);
+}
+.m-wheel .chips.locked,
+.m-wheel .wh-saved.locked {
+  pointer-events: none;
+  opacity: 0.5;
+}
+.m-wheel .wh-stage {
+  min-height: 428px;
+}
+
+/* —— 转盘框：指针 + 转盘 —— */
+.m-wheel .wh-frame {
+  position: relative;
+  width: min(330px, calc(100vw - 60px));
+  aspect-ratio: 1;
+  margin-top: 16px;
+}
+.m-wheel .wh-wrap {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  cursor: grab;
+}
+.m-wheel .wh-wrap:active {
+  cursor: grabbing;
+}
+/* 光晕：旋转时按速度变亮 */
+.m-wheel .wh-halo {
+  position: absolute;
+  inset: -14%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow) 0%, transparent 68%);
+  opacity: 0.32;
+  transition: opacity 0.4s ease-out;
+  pointer-events: none;
+}
+/* 底座：阴影 + 一圈金细线 */
+.m-wheel .wh-bezel {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48), 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 0 1px var(--line-strong);
+  background: radial-gradient(circle, transparent 92%, var(--bg-3) 100%);
+  pointer-events: none;
+}
+[data-theme='paper'] .m-wheel .wh-bezel,
+[data-theme='celadon'] .m-wheel .wh-bezel {
+  box-shadow: 0 14px 34px rgba(60, 40, 20, 0.22), 0 2px 6px rgba(60, 40, 20, 0.12), inset 0 0 0 1px var(--line-strong);
+}
+/* 旋转时外圈掠过一道光 */
+.m-wheel .wh-bezel::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 62%, var(--glow) 82%, transparent 100%);
+  -webkit-mask: radial-gradient(circle, transparent 93%, #000 94%);
+  mask: radial-gradient(circle, transparent 93%, #000 94%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.m-wheel .wh-wrap.spinning .wh-bezel::after {
+  opacity: 1;
+  animation: wh-streak 0.8s linear infinite;
+}
+@keyframes wh-streak {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 转子：唯一被旋转的元素 */
+.m-wheel .wh-rotor {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+.m-wheel .wh-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.m-wheel .wh-rim {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.m-wheel .wh-rim-in {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 0.8;
+}
+.m-wheel .wh-seg {
+  stroke: var(--bg);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  transition: opacity 0.4s ease, transform 0.55s var(--ease-spring), stroke 0.3s;
+}
+.m-wheel .wh-seg.hit {
+  transform: scale(1.045);
+  stroke: var(--accent-2);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 7px var(--glow));
+}
+.m-wheel .wh-svg.revealed .wh-seg:not(.hit),
+.m-wheel .wh-svg.revealed .wh-label:not(.hit) {
+  opacity: 0.42;
+}
+.m-wheel .wh-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.m-wheel .wh-label.dim {
+  opacity: 0.55;
+  font-weight: 500;
+}
+.m-wheel .wh-label.hit {
+  font-weight: 900;
+}
+.m-wheel .wh-dot {
+  fill: var(--accent-2);
+}
+.m-wheel .wh-dot.minor {
+  fill: var(--accent);
+  opacity: 0.7;
+}
+
+/* 中心圆帽：不随盘转 */
+.m-wheel .wh-cap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 25%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 35% 30%, var(--accent-2), var(--accent) 55%, var(--accent-3));
+  box-shadow: 0 6px 18px var(--glow), 0 2px 4px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.55), inset 0 -3px 6px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+.m-wheel .wh-cap-ring {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-ink);
+  opacity: 0.28;
+}
+.m-wheel .wh-cap-text {
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(22px, 9vw, 34px);
+  line-height: 1;
+  color: var(--accent-ink);
+  letter-spacing: 0;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.m-wheel .wh-cap.pulse {
+  animation: wh-pulse 0.75s var(--ease-bounce) both;
+}
+@keyframes wh-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1.16);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* 指针（拨片）：顶部 12 点，钉在上端，过界时抖一下 */
+.m-wheel .wh-flapper {
+  position: absolute;
+  left: 50%;
+  top: -18px;
+  width: 44px;
+  height: 56px;
+  margin-left: -22px;
+  padding: 0;
+  display: grid;
+  place-items: start center;
+  transform-origin: 50% 8px;
+  z-index: 3;
+  cursor: pointer;
+}
+.m-wheel .wh-flapper svg {
+  width: 28px;
+  height: 40px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+}
+[data-theme='paper'] .m-wheel .wh-flapper svg,
+[data-theme='celadon'] .m-wheel .wh-flapper svg {
+  filter: drop-shadow(0 4px 6px rgba(60, 40, 20, 0.3));
+}
+.m-wheel .wh-flap-body {
+  fill: var(--seal);
+  stroke: var(--accent-2);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.m-wheel .wh-flap-eye {
+  fill: var(--accent-2);
+  opacity: 0.95;
+}
+
+/* —— 自定义编辑区 —— */
+.m-wheel .wh-custom {
+  margin-top: var(--sp-3);
+}
+.m-wheel .wh-custom-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.m-wheel .wh-custom-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-l);
+  letter-spacing: 0.12em;
+}
+.m-wheel .wh-saved {
+  margin-top: var(--sp-3);
+}
+.m-wheel .wh-saved .chips {
+  justify-content: flex-start;
+}
+.m-wheel .wh-textarea {
+  min-height: 132px;
+  resize: vertical;
+  font-family: var(--font-serif);
+  line-height: 1.8;
+  letter-spacing: 0.04em;
+}
+.m-wheel .wh-custom-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.m-wheel .wh-count {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+}
+.m-wheel .wh-count.ok {
+  color: var(--success);
+}
+.m-wheel .wh-custom-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+.m-wheel .wh-custom-actions .btn {
+  flex: 1;
+}
+.m-wheel .wh-custom-actions .wh-del {
+  flex: 0 0 auto;
+  color: var(--danger);
+}
+.m-wheel .wh-history {
+  min-height: 24px;
+}
+
+/* —— 抽屉内容（抽屉元素带 .m-wheel 类）—— */
+/* 「再转一次的理由」有 7 个字，放宽结果卡的标签列 */
+.m-wheel .result-section:not(.stack) {
+  grid-template-columns: 6.9em 1fr;
+}
+.m-wheel .result-section-label {
+  letter-spacing: 0.1em;
+}
+.m-wheel .wh-remove {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.m-wheel .wh-remove-hint {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+}
+.m-wheel .wh-removed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  color: var(--text-2);
+}
+.m-wheel .wh-cands-tip {
+  font-size: var(--fs-s);
+  color: var(--text-3);
+  margin-bottom: var(--sp-3);
+  letter-spacing: 0.04em;
+}
+.m-wheel .wh-cands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.m-wheel .wh-cand {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--r-m);
+  border: var(--hairline) solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  transition: opacity var(--dur-fast), background var(--dur-fast), border-color var(--dur-fast);
+}
+.m-wheel .wh-cand:active {
+  background: var(--surface-2);
+}
+.m-wheel .wh-cand.off {
+  opacity: 0.5;
+}
+.m-wheel .wh-cand.off .wh-cand-label {
+  text-decoration: line-through;
+}
+.m-wheel .wh-cand-mark {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: var(--hairline) solid var(--accent);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  line-height: 1;
+}
+.m-wheel .wh-cand.off .wh-cand-mark {
+  border-color: var(--line-strong);
+}
+.m-wheel .wh-cand-body {
+  min-width: 0;
+  flex: 1;
+}
+.m-wheel .wh-cand-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.m-wheel .wh-cand-note {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--text-3);
+}

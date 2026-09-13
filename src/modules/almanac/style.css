@@ -1,1 +1,729 @@
-/* almanac 模块样式：所有选择器必须以 .m-almanac 开头 */
+/* 黄历 模块样式：所有选择器以 .m-almanac 开头。
+   纸面（.al-page / .al-stub）在五套皮肤下都是暖白纸 + 墨字（--paper / --paper-ink），
+   纸上印刷的红绿金是"材质色"，固定在下面这几个模块变量里；纸面以外一律用皮肤变量。 */
+.m-almanac {
+  --al-red: #b5352b;
+  --al-green: #2f7a58;
+  --al-gold: #8d6b22;
+  --al-shade: rgba(60, 40, 20, 0.07);
+  --al-shade-2: rgba(60, 40, 20, 0.16);
+  --al-shade-3: rgba(60, 40, 20, 0.3);
+  --al-metal-1: #efd58a;
+  --al-metal-2: #a17c2a;
+}
+
+/* —— 顶部日期条 —— */
+.m-almanac .al-datebar {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto 44px;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.m-almanac .al-arrow {
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 50%;
+}
+.m-almanac .al-arrow > span {
+  display: none;
+}
+.m-almanac .al-arrow svg {
+  width: 20px;
+  height: 20px;
+}
+.m-almanac .al-prev svg {
+  transform: rotate(180deg);
+}
+.m-almanac .al-date {
+  min-height: 44px;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: var(--fs-m);
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+.m-almanac .al-date::-webkit-date-and-time-value {
+  text-align: center;
+}
+.m-almanac .al-today {
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+}
+
+/* —— 舞台：挂历 —— */
+.m-almanac .al-stage {
+  min-height: 0;
+  perspective: 1100px;
+  perspective-origin: 50% 18%;
+}
+.m-almanac .al-stage .stage-floor {
+  bottom: 0;
+  height: 30%;
+  opacity: 0.6;
+}
+.m-almanac .al-wall {
+  position: relative;
+  padding: 44px 18px 40px;
+  transform-style: preserve-3d;
+}
+/* 木条挂板 */
+.m-almanac .al-board {
+  position: absolute;
+  top: 16px;
+  left: 22%;
+  right: 22%;
+  height: 16px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--wood-1), var(--wood-2));
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+.m-almanac .al-board::before,
+.m-almanac .al-board::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--al-metal-1), var(--al-metal-2) 70%);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+.m-almanac .al-board::before {
+  left: 8px;
+}
+.m-almanac .al-board::after {
+  right: 8px;
+}
+/* 铁环：从挂板穿过纸头的孔 */
+.m-almanac .al-ring {
+  position: absolute;
+  top: 24px;
+  width: 14px;
+  height: 30px;
+  border: 3px solid;
+  border-color: var(--al-metal-1) var(--al-metal-2) var(--al-metal-2) var(--al-metal-1);
+  border-radius: 8px;
+  z-index: 4;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  transition: transform 0.5s var(--ease-out);
+}
+.m-almanac .al-ring-l {
+  left: calc(26% + 1px);
+}
+.m-almanac .al-ring-r {
+  right: calc(26% + 1px);
+}
+.m-almanac .al-hang {
+  position: relative;
+}
+/* 纸头：带孔的固定纸条，撕页时留在环上 */
+.m-almanac .al-stub {
+  position: relative;
+  z-index: 2;
+  height: 26px;
+  margin: 0 2px;
+  border-radius: 4px 4px 0 0;
+  border-bottom: 1px dashed var(--al-shade-3);
+  background-image: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform-origin: 50% 0;
+}
+.m-almanac .al-hole {
+  position: absolute;
+  top: 7px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(20, 12, 6, 0.55);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+.m-almanac .al-hole-l {
+  left: 26%;
+}
+.m-almanac .al-hole-r {
+  right: 26%;
+}
+/* 页面容器：高度随当前页过渡 */
+.m-almanac .al-holder {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: height var(--dur-slow) var(--ease-out);
+}
+.m-almanac .al-stack {
+  position: absolute;
+  inset: 0 2px;
+  pointer-events: none;
+  transition: transform 0.45s var(--ease-out);
+}
+.m-almanac .al-sheet {
+  position: absolute;
+  inset: 0;
+  border-radius: 0 0 4px 4px;
+  background: var(--paper);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.22);
+}
+.m-almanac .al-sheet.s1 {
+  transform: translate(3px, 4px) rotate(0.5deg);
+  filter: brightness(0.96);
+}
+.m-almanac .al-sheet.s2 {
+  transform: translate(-3px, 8px) rotate(-0.6deg);
+  filter: brightness(0.9);
+}
+/* 当前一页 */
+.m-almanac .al-page {
+  position: relative;
+  z-index: 3;
+  margin: 0 2px;
+  padding: 12px 14px 14px;
+  border-radius: 0 0 4px 4px;
+  transform-origin: 50% 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform;
+  background-image: radial-gradient(120% 90% at 50% 0%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 60%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  line-height: 1.45;
+}
+[data-theme='paper'] .m-almanac .al-page,
+[data-theme='celadon'] .m-almanac .al-page {
+  box-shadow: 0 10px 24px rgba(60, 40, 20, 0.18), 0 0 0 1px rgba(60, 40, 20, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+[data-theme='paper'] .m-almanac .al-sheet,
+[data-theme='celadon'] .m-almanac .al-sheet,
+[data-theme='paper'] .m-almanac .al-stub,
+[data-theme='celadon'] .m-almanac .al-stub {
+  box-shadow: 0 4px 12px rgba(60, 40, 20, 0.14), 0 0 0 1px rgba(60, 40, 20, 0.08);
+}
+.m-almanac .al-page.leaving {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* 纸面排版 */
+.m-almanac .al-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  opacity: 0.78;
+  white-space: nowrap;
+}
+.m-almanac .al-tags {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.m-almanac .al-tags.al-next {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+.m-almanac .al-tag {
+  font-style: normal;
+  color: var(--al-red);
+  border: 1px solid var(--al-red);
+  border-radius: 3px;
+  padding: 0 5px;
+  font-size: 10px;
+  line-height: 16px;
+  letter-spacing: 0.12em;
+}
+.m-almanac .al-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 2px 0 10px;
+  border-bottom: 1px solid var(--al-shade-2);
+}
+.m-almanac .al-num {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 84px;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  min-width: 92px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.m-almanac .al-num.red {
+  color: var(--al-red);
+}
+.m-almanac .al-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding-right: 34px;
+}
+.m-almanac .al-meta b {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+}
+.m-almanac .al-meta span {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  opacity: 0.8;
+}
+.m-almanac .al-meta .al-meta-sub {
+  font-size: 11px;
+  opacity: 0.6;
+}
+/* 印章：吉 / 平 / 慎 / 忌 */
+.m-almanac .al-stamp {
+  position: absolute;
+  right: -2px;
+  top: 4px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--al-red);
+  border-radius: 6px;
+  color: var(--al-red);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 19px;
+  line-height: 1;
+  transform: rotate(-12deg) scale(0);
+  opacity: 0;
+  mix-blend-mode: multiply;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+.m-almanac .al-stamp.show {
+  animation: al-stamp 0.55s var(--ease-bounce) both;
+}
+@keyframes al-stamp {
+  0% {
+    transform: rotate(-12deg) scale(2.4);
+    opacity: 0;
+  }
+  60% {
+    transform: rotate(-12deg) scale(0.94);
+    opacity: 0.95;
+  }
+  100% {
+    transform: rotate(-12deg) scale(1);
+    opacity: 0.88;
+  }
+}
+
+/* 宜 / 忌 */
+.m-almanac .al-yiji {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+.m-almanac .al-col {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  min-width: 0;
+}
+.m-almanac .al-mark {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  background: var(--al-green);
+}
+.m-almanac .al-col.ji .al-mark {
+  background: var(--al-red);
+}
+.m-almanac .al-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+  padding-top: 1px;
+}
+.m-almanac .al-chip {
+  font: inherit;
+  font-size: 10.5px;
+  line-height: 18px;
+  padding: 0 6px;
+  border-radius: 3px;
+  border: 1px solid var(--al-shade-2);
+  background: var(--al-shade);
+  color: inherit;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.m-almanac .al-chip.ji {
+  border-color: rgba(181, 53, 43, 0.35);
+  background: rgba(181, 53, 43, 0.07);
+  color: var(--al-red);
+}
+.m-almanac .al-chip.empty {
+  opacity: 0.5;
+}
+.m-almanac .al-page.all-bad .al-chip.ji {
+  background: var(--al-red);
+  border-color: var(--al-red);
+  color: #fff;
+}
+
+/* 冲煞 / 值神 / 建除 / 星宿 / 纳音 / 彭祖 */
+.m-almanac .al-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--al-shade-2);
+}
+.m-almanac .al-cell {
+  min-width: 0;
+}
+.m-almanac .al-cell i {
+  display: block;
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  opacity: 0.55;
+}
+.m-almanac .al-cell b {
+  display: block;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+  white-space: pre-line;
+}
+.m-almanac .al-cell.good b {
+  color: var(--al-green);
+}
+.m-almanac .al-cell.bad b {
+  color: var(--al-red);
+}
+.m-almanac .al-cell.pz b {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* 吉神方位 */
+.m-almanac .al-pos {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  margin-top: 10px;
+  padding: 8px 0;
+  border-top: 1px dashed var(--al-shade-2);
+  border-bottom: 1px dashed var(--al-shade-2);
+  text-align: center;
+}
+.m-almanac .al-pos-item i {
+  display: block;
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.15em;
+  opacity: 0.55;
+}
+.m-almanac .al-pos-item b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--al-gold);
+  white-space: nowrap;
+}
+
+/* 时辰吉凶 */
+.m-almanac .al-hours {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2px;
+  margin-top: 8px;
+}
+.m-almanac .al-hour {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 0 2px;
+  border-radius: 4px;
+}
+.m-almanac .al-hour b {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12.5px;
+  line-height: 1.2;
+}
+.m-almanac .al-hour i {
+  font-style: normal;
+  font-size: 9px;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+.m-almanac .al-hour.good i {
+  color: var(--al-green);
+}
+.m-almanac .al-hour.bad i {
+  color: var(--al-red);
+}
+.m-almanac .al-hour.now {
+  background: rgba(141, 107, 34, 0.14);
+  box-shadow: inset 0 0 0 1px var(--al-gold);
+}
+.m-almanac .al-hour.now::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--al-red);
+  animation: al-pulse 1.8s ease-in-out infinite;
+}
+@keyframes al-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.45;
+  }
+}
+
+/* 每日一言 */
+.m-almanac .al-quote {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--al-shade-2);
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  letter-spacing: 0.08em;
+  line-height: 1.7;
+}
+.m-almanac .al-quote small {
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  opacity: 0.55;
+}
+
+/* —— 舞台之外：皮肤色 —— */
+.m-almanac .al-recent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--sp-3);
+}
+.m-almanac .al-recent-label {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  letter-spacing: 0.15em;
+}
+.m-almanac .al-recent-chip {
+  min-height: 30px;
+  padding: 0 12px;
+  font-size: var(--fs-xs);
+}
+
+/* —— 详解抽屉里的节点（抽屉挂在 body 上，内容用 .m-almanac 包裹）—— */
+.m-almanac .al-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.m-almanac .al-rating-label {
+  font-family: var(--font-display);
+  color: var(--accent);
+  letter-spacing: 0.2em;
+  font-size: var(--fs-m);
+}
+.m-almanac .al-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.m-almanac .al-term {
+  min-height: 30px;
+  padding: 0 11px;
+  border-radius: var(--r-pill);
+  border: var(--hairline) solid var(--line);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--fs-s);
+  letter-spacing: 0.04em;
+  transition: transform var(--dur-fast);
+}
+.m-almanac .al-term:active {
+  transform: scale(0.95);
+}
+.m-almanac .al-term.ji {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.m-almanac .al-term.jishen {
+  color: var(--accent);
+  border-color: var(--line-strong);
+}
+.m-almanac .al-term.xiongsha {
+  color: var(--text-3);
+}
+.m-almanac .al-term.pick {
+  color: var(--accent);
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  font-family: var(--font-display);
+  letter-spacing: 0.1em;
+}
+.m-almanac .al-song {
+  margin-top: 6px;
+  font-family: var(--font-serif);
+  font-size: var(--fs-xs);
+  line-height: 1.9;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+.m-almanac .al-pz {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.m-almanac .al-pz b {
+  display: block;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.1em;
+}
+.m-almanac .al-pz span {
+  display: block;
+  font-size: var(--fs-s);
+  color: var(--text-2);
+}
+.m-almanac .al-hgrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.m-almanac .al-hcell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 7px 2px 6px;
+  border: var(--hairline) solid var(--line);
+  border-radius: var(--r-s);
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+  min-height: 40px;
+}
+.m-almanac .al-hcell b {
+  font-family: var(--font-display);
+  font-size: var(--fs-l);
+  line-height: 1.2;
+}
+.m-almanac .al-hcell span {
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.m-almanac .al-hcell i {
+  font-style: normal;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.m-almanac .al-hcell small {
+  font-size: 9px;
+  color: var(--text-3);
+  letter-spacing: 0;
+}
+.m-almanac .al-hcell.good i {
+  color: var(--success);
+}
+.m-almanac .al-hcell.bad i {
+  color: var(--danger);
+}
+.m-almanac .al-hcell.now {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--glow);
+}
+.m-almanac .al-latezi {
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+.m-almanac .al-note {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  line-height: 1.7;
+}
+.m-almanac .al-compass {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.m-almanac .al-rose {
+  width: 220px;
+  max-width: 100%;
+  height: auto;
+  color: var(--accent);
+}
+.m-almanac .al-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+.m-almanac .al-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: var(--hairline) solid var(--line);
+  color: var(--text-2);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.04em;
+}
+.m-almanac .al-legend-item b {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 600;
+}
