@@ -12,6 +12,13 @@ export const SLOT_ORNAMENT = '<path d="M24 8L27 21L40 24L27 27L24 40L21 27L8 24L
 
 export function createCardArt(kit) {
   const { h, svg } = kit;
+  // One local atlas, fetched only when this module is opened. The original
+  // vector faces remain underneath as a fully offline fallback.
+  const atlas = new Image();
+  atlas.src = 'tarot/rws-atlas.webp';
+  const fronts = new Set();
+  atlas.onload = () => { fronts.forEach((el) => el.classList.add('tr-has-image')); fronts.clear(); };
+  atlas.onerror = () => fronts.clear();
 
   function backArt() {
     return h('div', { class: 'tr-back-art' }, h('div', { class: 'tr-back-frame' }), svg(BACK_EMBLEM, { viewBox: '0 0 48 48', size: 48, strokeWidth: 1.1, cls: 'tr-back-emblem' }));
@@ -38,7 +45,11 @@ export function createCardArt(kit) {
       mid = h('div', { class: ['tr-f-mid', card.rank === 1 && 'tr-ace'] }, pips);
     }
     const bot = h('div', { class: 'tr-f-bot' }, h('div', { class: 'tr-cn' }, card.name), h('div', { class: 'tr-en' }, card.en));
-    return h('div', { class: ['tr-front-art', 'tr-suit-' + (card.suit || 'major')] }, top, mid, bot, h('span', { class: 'tr-sheen' }));
+    const index = major ? card.no : ({ wands: 22, cups: 36, swords: 50, pentacles: 64 }[card.suit] + card.rank - 1);
+    const artwork = h('div', { class: 'tr-illustration', style: { backgroundImage: "url('tarot/rws-atlas.webp')", backgroundPosition: `${index % 8 / 7 * 100}% ${Math.floor(index / 8) / 9 * 100}%` }, attrs: { 'aria-hidden': 'true' } });
+    const front = h('div', { class: ['tr-front-art', 'tr-suit-' + (card.suit || 'major')], dataset: { card: card.id } }, top, mid, artwork, bot, h('span', { class: 'tr-sheen' }));
+    if (atlas.complete && atlas.naturalWidth) front.classList.add('tr-has-image'); else fronts.add(front);
+    return front;
   }
 
   /** 一张可翻转的牌：外层定位 / 中层逆位旋转 / 内层翻面 */
@@ -47,7 +58,7 @@ export function createCardArt(kit) {
     const front = h('div', { class: 'tr-face tr-front' }, frontArt(card));
     const inner = h('div', { class: 'tr-inner' }, back, front);
     const spin = h('div', { class: 'tr-spin' }, inner);
-    const el = h('div', { class: 'tr-card', attrs: { role: 'button', 'aria-label': '塔罗牌，点击翻开' } }, spin);
+    const el = h('div', { class: 'tr-card', attrs: { role: 'button', tabindex: '0', 'aria-label': '塔罗牌，点击或拖动翻开' } }, spin);
     return { el, spin, inner, front, off: null };
   }
 

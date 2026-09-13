@@ -1,0 +1,392 @@
+{
+  "M0": {
+    "index": 0,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/1.jpg",
+    "name": "the-fool"
+  },
+  "M1": {
+    "index": 1,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/2.jpg",
+    "name": "the-magician"
+  },
+  "M3": {
+    "index": 3,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/4.jpg",
+    "name": "the-empress"
+  },
+  "M4": {
+    "index": 4,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/5.jpg",
+    "name": "the-emperor"
+  },
+  "M2": {
+    "index": 2,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/3.jpg",
+    "name": "the-high-priestess"
+  },
+  "M5": {
+    "index": 5,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/6.jpg",
+    "name": "the-hierophant"
+  },
+  "M6": {
+    "index": 6,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/7.jpg",
+    "name": "the-lovers"
+  },
+  "M7": {
+    "index": 7,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/8.jpg",
+    "name": "the-chariot"
+  },
+  "M11": {
+    "index": 11,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/12.jpg",
+    "name": "justice"
+  },
+  "M14": {
+    "index": 14,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/15.jpg",
+    "name": "temperance"
+  },
+  "M8": {
+    "index": 8,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/9.jpg",
+    "name": "strength"
+  },
+  "M9": {
+    "index": 9,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/10.jpg",
+    "name": "the-hermit"
+  },
+  "M10": {
+    "index": 10,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/11.jpg",
+    "name": "wheel-of-fortune"
+  },
+  "M12": {
+    "index": 12,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/13.jpg",
+    "name": "the-hanged-man"
+  },
+  "M13": {
+    "index": 13,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/14.jpg",
+    "name": "death"
+  },
+  "M15": {
+    "index": 15,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/16.jpg",
+    "name": "the-devil"
+  },
+  "M16": {
+    "index": 16,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/17.jpg",
+    "name": "the-tower"
+  },
+  "M17": {
+    "index": 17,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/18.jpg",
+    "name": "the-star"
+  },
+  "M18": {
+    "index": 18,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/19.jpg",
+    "name": "the-moon"
+  },
+  "M19": {
+    "index": 19,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/20.jpg",
+    "name": "the-sun"
+  },
+  "M20": {
+    "index": 20,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/21.jpg",
+    "name": "judgement"
+  },
+  "M21": {
+    "index": 21,
+    "url": "https://tarot-api.s3.amazonaws.com/images/major/22.jpg",
+    "name": "the-world"
+  },
+  "S1": {
+    "index": 50,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/1.jpg",
+    "name": "ace-of-swords"
+  },
+  "S2": {
+    "index": 51,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/2.jpg",
+    "name": "two-of-swords"
+  },
+  "S3": {
+    "index": 52,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/3.jpg",
+    "name": "three-of-swords"
+  },
+  "S4": {
+    "index": 53,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/4.jpg",
+    "name": "four-of-swords"
+  },
+  "S5": {
+    "index": 54,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/5.jpg",
+    "name": "five-of-swords"
+  },
+  "S6": {
+    "index": 55,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/6.jpg",
+    "name": "six-of-swords"
+  },
+  "S7": {
+    "index": 56,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/7.jpg",
+    "name": "seven-of-swords"
+  },
+  "S8": {
+    "index": 57,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/8.jpg",
+    "name": "eight-of-swords"
+  },
+  "S9": {
+    "index": 58,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/9.jpg",
+    "name": "nine-of-swords"
+  },
+  "S10": {
+    "index": 59,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/10.jpg",
+    "name": "ten-of-swords"
+  },
+  "S11": {
+    "index": 60,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/11.jpg",
+    "name": "page-of-swords"
+  },
+  "S12": {
+    "index": 61,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/12.jpg",
+    "name": "knight-of-swords"
+  },
+  "S13": {
+    "index": 62,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/13.jpg",
+    "name": "queen-of-swords"
+  },
+  "S14": {
+    "index": 63,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/swords/14.jpg",
+    "name": "king-of-swords"
+  },
+  "C1": {
+    "index": 36,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/1.jpg",
+    "name": "ace-of-cups"
+  },
+  "C2": {
+    "index": 37,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/2.jpg",
+    "name": "two-of-cups"
+  },
+  "C3": {
+    "index": 38,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/3.jpg",
+    "name": "three-of-cups"
+  },
+  "C4": {
+    "index": 39,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/4.jpg",
+    "name": "four-of-cups"
+  },
+  "C5": {
+    "index": 40,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/5.jpg",
+    "name": "five-of-cups"
+  },
+  "C6": {
+    "index": 41,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/6.jpg",
+    "name": "six-of-cups"
+  },
+  "C7": {
+    "index": 42,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/7.jpg",
+    "name": "seven-of-cups"
+  },
+  "C8": {
+    "index": 43,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/8.jpg",
+    "name": "eight-of-cups"
+  },
+  "C9": {
+    "index": 44,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/9.jpg",
+    "name": "nine-of-cups"
+  },
+  "C10": {
+    "index": 45,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/10.jpg",
+    "name": "ten-of-cups"
+  },
+  "C11": {
+    "index": 46,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/11.jpg",
+    "name": "page-of-cups"
+  },
+  "C12": {
+    "index": 47,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/12.jpg",
+    "name": "knight-of-cups"
+  },
+  "C13": {
+    "index": 48,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/13.jpg",
+    "name": "queen-of-cups"
+  },
+  "C14": {
+    "index": 49,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/cups/14.jpg",
+    "name": "king-of-cups"
+  },
+  "W1": {
+    "index": 22,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/1.jpg",
+    "name": "ace-of-wands"
+  },
+  "W2": {
+    "index": 23,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/2.jpg",
+    "name": "two-of-wands"
+  },
+  "W3": {
+    "index": 24,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/3.jpg",
+    "name": "three-of-wands"
+  },
+  "W4": {
+    "index": 25,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/4.jpg",
+    "name": "four-of-wands"
+  },
+  "W5": {
+    "index": 26,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/5.jpg",
+    "name": "five-of-wands"
+  },
+  "W6": {
+    "index": 27,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/6.jpg",
+    "name": "six-of-wands"
+  },
+  "W7": {
+    "index": 28,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/7.jpg",
+    "name": "seven-of-wands"
+  },
+  "W8": {
+    "index": 29,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/8.jpg",
+    "name": "eight-of-wands"
+  },
+  "W9": {
+    "index": 30,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/9.jpg",
+    "name": "nine-of-wands"
+  },
+  "W10": {
+    "index": 31,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/10.jpg",
+    "name": "ten-of-wands"
+  },
+  "W11": {
+    "index": 32,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/11.jpg",
+    "name": "page-of-wands"
+  },
+  "W12": {
+    "index": 33,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/12.jpg",
+    "name": "knight-of-wands"
+  },
+  "W13": {
+    "index": 34,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/13.jpg",
+    "name": "queen-of-wands"
+  },
+  "W14": {
+    "index": 35,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/wands/14.jpg",
+    "name": "king-of-wands"
+  },
+  "P1": {
+    "index": 64,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/1.jpg",
+    "name": "ace-of-pentacles"
+  },
+  "P2": {
+    "index": 65,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/2.jpg",
+    "name": "two-of-pentacles"
+  },
+  "P3": {
+    "index": 66,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/3.jpg",
+    "name": "three-of-pentacles"
+  },
+  "P4": {
+    "index": 67,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/4.jpg",
+    "name": "four-of-pentacles"
+  },
+  "P5": {
+    "index": 68,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/5.jpg",
+    "name": "five-of-pentacles"
+  },
+  "P6": {
+    "index": 69,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/6.jpg",
+    "name": "six-of-pentacles"
+  },
+  "P7": {
+    "index": 70,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/7.jpg",
+    "name": "seven-of-pentacles"
+  },
+  "P8": {
+    "index": 71,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/8.jpg",
+    "name": "eight-of-pentacles"
+  },
+  "P9": {
+    "index": 72,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/9.jpg",
+    "name": "nine-of-pentacles"
+  },
+  "P10": {
+    "index": 73,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/10.jpg",
+    "name": "ten-of-pentacles"
+  },
+  "P11": {
+    "index": 74,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/11.jpg",
+    "name": "page-of-pentacles"
+  },
+  "P12": {
+    "index": 75,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/12.jpg",
+    "name": "knight-of-pentacles"
+  },
+  "P13": {
+    "index": 76,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/13.jpg",
+    "name": "queen-of-pentacles"
+  },
+  "P14": {
+    "index": 77,
+    "url": "https://tarot-api.s3.amazonaws.com/images/minor/pentacles/14.jpg",
+    "name": "king-of-pentacles"
+  }
+}

@@ -48,6 +48,7 @@ const onlyModulesPlugin = (allowed) => ({
 
 export async function buildAll({ out = outDir, min = minify, only = null } = {}) {
   await mkdir(out, { recursive: true });
+  await mkdir(path.join(out, 'tarot'), { recursive: true });
   const plugins = only && only.length ? [onlyModulesPlugin(new Set(only))] : [];
   const [js, css] = await Promise.all([
     build({
@@ -123,6 +124,8 @@ export async function buildAll({ out = outDir, min = minify, only = null } = {})
   };
   await Promise.all([
     writeFile(path.join(out, 'index.html'), full),
+    copyFile(path.join(root, 'assets/tarot/rws-atlas.webp'), path.join(out, 'tarot/rws-atlas.webp')),
+    copyFile(path.join(root, 'assets/tarot/ATTRIBUTION.md'), path.join(out, 'tarot/ATTRIBUTION.md')),
     writeFile(path.join(out, 'artifact.html'), artifact),
     writeFile(path.join(out, 'manifest.webmanifest'), JSON.stringify(manifest, null, 2)),
     ...[180, 192, 512].map((s) => copyFile(path.join(root, `assets/icon-${s}.png`), path.join(out, `icon-${s}.png`)).catch(() => {})),
