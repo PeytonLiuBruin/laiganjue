@@ -202,7 +202,7 @@ export function mount(container, ctx) {
     shuffleBtn.disabled = busy || flippingAll || started;
     resetBtn.hidden = !started || done;
     resetBtn.disabled = busy || flippingAll;
-    qInput.disabled = busy || flippingAll;
+    qInput.disabled = busy || flippingAll || started;
     spreadChips.el.querySelectorAll('button').forEach((b) => { b.disabled = busy || flippingAll; });
   }
 

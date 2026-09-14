@@ -14,6 +14,7 @@ export function mount(container, ctx) {
   let suppressClickUntil = 0;
   let phase = 'idle', busy = false, held = false, lot = null, reading = null;
   let question = String(storage.get('question', '') || '').slice(0, 60);
+  let asked = question;
   let history = storage.get('history', []).filter((x) => getLot(x.no)).slice(-8);
   // 舞台高度按签的飞行高度定：竹签抛到最高点仍在框内，顶部不留大块空白。
   const st = stage({ cls: 'qn-stage', badge: IDLE_BADGE, minHeight: 384 });
@@ -61,7 +62,7 @@ export function mount(container, ctx) {
     bundle.feed(m);
     if (moving) shake(20, { continuous: true });
   });
-  function lock(value) { busy = value; primary.disabled = value; q.disabled = value; vessel.disabled = value || phase !== 'idle'; picked.disabled = value; }
+  function lock(value) { busy = value; primary.disabled = value; q.disabled = value || phase !== 'idle'; vessel.disabled = value || phase !== 'idle'; picked.disabled = value; }
   function setGuide(gesture, text) {
     const glyph = guide.firstChild;
     if (!glyph.classList.contains(gesture)) { glyph.className = 'hint-glyph ' + gesture; kit.clear(glyph); glyph.append(kit.icon('g-' + gesture)); }
@@ -70,6 +71,7 @@ export function mount(container, ctx) {
 
   async function shake(intensity = 20, { continuous = false, replay = true } = {}) {
     if (busy || reading || phase !== 'idle' || !ritual.alive) return;
+    asked = question;
     lock(true); ritual.clear();
     if (!await ritual.focus()) return;
     ritual.step(1); setGuide('shake', continuous ? SENSOR_HINT : SHAKING_HINT); st.setBadge(SHAKING_BADGE);
@@ -99,11 +101,12 @@ export function mount(container, ctx) {
     paper.getAnimations().forEach((a) => a.cancel()); seal.classList.add('show');
     sound.play('chime'); haptic.success(); st.setBadge(`${lotLabel(lot)} · ${lot.level}`);
     const fated = isFated(history, lot.no);
-    history = history.concat({ no: lot.no, question, date: ctx.rng.dateKey() }).slice(-8); storage.set('history', history); renderHistory();
+    history = history.concat({ no: lot.no, question: asked, date: ctx.rng.dateKey() }).slice(-8); storage.set('history', history); renderHistory();
     if (fated) kit.toast(FATED_TOAST);
     if (!await ritual.pause(gentle || instant ? 80 : 900)) return;
     phase = 'paper'; primary.setLabel(AGAIN_LABEL); lock(false); setGuide('tap', REVEALED_HINT);
-    ritual.reveal({ kicker: `${lotLabel(lot)} · ${lot.title}`, title: lot.level + '签', text: lot.gist, onRead: () => read(lot, question) });
+    const result = lot, resultQuestion = asked;
+    ritual.reveal({ kicker: `${lotLabel(lot)} · ${lot.title}`, title: lot.level + '签', text: lot.gist, onRead: () => read(result, resultQuestion) });
   }
   function read(value, asked = '', { review = false } = {}) {
     if (busy || reading || !ritual.alive) return;

@@ -3,23 +3,12 @@
 import { directionAt, mountainAt, mingGua, guaInfo, houseMap, annualStars, toGrid, normalizeHeading, angleDiff, splitByTone, starFor, luckyDirections, compassShareText } from './core.js';
 import { UI, STARS8, GROUP_TEXT } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
-import { createModelSlot, registerModel } from '../../ui/model-slot.js';
-import { builtInModel } from '../../ui/models/index.js';
+import { createModelSlot } from '../../ui/model-slot.js';
 
 const YEAR_NOW = new Date().getFullYear();
 const TONE_LABEL = { great: '大吉', good: '吉', warn: '小凶', bad: '凶' };
 const RECORD_DRIFT = 12; // 转离已记录方位超过此角度，记录作废
 const MODEL_ID = 'fengshui.compass';
-
-// 内置罗盘渲染器一创建就观察自身可见性，而 createModelSlot 是先建元素、后由模块挂到舞台：
-// 元素在「未入文档」时被观察，首条记录必是「不可见」，页面繁忙时会与紧随的「可见」合并派发，
-// 渲染器只读第一条，画布便一直空着（深色皮肤下约一半概率）。用同名工厂包一层，
-// 先把元素挂进当前舞台再交给内置渲染器，观察到的第一条记录就是「可见」，问题从根上消失。
-let pendingScene = null;
-function mountCompassModel(el, ctx) {
-  if (pendingScene) { pendingScene.append(el); pendingScene = null; }
-  return builtInModel(MODEL_ID)?.(el, ctx) || null;
-}
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
@@ -103,7 +92,7 @@ export function mount(container, ctx) {
   let target = null;
   let raf = 0;
   ctx.motion.onHeading(({ heading: hd }) => {
-    if (tab !== 'compass' || hd == null) return;
+    if (tab !== 'compass' || hd == null || resultSheet) return;
     setLive(true);
     target = normalizeHeading(hd);
     if (!raf) raf = requestAnimationFrame(smooth);
@@ -131,6 +120,7 @@ export function mount(container, ctx) {
   const guaPane = h('div', { class: 'fs-pane' }, h('div', { class: 'field-row' }, field('出生年', yearSel), field('性别', genderChips.el)), h('p', { class: 'fs-note' }, UI.lichun), guaCard, h('p', { class: 'fs-grid-note' }, UI.northUp), guaGrid);
 
   function setProfile(y, g) {
+    unrecord();
     birthYear = y;
     gender = g;
     gua = mingGua(birthYear, gender);
@@ -204,10 +194,7 @@ export function mount(container, ctx) {
     },
   });
   container.append(ritual.progress, tabBar.el, h('div', { class: 'mt-3' }, st.el), paneWrap, kit.actionBar(primaryBtn), ritual.receipt);
-  registerModel(MODEL_ID, mountCompassModel);
-  pendingScene = st.scene;
   slot = createModelSlot(ctx, { id: MODEL_ID, label: '罗盘', glyph: '北', hint: UI.compassHint });
-  pendingScene = null;
   slot.el.classList.add('fs-slot');
   if (!slot.el.isConnected) st.scene.append(slot.el); // 没有内置模型时的占位块照常挂上
   // 屏幕拨动罗盘 = 手动转罗盘

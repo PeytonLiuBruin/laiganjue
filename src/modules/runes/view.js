@@ -1,4 +1,6 @@
 import { createRitual } from '../../ui/ritual.js';
+import { hingeMotion } from '../../core/hinge-motion.js';
+import { stoneFlight } from '../../core/stone-motion.js';
 // 卢恩符文 · 界面（Web DOM）。逻辑在 core.js，文案在 data.js。
 // 舞台：皮袋（摇动 / 倾倒）→ 符石滚落到麻布上的槽位（背面朝上）→ 点石翻面 → 全翻揭示。
 // 三入口：体感（摇 / 甩）· 屏幕手势（摩擦皮袋 / 布上一划）· 主按钮。
@@ -34,6 +36,14 @@ export function mount(container, ctx) {
   let revealing = false; // 防止两枚石头几乎同时翻完时重复揭示
   let stones = []; // { el, body, shadow, rune, reversed, tilt, flipped, flipAnim, off }
   let history = storage.get('history', []);
+  const readings = new Set();
+  const isReading = () => readings.size > 0;
+  function openReading(options) {
+    const dialog = sheet({ ...options, onClose() { readings.delete(dialog); options.onClose?.(); } });
+    readings.add(dialog);
+    dialog.open();
+    return dialog;
+  }
   container.dataset.rnTheme = ctx.theme;
   ctx.onTheme((t) => {
     container.dataset.rnTheme = t;
@@ -43,7 +53,7 @@ export function mount(container, ctx) {
   const spreadChips = chips(SPREAD_CHIPS, {
     value: spreadId,
     onChange: async (v) => {
-      if (busy) {
+      if (busy || stones.some((s) => s.turning)) {
         spreadChips.set(spreadId);
         return;
       }
@@ -108,7 +118,7 @@ export function mount(container, ctx) {
     h('div', { class: 'rn-cord' }, h('span', { class: 'rn-cord-knot' }), h('span', { class: 'rn-cord-tail t1' }), h('span', { class: 'rn-cord-tail t2' })),
     mouthPt,
   );
-  const bagWrap = h('div', { class: 'rn-bag-wrap', attrs: { role: 'button', 'aria-label': '皮袋：摩擦或点击摸符' } }, h('div', { class: 'rn-bag-shadow' }), bag);
+  const bagWrap = h('div', { class: 'rn-bag-wrap', attrs: { role: 'button', tabindex: '0', 'aria-label': '皮袋：摩擦或点击摸符' }, onKeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onShakeInput(); } } }, h('div', { class: 'rn-bag-shadow' }), bag);
 
   // 布面 + 符石层（兄弟关系：手势互不干扰）
   const cloth = h('div', { class: 'rn-cloth', attrs: { 'aria-label': '麻布：一划全部翻开' } });
@@ -156,7 +166,7 @@ export function mount(container, ctx) {
     const t = now();
     if (t - lastMotion < 70) return;
     lastMotion = t;
-    if (busy || !ritual.alive || state.phase !== 'idle') return;
+    if (busy || isReading() || !ritual.alive || state.phase !== 'idle') return;
     const k = Math.max(0, Math.min(1, ((m.smooth || 0) - 2) / 10));
     bagWrap.style.setProperty('--rn-jit', k < 0.03 ? '0deg' : `${Math.max(-8, Math.min(8, -(m.ax || 0) * .7))}deg`);
   });
@@ -211,13 +221,13 @@ export function mount(container, ctx) {
   ctx.gesture.flick(cloth, () => onTossInput(), { direction: 'any', minSpeed: 0.4, minDist: 28 });
 
   function onShakeInput(intensity = 20) {
-    if (busy) return;
+    if (busy || isReading() || stones.some((s) => s.turning)) return;
     if (state.phase === 'idle') doDraw(intensity);
     else if (state.phase === 'revealed') collect({ silent: true }).then(() => { if (ritual.alive) doDraw(intensity); });
     else if (state.phase === 'drawn') flipAll();
   }
   function onTossInput() {
-    if (busy) return;
+    if (busy || isReading() || stones.some((s) => s.turning)) return;
     if (state.phase === 'idle') doDraw(22);
     else if (state.phase === 'drawn') flipAll();
     else if (state.phase === 'revealed') collect({ silent: true }).then(() => { if (ritual.alive) doDraw(22); });
@@ -258,11 +268,12 @@ export function mount(container, ctx) {
       const body = h(
         'div',
         { class: 'rn-stone-body' },
+        ...Array.from({ length: 6 }, (_, z) => h('i', { class: 'rn-stone-edge', style: { transform: `translateZ(${z - 3}px)` }, attrs: { 'aria-hidden': 'true' } })),
         h('div', { class: 'rn-face rn-back' }, h('span', { class: 'rn-speck' })),
         h('div', { class: 'rn-face rn-front' }, glyph(d.rune, { size: 40, reversed: d.reversed })),
       );
-      const label = h('div', { class: 'rn-stone-label' }, d.rune.zh, d.reversed ? h('i', null, UI_TEXT.reversed) : null);
-      const el = h('div', { class: ['rn-stone', 'rn-shape-' + (i % 5)], style: { left: p.x + '%', top: p.y + '%' }, attrs: { role: 'button', 'aria-label': `符石 ${i + 1}` } }, shadow, body, label);
+      const label = h('div', { class: 'rn-stone-label', attrs: { 'aria-hidden': 'true' } }, d.rune.zh, d.reversed ? h('i', null, UI_TEXT.reversed) : null);
+      const el = h('div', { class: ['rn-stone', 'rn-shape-' + (i % 5)], style: { left: p.x + '%', top: p.y + '%' }, attrs: { role: 'button', tabindex: '0', 'aria-label': `${spread.positions[i].label}，点击翻开符石` }, onKeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStoneTap(i); } } }, shadow, body, label);
       const stone = { el, body, shadow, rune: d.rune, reversed: d.reversed, tilt: (Math.random() - 0.5) * 22, flipped: false, flipAnim: null, off: null };
       stone.off = ctx.gesture.tap(el, () => onStoneTap(i));
       stoneLayer.append(el);
@@ -327,7 +338,7 @@ export function mount(container, ctx) {
     const gap = T(150);
     const flights = stones.map((s, i) => flyStone(s, mouth, i * gap));
     ctx.setTimeout(() => {
-      bag.animate([{ transform: 'translate(-8px, 30px) rotate(150deg)' }, { transform: 'translate(0px, 0px) rotate(0deg)' }], {
+      ritual.animate(bag, [{ transform: 'translate(-8px, 30px) rotate(150deg)' }, { transform: 'translate(0px, 0px) rotate(0deg)' }], {
         duration: T(560),
         fill: 'forwards',
         easing: 'cubic-bezier(.34,1.45,.64,1)',
@@ -341,23 +352,13 @@ export function mount(container, ctx) {
     if (!ritual.alive) return;
     const r = s.el.getBoundingClientRect();
     const dx = mouth.x - (r.left + r.width / 2), dy = mouth.y - (r.top + r.height / 2);
-    const dur = T(2100), tilt = s.tilt;
-    const flight = ritual.animate(s.el, [
-      { transform: `translate(${dx}px,${dy}px) rotate(-190deg) scale(.5)`, opacity: 0, offset: 0 },
-      { opacity: 1, offset: .1 },
-      { transform: `translate(${dx * .4}px,${dy * .4 - 26}px) rotate(-75deg) scale(1)`, offset: .28 },
-      { transform: `translate(8px,0) rotate(${tilt - 35}deg) scale(1)`, offset: .44 },
-      { transform: `translate(3px,-12px) rotate(${tilt + 20}deg)`, offset: .56 },
-      { transform: `translate(0,0) rotate(${tilt - 15}deg)`, offset: .68 },
-      { transform: `translate(0,-2px) rotate(${tilt - 12}deg)`, offset: .82 },
-      { transform: `translate(0,0) rotate(${tilt + 4}deg)`, offset: .94 },
-      { transform: `translate(0,0) rotate(${tilt}deg)`, opacity: 1, offset: 1 },
-    ].map((frame) => ({ ...frame, easing: 'ease-in-out' })), { duration: dur, easing: 'linear' });
-    ritual.animate(s.shadow, [{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: .44 }, { transform: 'scale(.85)', opacity: .5, offset: .56 }, { transform: 'scale(1)', opacity: 1 }], { duration: dur });
+    const dur = T(2100), { samples, impacts } = stoneFlight(dx, dy, s.tilt);
+    const flight = ritual.animate(s.el, samples.map(({ offset, x, y, angle }) => ({ offset, transform: `translate(${x}px,${y}px) rotate(${angle}deg)`, opacity: Math.min(1, offset * 20) })), { duration: dur, easing: 'linear' });
+    ritual.animate(s.shadow, samples.map(({ offset, height, angle }) => ({ offset, transform: `rotate(${-angle}deg) translateY(${height}px) scale(${1 + height / 150})`, opacity: .8 / (1 + height / 28) })), { duration: dur, easing: 'linear' });
     let previous = 0;
-    for (const [i, t] of [.44, .68, .94].entries()) {
-      if (!await wait(dur * (t - previous))) return;
-      sound.play(i ? 'tick' : 'thud'); haptic.impact([.8, .4, .15][i]); previous = t;
+    for (const { time, strength } of impacts) {
+      if (!await wait(dur * (time - previous) / 2.1)) return;
+      sound.play(strength > .5 ? 'thud' : 'tick'); haptic.impact(strength); previous = time;
     }
     await flight;
     if (!ritual.alive) return;
@@ -366,7 +367,7 @@ export function mount(container, ctx) {
 
   /* ---------- 抽符主流程 ---------- */
   async function doDraw(intensity = 20) {
-    if (busy || state.phase !== 'idle') return;
+    if (busy || isReading() || !ritual.alive || state.phase !== 'idle') return;
     busy = true;
     setButtons();
     if (!await ritual.focus()) return;
@@ -392,16 +393,13 @@ export function mount(container, ctx) {
     const s = stones[i];
     if (!ritual.alive || !s || s.flipped) return;
     s.flipped = true;
+    s.turning = true;
+    setButtons();
     state = reduceState(state, { type: 'flip', index: i });
     sound.play('flip');
     const a = (s.flipAnim = ritual.track(s.body.animate(
-      [
-        { transform: 'rotateY(0deg) translateZ(0px)' },
-        { transform: 'rotateY(78deg) translateZ(30px)', offset: .36 },
-        { transform: 'rotateY(84deg) translateZ(34px)', offset: .62 },
-        { transform: 'rotateY(180deg) translateZ(0px)' },
-      ],
-      { duration: T(1700), fill: 'forwards', easing: 'cubic-bezier(.45,0,.2,1)' },
+      hingeMotion(0, 1.65).map(({ offset, angle, lift }) => ({ offset, transform: `translateY(${-lift * .45}px) translateZ(${lift}px) rotateY(${angle * 180 / Math.PI}deg)` })),
+      { duration: T(1650), fill: 'forwards', easing: 'linear' },
     )));
     if (!await wait(T(1050))) return;
     haptic.light();
@@ -409,6 +407,9 @@ export function mount(container, ctx) {
     await a.finished.catch(() => {});
     if (!ritual.alive) return;
     s.el.classList.add('flipped');
+    s.turning = false;
+    setButtons();
+    s.el.setAttribute('aria-label', `${spread.positions[i].label}，${s.rune.zh}，${s.reversed ? UI_TEXT.reversed : UI_TEXT.upright}，查看解读`);
     if (s.reversed) haptic.double();
     if (!chain && state.phase === 'revealed') await reveal();
   }
@@ -461,7 +462,7 @@ export function mount(container, ctx) {
 
   /* ---------- 收回 ---------- */
   async function collect({ silent = false } = {}) {
-    if (busy) return;
+    if (busy || stones.some((s) => s.turning)) return;
     if (!stones.length) {
       state = reduceState(state, { type: 'reset' });
       setPhaseUI();
@@ -482,18 +483,19 @@ export function mount(container, ctx) {
           const r = s.el.getBoundingClientRect();
           const dx = mouth.x - (r.left + r.width / 2);
           const dy = mouth.y - (r.top + r.height / 2);
-          const a = s.el.animate(
+          const a = ritual.track(s.el.animate(
             [
               { transform: `translate(0px, 0px) rotate(${s.tilt}deg) scale(1)`, opacity: 1 },
               { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 30}px) rotate(${s.tilt + 90}deg) scale(0.8)`, opacity: 1, offset: 0.55 },
               { transform: `translate(${dx}px, ${dy}px) rotate(${s.tilt + 200}deg) scale(0.3)`, opacity: 0 },
             ],
             { duration: T(440), fill: 'forwards', easing: 'cubic-bezier(.4,0,.6,1)' },
-          );
+          ));
           await a.finished.catch(() => {});
         }),
       ),
     );
+    if (!ritual.alive) return;
     sound.play('rattle');
     haptic.tap();
     setShakeClass(1);
@@ -514,8 +516,12 @@ export function mount(container, ctx) {
     return spread.daily ? `${spread.name} · ${dateLabel(new Date())}` : `${spread.name} · ${spread.short || spread.kicker}`;
   }
   function setButtons() {
-    primary.disabled = busy;
-    resetBtn.disabled = busy || state.phase === 'idle';
+    const locked = busy || stones.some((s) => s.turning);
+    primary.disabled = locked;
+    resetBtn.disabled = locked || state.phase === 'idle';
+    indexBtn.disabled = locked;
+    spreadChips.el.querySelectorAll('button').forEach((b) => { b.disabled = locked; });
+    bagWrap.setAttribute('aria-disabled', String(locked));
   }
   function setPhaseUI() {
     const ph = state.phase;
@@ -567,6 +573,7 @@ export function mount(container, ctx) {
   }
 
   function showResult(model) {
+    if (busy || isReading() || !model) return;
     const multi = model.items.length > 1;
     const sections = [];
     if (model.overall) sections.push({ label: '合参', text: model.overall });
@@ -587,7 +594,7 @@ export function mount(container, ctx) {
       footer: model.footer,
     });
     const wrap = h('div', { class: 'm-runes rn-sheet', dataset: { rnTheme: ctx.theme } }, card);
-    const sh = sheet({
+    const sh = openReading({
       title: UI_TEXT.sheetTitle,
       content: wrap,
       actions: [
@@ -610,7 +617,6 @@ export function mount(container, ctx) {
         }),
       ],
     });
-    sh.open();
   }
 
   /* ---------- 单符细解 ---------- */
@@ -651,7 +657,7 @@ export function mount(container, ctx) {
       footer: UI_TEXT.footer,
     });
     const wrap = h('div', { class: 'm-runes rn-sheet', dataset: { rnTheme: ctx.theme } }, card);
-    sheet({ title: UI_TEXT.detailTitle, content: wrap }).open();
+    openReading({ title: UI_TEXT.detailTitle, content: wrap });
   }
 
   /* ---------- 符文一览 ---------- */
@@ -686,11 +692,12 @@ export function mount(container, ctx) {
       h('p', { class: 'rn-index-intro' }, '古弗萨克二十四枚，分三族。点任意一枚看细解；灰点者不取逆位。'),
       groups,
     );
-    sheet({ title: UI_TEXT.indexTitle, content: wrap }).open();
+    if (!busy) openReading({ title: UI_TEXT.indexTitle, content: wrap });
   }
 
   /* ---------- 卸载 ---------- */
   return () => {
+    [...readings].reverse().forEach((dialog) => dialog.close());
     clearTimeout(rubTimer);
     clearStones();
     bag.getAnimations().forEach((a) => a.cancel());

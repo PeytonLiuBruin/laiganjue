@@ -13,6 +13,8 @@ export function mount(container, ctx) {
   if (!UI.tabs.some((t) => t.value === tab)) tab = 'sign';
   let signId = storage.get('sign', 'aries');
   let animalId = storage.get('animal', 'shu');
+  signId = signById(signId)?.id || SIGNS[0].id;
+  animalId = animalById(animalId)?.id || ANIMALS[0].id;
   let bday = String(storage.get('bday', '') || '');
   let fortune = null;
   let resultSheet = null;
@@ -42,6 +44,8 @@ export function mount(container, ctx) {
   );
   const strip = h('div', { class: 'zd-strip' });
   const bdayInput = input({ type: 'date', value: bday, onInput: applyBirthday });
+  bdayInput.min = '1900-01-01';
+  bdayInput.max = '2100-12-31';
   bdayInput.setAttribute('aria-label', '生日');
   const bdayField = h('div', { class: 'zd-bday', hidden: true });
   const bdayBtn = button(UI.birthToggle, { variant: 'ghost', cls: 'zd-bday-btn', onClick: toggleBirthday });
@@ -196,6 +200,8 @@ export function mount(container, ctx) {
     if (!v || busy) return;
     const [y, m, d] = v.split('-').map(Number);
     if (!m || !d || !y || y < 1900 || y > 2100) return;
+    const date = new Date(y, m - 1, d);
+    if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return;
     bday = v;
     storage.set('bday', v);
     if (tab === 'sign') {
@@ -365,10 +371,6 @@ export function mount(container, ctx) {
     slot.set(pendingSky);
     ctx.gesture.tap(slot.el, () => look());
     ctx.gesture.flick(slot.el, (g) => switchBy(g.direction === 'left' ? 1 : -1), { axis: 'x', direction: 'any', minDist: 36 });
-    // 共享渲染器只读可见性回调的首条记录；实物先挂后见时两条记录若合并到一次回调，
-    // 画布会一直空着。挂好后把实物挪出视口再挪回来，让「可见」单独到达一次。
-    ctx.setTimeout(() => { if (slot) slot.el.style.transform = 'translateX(-300vw)'; }, 80);
-    ctx.setTimeout(() => { if (slot) slot.el.style.transform = ''; }, 200);
   }
 
   showTab();

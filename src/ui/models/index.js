@@ -23,6 +23,7 @@ function createModelRenderer(el,ctx,id) {
   const c=canvas.getContext('2d');if(!c)return null;
   let alive=true,frame=0,last=null,lastPaint=0,time=0,activeTime=0,width=320,height=340,visible=true;
   let palette={...DEFAULT_PALETTE},state={},tilt={x:0,y:0},targetTilt={x:0,y:0};
+  const gentle = ctx.platform?.prefersReducedMotion || ctx.platform?.simpleMotion;
   function schedule(){if(alive&&!frame&&!document.hidden&&visible)frame=requestAnimationFrame(tick);}
   function tick(now){
     frame=0;if(!alive||document.hidden||!visible||el.closest('[hidden]')||!el.isConnected){last=null;return;}
@@ -34,10 +35,11 @@ function createModelRenderer(el,ctx,id) {
       const dpr=Math.min(window.devicePixelRatio||1,2);c.setTransform(dpr,0,0,dpr,0,0);
       paintModel(c,width,height,id,state,id==='bazi.pillars'?activeTime:time,palette,tilt);lastPaint=now;
     }
-    if(MODELS[id].ambient||state.active||Math.abs(targetTilt.x-tilt.x)+Math.abs(targetTilt.y-tilt.y)>.005)schedule();
+    if(MODELS[id].ambient&&!gentle||state.active||Math.abs((state.revealed?1:0)-(state.revealMix||0))>.005||Math.abs(targetTilt.x-tilt.x)+Math.abs(targetTilt.y-tilt.y)>.005)schedule();
   }
   function resize(){
     const r=el.getBoundingClientRect();if(r.width>0&&r.height>0){width=r.width;height=r.height;}
+    visible=el.isConnected&&!el.closest('[hidden]')&&r.width>0&&r.height>0&&r.bottom>-80&&r.top<(window.innerHeight||900)+80;
     const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);lastPaint=-Infinity;schedule();
   }
   function theme(){
@@ -51,11 +53,14 @@ function createModelRenderer(el,ctx,id) {
   intersection?.observe(el);
   const visibility=()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;last=null;}else schedule();};
   document.addEventListener('visibilitychange',visibility);
-  const move=e=>{const r=el.getBoundingClientRect();targetTilt={x:clamp((e.clientX-r.left)/r.width*2-1,-1,1),y:clamp((e.clientY-r.top)/r.height*2-1,-1,1)};schedule();};
+  const move=e=>{if(gentle)return;const r=el.getBoundingClientRect();targetTilt={x:clamp((e.clientX-r.left)/r.width*2-1,-1,1),y:clamp((e.clientY-r.top)/r.height*2-1,-1,1)};schedule();};
   const leave=()=>{targetTilt={x:0,y:0};schedule();};
   el.addEventListener('pointermove',move);el.addEventListener('pointerleave',leave);
   const offTilt=ctx.motion?.onTilt?.(({gamma,beta})=>{if(gamma==null||beta==null)return;targetTilt={x:clamp(gamma/35,-1,1),y:clamp((beta-35)/50,-1,1)};schedule();});
   ctx.onTheme?.(theme);theme();resize();
+  // Factories can run before their slot is attached. Paint after the mount has
+  // committed, without hiding/showing the object or relying on a timed flash.
+  const mountedFrame=requestAnimationFrame(()=>{if(alive)resize();});
   return {
     set(next){
       if(!alive)return;
@@ -69,7 +74,7 @@ function createModelRenderer(el,ctx,id) {
       lastPaint=-Infinity;schedule();
     },
     dispose(){
-      if(!alive)return;alive=false;cancelAnimationFrame(frame);resizeObserver.disconnect();intersection?.disconnect();
+      if(!alive)return;alive=false;cancelAnimationFrame(frame);cancelAnimationFrame(mountedFrame);resizeObserver.disconnect();intersection?.disconnect();
       document.removeEventListener('visibilitychange',visibility);el.removeEventListener('pointermove',move);el.removeEventListener('pointerleave',leave);if(typeof offTilt==='function')offTilt();
       canvas.width=1;canvas.height=1;
     },

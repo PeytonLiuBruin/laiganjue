@@ -82,7 +82,7 @@ export function mount(container, ctx) {
       canvas.setAttribute('aria-label', '小球正在碰撞下落'); sound.play('tick'); haptic.release();
       const chosen = await scene.play(plan);
       if (!alive) return;
-      if (chosen === null) { lock(false); releaseSpace(); primary.setLabel(TEXT.primary); return; }
+      if (chosen === null) { lock(false); releaseSpace(); primary.setLabel(TEXT.primary); setHint(idleHint()); return; }
       slots.children[chosen]?.classList.add('selected');
       canvas.setAttribute('aria-label', `小球已落定：${roundOptions[chosen]}`);
       haptic.settle(); sound.play('shimmer');
@@ -137,6 +137,7 @@ export function mount(container, ctx) {
       attrs: { 'aria-label': '底部选项，每行一个', maxlength: 400, spellcheck: 'false' },
     });
     const error = h('p', { class: 'pl-editor-error', attrs: { role: 'status', id: 'pl-editor-error' } });
+    const preview = h('div', { class: 'pl-editor-preview', attrs: { 'aria-label': '选项预览' } });
     textarea.setAttribute('aria-describedby', 'pl-editor-error');
     const save = button(TEXT.save, { variant: 'primary', onClick: () => {
       const parsed = parseOptions(textarea.value);
@@ -152,11 +153,15 @@ export function mount(container, ctx) {
       error.textContent = parsed.error || `${parsed.labels.length} 格`;
       error.classList.toggle('invalid', !!parsed.error); save.disabled = !!parsed.error;
       textarea.setAttribute('aria-invalid', String(!!parsed.error)); storage.set('draft', textarea.value);
+      clear(preview);
+      if (!parsed.error) preview.append(...parsed.labels.map((label, i) => h('span', null, `${i + 1} · ${label}`)));
     };
+    const restore = button('恢复默认', { variant: 'ghost', onClick: () => { textarea.value = DEFAULT_OPTIONS.join('\n'); update(); textarea.focus(); } });
+    textarea.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !save.disabled) { e.preventDefault(); save.click(); } });
     textarea.addEventListener('input', update); update();
-    const content = h('div', { class: 'pl-editor' }, h('p', { class: 'pl-editor-hint' }, TEXT.editorHint), textarea, error);
+    const content = h('div', { class: 'pl-editor' }, h('p', { class: 'pl-editor-hint' }, TEXT.editorHint), textarea, error, preview);
     content.addEventListener('pointerdown', event => event.stopPropagation());
-    editor = sheet({ title: TEXT.editor, content, actions: [save], onClose: () => { editor = null; } });
+    editor = sheet({ title: TEXT.editor, content, actions: [save, restore], onClose: () => { editor = null; } });
     editor.el.classList.add('m-plinko'); editor.open();
     if (selected !== null) ctx.setTimeout(() => {
       if (!editor?.opened || !alive) return;
