@@ -442,6 +442,7 @@ export function startApp(root) {
         }),
       ),
       h('p', { class: 't-faint mt-3', style: { fontSize: '12px', lineHeight: '1.8' } }, 'iPhone：在 Safari 里点「分享 → 添加到主屏幕」，从主屏幕打开即为全屏、无地址栏，屏保效果最佳。安卓 Chrome：菜单 → 添加到主屏幕。'),
+      h('div', { class: 'mt-3' }, button('重看新手引导', { variant: 'ghost', block: true, onClick: () => { sh.close(); setTimeout(() => openOnboarding(true), 300); } })),
       h('div', { class: 'ornament' }, icon('sparkle', { size: 18 })),
       h('p', { class: 't-faint', style: { fontSize: '12px', lineHeight: '1.8' } }, `${APP_NAME} · 玄学占卜合集。所有结果均由随机算法与传统文化文本生成，仅供娱乐与自我觉察，请勿据此做出医疗、财务、法律等重要决定。`),
       h('p', { class: 't-faint mt-2', style: { fontSize: '11px' } }, `构建时间 ${typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__.slice(0, 16).replace('T', ' ') : '开发模式'}`),
@@ -449,6 +450,44 @@ export function startApp(root) {
     const sh = sheet({ title: '设置', content });
     sh.open();
   }
+
+  /* ---------------- 首次引导 ---------------- */
+  function openOnboarding(force = false) {
+    if (!force && storage.get('onboarded', false)) return;
+    if (document.querySelector('.onboard')) return;
+    const rows = [
+      ['摇', '摇一摇 · 甩一甩', '手机就是你的筊杯、签筒与铜钱。也可以在屏幕上滑动，或直接点按钮。'],
+      ['问', '一问一答', '每个玩法只有一个主按钮，跟着它走：先出手，看见结果，再展开解读。'],
+      ['静', '静观屏保', '左上角的月亮进入屏保；把网页加到主屏幕，闲置时它就是一面素雅的时钟。'],
+    ];
+    const el = h(
+      'div',
+      { class: 'onboard', attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-label': '欢迎' } },
+      h(
+        'div',
+        { class: 'onboard-card' },
+        h('div', { class: 'onboard-mark' }, '感'),
+        h('div', { class: 'onboard-title' }, APP_NAME),
+        h('div', { class: 'onboard-sub' }, '片刻留白 · 一点灵感'),
+        h('div', { class: 'onboard-rows' }, rows.map(([g, t, d]) => h('div', { class: 'onboard-row' }, h('span', { class: 'onboard-glyph' }, g), h('div', null, h('b', null, t), h('p', null, d))))),
+        button('开始', {
+          variant: 'primary',
+          size: 'large',
+          block: true,
+          onClick: () => {
+            storage.set('onboarded', true);
+            el.classList.remove('show');
+            platform.haptic.tap();
+            setTimeout(() => el.remove(), 400);
+          },
+        }),
+        h('p', { class: 'onboard-foot' }, '传统文化演绎 · 仅供娱乐与自我觉察'),
+      ),
+    );
+    document.body.append(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+  }
+  if (!location.hash.startsWith('#/zen') && !navigator.webdriver) wait(500).then(() => openOnboarding());
 
   /* ---------------- 调试 / 自动化钩子 ---------------- */
   window.__lgj = {
@@ -458,6 +497,7 @@ export function startApp(root) {
     zen,
     registerModel,
     hasModel,
+    openOnboarding,
     simulate: (type, payload) => platform.motion.simulate(type, payload),
     setTheme: applyTheme,
     get current() {

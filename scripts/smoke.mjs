@@ -6,6 +6,7 @@
 //   node scripts/smoke.mjs --theme paper         指定皮肤
 //   node scripts/smoke.mjs --shots dist/shots    截图目录（默认 dist/shots）
 //   node scripts/smoke.mjs --module tarot --full 指定模块但仍全量打包（默认只打包指定模块，其余占位）
+//   node scripts/smoke.mjs --module liuyao --act --until-sheet 8   多步模块：持续点主按钮直到结果抽屉出现，截 <id>-3.png
 // 退出码：有 console.error / pageerror / 模块未就绪 → 1，否则 0。
 import path from 'node:path';
 import os from 'node:os';
@@ -30,6 +31,7 @@ const only = opt('--module', '')
   .filter(Boolean);
 const act = flag('--act');
 const theme = opt('--theme', '');
+const untilSheet = Number(opt('--until-sheet', '0')) || 0;
 const shotsDir = path.resolve(root, opt('--shots', 'dist/shots'));
 const tmpOut = path.join(os.tmpdir(), `lgj-smoke-${process.pid}`);
 
@@ -164,6 +166,17 @@ for (const id of ids) {
       }
     }
     await page.screenshot({ path: path.join(shotsDir, `${id}-2.png`) });
+    // --until-sheet N：多步模块（如六爻六掷）——继续点主按钮 / 「展开解读」直到结果抽屉出现，再截一张
+    if (untilSheet > 0) {
+      for (let i = 0; i < untilSheet && !(await page.$('.sheet.open')); i++) {
+        const read = await page.$('.ritual-receipt:not([hidden]) .btn.primary');
+        const primary = read || (await page.$(`.view-module[data-module="${id}"] [data-action="primary"]:not([disabled])`));
+        if (!primary) break;
+        await primary.click({ timeout: 4000, force: true }).catch(() => {});
+        await sleep(2600);
+      }
+      await page.screenshot({ path: path.join(shotsDir, `${id}-3.png`) });
+    }
   }
   report.modules[id] = { ready, acted, errors: errors[id] || [] };
 }
