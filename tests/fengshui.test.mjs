@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mingGua, guaGroup, houseMap, annualCenter, annualStars, directionAt, mountainAt, digitSum, luckyDirections, toGrid } from '../src/modules/fengshui/core.js';
-import { EIGHT_HOUSE, DIRECTIONS, STARS8, NINE_STARS } from '../src/modules/fengshui/data.js';
+import { mingGua, guaGroup, houseMap, annualCenter, annualStars, directionAt, mountainAt, digitSum, luckyDirections, toGrid, angleDiff, splitByTone } from '../src/modules/fengshui/core.js';
+import { EIGHT_HOUSE, DIRECTIONS, STARS8, NINE_STARS, GUA, GROUP_TEXT, UI } from '../src/modules/fengshui/data.js';
 
 test('命卦经典用例', () => {
   assert.equal(mingGua(1985, 'male'), '乾');
@@ -79,4 +79,47 @@ test('方位与二十四山', () => {
 test('数据完整：八星与九星文案齐全', () => {
   for (const s of Object.values(STARS8)) for (const k of ['text', 'use', 'avoid', 'label', 'tone']) assert.ok(s[k]);
   for (let i = 1; i <= 9; i++) for (const k of ['name', 'meaning', 'advice', 'tone']) assert.ok(NINE_STARS[i][k]);
+});
+
+test('角差：最短有向差在 (−180, 180]', () => {
+  assert.equal(angleDiff(10, 350), 20);
+  assert.equal(angleDiff(350, 10), -20);
+  assert.equal(angleDiff(180, 0), 180);
+  assert.equal(angleDiff(0, 180), 180);
+  assert.equal(angleDiff(90, 90), 0);
+  assert.equal(angleDiff(-30, 30), -60);
+  // 记录后小幅抖动不作废，转离超过阈值才作废
+  assert.ok(Math.abs(angleDiff(125, 120)) <= 12);
+  assert.ok(Math.abs(angleDiff(135, 120)) > 12);
+});
+
+test('吉凶分组：八宅按 rank 排，飞星保持八方原序', () => {
+  const eight = splitByTone(houseMap('坎'));
+  assert.deepEqual(eight.lucky.map((x) => x.star), ['生气', '天医', '延年', '伏位']);
+  assert.deepEqual(eight.unlucky.map((x) => x.star), ['祸害', '六煞', '五鬼', '绝命']);
+  assert.equal(eight.lucky.length + eight.unlucky.length, 8);
+  const nine = splitByTone(annualStars(2026).palaces);
+  assert.equal(nine.lucky.length + nine.unlucky.length, 8);
+  for (const p of nine.lucky) assert.ok(['great', 'good'].includes(p.tone));
+  for (const p of nine.unlucky) assert.ok(['warn', 'bad'].includes(p.tone));
+  const order = annualStars(2026).palaces.map((p) => p.id);
+  assert.deepEqual(nine.lucky.map((p) => p.id), order.filter((id) => nine.lucky.some((p) => p.id === id)));
+});
+
+test('文案：舞台提示 ≤ 18 字且动词开头；每个标签页都有主按钮与返回文案；不用英文直引号', () => {
+  for (const key of ['hintManual', 'hintLive']) {
+    assert.ok(UI[key].length <= 18, `${key} 过长`);
+    assert.match(UI[key], /^(拨动|平放|转动|按)/);
+  }
+  for (const t of UI.tabs) {
+    assert.ok(UI.primary[t.value], `缺主按钮文案 ${t.value}`);
+    assert.ok(UI.back[t.value], `缺返回文案 ${t.value}`);
+  }
+  assert.notEqual(UI.recorded, UI.primary.compass);
+  const walk = (v, path) => {
+    if (typeof v === 'string') assert.ok(!/["']/.test(v), `${path} 含英文引号：${v}`);
+    else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(x, `${path}.${k}`);
+  };
+  walk({ UI, STARS8, NINE_STARS, GUA, GROUP_TEXT }, 'data');
+  assert.ok(!JSON.stringify(UI).includes('占位'), '不应出现开发术语');
 });

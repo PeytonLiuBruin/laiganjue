@@ -1,5 +1,6 @@
 // 转盘 · 内容（纯数据）。所有面向用户的文字都在这里。
-// 每个预设：{ id, name, seal, hint, palette, badgeWord, items:[{label, note, seal?, tone?, text?}], reasons:[], verses:[] }
+// 每个预设：{ id, name, seal, hint, palette, items:[{label, note, seal?, tone?, text?}], reasons:[], verses:[] }
+//   hint   舞台下方唯一的一句操作提示：动词开头、≤ 18 字、同时点到「拨」与「摇」两条入口
 //   label  转盘上的短字（≤6 字最好看）
 //   note   结果抽屉里的一句解语 / 吐槽
 //   text   （真心话）完整问题，抽屉里展示
@@ -46,7 +47,7 @@ export const PRESETS = [
     id: 'fortune',
     name: '今日运势',
     seal: null, // 用每项自己的印
-    hint: '心里想着今天，拨一下',
+    hint: '想着今天，拨一下或摇一摇',
     palette: 'gold',
     items: [
       { label: '大吉', seal: '大吉', tone: 'good', note: '万事顺遂之象。今天遇见的好运不必客气，笑着接住就是；别忘了顺手也分一点给身边的人。' },
@@ -65,7 +66,7 @@ export const PRESETS = [
     id: 'eat',
     name: '吃什么',
     seal: '食',
-    hint: '饿着的时候，转得最准',
+    hint: '拨一下或摇一摇，饿着转最准',
     palette: 'ember',
     items: [
       { label: '火锅', note: '众口难调时的万能答案。锅一开，天下太平。' },
@@ -86,7 +87,7 @@ export const PRESETS = [
     id: 'doit',
     name: '做不做',
     seal: '决',
-    hint: '心里默念那件事，再拨一下',
+    hint: '默念那件事，再拨一下或摇一摇',
     palette: 'dusk',
     items: [
       { label: '做', note: '想了这么久还没放下，说明它值得。去做，做完再后悔也来得及。' },
@@ -103,7 +104,7 @@ export const PRESETS = [
     id: 'go',
     name: '去哪儿',
     seal: '行',
-    hint: '换双好走的鞋，再转',
+    hint: '换双好走的鞋，拨一下或摇一摇',
     palette: 'dusk',
     items: [
       { label: '山', note: '山不来找你，你就去找山。爬到一半喘的那口气，比什么都真实。' },
@@ -122,7 +123,7 @@ export const PRESETS = [
     id: 'tonight',
     name: '今晚干嘛',
     seal: '夜',
-    hint: '夜还长，转一个安排',
+    hint: '拨一下或摇一摇，给今晚一个安排',
     palette: 'night',
     items: [
       { label: '追剧', note: '今晚不上进也行。挑一部早就想看的，别再刷预告了。' },
@@ -141,7 +142,7 @@ export const PRESETS = [
     id: 'truth',
     name: '真心话',
     seal: '真',
-    hint: '手机传给下一个人，拨一下',
+    hint: '传给下一个人，拨一下或摇一摇',
     palette: 'truth',
     items: [
       { label: '初恋', text: '你的初恋，现在还有联系吗？最近一次联系说了什么？', note: '答「不记得」不算回答。' },
@@ -165,7 +166,7 @@ export const CUSTOM = {
   id: 'custom',
   name: '自定义',
   seal: '择',
-  hint: '在下方写好选项，再拨一下',
+  hint: '写好选项，拨一下或摇一摇',
   palette: 'gold',
   emptyLabel: '写两项以上',
   namePlaceholder: '给转盘起个名字，比如：周末去哪',

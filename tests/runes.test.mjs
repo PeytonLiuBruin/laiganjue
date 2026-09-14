@@ -10,6 +10,7 @@ import {
   drawForSpread,
   getSpread,
   interpret,
+  receiptOf,
   shareText,
   toneKey,
   overallText,
@@ -185,6 +186,52 @@ test('interpret: 单符标题含中文名与拉丁名，多符每符一节 + 建
   const daily = interpret([dailyRune(new Date(2026, 8, 13))], getSpread('daily'), { date: new Date(2026, 8, 13) });
   assert.ok(daily.kicker.includes('9月13日'));
   assert.equal(daily.seal, '日');
+});
+
+test('receiptOf: 结果条标题 ≤ 8 字、一句话 ≤ 40 字（单符全枚正逆 + 多符随机）', () => {
+  const check = (m) => {
+    const rc = receiptOf(m);
+    assert.ok(rc.title && rc.title.length <= 8, `title ${rc.title}`);
+    assert.ok(rc.text && rc.text.length <= 40, `text ${rc.text.length}: ${rc.text}`);
+    assert.ok(rc.kicker.length <= 16, rc.kicker);
+    assert.doesNotMatch(rc.text, /undefined|null|\[object/);
+    return rc;
+  };
+  for (const r of RUNES) {
+    for (const reversed of [false, true]) {
+      if (reversed && !r.rev) continue;
+      const rc = check(interpret([{ rune: r, reversed }], getSpread('single')));
+      assert.equal(rc.title, r.zh);
+      assert.ok(rc.text.includes(r.line) && rc.text.startsWith(reversed ? UI_TEXT.reversed : UI_TEXT.upright));
+    }
+  }
+  for (const id of ['three', 'five']) {
+    const sp = getSpread(id);
+    for (let i = 0; i < 300; i++) {
+      const m = interpret(drawRunes(sp.n, seeded(id + i)), sp);
+      const rc = check(m);
+      assert.equal(rc.title, m.badge, '多符以判词为题');
+      assert.ok(rc.text.includes(m.adviceFrom.rune.line), '一句话取关键位符语');
+    }
+  }
+  const daily = check(interpret([dailyRune(new Date(2026, 8, 13))], getSpread('daily'), { date: new Date(2026, 8, 13) }));
+  assert.ok(daily.kicker.includes('9月13日'));
+});
+
+test('牌阵 chips 与牌阵同名，界面文案无占位、无英文残留', () => {
+  assert.deepEqual(SPREAD_CHIPS.map((c) => c.label), SPREADS.map((s) => s.name));
+  const texts = [];
+  const walk = (v) => (typeof v === 'string' ? texts.push(v) : typeof v === 'function' ? [1, 3, 5].forEach((n) => texts.push(v(n))) : v && typeof v === 'object' ? Object.values(v).forEach(walk) : null);
+  const { hintGesture, ...copy } = UI_TEXT; // hintGesture 是手势图标 id（shake/flip/tap），不是文案
+  walk(copy);
+  walk(TONE);
+  for (const t of texts) {
+    assert.doesNotMatch(t.replace(/\{\w+\}/g, ''), /TODO|xxx|示例|lorem|[A-Za-z]{2,}/, t); // {aett} 之类是模板占位，允许
+  }
+  for (const k of ['idle', 'drawn', 'revealed']) {
+    assert.ok(UI_TEXT.hints[k].length <= 18, `hint ${k} 过长`);
+    assert.ok(UI_TEXT.hintGesture[k]);
+  }
 });
 
 test('toneKey / overallText', () => {

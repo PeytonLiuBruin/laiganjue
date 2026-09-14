@@ -17,6 +17,9 @@ import {
   remaining,
   pushHistory,
   streakOf,
+  briefNote,
+  speedFromOmega,
+  SPIN_FRICTION,
   CUSTOM_MAX,
   CUSTOM_ITEM_MAX,
 } from '../src/modules/wheel/core.js';
@@ -174,6 +177,42 @@ test('omegaFromIntensity / randomOmega / normalizeFlick 范围', () => {
   assert.equal(normalizeFlick(1000, rnd).omega, 40);
 });
 
+test('界面节奏：按钮 / 摇一摇 / 拨动的一转在 4–6 秒内停下，2.5–5.5 圈', () => {
+  const rnd = seeded('pace');
+  for (let i = 0; i < 30; i++) {
+    for (const w of [randomOmega(rnd), omegaFromIntensity(13 + rnd() * 27, rnd), normalizeFlick(6 + rnd() * 34, rnd).omega]) {
+      const s = simulateSpin(speedFromOmega(w), SPIN_FRICTION);
+      assert.ok(s.duration >= 4000 && s.duration <= 6000, `omega ${w} → ${s.duration}ms`);
+      assert.ok(s.turns >= 1.7 && s.turns <= 5.5, `omega ${w} → ${s.turns} turns`);
+    }
+  }
+  // 太轻也有下限，太猛也有上限；方向保留
+  assert.equal(speedFromOmega(0.5), 9);
+  assert.equal(speedFromOmega(1000), 24);
+  assert.equal(speedFromOmega(-1000), -24);
+  assert.ok(speedFromOmega(20) > speedFromOmega(15));
+});
+
+test('briefNote：≤ 40 字原样返回，超长按句读截到 40 字以内且以句号收尾', () => {
+  assert.equal(briefNote('众口难调时的万能答案。锅一开，天下太平。'), '众口难调时的万能答案。锅一开，天下太平。');
+  const long = '万事顺遂之象。今天遇见的好运不必客气，笑着接住就是；别忘了顺手也分一点给身边的人。';
+  const b = briefNote(long);
+  assert.ok(Array.from(b).length <= 40, b);
+  assert.ok(b.startsWith('万事顺遂之象。'));
+  assert.ok(b.endsWith('。'));
+  assert.ok(!b.endsWith('；'));
+  // 单句就超长：硬截 + 省略号
+  const hard = briefNote('一'.repeat(60));
+  assert.ok(Array.from(hard).length <= 40 && hard.endsWith('…'));
+  assert.equal(briefNote(''), '');
+  assert.equal(briefNote(null), '');
+  // 今日运势全部解语都能摘成一句
+  for (const it of getPreset('fortune').items) {
+    const s = briefNote(it.note);
+    assert.ok(s.length >= 6 && Array.from(s).length <= 40, `${it.label}: ${s}`);
+  }
+});
+
 /* ------------------------------ 文字排版 / 调色 ------------------------------ */
 test('fitLabel：短标签不动，1–2 字放大，过长缩小或截断加省略号', () => {
   const s = fitLabel('火锅');
@@ -263,6 +302,10 @@ test('预设数据：项数 2–16，标签/解语非空且无重复、无占位
   const ids = new Set();
   for (const p of PRESETS) {
     assert.ok(p.id && p.name && p.hint && p.palette, p.id);
+    // 舞台下方唯一的一句操作提示：≤ 18 字，同时点到「拨」与「摇」，不以标点结尾
+    assert.ok(Array.from(p.hint).length <= 18, `${p.id} hint 过长：${p.hint}`);
+    assert.ok(/拨/.test(p.hint) && /摇/.test(p.hint), `${p.id} hint 应同时提到拨与摇`);
+    assert.ok(!/[。！？]$/.test(p.hint), p.hint);
     assert.ok(!ids.has(p.id));
     ids.add(p.id);
     assert.ok(PALETTES[p.palette], `palette ${p.palette} 不存在`);
@@ -328,6 +371,7 @@ test('自定义模板可解析且可转；杂项文案池非空无占位词', ()
     assert.ok(isSpinnable(parsePreset(t.text)), t.name);
   }
   assert.ok(CUSTOM.seal && CUSTOM.emptyLabel && CUSTOM.textPlaceholder);
+  assert.ok(Array.from(CUSTOM.hint).length <= 18 && /拨/.test(CUSTOM.hint) && /摇/.test(CUSTOM.hint));
   for (const pool of [REASONS, VERSES, LAST_ONE, FLAPPER_LINES, CAP_LINES, WEAK_FLICK, BUSY_LINES, MILESTONES, CUSTOM.reasons, CUSTOM.verses]) {
     assert.ok(pool.length >= 3);
     for (const s of pool) assert.ok(typeof s === 'string' && s.length >= 4 && !BAD_WORDS.test(s));

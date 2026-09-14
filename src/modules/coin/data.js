@@ -101,8 +101,8 @@ export const COIN_QUIPS = {
 export const BURST_TEXT = {
   win: '{n} 抛之中「{w}」占了 {c} 次，多数为胜。',
   sweep: '{n} 抛全是「{w}」，这不是巧合，是态度。',
-  tie: '{n} 抛正反各半，天意暂不表态。要么再来一轮，要么这件事本来就不该由硬币决定。',
-  kicker: '连抛 {n} 次 · 多数为胜',
+  tie: '{n} 抛正反各半，天意暂不表态。要么再来一轮，要么这事本就不该由硬币决定。',
+  kicker: '连抛 {n} · 多数为胜',
   tieTitle: '平',
 };
 
@@ -199,29 +199,56 @@ export const D20_BANDS = [
 ];
 
 /* ------------------------------ 提示与文案 ------------------------------ */
+/** 舞台下方唯一一行操作提示（待机态），动词开头、不超过 18 字 */
 export const STAGE_HINT = {
-  coin: '向上滑动硬币，松手抛出',
-  dice: '左右轻摇手机，收住后投出，或在托盘上快滑',
-  choice: '填好两个选项，向上滑动后松手',
+  coin: '上滑硬币松手抛出，或轻甩手机',
+  dice: '拖着骰子晃一晃，或摇一摇手机',
+  choice: '填好两项，上滑硬币松手抛出',
 };
 
-export const GESTURE_TEXT = {
-  coin: '向上轻甩手机后收住，或上滑硬币后松手',
-  dice: '摇动手机或拖动骰子，停下后落定',
-  choice: '向上轻甩手机后收住，或上滑硬币后松手',
+/** 同一行提示随状态更替 */
+export const HINTS = {
+  drag: '再往上一点',
+  release: '松手，抛出',
+  ready: '收住动作，准备出手',
+  charging: '向上轻甩，收住后抛出',
+  flight: '铜钱在飞',
+  settled: '看它停在哪一面',
+  landed: '再抛一次，或展开解读',
+  diceDrag: '晃起来了，停手就落',
+  diceFlight: '骰子在滚',
+  diceSettled: '看它们停在哪一面',
+  diceLanded: '再摇一次，或展开解读',
 };
 
+/** 主按钮：首次 / 有了结果之后 */
 export const PRIMARY_LABEL = {
-  coin: '抛 硬 币',
-  dice: '摇 骰 子',
-  choice: '抛 硬 币',
+  coin: '抛硬币',
+  dice: '摇骰子',
+  choice: '抛硬币',
+};
+
+export const AGAIN_LABEL = {
+  coin: '再抛一次',
+  burst: '再抛一轮',
+  dice: '再摇一次',
+  choice: '再抛一次',
 };
 
 export const SHEET_TITLE = {
-  coin: '铜钱落定',
-  burst: '连抛结果',
-  dice: '骰子落定',
-  choice: '天意已决',
+  coin: '铜钱解读',
+  burst: '连抛解读',
+  dice: '骰子解读',
+  choice: '二选一解读',
+};
+
+/** 二选一的解曰：硬币两面写着选项，不谈字面花面 */
+export const CHOICE_MEANING = '硬币只负责给一个答案，不负责解释。它落下的那一瞬，你心里是松了一口气还是紧了一下，那才是真正的判词。';
+
+export const HISTORY_LABEL = {
+  coin: '最近几抛',
+  dice: '最近几把',
+  choice: '最近几次',
 };
 
 export const BUSY_TOAST = '等这一把落定再说';

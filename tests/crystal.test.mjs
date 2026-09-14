@@ -22,7 +22,7 @@ import {
   pendulumLabel,
   PENDULUM_PARAMS,
 } from '../src/modules/crystal/core.js';
-import { YESNO, ORACLE, WORDS, REPHRASE, PENDULUM_TEXT, REPEAT_EGG, MODES, TABS } from '../src/modules/crystal/data.js';
+import { YESNO, ORACLE, WORDS, REPHRASE, PENDULUM_TEXT, REPEAT_EGG, MODES, TABS, LABELS, BALL_HINTS, BALL_BADGE, PENDULUM_HINTS, PENDULUM_BADGE, TONE_LABEL, MODE_LABEL, MODE_SEAL, QUESTION_PLACEHOLDER, EMPTY_QUESTION_KICKER, TAP_WHISPERS } from '../src/modules/crystal/data.js';
 import { seeded } from '../src/core/rng.js';
 
 /* ------------------------------ 答案池 ------------------------------ */
@@ -60,6 +60,43 @@ test('文案无占位词、无乱码，且每条都有注解', () => {
   for (const k of ['yes', 'maybe', 'no', 'oracle', 'word']) assert.ok(REPHRASE[k].length >= 3, 'rephrase ' + k);
   assert.equal(MODES.length, 3);
   assert.equal(TABS.length, 2);
+});
+
+test('界面文案：提示 ≤ 18 字且动词开头、按钮 ≤ 6 字、徽记 ≤ 8 字、无英文残留', () => {
+  const bad = /TODO|待补|示例|xxx|lorem|[A-Za-z]/;
+  const len = (s) => [...s].length;
+  for (const k of ['idle', 'low', 'mid', 'high', 'charging', 'clearing', 'revealed']) {
+    const t = BALL_HINTS[k];
+    assert.ok(t && len(t) <= 18, `ball hint ${k}: ${t}`);
+    assert.ok(!bad.test(t), t);
+  }
+  for (const k of ['idle', 'asking', 'done']) {
+    const t = PENDULUM_HINTS[k];
+    assert.ok(t && len(t) <= 18, `pendulum hint ${k}: ${t}`);
+    assert.ok(!bad.test(t), t);
+  }
+  // 静止态的那一句必须以动词起头，进入页面 3 秒内知道该做什么
+  assert.match(BALL_HINTS.idle, /^(摩擦|摇|凝视|轻抚)/);
+  assert.match(PENDULUM_HINTS.idle, /^(拖动|倾斜|松手)/);
+  for (const [k, t] of Object.entries(LABELS)) {
+    assert.ok(t && len(t) <= 6, `label ${k}: ${t}`);
+    assert.ok(!bad.test(t), t);
+  }
+  assert.notEqual(LABELS.gaze, LABELS.again, '做过一次后按钮要换成「再问一次」之类');
+  assert.notEqual(LABELS.askPendulum, LABELS.again);
+  for (const t of [...Object.values(BALL_BADGE), ...Object.values(PENDULUM_BADGE), ...Object.values(TONE_LABEL), ...Object.values(MODE_LABEL)]) {
+    assert.ok(t && len(t) <= 8 && !bad.test(t), t);
+  }
+  assert.equal(len(MODE_SEAL.oracle), 1);
+  assert.equal(len(MODE_SEAL.word), 1);
+  for (const t of Object.values(MODE_SEAL.yesno)) assert.equal(len(t), 1);
+  for (const p of Object.values(PENDULUM_TEXT)) {
+    assert.ok(len(p.seal) <= 2 && len(p.title) <= 8 && len(p.badge.replace(/[\s·]/g, '')) <= 8, p.title);
+    assert.ok(len(p.conclusion) <= 60, p.conclusion);
+  }
+  assert.ok(len(QUESTION_PLACEHOLDER) <= 20 && !bad.test(QUESTION_PLACEHOLDER));
+  assert.ok(len(EMPTY_QUESTION_KICKER) <= 10);
+  for (const t of TAP_WHISPERS) assert.ok(len(t) <= 12 && !bad.test(t), t);
 });
 
 test('toneWeights：三组权重之和恰为 5:3:2', () => {

@@ -127,6 +127,19 @@ export function simulateSpin(omega0, friction = DEFAULT_FRICTION) {
   };
 }
 
+/**
+ * 界面实际使用的摩擦与初速映射（节奏调参集中在这里，方便测试与微调）。
+ * 目标：按钮一转 4.5–5.5 秒、2.5–4.5 圈——够久有仪式感，又不至于让人等到走神。
+ */
+export const SPIN_FRICTION = { k: 0.66, c: 0.42 };
+
+/** 输入角速度(rad/s，来自摇/甩/按钮) → 转盘初速(rad/s)，带下限与上限 */
+export function speedFromOmega(omega, { gain = 0.78, min = 9, max = 24 } = {}) {
+  const w = Number(omega) || 0;
+  const sign = w < 0 ? -1 : 1;
+  return sign * Math.max(min, Math.min(max, Math.abs(w) * gain));
+}
+
 /** 摇晃强度(m/s²，约 13–40) → 初角速度(rad/s)。rnd 注入以便测试。 */
 export function omegaFromIntensity(intensity, rnd = random) {
   const x = Number(intensity);
@@ -233,6 +246,26 @@ export function parsePreset(text) {
 /** 自定义是否可转 */
 export function isSpinnable(items) {
   return Array.isArray(items) && items.length >= CUSTOM_MIN;
+}
+
+/* ------------------------------ 解语摘句 ------------------------------ */
+/**
+ * 结果小票只放一句话：按句读（。！？；）切分，从头累加到不超过 max 字为止（至少保留一段）。
+ * 单段本身就超长时硬截并加省略号。返回句子以句号收尾。
+ */
+export function briefNote(text, max = 40) {
+  const raw = String(text ?? '').trim();
+  if (!raw) return '';
+  if (Array.from(raw).length <= max) return raw;
+  const parts = raw.split(/(?<=[。！？；])/).map((s) => s.trim()).filter(Boolean);
+  let out = '';
+  for (const p of parts) {
+    const next = out + p;
+    if (Array.from(next).length > max) break;
+    out = next;
+  }
+  if (!out) out = Array.from(raw).slice(0, Math.max(1, max - 1)).join('') + '…';
+  return out.replace(/[；，、,;]$/, '。');
 }
 
 /* ------------------------------ 候选 / 历史 ------------------------------ */

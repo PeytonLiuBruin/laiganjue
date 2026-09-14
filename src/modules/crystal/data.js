@@ -14,33 +14,44 @@ export const MODES = [
 
 export const MODE_LABEL = { yesno: '是非题', oracle: '神谕', word: '一字' };
 export const MODE_SEAL = { yesno: { yes: '是', maybe: '待', no: '否' }, oracle: '谕', word: '字' };
-export const TONE_LABEL = { yes: '肯定', maybe: '含糊', no: '否定' };
+export const TONE_LABEL = { yes: '肯定', maybe: '未明', no: '否定' };
 
-export const QUESTION_PLACEHOLDER = '（可选）把想问的事写在这里，一次只问一件';
+export const QUESTION_PLACEHOLDER = '想问什么？一次只问一件（选填）';
 export const EMPTY_QUESTION_KICKER = '你心里的那件事';
 
-/* ------------------------------ 提示文案 ------------------------------ */
+/* ------------------------------ 按钮文案 ------------------------------ */
+export const LABELS = {
+  gaze: '凝视水晶球',
+  gazing: '凝视中…',
+  askPendulum: '开始问灵摆',
+  swinging: '摆动中…',
+  again: '再问一次',
+  wipe: '擦拭球面',
+  steady: '扶住灵摆',
+  read: '展开解读',
+  share: '分享',
+};
+
+/* ------------------------------ 提示文案（舞台下方唯一一行，≤ 18 字，动词开头） ------------------------------ */
 export const BALL_HINTS = {
-  idle: '双手摩擦水晶球，心中默念所问',
-  low: '雾动了，继续',
-  mid: '球在发热，别停',
+  idle: '摩擦球面，或摇一摇手机',
+  low: '雾动了，继续摩擦',
+  mid: '球在发热，别停手',
   high: '快了，再多一点',
   charging: '凝视球心……',
-  revealed: '雾已散。长按球面可擦拭重问',
+  clearing: '雾散了',
+  revealed: '雾已散，再摩擦可重问',
 };
-export const BALL_BADGE_IDLE = '雾未散';
-export const BALL_HINT_GESTURE = '在球上来回摩擦 · 或摇一摇手机';
+export const BALL_BADGE = { idle: '雾未散', charging: '雾在动', revealed: '雾已散' };
 export const NIGHT_FOOTER = '夜深了，水晶球也在打盹 · 仅供娱乐';
 export const DAY_FOOTER = '仅供娱乐 · 答案其实一直在你心里';
 
 export const PENDULUM_HINTS = {
-  idle: '拖动水晶锥松手，或倾斜手机，让它摆起来',
-  asking: '别碰它，看它往哪个方向去',
-  done: '摆盘已亮，点「再问」重新开始',
+  idle: '拖动水晶锥松手，或倾斜手机',
+  asking: '别碰它，看它往哪边去',
+  done: '已停下，可再问一次',
 };
-export const PENDULUM_HINT_GESTURE = '倾斜手机 / 拖动水晶锥 · 松手让它自己摆';
-export const PENDULUM_BADGE_IDLE = '静止';
-export const PENDULUM_BADGE_ASKING = '摆动中';
+export const PENDULUM_BADGE = { idle: '静止', asking: '摆动中' };
 
 /* ------------------------------ 是非题：20 条 ------------------------------ */
 // 10 肯定 / 5 中立 / 5 否定；权重 5:3:2（见 core.toneWeights）

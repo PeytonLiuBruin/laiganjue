@@ -311,5 +311,18 @@ test('data: 结构完整', () => {
   assert.equal(data.DICE_COUNTS.length, 6);
   assert.ok(data.CHOICE_PRESETS.every(([a, b]) => a && b && a !== b));
   assert.ok(Object.keys(data.COIN_INSCRIPTION).length === 4);
-  for (const m of ['coin', 'dice', 'choice']) assert.ok(data.STAGE_HINT[m] && data.GESTURE_TEXT[m] && data.PRIMARY_LABEL[m]);
+  for (const m of ['coin', 'dice', 'choice']) assert.ok(data.STAGE_HINT[m] && data.PRIMARY_LABEL[m] && data.HISTORY_LABEL[m]);
+  for (const k of ['coin', 'burst', 'dice', 'choice']) assert.ok(data.AGAIN_LABEL[k] && data.SHEET_TITLE[k]);
+  for (const k of ['drag', 'release', 'flight', 'settled', 'landed', 'diceDrag', 'diceSettled', 'diceLanded']) assert.ok(data.HINTS[k], 'hint ' + k);
+  assert.ok(data.CHOICE_MEANING.length > 10);
+});
+
+test('data: 提示一行讲完，按钮文案不带空格', () => {
+  const len = (s) => [...String(s).replace(/[，。、！？·]/g, '')].length;
+  for (const [m, t] of Object.entries(data.STAGE_HINT)) assert.ok(len(t) <= 18, `${m} 提示过长：${t}`);
+  for (const t of Object.values(data.HINTS)) assert.ok(len(t) <= 18, '状态提示过长：' + t);
+  for (const t of [...Object.values(data.PRIMARY_LABEL), ...Object.values(data.AGAIN_LABEL)]) assert.ok(!/\s/.test(t) && [...t].length <= 4, t);
+  for (const q of [...data.COIN_QUIPS.heads, ...data.COIN_QUIPS.tails, ...data.COIN_QUIPS.edge]) assert.ok([...q].length <= 40, q);
+  for (const v of data.CHOICE_VERDICTS) assert.ok([...v].length <= 40, v);
+  for (const k of Object.keys(data.BURST_TEXT)) if (k !== 'kicker' && k !== 'tieTitle') assert.ok([...data.BURST_TEXT[k]].length <= 44, data.BURST_TEXT[k]);
 });

@@ -76,3 +76,22 @@ test('playback sampling, resizing or replaying cannot modify a prepared round', 
   assert.equal(frameAt(a, 1e5).phase, 'settled');
   assert.equal(frameAt(a, 0).y, 30);
 });
+
+test('copy is complete, sized for the receipt and drawer, and free of placeholders', async () => {
+  const { TEXT, BRIEFS, VERSES, READINGS, ADVICE, FOOTER, SHARE_SIGN } = await import('../src/modules/plinko/data.js');
+  const len = (s) => [...s].length;
+  const all = [...Object.values(TEXT), ...BRIEFS, ...VERSES, ...READINGS, ...ADVICE, FOOTER, SHARE_SIGN];
+  for (const s of all) {
+    assert.equal(typeof s, 'string'); assert(s.trim().length, 'empty copy');
+    assert(!/TODO|xxx|示例|lorem|undefined|null/i.test(s), `placeholder in copy: ${s}`);
+    assert(!/[A-Za-z]/.test(s), `latin residue in copy: ${s}`);
+  }
+  // 舞台下方那一行：≤ 18 字，动词开头
+  for (const key of ['hintMotion', 'hintTap', 'falling', 'landing', 'landed']) assert(len(TEXT[key]) <= 18, `${key} too long`);
+  assert(/^(轻点|看|等|落定)/.test(TEXT.hintMotion) && /^(轻点)/.test(TEXT.hintTap));
+  for (const s of BRIEFS) assert(len(s) <= 40, `brief too long: ${s}`);
+  for (const s of [...READINGS, ...ADVICE]) assert(len(s) <= 120, `section too long: ${s}`);
+  for (const pool of [BRIEFS, VERSES, READINGS, ADVICE]) { assert(pool.length >= 4); assert.equal(new Set(pool).size, pool.length, 'duplicate copy'); }
+  assert(len(TEXT.primary) <= 6 && len(TEXT.again) <= 6 && len(TEXT.busy) <= 6, 'button labels stay short');
+  assert.notEqual(TEXT.primary, TEXT.again, 'the button reads differently after a round');
+});

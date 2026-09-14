@@ -1,6 +1,6 @@
 // 转盘 · 界面（Web DOM）。逻辑在 core.js，文案在 data.js。
 import { createRitual } from '../../ui/ritual.js';
-import { segmentAt, simulateSpin, boundaryCrossings, omegaFromIntensity, randomOmega, normalizeFlick, fitLabel, paletteFor, parsePreset, isSpinnable, remaining, pushHistory, streakOf, normalizeDeg, DEG, CUSTOM_MAX } from './core.js';
+import { segmentAt, simulateSpin, boundaryCrossings, omegaFromIntensity, randomOmega, normalizeFlick, fitLabel, paletteFor, parsePreset, isSpinnable, remaining, pushHistory, streakOf, normalizeDeg, briefNote, speedFromOmega, SPIN_FRICTION, DEG, CUSTOM_MAX } from './core.js';
 import { PRESETS, CUSTOM, CUSTOM_TEMPLATES, PALETTES, REASONS, VERSES, LAST_ONE, TRIPLE, FLAPPER_LINES, CAP_LINES, WEAK_FLICK, BUSY_LINES, MILESTONES, SHARE_SIGN, FOOTER, getPreset } from './data.js';
 
 /* SVG 几何常量（viewBox 400×400） */
@@ -54,7 +54,8 @@ export function mount(container, ctx) {
       customPanel.hidden = v !== CUSTOM.id;
       refreshItems();
       rebuildWheel(true);
-      st.setHint(preset.hint);
+      setGestureHint(preset.hint);
+      spinBtn.setLabel(LABEL_SPIN);
       updateBadge();
       renderHistory();
       haptic.tap();
@@ -63,7 +64,7 @@ export function mount(container, ctx) {
   });
 
   /* ---------- 舞台：转盘实物 ---------- */
-  const st = stage({ cls: 'wh-stage', hint: preset.hint, badge: '' });
+  const st = stage({ cls: 'wh-stage', hint: '', badge: '' });
   const ritual = createRitual(ctx, st, ['写选项', '转动', '落定', '揭晓']);
   const wait = ritual.pause;
   const halo = h('div', { class: 'wh-halo' });
@@ -110,7 +111,7 @@ export function mount(container, ctx) {
   const customPanel = h(
     'div',
     { class: 'wh-custom card', hidden: presetId !== CUSTOM.id },
-    h('div', { class: 'wh-custom-head' }, h('span', { class: 't-kicker' }, 'MY WHEEL'), h('span', { class: 'wh-custom-title' }, '我的转盘')),
+    h('div', { class: 'wh-custom-head' }, h('span', { class: 't-kicker' }, '自己填写'), h('span', { class: 'wh-custom-title' }, '我的转盘')),
     savedWrap,
     h('div', { class: 'mt-3' }, nameInput),
     h('p', { class: 'wh-editor-tip' }, `每行一个选项，也可用逗号分隔，支持 2–${CUSTOM_MAX} 项。`),
@@ -129,6 +130,7 @@ export function mount(container, ctx) {
   function onCustomTextChanged() {
     if (presetId !== CUSTOM.id) return;
     ritual.clear(); ritual.step(0);
+    spinBtn.setLabel(LABEL_SPIN);
     removed.clear();
     if (busy) {
       dirty = true;
@@ -239,7 +241,9 @@ export function mount(container, ctx) {
   renderSaved();
 
   /* ---------- 操作 ---------- */
-  const spinBtn = button('转 一 下', {
+  const LABEL_SPIN = '转一下';
+  const LABEL_AGAIN = '再转一次';
+  const spinBtn = button(LABEL_SPIN, {
     variant: 'primary',
     size: 'large',
     primary: true,
@@ -251,17 +255,21 @@ export function mount(container, ctx) {
       spin(randomOmega(), 'button');
     },
   });
-  const editBtn = button('编辑选项', { variant: 'soft', onClick: editOptions });
-  const candBtn = button('候选', { variant: 'ghost', onClick: openCandidates });
+  const candBtn = button('调整候选', { variant: 'ghost', onClick: openCandidates });
   const histEl = h('div', { class: 'wh-history' });
+  // 舞台正下方唯一的一句操作提示；旋转中淡下去，落定后回来
+  const gestureHint = hint('spin', preset.hint);
+  gestureHint.classList.add('wh-hint');
+  function setGestureHint(text) {
+    gestureHint.lastChild.textContent = text;
+  }
 
   container.append(
     ritual.progress,
     h('div', { class: 'wh-top' }, presetChips.el),
-    h('div', { class: 'wh-editbar' }, h('span', null, '每一个选项，都由你决定'), editBtn),
     customPanel,
     h('div', { class: 'mt-3' }, st.el),
-    hint('spin', '在转盘上拨一下，或摇一摇手机'),
+    gestureHint,
     kit.actionBar(spinBtn, candBtn),
     ritual.receipt,
     histEl,
@@ -275,6 +283,7 @@ export function mount(container, ctx) {
       storage.set('preset', presetId); presetChips.set(presetId);
       nameInput.value = cur.name; textarea.value = cur.text; saveDraft();
       deleteBtn.hidden = true; removed.clear(); renderSaved(); refreshItems(); rebuildWheel(false); updateBadge();
+      setGestureHint(preset.hint); spinBtn.setLabel(LABEL_SPIN);
     }
     ritual.clear(); customPanel.hidden = false;
     customPanel.scrollIntoView({ block: 'start', behavior: reduce ? 'instant' : 'smooth' });
@@ -348,7 +357,7 @@ export function mount(container, ctx) {
       if (!items.length) items = all.slice();
     }
     updateCount();
-    candBtn.setLabel(removed.size ? `候选 ${items.length}/${all.length}` : '候选');
+    candBtn.setLabel(removed.size ? `候选 ${items.length}/${all.length}` : '调整候选');
   }
   function updateCount() {
     if (presetId !== CUSTOM.id) return;
@@ -452,7 +461,8 @@ export function mount(container, ctx) {
     templateBtn.disabled = v;
     presetChips.el.classList.toggle('locked', v);
     savedWrap.classList.toggle('locked', v);
-    [editBtn, deleteBtn, nameInput, textarea].forEach((el) => { el.disabled = v; });
+    gestureHint.classList.toggle('dim', v);
+    [deleteBtn, nameInput, textarea].forEach((el) => { el.disabled = v; });
   }
 
   /* ---------- 历史 ---------- */
@@ -485,8 +495,8 @@ export function mount(container, ctx) {
     clearReveal();
     st.setHint('');
     const n = items.length;
-    const speed = Math.sign(omega0) * Math.max(8, Math.min(22, Math.abs(omega0) * 0.62));
-    const plan = simulateSpin(speed, { k: 0.48, c: 0.3 });
+    const speed = speedFromOmega(omega0);
+    const plan = simulateSpin(speed, SPIN_FRICTION);
     const start = angle;
     const PRE = source === 'gesture' ? 0 : 220;
     const leadAngle = plan.omegaAt(0) * 180 / Math.PI * PRE / 2000;
@@ -565,8 +575,8 @@ export function mount(container, ctx) {
     const n = items.length;
     const idx = segmentAt(angle, n);
     const item = items[idx];
-    ritual.step(2); st.setHint('指针停住了，看看它选中了什么');
-    if (!await wait(reduce ? 80 : 350)) return;
+    ritual.step(2); st.setHint('指针停住了');
+    if (!await wait(reduce ? 80 : 300)) return;
     await reveal(idx, item);
   }
 
@@ -579,18 +589,18 @@ export function mount(container, ctx) {
     cap.classList.add('pulse');
     const tone = item.tone || 'good';
     const big = item.label === '大吉' || item.label === '中吉';
+    const paper = ['var(--accent)', 'var(--accent-2)', 'var(--seal)', 'var(--accent-3)'];
     if (tone === 'bad') {
       sound.play('low');
     } else if (big) {
       sound.play('chime');
-      confetti(st.el, { count: 80, origin: { x: 0.5, y: 0.12 } });
+      confetti(st.el, { count: 64, colors: paper, origin: { x: 0.5, y: 0.12 } });
     } else {
       sound.play('success');
-      confetti(st.el, { count: 44, origin: { x: 0.5, y: 0.12 } });
+      confetti(st.el, { count: 36, colors: paper, origin: { x: 0.5, y: 0.12 } });
     }
     haptic.success();
     st.setBadge(`${preset.name} · ${item.label}`);
-    st.setHint('选择已揭晓，详细内容可以稍后展开');
 
     // 记录
     const key = histKey();
@@ -602,12 +612,14 @@ export function mount(container, ctx) {
     storage.set('spins', spins);
     renderHistory();
 
-    if (!await wait(reduce ? 80 : 850)) return;
+    if (!await wait(reduce ? 80 : 700)) return;
     ritual.step(3);
-    ritual.reveal({ kicker: `${preset.name} · ${nLabel()}`, title: item.label, text: presetId === 'truth' ? item.text : (item.note || '这一轮，就选它。'), onRead: () => showResult(item, idx, { streak }) });
+    st.setHint('');
+    ritual.reveal({ kicker: `${preset.name} · ${nLabel()}`, title: item.label, text: presetId === 'truth' ? item.text : briefNote(item.note || '这一轮，就选它。'), onRead: () => showResult(item, idx, { streak }) });
     if (spins % 10 === 0) ctx.setTimeout(() => toast(MILESTONES[Math.min(MILESTONES.length - 1, spins / 10 - 1)]), 900);
     busy = false;
     lock(false);
+    spinBtn.setLabel(LABEL_AGAIN);
     if (dirty) {
       dirty = false;
       onCustomTextChanged();
@@ -627,9 +639,10 @@ export function mount(container, ctx) {
     const verse = isTruth ? item.text : pick((preset.verses || []).concat(VERSES));
     const sections = [];
     if (isTruth) sections.push({ label: '规则', text: item.note });
-    sections.push({ label: n === 1 ? '只剩它了' : '再转一次的理由', text: reason });
+    else if (item.note) sections.push({ label: '解语', text: item.note });
+    sections.push({ label: n === 1 ? '只剩它了' : '再转的理由', text: reason });
     if (n > 1) {
-      const removeBtn = button(`去掉「${item.label}」再转`, {
+      const removeBtn = button(Array.from(item.label).length > 6 ? '去掉这一项再转' : `去掉「${item.label}」再转`, {
         variant: 'soft',
         size: 'small',
         onClick: () => {
@@ -667,14 +680,15 @@ export function mount(container, ctx) {
       title: item.label,
       titleGold: true,
       badge: triple ? TRIPLE.badge : `第 ${spins} 转`,
-      sub: isTruth ? '轮到你了' : item.note || undefined,
+      sub: isTruth ? '轮到你了' : undefined,
       seal: item.seal || preset.seal || CUSTOM.seal,
       verse,
       sections,
       footer: FOOTER,
     });
+    if (Array.from(item.label).length > 4) card.querySelector('.result-title')?.classList.add('long');
     const actions = [
-      button('再转', {
+      button('再转一次', {
         variant: 'primary',
         icon: 'refresh',
         onClick: () => {
@@ -689,7 +703,7 @@ export function mount(container, ctx) {
           const lines = [`【转盘 · ${preset.name}】转到了「${item.label}」`];
           if (isTruth) lines.push(item.text);
           if (item.note && !isTruth) lines.push(item.note);
-          lines.push(`再转一次的理由：${reason}`, SHARE_SIGN);
+          lines.push(verse, `再转的理由：${reason}`, SHARE_SIGN);
           const r = await ctx.share(lines.join('\n'));
           toast(r === 'shared' ? '已分享' : r === 'copied' ? '已复制到剪贴板' : '分享失败');
         },
@@ -750,9 +764,12 @@ export function mount(container, ctx) {
       rebuildWheel(true);
       updateBadge();
     };
+    const editRow = presetId === CUSTOM.id
+      ? null
+      : h('div', { class: 'wh-cand-edit' }, h('span', null, '想改文字、加几项？'), button('改成我的转盘', { variant: 'soft', size: 'small', onClick: () => { sh.close(); wait(reduce ? 20 : 320).then(() => editOptions()); } }));
     const sh = sheet({
       title: '调整候选',
-      content: h('div', null, h('p', { class: 'wh-cands-tip' }, '点一下去掉不想要的，再点恢复。去掉的项这次不上盘。'), listEl),
+      content: h('div', null, h('p', { class: 'wh-cands-tip' }, '点一下去掉不想要的，再点恢复。去掉的项这次不上盘。'), listEl, editRow),
       actions: [
         button('全部恢复', {
           variant: 'ghost',

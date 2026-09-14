@@ -184,52 +184,62 @@ function variant(list, seed) {
 }
 
 /**
- * 综合语（纯函数）：基于大牌比例 / 主导花色 / 正逆比例 / 牌阵关系拼句。
- * 模板总数 ≥ 12，见 data.js SYNTH。
+ * 综合语的分句（纯函数），每句带来源标签，便于界面分段排版：
+ * major 大牌比例 / spread 牌阵关系 / element 元素 / court 宫廷 / reversed 逆位比例 / tone 整体气息。
+ * → [{ key, text }]
  */
-export function synthesize(spreadId, draws) {
-  if (!draws || !draws.length) return '';
+export function synthesizeParts(spreadId, draws) {
+  if (!draws || !draws.length) return [];
   const st = analyze(draws);
   const seed = spreadId + '|' + draws.map((d) => d.card.id + (d.reversed ? 'r' : 'u')).join(',');
   const parts = [];
+  const push = (key, text) => text && parts.push({ key, text });
 
   // 1. 大牌比例
-  if (st.n === 1) parts.push(variant(st.majors ? SYNTH.major.single_major : SYNTH.major.single_minor, seed + 'M'));
-  else if (st.majors === st.n) parts.push(variant(SYNTH.major.all, seed + 'M'));
-  else if (st.majors * 2 > st.n) parts.push(variant(SYNTH.major.most, seed + 'M'));
-  else if (st.majors > 0) parts.push(variant(SYNTH.major.some, seed + 'M'));
-  else parts.push(variant(SYNTH.major.none, seed + 'M'));
+  if (st.n === 1) push('major', variant(st.majors ? SYNTH.major.single_major : SYNTH.major.single_minor, seed + 'M'));
+  else if (st.majors === st.n) push('major', variant(SYNTH.major.all, seed + 'M'));
+  else if (st.majors * 2 > st.n) push('major', variant(SYNTH.major.most, seed + 'M'));
+  else if (st.majors > 0) push('major', variant(SYNTH.major.some, seed + 'M'));
+  else push('major', variant(SYNTH.major.none, seed + 'M'));
 
   // 2. 牌阵关系
   const t = st.tones;
   if (spreadId === 'time' && st.n === 3) {
     const delta = t[2] - t[0];
-    parts.push(delta > 0.5 ? SYNTH.spread.time.rising : delta < -0.5 ? SYNTH.spread.time.falling : SYNTH.spread.time.flat);
+    push('spread', delta > 0.5 ? SYNTH.spread.time.rising : delta < -0.5 ? SYNTH.spread.time.falling : SYNTH.spread.time.flat);
   } else if (spreadId === 'relation' && st.n === 3) {
     const delta = t[0] - t[1];
-    parts.push(delta > 0.5 ? SYNTH.spread.relation.you : delta < -0.5 ? SYNTH.spread.relation.them : SYNTH.spread.relation.even);
+    push('spread', delta > 0.5 ? SYNTH.spread.relation.you : delta < -0.5 ? SYNTH.spread.relation.them : SYNTH.spread.relation.even);
   } else if (spreadId === 'choice' && st.n === 3) {
     const delta = t[0] - t[1];
-    parts.push(delta > 0.5 ? SYNTH.spread.choice.a : delta < -0.5 ? SYNTH.spread.choice.b : SYNTH.spread.choice.tie);
+    push('spread', delta > 0.5 ? SYNTH.spread.choice.a : delta < -0.5 ? SYNTH.spread.choice.b : SYNTH.spread.choice.tie);
   }
 
   // 3. 元素 / 宫廷
-  if (st.dominant) parts.push(SYNTH.element[st.dominant]);
-  else if (st.n > 1 && st.majors < st.n) parts.push(SYNTH.element.mixed);
-  if (st.courts >= 2) parts.push(SYNTH.element.court);
+  if (st.dominant) push('element', SYNTH.element[st.dominant]);
+  else if (st.n > 1 && st.majors < st.n) push('element', SYNTH.element.mixed);
+  if (st.courts >= 2) push('court', SYNTH.element.court);
 
   // 4. 逆位比例
   if (st.n > 1) {
-    if (st.reversed === 0) parts.push(SYNTH.reversed.none);
-    else if (st.reversed === st.n) parts.push(SYNTH.reversed.all);
-    else if (st.reversed * 2 > st.n) parts.push(SYNTH.reversed.most);
-    else parts.push(SYNTH.reversed.some);
+    if (st.reversed === 0) push('reversed', SYNTH.reversed.none);
+    else if (st.reversed === st.n) push('reversed', SYNTH.reversed.all);
+    else if (st.reversed * 2 > st.n) push('reversed', SYNTH.reversed.most);
+    else push('reversed', SYNTH.reversed.some);
   }
 
   // 5. 整体气息
   const mood = st.mood > 0.6 ? 'good' : st.mood < -0.6 ? 'bad' : 'neutral';
-  parts.push(variant(SYNTH.tone[mood], seed + 'T'));
-  return parts.join('');
+  push('tone', variant(SYNTH.tone[mood], seed + 'T'));
+  return parts;
+}
+
+/**
+ * 综合语（纯函数）：基于大牌比例 / 主导花色 / 正逆比例 / 牌阵关系拼句。
+ * 模板总数 ≥ 12，见 data.js SYNTH。
+ */
+export function synthesize(spreadId, draws) {
+  return synthesizeParts(spreadId, draws).map((p) => p.text).join('');
 }
 
 /** 模板计数（供测试校验 ≥ 12） */

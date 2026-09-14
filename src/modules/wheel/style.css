@@ -12,6 +12,13 @@
 .m-wheel .wh-stage {
   min-height: 428px;
 }
+/* 舞台正下方唯一的一句操作提示：旋转中淡下去，落定后回来 */
+.m-wheel .wh-hint {
+  transition: opacity 0.35s ease;
+}
+.m-wheel .wh-hint.dim {
+  opacity: 0.35;
+}
 
 /* —— 转盘框：指针 + 转盘 —— */
 .m-wheel .wh-frame {
@@ -210,13 +217,13 @@
 }
 .m-wheel .wh-flap-body {
   fill: var(--seal);
-  stroke: var(--accent-2);
-  stroke-width: 1.4;
+  stroke: var(--bg);
+  stroke-width: 1.8;
   stroke-linejoin: round;
 }
 .m-wheel .wh-flap-eye {
-  fill: var(--accent-2);
-  opacity: 0.95;
+  fill: var(--accent-ink);
+  opacity: 0.92;
 }
 
 /* —— 自定义编辑区 —— */
@@ -280,12 +287,26 @@
 }
 
 /* —— 抽屉内容（抽屉元素带 .m-wheel 类）—— */
-/* 「再转一次的理由」有 7 个字，放宽结果卡的标签列 */
+/* 「再转的理由」5 个字，标签列略放宽 */
 .m-wheel .result-section:not(.stack) {
-  grid-template-columns: 6.9em 1fr;
+  grid-template-columns: 5.6em 1fr;
 }
 .m-wheel .result-section-label {
   letter-spacing: 0.1em;
+}
+/* 自定义选项可达 12 字（含中英混排）：标题允许任意处换行，长标题缩一号 */
+.m-wheel .result-title {
+  overflow-wrap: anywhere;
+  padding-inline: 4px;
+}
+.m-wheel .result-title.long {
+  font-size: 28px;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  padding-inline: 12px;
+}
+.m-wheel .result-title.long + .result-sub {
+  margin-top: 10px;
 }
 .m-wheel .wh-remove {
   display: flex;
@@ -315,6 +336,21 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
+}
+/* 候选抽屉底部：把预设改成自己的转盘 */
+.m-wheel .wh-cand-edit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: var(--hairline) solid var(--line);
+  font-size: var(--fs-s);
+  color: var(--text-2);
+}
+.m-wheel .wh-cand-edit .btn {
+  flex: none;
 }
 .m-wheel .wh-cand {
   display: flex;

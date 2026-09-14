@@ -58,9 +58,9 @@
   animation: ok-glory 2.4s ease-out both;
 }
 @keyframes ok-glory {
-  0% { box-shadow: var(--shadow-1), inset 0 0 0 0 var(--glow); }
-  25% { box-shadow: var(--shadow-1), inset 0 0 90px 10px var(--glow); }
-  100% { box-shadow: var(--shadow-1), inset 0 0 80px rgba(0, 0, 0, 0.25); }
+  0% { box-shadow: 0 0 0 0 var(--glow), inset 0 0 0 0 var(--glow); }
+  25% { box-shadow: 0 0 0 6px var(--glow), inset 0 0 90px 10px var(--glow); }
+  100% { box-shadow: 0 0 0 0 transparent, inset 0 0 0 0 transparent; }
 }
 
 /* 四季飘落物 */
@@ -612,7 +612,7 @@
 .m-omikuji .ok-history-kicker {
   margin-top: var(--sp-4);
   text-align: center;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.3em;
   color: var(--text-3);
 }
@@ -645,17 +645,33 @@
   line-height: 1.55;
   color: var(--text-2);
 }
-.m-omikuji .ok-sheet-wrap .result-kicker {
+/* 印章占据右上角：番号与运势徽记收窄居中，长假名（すえしょうきち）也不与印章相叠 */
+/* 抽屉内容的包裹层同时带 .m-omikuji 与 .ok-sheet-wrap / .ok-tone-*，故用复合选择器 */
+.m-omikuji.ok-sheet-wrap .result-kicker {
   font-family: var(--font-serif);
-  letter-spacing: 0.28em;
+  letter-spacing: 0.16em;
+  padding-inline: 78px;
+  line-height: 1.7;
 }
-.m-omikuji .ok-tone-red .result-title {
+.m-omikuji.ok-sheet-wrap .result-badge-wrap {
+  padding-inline: 78px;
+}
+.m-omikuji .ok-nowrap {
+  white-space: nowrap;
+}
+/* 标题色与舞台上签纸的等级色呼应；大吉不用渐变，按皮肤强调色平涂 */
+.m-omikuji.ok-tone-gold .result-title.gold {
+  background: none;
+  color: var(--ok-gold);
+  -webkit-text-fill-color: currentColor;
+}
+.m-omikuji.ok-tone-red .result-title {
   color: var(--ok-red);
 }
-.m-omikuji .ok-tone-ink .result-title {
+.m-omikuji.ok-tone-ink .result-title {
   color: var(--ok-ink);
 }
-.m-omikuji .ok-tone-indigo .result-title {
+.m-omikuji.ok-tone-indigo .result-title {
   color: var(--ok-indigo);
 }
 .m-omikuji .ok-p {
@@ -708,4 +724,19 @@
   font-size: var(--fs-s);
   font-weight: 700;
   letter-spacing: 0.1em;
+}
+
+/* —— 结签场景（覆盖 refinement.css 的同名规则，需更高优先级） —— */
+/* 签绳上方的即时反馈只在拖动中与结好后出现；操作提示由舞台下方那一句负责 */
+.m-omikuji .ok-stage[data-tie] .ok-drop-hint:not(.show) {
+  opacity: 0;
+}
+/* 结签时签筒完全退场，不留半透明残影 */
+.m-omikuji .ok-stage[data-tie] .ok-tube-wrap.stick-scene.ok-dim {
+  opacity: 0;
+}
+/* 结好后，挂架带着新结的签纸缓缓落到舞台中央，作为收尾画面 */
+.m-omikuji .ok-stage.ok-stage[data-tie='done'] .ok-rack {
+  transform: translateY(118px);
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
 }

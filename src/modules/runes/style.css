@@ -7,9 +7,9 @@
   --rn-carve: var(--accent);
   --rn-carve-hi: rgba(255, 255, 255, 0.38);
   --rn-carve-lo: rgba(0, 0, 0, 0.55);
-  --rn-cloth: #262120;
-  --rn-cloth-weave: rgba(255, 255, 255, 0.045);
-  --rn-cloth-weave-2: rgba(0, 0, 0, 0.2);
+  --rn-cloth: #2e2624;
+  --rn-cloth-weave: rgba(255, 255, 255, 0.035);
+  --rn-cloth-weave-2: rgba(0, 0, 0, 0.12);
   --rn-cord: #c9a86c;
   --rn-cord-2: #8b6838;
   --rn-cord-3: #ead6a6;
@@ -22,7 +22,7 @@
   --rn-stone-2: #9b9eba;
   --rn-stone-3: #5f6380;
   --rn-cloth: #14163a;
-  --rn-cloth-weave: rgba(200, 205, 255, 0.05);
+  --rn-cloth-weave: rgba(200, 205, 255, 0.035);
 }
 .m-runes[data-rn-theme='cinnabar'] {
   --rn-stone-1: #e3ad62;
@@ -32,7 +32,7 @@
   --rn-carve-hi: rgba(255, 230, 180, 0.35);
   --rn-carve-lo: rgba(40, 15, 0, 0.5);
   --rn-cloth: #2b1211;
-  --rn-cloth-weave: rgba(255, 200, 160, 0.05);
+  --rn-cloth-weave: rgba(255, 200, 160, 0.035);
   --rn-radius: 22% 22% 22% 22% / 18% 18% 18% 18%;
 }
 .m-runes[data-rn-theme='paper'] {
@@ -42,9 +42,9 @@
   --rn-carve: var(--accent-2);
   --rn-carve-hi: rgba(255, 240, 210, 0.3);
   --rn-carve-lo: rgba(0, 0, 0, 0.6);
-  --rn-cloth: #cdbb98;
-  --rn-cloth-weave: rgba(255, 255, 255, 0.22);
-  --rn-cloth-weave-2: rgba(80, 55, 25, 0.12);
+  --rn-cloth: #d3c3a3;
+  --rn-cloth-weave: rgba(255, 255, 255, 0.13);
+  --rn-cloth-weave-2: rgba(80, 55, 25, 0.06);
   --rn-shadow: rgba(60, 40, 20, 0.4);
 }
 .m-runes[data-rn-theme='celadon'] {
@@ -54,9 +54,9 @@
   --rn-carve: var(--accent-2);
   --rn-carve-hi: rgba(230, 255, 240, 0.28);
   --rn-carve-lo: rgba(0, 0, 0, 0.6);
-  --rn-cloth: #b6c7b9;
-  --rn-cloth-weave: rgba(255, 255, 255, 0.24);
-  --rn-cloth-weave-2: rgba(20, 60, 45, 0.12);
+  --rn-cloth: #b9c9bc;
+  --rn-cloth-weave: rgba(255, 255, 255, 0.14);
+  --rn-cloth-weave-2: rgba(20, 60, 45, 0.06);
   --rn-shadow: rgba(20, 60, 45, 0.35);
 }
 
@@ -66,9 +66,30 @@
   justify-content: center;
 }
 
-/* —— 舞台 —— */
+/* —— 舞台 ——
+   高度由牌阵决定：单符 / 三符 430px；五符十字上下各多一枚，需要多给一截，标签才不压到中间那枚 */
 .m-runes .rn-stage {
-  min-height: 446px;
+  min-height: 430px;
+}
+.m-runes[data-rn-n='5'] .rn-stage {
+  min-height: 484px;
+}
+/* 舞台下方只此一行操作提示，随阶段更替；固定高度避免跳动。动画进行中收起手势图标，只留状态说明 */
+.m-runes .rn-hint {
+  min-height: 22px;
+  transition: color var(--dur);
+}
+.m-runes .rn-hint > span:last-child {
+  line-height: 28px; /* 与手势图标同高：图标收起时这一行不缩、按钮不跳 */
+}
+.m-runes .rn-hint.rn-quiet .hint-glyph {
+  display: none;
+}
+.m-runes .rn-hint.rn-quiet {
+  color: var(--text-3);
+}
+.m-runes .rn-spacer {
+  height: 0;
 }
 .m-runes .rn-glow {
   position: absolute;
@@ -85,7 +106,7 @@
 /* —— 皮袋 —— */
 .m-runes .rn-bag-wrap {
   position: absolute;
-  top: 30px;
+  top: 42px;
   left: 50%;
   width: 110px;
   height: 136px;
@@ -269,10 +290,15 @@
   position: absolute;
   left: 5%;
   right: 5%;
-  top: 178px;
-  bottom: 38px;
+  top: 188px;
+  bottom: 32px;
   transform: rotate(-0.8deg);
   z-index: 1;
+}
+/* 单符 / 今日：一枚石头配一方小布，别铺一整张空布 */
+.m-runes .rn-table.rn-n1 {
+  left: 17%;
+  right: 17%;
 }
 .m-runes .rn-cloth {
   position: absolute;
@@ -459,16 +485,73 @@
 .m-runes .rn-more {
   display: flex;
   justify-content: center;
-  margin-top: var(--sp-3);
+  margin-top: var(--sp-2);
 }
 .m-runes .rn-history {
   min-height: 24px;
+  margin-top: var(--sp-4);
+  text-align: center;
+  opacity: 0.85;
+}
+.m-runes .rn-history .t-kicker {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+}
+.m-runes .rn-history .history {
+  margin-top: 8px;
 }
 
 /* —— 抽屉内容（包在 .m-runes 里） —— */
 .m-runes.rn-sheet .result-title {
   font-size: 30px;
   letter-spacing: 0.12em;
+}
+/* 大标题：中文名一行，拉丁名单独一小行；中英混排在 375px 也不会从字中间断开 */
+.m-runes .rn-title {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.m-runes .rn-title-zh {
+  word-break: keep-all;
+}
+.m-runes .rn-title-latin {
+  font-family: var(--font-latin-display);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.3em;
+  padding-left: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+/* 多符副题：每枚符名一个不可断的小块，逆位者带小标 */
+.m-runes .rn-names {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+}
+.m-runes .rn-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-family: var(--font-display);
+}
+.m-runes .rn-name i {
+  font-style: normal;
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  color: var(--seal);
+  border: 1px solid var(--seal);
+  border-radius: 3px;
+  padding: 0 3px;
 }
 .m-runes.rn-sheet .rn-sec {
   display: flex;

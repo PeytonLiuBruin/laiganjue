@@ -22,6 +22,7 @@ import {
   PHASE,
   nextPhase,
   shareText,
+  briefOf,
   cnNumber,
   toneOf,
 } from '../src/modules/omikuji/core.js';
@@ -234,4 +235,33 @@ test('界面文案齐全、无占位', () => {
   assert.ok(TEXT.tieDone.includes('厄运留在神社'));
   assert.ok(Array.isArray(TEXT.howto) && TEXT.howto.length >= 4);
   assert.ok(!/TODO|待补|示例/.test(JSON.stringify(TEXT)));
+});
+
+test('briefOf：结果条一句话跳过标题句、≤ 40 字、带句号', () => {
+  for (const lot of LOTS) {
+    const b = briefOf(lot);
+    const n = len(b);
+    assert.ok(b.endsWith('。'), lot.no + ' 句号');
+    assert.ok(n >= 8 && n <= 40, `${lot.no} 结果条 ${n} 字：${b}`);
+    assert.notEqual(b, levelOf(lot.level).name + '。', lot.no + ' 不应只是等级名');
+  }
+  // 「小吉。眼下……」这类开头，应取后一句
+  assert.equal(briefOf({ level: 'shokichi', summary: '小吉。慢一点走，反而先到。' }), '慢一点走，反而先到。');
+  assert.equal(briefOf({ level: 'kichi', summary: '短。' }), '短。');
+  assert.equal(briefOf({ level: 'kichi', summary: '' }), '');
+});
+
+test('界面提示：舞台下方每句 ≤ 18 字、非空；按钮与结果条文案齐全；无拉丁字母残留', () => {
+  const hints = Object.entries(TEXT).filter(([k]) => /^hint/.test(k));
+  assert.ok(hints.length >= 8);
+  for (const [k, v] of hints) {
+    assert.ok(typeof v === 'string' && v.length > 0, k);
+    assert.ok(len(v) <= 18, `${k} ${len(v)} 字`);
+  }
+  for (const k of ['dropHint', 'dropHintOver', 'dropHintDone', 'btnTieHelp', 'btnTieCancel', 'receiptKeep', 'receiptTie', 'tieTitle', 'tieText', 'tiedTitle', 'tiedText', 'takenTitle', 'takenText', 'rackKicker']) {
+    assert.ok(typeof TEXT[k] === 'string' && TEXT[k].length > 0, k);
+  }
+  assert.ok(len(TEXT.tieText) <= 40 && len(TEXT.tiedText) <= 40 && len(TEXT.takenText) <= 40);
+  const leaves = (v) => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.flatMap(leaves) : v && typeof v === 'object' ? Object.values(v).flatMap(leaves) : []);
+  for (const v of leaves(TEXT)) assert.ok(!/[A-Za-z]/.test(v.replace(/\{n\}/g, '')), `界面文案不应含拉丁字母：${v}`);
 });

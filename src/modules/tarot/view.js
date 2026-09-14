@@ -1,13 +1,14 @@
 import { hingeMotion } from '../../core/hinge-motion.js';
 // 塔罗 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 流程：洗牌（摇 / 摩擦牌堆 / 按钮）→ 抽牌（甩 / 向上快滑 / 主按钮）→ 翻牌（点牌 / 按钮）→ 全部翻开 → 解读抽屉。
-import { initSession, shuffleSession, drawNext, flipCard, isFull, allFlipped, isDone, getSpread, SPREADS, synthesize, keywordsOf, meaningOf, sealFor, shareText, cardById, analyze } from './core.js';
+import { initSession, shuffleSession, drawNext, flipCard, isFull, allFlipped, isDone, getSpread, SPREADS, synthesize, synthesizeParts, keywordsOf, meaningOf, sealFor, shareText, cardById, analyze } from './core.js';
 import { SUITS, SUIT_VERSES, SPREAD_VERSES, TEXT } from './data.js';
 import { createCardArt } from './cards.js';
 import { hashString } from '../../core/rng.js';
 import { createRitual } from '../../ui/ritual.js';
 
 const PILE_N = 6;
+const FLIP_S = 1.3; // 翻牌时长（秒）：铰链运动约 1.2s 落定，再长只是空等
 const BRIGHT = new Set(['M19', 'M17', 'M21']); // 太阳 星星 世界：正位撒花
 const HEAVY = new Set(['M16', 'M15', 'M13']); // 高塔 恶魔 死神：正位低音 + 震颤
 
@@ -24,7 +25,7 @@ export function mount(container, ctx) {
   let session = initSession(spreadId, rng.random);
   let busy = false;
   let flippingAll = false;
-  let question = '';
+  let question = String(storage.get('question', '') || '').slice(0, 40);
   let history = storage.get('history', []);
   let resultSheet = null;
   let cardEls = []; // draw index → { el, spin, inner, front, off }
@@ -36,11 +37,12 @@ export function mount(container, ctx) {
   let histOff = null;
 
   /* ---------- 头部：问题 + 牌阵 ---------- */
-  const qInput = input({ placeholder: TEXT.questionPlaceholder, maxlength: 40, onInput: (v) => (question = v.trim()) });
+  const qInput = input({ placeholder: TEXT.questionPlaceholder, value: question, maxlength: 40, onInput: (v) => { question = v.trim(); storage.set('question', question); } });
   const spreadChips = chips(
     SPREADS.map((s) => ({ value: s.id, label: s.name })),
     {
       value: spreadId,
+      scroll: true,
       onChange: (v) => {
         if (busy || flippingAll) {
           spreadChips.set(spreadId);
@@ -74,7 +76,6 @@ export function mount(container, ctx) {
   st.scene.append(table, layer);
   const ritual = createRitual(ctx, st, ['洗牌', '抽牌', '翻牌', '解读']);
   const wait = ritual.pause;
-  qInput.placeholder = '想从牌中了解什么？（选填）';
   qInput.setAttribute('aria-label', '想问塔罗的问题');
   applyPileRest();
 
@@ -96,8 +97,16 @@ export function mount(container, ctx) {
   const resetBtn = button(TEXT.btnReset, { variant: 'ghost', onClick: () => reset() });
   const actions = h('div', { class: 'tr-actions' }, shuffleBtn, primaryBtn, resetBtn);
   const histWrap = h('div', { class: 'tr-history' });
+  const spacer = h('div', { class: 'tr-spacer', attrs: { 'aria-hidden': 'true' } });
 
-  container.append(ritual.progress, h('div', { class: 'tr-top' }, qInput, h('div', { class: 'mt-3' }, spreadChips.el)), h('div', { class: 'mt-4' }, st.el), hintWrap, actions, ritual.receipt, histWrap);
+  container.append(ritual.progress, h('div', { class: 'tr-top' }, qInput, h('div', { class: 'mt-3' }, spreadChips.el)), h('div', { class: 'mt-4' }, st.el), hintWrap, actions, ritual.receipt, spacer, histWrap);
+  // 记住的牌阵若被横向滚动区裁掉，只滚到刚好露出它为止
+  ctx.setTimeout(() => {
+    const el = spreadChips.el, active = el.querySelector('.chip.active');
+    if (!active) return;
+    const over = active.offsetLeft + active.offsetWidth + 12 - el.clientWidth;
+    if (over > 0) el.scrollLeft = over;
+  }, 0);
 
   renderSpread();
   updateCount();
@@ -161,24 +170,37 @@ export function mount(container, ctx) {
     table.classList.remove('unveiled');
   }
 
+  /** 徽记只说当前状态（牌阵名已由上方芯片承担）：张数 / 已洗 / 已抽 / 翻开后的牌名 */
   function updateCount() {
     table.classList.toggle('has-draws', session.draws.length > 0);
     table.classList.toggle('is-full', isFull(session));
     const spread = getSpread(spreadId);
     countEl.textContent = TEXT.shuffledTimes(session.shuffles);
-    const d = new Date();
-    st.setBadge(spread.daily ? `${spread.name} · ${d.getMonth() + 1}月${d.getDate()}日` : `${spread.name} · ${TEXT.shuffledTimes(session.shuffles)}`);
+    const n = spread.positions.length, k = session.draws.length;
+    let badge;
+    if (isDone(session)) {
+      const st0 = analyze(session.draws);
+      badge = n === 1 ? `${session.draws[0].card.name} · ${session.draws[0].reversed ? TEXT.reversed : TEXT.upright}` : TEXT.receiptSpread(st0.majors, st0.reversed);
+    } else if (k) badge = n > 1 ? TEXT.drawnCount(k, n) : TEXT.awaitFlip;
+    else if (spread.daily) { const d = new Date(); badge = `${d.getMonth() + 1}月${d.getDate()}日`; }
+    else badge = session.shuffles ? TEXT.shuffledTimes(session.shuffles) : TEXT.deckCount(session.deck.length);
+    st.setBadge(badge);
   }
 
+  /** 主按钮文案跟着状态走：抽一张 → 翻开 → 再来一次；洗牌只在抽牌前出现，重来只在牌局中出现 */
   function setButtons() {
     const spread = getSpread(spreadId);
+    const started = session.draws.length > 0;
+    const done = isDone(session);
     let label;
     if (!isFull(session)) label = spread.daily ? TEXT.btnDrawDaily : TEXT.btnDraw;
     else if (!allFlipped(session)) label = TEXT.btnFlip;
-    else label = TEXT.btnRead;
+    else label = TEXT.btnAgain;
     primaryBtn.setLabel(label);
     primaryBtn.disabled = busy || flippingAll;
-    shuffleBtn.disabled = busy || flippingAll || session.draws.length > 0;
+    shuffleBtn.hidden = started;
+    shuffleBtn.disabled = busy || flippingAll || started;
+    resetBtn.hidden = !started || done;
     resetBtn.disabled = busy || flippingAll;
     qInput.disabled = busy || flippingAll;
     spreadChips.el.querySelectorAll('button').forEach((b) => { b.disabled = busy || flippingAll; });
@@ -189,7 +211,7 @@ export function mount(container, ctx) {
     if (busy || flippingAll || resultSheet || !ritual.alive) return;
     if (!isFull(session)) return doDraw(intensity);
     if (!allFlipped(session)) return flipAll();
-    if (!fromGesture) return showResult(spreadId, session.draws, { question });
+    if (!fromGesture) return reset();
   }
 
   /* ---------- 洗牌 ---------- */
@@ -378,8 +400,8 @@ export function mount(container, ctx) {
     haptic.light();
     await ritual.animate(
       c.inner,
-      hingeMotion((parseFloat(c.inner.style.transform.match(/rotateY\(([-.\d]+)/)?.[1]) || 0) * Math.PI / 180).map(({offset,angle,lift}) => ({ offset, transform: `translateZ(${lift}px) rotateY(${angle*180/Math.PI}deg)` })),
-      { duration: D(1900), easing: 'linear' },
+      hingeMotion((parseFloat(c.inner.style.transform.match(/rotateY\(([-.\d]+)/)?.[1]) || 0) * Math.PI / 180, FLIP_S).map(({offset,angle,lift}) => ({ offset, transform: `translateZ(${lift}px) rotateY(${angle*180/Math.PI}deg)` })),
+      { duration: D(FLIP_S * 1000), easing: 'linear' },
     );
     if (!ritual.alive) return;
     c.inner.getAnimations().forEach((a) => a.cancel());
@@ -403,7 +425,7 @@ export function mount(container, ctx) {
       if (!ritual.alive) return;
       if (session.draws[i].flipped) continue;
       await doFlip(i);
-      if (!isDone(session)) await wait(D(650));
+      if (!isDone(session)) await wait(D(420));
     }
     flippingAll = false;
     setButtons();
@@ -435,13 +457,57 @@ export function mount(container, ctx) {
     const stats = analyze(session.draws);
     if (stats.n === 3 && stats.majors === 3) toast(TEXT.allMajors);
     saveHistory();
-    if (!await ritual.pause(reduce ? 180 : 1000)) return;
-    table.classList.add('unveiled');
+    updateCount();
+    if (!await ritual.pause(reduce ? 180 : 600)) return;
+    // 多张牌阵：牌堆先淡出再让位，舞台随之收紧
+    if (session.draws.length > 1 && !reduce) {
+      const a = await ritual.animate(deckZone, [{ opacity: 1 }, { opacity: 0 }], { duration: 300 });
+      if (!ritual.alive) return;
+      table.classList.add('unveiled');
+      a && a.cancel();
+    } else table.classList.add('unveiled');
     const d = session.draws[0];
-    ritual.reveal({ kicker: session.draws.length === 1 ? keywordsOf(d).join(' · ') : '牌阵已展开', title: session.draws.length === 1 ? '这一刻的提示' : getSpread(spreadId).name, text: session.draws.length === 1 ? meaningOf(d).split('。')[0] + '。' : synthesize(spreadId, session.draws).split('。')[0] + '。' });
+    const single = session.draws.length === 1;
+    const draws = session.draws, sid = spreadId, q = question;
+    ritual.reveal({
+      kicker: single ? `${d.reversed ? TEXT.reversed : TEXT.upright} · ${keywordsOf(d).join(' · ')}` : draws.map((x) => x.card.name + (x.reversed ? `（${TEXT.reversed}）` : '')).join(' · '),
+      title: single ? d.card.name : getSpread(spreadId).name,
+      text: brief(single ? meaningOf(d) : synthesize(spreadId, draws)),
+      onRead: () => showResult(sid, draws, { question: q }),
+    });
     st.setHint('牌面会留在这里，准备好后再展开解读');
     setButtons();
+    revealScroll();
   }
+
+  /** 结果条的一句话：取第一句；太长时在冒号 / 分号或最后一个逗号处收住，保持 40 字以内 */
+  function brief(text, max = 40) {
+    let s = text.split('。')[0];
+    if ([...s].length > max) {
+      const chars = [...s];
+      const colon = chars.findIndex((ch, i) => i >= 8 && (ch === '：' || ch === '；'));
+      let cut = colon > 0 && colon < max ? colon : -1;
+      if (cut < 0) for (let i = Math.min(max, chars.length) - 1; i >= 8; i--) if (chars[i] === '，') { cut = i; break; }
+      s = chars.slice(0, cut > 0 ? cut : max).join('');
+    }
+    return s + '。';
+  }
+
+  /** 结果条若被首屏截断，轻轻滚到能看见「展开解读」为止。 */
+  function revealScroll() {
+    const r = ritual.receipt.getBoundingClientRect();
+    const vh = window.visualViewport?.height || window.innerHeight;
+    const over = r.bottom - (vh - 12);
+    if (over > 0) window.scrollBy({ top: Math.min(over, Math.max(0, r.top - 84)), behavior: ctx.platform.prefersReducedMotion ? 'instant' : 'smooth' });
+  }
+  // 结果条收起时页面会变短，浏览器会把滚动位置硬拉回顶部；用占位撑住，等滚动完成再放开。
+  function holdSpace() {
+    const r = ritual.receipt;
+    if (r.hidden) return;
+    const cs = getComputedStyle(r);
+    spacer.style.height = `${r.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom)}px`;
+  }
+  function releaseSpace() { spacer.style.height = '0px'; }
 
   /* ---------- 结果抽屉 ---------- */
   function showResult(sid, draws, { question: q = '', replay = false } = {}) {
@@ -466,15 +532,25 @@ export function mount(container, ctx) {
     const sections = [];
     if (q) sections.push({ label: TEXT.questionLabel, text: q });
     draws.forEach((d, i) => sections.push({ label: spread.positions[i] ? spread.positions[i].label : `第 ${i + 1} 张`, node: readNode(d, spread.positions[i], { detail: single }), stack: true }));
-    sections.push({ label: TEXT.synthesisLabel, text: synthesize(sid, draws) });
+    // 单张大牌：爱情 / 事业 / 建议 单独成段，段段短而清楚
+    if (single && d0.card.arcana === 'major') sections.push({ label: TEXT.detailLabel, node: detailNode(d0.card), stack: true });
+    // 综合语：多张牌时分成「综合」（牌面关系）与「气息」（正逆与整体），每段不超过百余字
+    const parts = synthesizeParts(sid, draws);
+    const text = (keys) => parts.filter((p) => keys.includes(p.key)).map((p) => p.text).join('');
+    if (single) sections.push({ label: TEXT.synthesisLabel, text: text(['major', 'spread', 'element', 'court', 'reversed', 'tone']) });
+    else {
+      sections.push({ label: TEXT.synthesisLabel, text: text(['major', 'spread', 'element']) });
+      const air = text(['court', 'reversed', 'tone']);
+      if (air) sections.push({ label: TEXT.airLabel, text: air });
+    }
     const card = resultCard({ kicker, title, sub, badge, seal: sealFor(sid, draws), verse, sections, footer: TEXT.footer });
     const wrap = h('div', { class: 'm-tarot tr-result' }, card);
     const actions = [
-      button('回到牌面', {
+      button(replay ? TEXT.btnBack : TEXT.btnAgain, {
         variant: 'primary',
         onClick: () => {
-          sh.close();
-          ritual.step(2);
+          const s = sh; resultSheet = null; s.close();
+          if (!replay) reset();
         },
       }),
       button(TEXT.btnShare, {
@@ -504,21 +580,22 @@ export function mount(container, ctx) {
     );
     const body = h('div', { class: 'tr-read-body' }, name, h('div', { class: 'tr-read-kw' }, keywordsOf(d).join(' · ')), h('p', { class: 'tr-read-text' }, meaningOf(d)));
     if (pos && pos.hint && !detail) body.insertBefore(h('div', { class: 'tr-read-meta' }, pos.hint), body.children[1]);
-    if (card.arcana === 'major' && detail) {
-      body.append(
-        h(
-          'div',
-          { class: 'tr-read-more' },
-          h('div', null, h('b', null, '爱情'), card.love),
-          h('div', null, h('b', null, '事业'), card.career),
-          h('div', null, h('b', null, '建议'), card.advice),
-        ),
-      );
-    } else if (card.arcana === 'minor' && detail) {
+    if (card.arcana === 'minor' && detail) {
       const s = SUITS[card.suit];
       body.append(h('div', { class: 'tr-read-meta' }, `${s.name} · ${s.element} · ${s.theme}`));
     }
     return h('div', { class: 'tr-read' }, thumb, body);
+  }
+
+  /** 大牌分项：爱情 / 事业 / 建议 */
+  function detailNode(card) {
+    return h(
+      'div',
+      { class: 'tr-read-more' },
+      h('div', null, h('b', null, '爱情'), card.love),
+      h('div', null, h('b', null, '事业'), card.career),
+      h('div', null, h('b', null, '建议'), card.advice),
+    );
   }
 
   function verseFor(d) {
@@ -573,8 +650,15 @@ export function mount(container, ctx) {
   /* ---------- 重来 ---------- */
   async function reset({ silent = false } = {}) {
     if (busy || flippingAll || !ritual.alive) return;
+    holdSpace();
+    const wasUnveiled = table.classList.contains('unveiled');
     ritual.clear(); ritual.step(0); table.classList.remove('unveiled');
     if (resultSheet) resultSheet.close();
+    if (window.scrollY > 0 && !ctx.platform.prefersReducedMotion) { window.scrollTo({ top: 0, behavior: 'smooth' }); ctx.setTimeout(releaseSpace, 450); }
+    else releaseSpace();
+    // 牌位先恢复空框与原名，牌堆淡回来，再让牌飞回去
+    slots.forEach((s, i) => { s.wrap.classList.remove('filled'); s.label.textContent = getSpread(spreadId).positions[i].label; });
+    if (wasUnveiled && session.draws.length > 1 && !silent && !reduce) ritual.animate(deckZone, [{ opacity: 0 }, { opacity: 1 }], { duration: 420 }).then((a) => a && a.cancel());
     const cards = cardEls.filter(Boolean);
     if (cards.length && !silent && !reduce) {
       busy = true;
@@ -614,9 +698,12 @@ export function mount(container, ctx) {
   function makeJitter(scale) {
     return Array.from({ length: PILE_N }, () => ({ x: (rng.random() - 0.5) * 10 * scale, y: (rng.random() - 0.5) * 6 * scale, r: (rng.random() - 0.5) * 12 * scale }));
   }
+  /** 静止牌堆：顶牌端正居中，其余交替向两侧微微露出，像一叠刚理好的牌 */
   function pileRest(i, jit = pileJitter) {
     const j = jit[i];
-    return `translate(${((i - 2.5) * 6 + j.x).toFixed(1)}px, ${(Math.abs(i - 2.5) * 2 - i * .8).toFixed(1)}px) rotate(${((i - 2.5) * 5 + j.r * .25).toFixed(1)}deg)`;
+    const k = PILE_N - 1 - i; // 0 = 顶牌
+    const fan = (k % 2 ? -1 : 1) * Math.ceil(k / 2); // 0, -1, 1, -2, 2, -3
+    return `translate(${(fan * 4 + j.x * .5).toFixed(1)}px, ${(k * 1.1 + j.y * .3).toFixed(1)}px) rotate(${(fan * 3.2 + j.r * .25).toFixed(1)}deg)`;
   }
   function applyPileRest() {
     if (!ritual.alive) return;

@@ -18,6 +18,14 @@ export function mountainAt(heading) {
   return MOUNTAINS[Math.round(h / 15) % 24];
 }
 
+/** 最短有向角差 a − b，范围 (−180, 180]：用于平滑转动与判断"是否已转离记录的方位" */
+export function angleDiff(a, b) {
+  let d = normalizeHeading(a) - normalizeHeading(b);
+  if (d > 180) d -= 360;
+  if (d <= -180) d += 360;
+  return d;
+}
+
 export function directionByName(name) {
   return DIRECTIONS.find((d) => d.name === name) || null;
 }
@@ -72,6 +80,16 @@ export function luckyDirections(gua) {
     .filter((x) => ['great', 'good'].includes(x.tone))
     .sort((a, b) => a.rank - b.rank)
     .map((x) => x.name);
+}
+
+/** 按吉凶把方位分成两组（吉：great/good；凶：warn/bad），有 rank 的按 rank 排，否则保持原序 */
+export function splitByTone(items) {
+  const lucky = (x) => x.tone === 'great' || x.tone === 'good';
+  const byRank = (a, b) => (a.rank ?? 0) - (b.rank ?? 0);
+  return {
+    lucky: items.filter(lucky).sort(byRank),
+    unlucky: items.filter((x) => !lucky(x)).sort(byRank),
+  };
 }
 
 /** 年紫白入中星：2024→3 2025→2 2026→1 2027→9 2018→9 1999→1 */

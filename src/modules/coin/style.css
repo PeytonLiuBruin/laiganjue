@@ -1,615 +1,71 @@
-/* 硬币骰子 模块样式：所有选择器以 .m-coin 开头 */
+/* 硬币骰子 模块样式：所有选择器以 .m-coin 开头。
+   实物（铜钱 / 骰子）都在画布里，这里只管布局与纸面上的字。 */
 .m-coin {
-  --cn-ds: 52px;
-  --cn-die: #23212a;
-  --cn-die-hi: rgba(255, 255, 255, 0.12);
-  --cn-die-edge: rgba(255, 255, 255, 0.16);
-  --cn-pip: var(--accent);
-  --cn-shadow: rgba(0, 0, 0, 0.55);
-}
-.m-coin.cn-light {
-  --cn-die: #fbf7ec;
-  --cn-die-hi: rgba(255, 255, 255, 0.75);
-  --cn-die-edge: rgba(60, 40, 20, 0.24);
-  --cn-pip: #2a2118;
-  --cn-shadow: rgba(60, 40, 20, 0.32);
+  /* 抽屉里的小骰子：与舞台上的实物同一种象牙白，深浅皮肤都不变 */
+  --cn-die: #f3edda;
+  --cn-die-hi: rgba(255, 255, 255, 0.7);
+  --cn-die-edge: rgba(83, 59, 29, 0.28);
+  --cn-pip: #302921;
 }
 
-/* —— 头部：标签页 + 各模式面板 —— */
-.m-coin .cn-head .tabs {
-  max-width: 360px;
-  margin: 0 auto;
-}
-.m-coin .cn-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  align-items: center;
-}
-.m-coin .cn-ctl-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-3);
-  width: 100%;
-}
-.m-coin .cn-ctl-label {
-  flex: none;
-  font-size: var(--fs-xs);
-  letter-spacing: 0.24em;
-  color: var(--text-3);
-}
-.m-coin .cn-ctl-row .chips {
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-}
-.m-coin .cn-dice-panel .chip {
-  min-width: 40px;
-  padding: 0 10px;
-  font-variant-numeric: tabular-nums;
-}
-.m-coin .cn-vs {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  width: 100%;
-}
-.m-coin .cn-vs .input {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-  font-family: var(--font-serif);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-}
-.m-coin .cn-vs-mark {
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: var(--hairline) solid var(--line-strong);
-  display: grid;
-  place-items: center;
-  font-family: var(--font-serif);
-  font-size: 13px;
-  color: var(--accent);
-}
-.m-coin .cn-presets {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-}
-.m-coin .cn-preset {
-  min-height: 28px;
-  padding: 0 10px;
-  border-radius: var(--r-pill);
-  border: var(--hairline) dashed var(--line);
-  color: var(--text-3);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.06em;
-  transition: all var(--dur-fast);
-}
-.m-coin .cn-preset:active {
-  background: var(--surface-2);
-  color: var(--text);
-}
-.m-coin.cn-busy .cn-head {
-  opacity: 0.55;
-  pointer-events: none;
-  transition: opacity var(--dur);
-}
+/* —— 头部：标签页 + 各模式面板（控件不超过两行）—— */
+.m-coin .cn-head { display: grid; gap: 14px; margin-bottom: 16px; }
+.m-coin .cn-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.m-coin .cn-panel .chip { min-height: 44px; }
+.m-coin .cn-ctl-row { display: flex; align-items: center; gap: 12px; width: 100%; }
+.m-coin .cn-ctl-label { flex: none; width: 2.6em; font-size: 12px; letter-spacing: 0.08em; color: var(--text-3); }
+.m-coin .cn-ctl-row .chips { flex: 1; min-width: 0; }
+.m-coin .cn-dice-panel .cn-ctl-row:first-child .chip { min-width: 44px; padding-inline: 8px; justify-content: center; font-variant-numeric: tabular-nums; }
+.m-coin .cn-vs { display: flex; align-items: center; gap: 8px; width: 100%; }
+.m-coin .cn-vs .input { flex: 1; min-width: 0; text-align: center; font-family: var(--font-serif); font-weight: 600; letter-spacing: 0.08em; }
+.m-coin .cn-vs-mark { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-family: var(--font-serif); font-size: 13px; color: var(--accent); }
+/* 预设是一行横滑的芯片：末尾露出半个，看得出还有更多 */
+.m-coin .cn-presets { width: 100%; }
+.m-coin .cn-presets .chip { padding-inline: 10px; color: var(--text-2); }
+.m-coin .cn-presets .chip.active { color: var(--accent); }
+.m-coin.cn-busy .cn-head { opacity: 0.55; pointer-events: none; transition: opacity var(--dur); }
 
-/* —— 舞台 —— */
-.m-coin .cn-stage {
-  min-height: 380px;
-}
-.m-coin .cn-ambient {
-  position: absolute;
-  left: 50%;
-  top: 26%;
-  width: 280px;
-  height: 280px;
-  margin-left: -140px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--glow), transparent 68%);
-  opacity: 0.55;
-  filter: blur(18px);
-  transition: transform 0.5s ease-out;
-  pointer-events: none;
-}
-.m-coin .cn-jitter {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  transition: transform 0.12s ease-out;
-}
+/* —— 舞台：画布是唯一的实物层，可以直接上手拖 —— */
+.m-coin .cn-stage .stage-scene { transform-style: flat; }
+.m-coin .cn-solid { touch-action: none; cursor: grab; }
+.m-coin .cn-solid:active { cursor: grabbing; }
 
-/* —— 硬币 —— */
-.m-coin .cn-coin-zone {
-  position: absolute;
-  left: 50%;
-  bottom: 46px;
-  width: 150px;
-  height: 150px;
-  margin-left: -75px;
-  transform-style: preserve-3d;
-}
-.m-coin .cn-coin-zone.standing {
-  filter: drop-shadow(0 0 18px var(--glow));
-}
-.m-coin .cn-coin-wrap {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.m-coin .cn-coin {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.m-coin .cn-face {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  background: radial-gradient(circle at 36% 30%, var(--accent-2) 0%, var(--accent) 46%, var(--accent-3) 100%);
-  box-shadow: inset 0 0 0 1px var(--accent-3), inset 0 2px 6px rgba(255, 255, 255, 0.35), inset 0 -6px 12px rgba(0, 0, 0, 0.28);
-  overflow: hidden;
-}
-.m-coin .cn-heads {
-  transform: translateZ(3.5px);
-}
-.m-coin .cn-tails {
-  transform: rotateX(180deg) translateZ(3.5px);
-}
-/* 币边：多层薄片叠成厚度，齿纹用重复锥形渐变 */
-.m-coin .cn-edge {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-conic-gradient(var(--accent-3) 0 2deg, var(--accent) 2deg 4deg);
-}
-.m-coin .cn-rim {
-  position: absolute;
-  inset: 7px;
-  border-radius: 50%;
-  border: 1.5px solid var(--accent-3);
-  opacity: 0.75;
-  pointer-events: none;
-}
-.m-coin .cn-rim::after {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  border: 1px solid var(--accent-2);
-  opacity: 0.7;
-}
-/* 方孔 */
-.m-coin .cn-hole {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 36px;
-  height: 36px;
-  margin: -18px 0 0 -18px;
-  border-radius: 3px;
-  background: linear-gradient(160deg, var(--bg-3), var(--bg));
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6), 0 1px 0 var(--accent-2), 0 -1px 0 var(--accent-3);
-}
-/* 铸字：来 感 通 宝 */
-.m-coin .cn-ch {
-  position: absolute;
-  font-family: var(--font-serif);
-  font-weight: 900;
-  font-size: 27px;
-  line-height: 1;
-  color: var(--accent-ink);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28), 0 -1px 0 rgba(0, 0, 0, 0.25);
-}
-.m-coin .cn-at-top {
-  top: 19px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.m-coin .cn-at-bottom {
-  bottom: 19px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.m-coin .cn-at-left {
-  left: 21px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.m-coin .cn-at-right {
-  right: 21px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-/* 花面纹样 */
-.m-coin .cn-flower {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.m-coin .cn-fl-ring circle {
-  fill: none;
-  stroke: var(--accent-ink);
-  stroke-width: 1.2;
-  opacity: 0.5;
-}
-.m-coin .cn-fl-petals path {
-  fill: var(--accent-3);
-  stroke: var(--accent-ink);
-  stroke-width: 1.4;
-  opacity: 0.92;
-}
-.m-coin .cn-fl-dots circle {
-  fill: var(--accent-ink);
-  opacity: 0.7;
-}
-.m-coin .cn-fl-core {
-  fill: var(--accent-ink);
-  opacity: 0.85;
-}
-.m-coin .cn-fl-core2 {
-  fill: var(--accent-2);
-  opacity: 0.9;
-}
-/* 二选一：两面写字 */
-.m-coin .cn-opt {
-  display: none;
-  position: absolute;
-  inset: 0;
-  place-items: center;
-  padding: 0 20px;
-  text-align: center;
-  font-family: var(--font-serif);
-  font-weight: 900;
-  line-height: 1.15;
-  letter-spacing: 0.04em;
-  color: var(--accent-ink);
-  word-break: break-all;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25), 0 -1px 0 rgba(0, 0, 0, 0.25);
-}
-.m-coin .cn-coin.choice .cn-opt {
-  display: grid;
-}
-.m-coin .cn-coin.choice .cn-ch,
-.m-coin .cn-coin.choice .cn-hole,
-.m-coin .cn-coin.choice .cn-flower {
-  display: none;
-}
-.m-coin .cn-coin.choice .cn-tails {
-  background-image: repeating-radial-gradient(circle at 50% 50%, transparent 0 7px, rgba(0, 0, 0, 0.07) 7px 8px),
-    radial-gradient(circle at 36% 30%, var(--accent-2) 0%, var(--accent) 46%, var(--accent-3) 100%);
-}
-.m-coin .cn-coin-shadow {
-  position: absolute;
-  left: 50%;
-  bottom: -14px;
-  width: 124px;
-  height: 18px;
-  margin-left: -62px;
-  border-radius: 50%;
-  background: var(--cn-shadow);
-  filter: blur(6px);
-  transform-origin: center;
-  opacity: 0.6;
-}
+/* —— 只此一行操作提示，随状态更替；固定高度避免跳动 —— */
+.m-coin .cn-hint .hint { min-height: 22px; }
+.m-coin .cn-hint .hint.cn-quiet .hint-glyph { display: none; }
 
-/* —— 骰子托盘（倾斜的深色圆盘）—— */
-.m-coin .cn-tray {
-  position: absolute;
-  left: 50%;
-  bottom: 34px;
-  width: 300px;
-  height: 190px;
-  margin-left: -150px;
-  transform-style: preserve-3d;
-  transform: rotateX(34deg);
-  transform-origin: 50% 100%;
-}
-.m-coin .cn-tray-disc {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at 50% 42%, var(--bg-3), var(--bg-2) 55%, var(--bg) 100%);
-  box-shadow: inset 0 0 44px rgba(0, 0, 0, 0.45), 0 10px 30px rgba(0, 0, 0, 0.35);
-  border: var(--hairline) solid var(--line-strong);
-}
-.m-coin .cn-tray-disc::before {
-  content: '';
-  position: absolute;
-  inset: 12px;
-  border-radius: 50%;
-  border: var(--hairline) solid var(--line);
-  opacity: 0.8;
-}
-.m-coin .cn-tray-disc::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-radial-gradient(circle at 50% 50%, transparent 0 9px, rgba(255, 255, 255, 0.025) 9px 10px);
-}
-.m-coin.cn-light .cn-tray-disc {
-  box-shadow: inset 0 0 30px rgba(60, 40, 20, 0.18), 0 8px 24px rgba(60, 40, 20, 0.18);
-}
-.m-coin.cn-light .cn-tray-disc::after {
-  background: repeating-radial-gradient(circle at 50% 50%, transparent 0 9px, rgba(60, 40, 20, 0.04) 9px 10px);
-}
-.m-coin .cn-tray-field {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-}
+/* —— 结果条：一两个字的结果（正 / 反 / 做）放大一号，像盖下去的一枚字 —— */
+.m-coin .ritual-receipt.cn-glyph h2 { font-size: 36px; line-height: 1.25; letter-spacing: 0.12em; }
+.m-coin .cn-spacer { height: 0; }
 
-/* —— 骰子：CSS 立方体 —— */
-.m-coin .cn-die {
-  position: absolute;
-  width: var(--cn-ds);
-  height: var(--cn-ds);
-  margin: calc(var(--cn-ds) / -2) 0 0 calc(var(--cn-ds) / -2);
-  transform-style: preserve-3d;
-}
-.m-coin .cn-dshadow {
-  position: absolute;
-  inset: -4px;
-  border-radius: 30%;
-  background: var(--cn-shadow);
-  filter: blur(5px);
-  opacity: 0.55;
-  transform: translateZ(0.5px);
-}
-.m-coin .cn-lift {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  transform: translateZ(calc(var(--cn-ds) / 2));
-  will-change: transform;
-}
-.m-coin .cn-up {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-}
-.m-coin .cn-cube {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.m-coin .cn-df {
-  position: absolute;
-  inset: 0;
-  border-radius: 16%;
-  background: linear-gradient(160deg, var(--cn-die-hi), transparent 55%), var(--cn-die);
-  box-shadow: inset 0 0 0 1px var(--cn-die-edge), inset 0 -4px 8px rgba(0, 0, 0, 0.18);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  padding: 15%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-.m-coin .cn-f1 {
-  transform: translateZ(calc(var(--cn-ds) / 2));
-}
-.m-coin .cn-f6 {
-  transform: rotateY(180deg) translateZ(calc(var(--cn-ds) / 2));
-}
-.m-coin .cn-f2 {
-  transform: rotateY(90deg) translateZ(calc(var(--cn-ds) / 2));
-}
-.m-coin .cn-f5 {
-  transform: rotateY(-90deg) translateZ(calc(var(--cn-ds) / 2));
-}
-.m-coin .cn-f3 {
-  transform: rotateX(90deg) translateZ(calc(var(--cn-ds) / 2));
-}
-.m-coin .cn-f4 {
-  transform: rotateX(-90deg) translateZ(calc(var(--cn-ds) / 2));
-}
-.m-coin .cn-pip {
-  width: 72%;
-  height: 72%;
-  border-radius: 50%;
-  place-self: center;
-  background: var(--cn-pip);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
-}
-/* D20：简化为立起的多面数字牌 */
-.m-coin .cn-d20 .cn-up {
-  transform: rotateX(-34deg) translateZ(4px);
-}
-.m-coin .cn-d20 .cn-df {
-  inset: -5px;
-  border-radius: 0;
-  padding: 0;
-  clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
-  background: conic-gradient(from 30deg, var(--cn-die-hi) 0 60deg, transparent 60deg 120deg, var(--cn-die-hi) 120deg 180deg, transparent 180deg 240deg, var(--cn-die-hi) 240deg 300deg, transparent 300deg 360deg), var(--cn-die);
-  box-shadow: none;
-  display: grid;
-  place-items: center;
-}
-.m-coin .cn-d20 .cn-f20a {
-  transform: translateZ(3px);
-}
-.m-coin .cn-d20 .cn-f20b {
-  transform: rotateY(180deg) translateZ(3px);
-}
-.m-coin .cn-num {
-  font-family: var(--font-serif);
-  font-weight: 900;
-  font-size: 24px;
-  line-height: 1;
-  color: var(--cn-pip);
-  font-variant-numeric: tabular-nums;
-}
+/* —— 记录：计数 + 最近序列 —— */
+.m-coin .cn-record { margin-top: 22px; text-align: center; opacity: 0.9; }
+.m-coin .cn-record .t-kicker { display: block; font-size: 11px; letter-spacing: 0.12em; color: var(--text-3); }
+.m-coin .cn-stats { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 12px; letter-spacing: 0.06em; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.m-coin .cn-reset { min-height: 44px; min-width: 44px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: var(--text-2); font-size: 12px; letter-spacing: 0.06em; text-decoration: underline dotted; text-underline-offset: 4px; }
+.m-coin .cn-reset:active { background: var(--surface-2); }
+.m-coin .cn-reset:disabled { opacity: 0.5; text-decoration: none; }
+.m-coin .cn-history { margin-top: 10px; }
+.m-coin .cn-history .history { margin-top: 8px; }
+.m-coin .cn-dots-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 8px; }
+.m-coin .cn-dots { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; padding: 2px 0; }
+.m-coin .cn-dot { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--accent); opacity: 0.85; }
+.m-coin .cn-dot.h { background: var(--accent); }
+.m-coin .cn-dot.e { background: linear-gradient(90deg, var(--accent) 50%, transparent 50%); }
+.m-coin .cn-dot.latest { box-shadow: 0 0 0 3px var(--glow); }
+.m-coin .cn-dots-legend { font-size: 10px; letter-spacing: 0.2em; color: var(--text-3); }
 
-/* —— 舞台下方：结果大字 / 统计 —— */
-.m-coin .cn-result {
-  min-height: 118px;
-  margin-top: var(--sp-4);
-  text-align: center;
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
-}
-.m-coin .cn-result.show {
-  opacity: 1;
-  transform: none;
-}
-.m-coin .cn-res-big {
-  font-family: var(--font-serif);
-  font-weight: 900;
-  font-size: 52px;
-  line-height: 1.1;
-  letter-spacing: 0.12em;
-}
-.m-coin .cn-res-big.cn-long {
-  font-size: 30px;
-  letter-spacing: 0.06em;
-  line-height: 1.3;
-}
-.m-coin .cn-res-big.cn-seq {
-  font-size: 22px;
-  letter-spacing: 0.3em;
-  line-height: 2.2;
-}
-.m-coin .cn-res-badge {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 2px 12px;
-  border-radius: var(--r-pill);
-  border: var(--hairline) solid var(--line-strong);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.2em;
-  color: var(--accent);
-}
-.m-coin .cn-res-sub {
-  margin: 10px auto 0;
-  max-width: 320px;
-  font-family: var(--font-serif);
-  font-size: var(--fs-m);
-  line-height: 1.8;
-  letter-spacing: 0.06em;
-  color: var(--text-2);
-}
-.m-coin .cn-stats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.2em;
-  color: var(--text-3);
-  font-variant-numeric: tabular-nums;
-}
-.m-coin .cn-reset {
-  min-height: 26px;
-  padding: 0 10px;
-  border-radius: var(--r-pill);
-  border: var(--hairline) solid var(--line);
-  color: var(--text-3);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-}
-.m-coin .cn-reset:active {
-  background: var(--surface-2);
-}
-.m-coin .cn-hint {
-  margin-top: var(--sp-2);
-}
-
-/* —— 历史：●○ 序列 —— */
-.m-coin .cn-history {
-  min-height: 28px;
-  margin-top: var(--sp-3);
-}
-.m-coin .cn-dots-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.m-coin .cn-dots {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 7px;
-  padding: 2px 0;
-}
-.m-coin .cn-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  border: 1.5px solid var(--accent);
-  opacity: 0.85;
-}
-.m-coin .cn-dot.h {
-  background: var(--accent);
-}
-.m-coin .cn-dot.e {
-  background: linear-gradient(90deg, var(--accent) 50%, transparent 50%);
-}
-.m-coin .cn-dot.latest {
-  box-shadow: 0 0 0 3px var(--glow);
-}
-.m-coin .cn-dots-legend {
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--text-3);
-}
-
-/* —— 抽屉结果卡里的小骰子（卡片本身带 .m-coin.cn-card）—— */
-.m-coin.cn-card .cn-mini-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
+/* —— 抽屉结果卡（卡片本身带 .m-coin.cn-card）—— */
+.m-coin.cn-card .result-kicker { padding-inline: 64px; }
+.m-coin.cn-card .result-title.cn-title-l { font-size: 30px; letter-spacing: 0.08em; }
+.m-coin.cn-card .result-title.cn-title-xl { font-size: 24px; letter-spacing: 0.06em; }
+.m-coin.cn-card .cn-mini-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .m-coin.cn-card .cn-mini {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
+  width: 30px; height: 30px; border-radius: 6px;
   background: linear-gradient(160deg, var(--cn-die-hi), transparent 55%), var(--cn-die);
-  box-shadow: inset 0 0 0 1px var(--cn-die-edge);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  padding: 4px;
+  box-shadow: inset 0 0 0 1px var(--cn-die-edge), 0 1px 2px rgba(42, 29, 19, 0.18);
+  display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); padding: 4px;
 }
-.m-coin.cn-card .cn-mini .cn-pip {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  place-self: center;
-  background: var(--cn-pip);
-}
-.m-coin.cn-card .cn-mini.cn-n {
-  place-items: center;
-  font-family: var(--font-serif);
-  font-weight: 900;
-  font-size: 13px;
-  color: var(--cn-pip);
-  clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%);
-  border-radius: 0;
-}
-.m-coin.cn-card .cn-mini-sum {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--text);
-}
+.m-coin.cn-card .cn-mini .cn-pip { width: 5px; height: 5px; border-radius: 50%; place-self: center; background: var(--cn-pip); }
+.m-coin.cn-card .cn-mini.cn-n { place-items: center; font-family: var(--font-serif); font-weight: 700; font-size: 13px; color: var(--cn-pip); clip-path: polygon(50% 0, 94% 25%, 94% 75%, 50% 100%, 6% 75%, 6% 25%); border-radius: 0; }
+.m-coin.cn-card .cn-mini-sum { font-family: var(--font-serif); font-weight: 700; letter-spacing: 0.1em; color: var(--text); }

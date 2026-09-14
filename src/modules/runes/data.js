@@ -545,8 +545,8 @@ export const SPREADS = [
       { x: 50, y: 50 },
       { x: 20, y: 50 },
       { x: 80, y: 50 },
-      { x: 50, y: 17 },
-      { x: 50, y: 83 },
+      { x: 50, y: 18 },
+      { x: 50, y: 80 },
     ],
   },
   {
@@ -562,7 +562,8 @@ export const SPREADS = [
   },
 ];
 
-export const SPREAD_CHIPS = SPREADS.map((s) => ({ value: s.id, label: s.id === 'three' ? '三符·诺伦' : s.id === 'five' ? '五符·十字' : s.name }));
+// 牌阵切换：与舞台徽记、抽屉标题同名，避免「三符·诺伦」与「诺伦三符」两套叫法
+export const SPREAD_CHIPS = SPREADS.map((s) => ({ value: s.id, label: s.name }));
 
 /* ---------------- 合参（多符时的总评） ---------------- */
 // 按逆位比例：none 全正 / few 少数逆位 / most 多数逆位 / all 全逆
@@ -580,19 +581,24 @@ export const UI_TEXT = {
   detailTitle: '符文细解',
   indexTitle: '二十四枚符文',
   footer: '仅供娱乐 · 符文只给方向，路要自己走',
+  // 舞台下方只此一行提示，随阶段更替（≤ 18 字，动词开头）；带手势图标的是操作指引，不带的是状态说明
   hints: {
-    idle: '摇动手机，或在皮袋上来回摩擦',
+    idle: '摇一摇，或在皮袋上来回摩擦',
     shaking: '符石在袋里翻滚……',
     pouring: '符石滚出来了',
-    drawn: '点一枚翻面 · 在布上一划全部翻开',
-    revealed: '点石头看细解 · 摇一摇再来一次',
+    drawn: '点一枚翻面，或在布上一划全翻开',
+    flipping: '符石翻面中……',
+    revealed: '点石头看细解，摇一摇再摸一次',
+    collecting: '符石收回袋中',
   },
+  hintGesture: { idle: 'shake', drawn: 'flip', revealed: 'tap' },
   primary: {
     idle: (n) => (n === 1 ? '摸一枚' : n === 3 ? '摸三枚' : '摸五枚'),
     drawn: '全部翻开',
     revealed: '再摸一次',
   },
-  gestureHint: '摇一摇 · 或在皮袋上来回摩擦',
+  receiptRead: '展开解读',
+  historyKicker: '最近摸到',
   reset: '收回',
   index: '符文一览',
   again: '再摸一次',

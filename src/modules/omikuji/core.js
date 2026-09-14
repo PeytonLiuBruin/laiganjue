@@ -163,6 +163,18 @@ export function nextPhase(phase, action) {
   return (t && t[action]) || null;
 }
 
+/* ------------------------------ 结果条一句话 ------------------------------ */
+/**
+ * 舞台下方结果条用的一句话：取总运里第一句"有内容"的话（跳过「小吉」「圆满之象」这类 ≤ 6 字的标题句），
+ * 带回句号。全部签文下最长 39 字。
+ */
+export function briefOf(lot, { minLen = 7 } = {}) {
+  const level = levelOf(lot.level);
+  const parts = String(lot.summary || '').split(/[。！？]/).map((s) => s.trim()).filter(Boolean);
+  const hit = parts.find((s) => len(s) >= minLen && (!level || s !== level.name)) || parts[0] || '';
+  return hit ? hit + '。' : '';
+}
+
 /* ------------------------------ 分享文本 ------------------------------ */
 export function shareText(lot, { title = TEXT.shareTitle, footer = TEXT.shareFooter } = {}) {
   const level = levelOf(lot.level);

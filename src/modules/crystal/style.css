@@ -1,18 +1,34 @@
-/* 水晶球 模块样式：所有选择器以 .m-crystal 开头 */
-.m-crystal .cr-stage { min-height: 320px; }
+/* 水晶球 模块样式：所有选择器以 .m-crystal 开头；颜色只用 CSS 变量。
+   版式：标签页 → 问题 / 模式 → 舞台 → 一行提示 → 主按钮 → 小结，从上到下一条线。 */
+.m-crystal .cr-ask { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.m-crystal .cr-controls { display: flex; justify-content: center; }
+.m-crystal .cr-controls .chip { min-height: 44px; padding-inline: 16px; }
+.m-crystal .cr-stage { min-height: 360px; margin-top: 14px; }
 .m-crystal .cr-stage .stage-floor { display: none; }
-.m-crystal .cr-controls { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
-.m-crystal .cr-controls .hint { margin-top: 0; }
-.m-crystal .cr-note { font-size: 12px; color: var(--text-3); line-height: 1.7; }
-.m-crystal .cr-answer { position: absolute; left: 24px; right: 24px; top: 50%; transform: translateY(-58%); text-align: center; pointer-events: none; }
-.m-crystal .cr-answer-text { font-family: var(--font-serif); font-size: clamp(20px, 5.5vw, 26px); line-height: 1.6; letter-spacing: 0.14em; color: var(--text); text-shadow: 0 0 18px var(--glow); }
-.m-crystal .cr-answer-text.word { font-size: 96px; line-height: 1; letter-spacing: 0; font-weight: 600; color: var(--accent); }
-.m-crystal .cr-pend-labels { position: absolute; inset: 14px; pointer-events: none; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.1em; color: var(--text-3); }
-.m-crystal .cr-pend-labels span { position: absolute; transition: color 0.4s; }
-.m-crystal .cr-pend-labels .n { top: 44px; left: 50%; transform: translateX(-50%); }
-.m-crystal .cr-pend-labels .s { bottom: 96px; left: 50%; transform: translateX(-50%); }
-.m-crystal .cr-pend-labels .w { left: 22px; top: 50%; transform: translateY(-50%); }
-.m-crystal .cr-pend-labels .e { right: 22px; top: 50%; transform: translateY(-50%); }
-.m-crystal .cr-pend-labels[data-result='yes'] .n, .m-crystal .cr-pend-labels[data-result='yes'] .s { color: var(--accent); }
-.m-crystal .cr-pend-labels[data-result='no'] .w, .m-crystal .cr-pend-labels[data-result='no'] .e { color: var(--accent); }
-.m-crystal .cr-pend-labels[data-result='unclear'] span { color: var(--text-2); }
+
+/* 实物：可摸的区域给一个抓握光标；登场时淡入（切换标签页与挂载后的唤醒都会重放） */
+.m-crystal .cr-slot { cursor: grab; animation: cr-slot-in .6s ease both; }
+.m-crystal .cr-slot:active { cursor: grabbing; }
+@keyframes cr-slot-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* 球心浮现的答案 */
+.m-crystal .cr-answer { position: absolute; left: 50%; top: 46%; width: min(60%, 200px); transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 2; animation: cr-answer-in .5s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes cr-answer-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.94); } to { opacity: 1; transform: translate(-50%, -50%); } }
+.m-crystal .cr-answer-text { font-family: var(--font-serif); font-size: clamp(18px, 5vw, 23px); line-height: 1.6; letter-spacing: .06em; color: var(--text); text-shadow: 0 0 18px var(--glow); text-wrap: balance; }
+.m-crystal .cr-answer-text.word { font-size: clamp(62px, 20vw, 84px); line-height: 1; letter-spacing: 0; font-weight: 600; color: var(--accent); }
+
+/* 舞台正下方唯一的一行提示；充能 / 摆动时旁边多一条 3px 的进度 */
+.m-crystal .cr-hint { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 22px; margin-top: 12px; font-size: 12px; line-height: 1.6; letter-spacing: .04em; color: var(--text-2); text-align: center; }
+.m-crystal .cr-hint-track { display: block; flex: none; width: 44px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; opacity: 0; transition: opacity .25s; }
+.m-crystal .cr-hint-track i { display: block; width: 100%; height: 100%; transform: scaleX(0); transform-origin: left; background: var(--accent); transition: transform .12s linear; }
+.m-crystal .cr-hint[data-charging] .cr-hint-track { opacity: 1; }
+
+/* 小结：神谕整句作标题时缩小、放宽行距 */
+.m-crystal .ritual-receipt[data-long] h2 { font-size: 22px; line-height: 1.65; letter-spacing: .05em; }
+
+/* 抽屉：标题按长短分级，一字模式放大成一个字 */
+.m-crystal .result.cr-card-mid .result-title { font-size: 30px; letter-spacing: .12em; }
+.m-crystal .result.cr-card-word .result-title { font-size: 76px; letter-spacing: 0; line-height: 1.1; }
+/* 神谕整句作标题：诗行居中、两三行平衡换行；印章缩小收进右上角，不压到字 */
+.m-crystal .result.cr-card-verse .result-title { font-family: var(--font-serif); font-size: 24px; font-weight: 500; letter-spacing: .06em; line-height: 1.65; text-wrap: balance; padding-inline: 28px; margin-top: 14px; }
+.m-crystal .result.cr-card-verse .seal, .m-crystal .result.cr-card-mid .seal { top: 0; right: 6px; width: 44px; height: 44px; font-size: 18px; border-width: 2px; }

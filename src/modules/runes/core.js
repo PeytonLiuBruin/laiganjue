@@ -174,6 +174,21 @@ export function interpret(draw, spread, { date = new Date() } = {}) {
   };
 }
 
+/**
+ * 结果条（舞台下方的一行小结，先于抽屉出现）：标题 ≤ 8 字，一句话 ≤ 40 字。
+ * 单符：标题是符名，一句话 = 正逆 + 关键词 + 符语；多符：标题是「几枚皆正 / 几枚逆位」这句判词，一句话取关键位的符语。
+ */
+export function receiptOf(model) {
+  const single = model.items.length === 1;
+  if (single) {
+    const it = model.items[0];
+    return { kicker: model.kicker, title: it.rune.zh, text: `${model.badge}，${it.keywords.join('、')}。${it.rune.line}` };
+  }
+  const key = model.adviceFrom || model.items[model.items.length - 1];
+  const lead = (model.overall || '').split('。')[0];
+  return { kicker: model.kicker, title: model.badge, text: `${lead ? lead + '。' : ''}${key.position.label}位 ${key.rune.zh}：${key.rune.line}` };
+}
+
 /** 分享文本 */
 export function shareText(model) {
   const lines = [`【卢恩符文 · ${model.spreadName}】`];

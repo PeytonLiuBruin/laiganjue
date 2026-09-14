@@ -2,7 +2,7 @@ import { createRitual } from '../../ui/ritual.js';
 // 卢恩符文 · 界面（Web DOM）。逻辑在 core.js，文案在 data.js。
 // 舞台：皮袋（摇动 / 倾倒）→ 符石滚落到麻布上的槽位（背面朝上）→ 点石翻面 → 全翻揭示。
 // 三入口：体感（摇 / 甩）· 屏幕手势（摩擦皮袋 / 布上一划）· 主按钮。
-import { getSpread, drawForSpread, interpret, shareText, initState, reduceState, packDraw, unpackDraw, RUNES, dateLabel } from './core.js';
+import { getSpread, drawForSpread, interpret, receiptOf, shareText, initState, reduceState, packDraw, unpackDraw, RUNES, dateLabel } from './core.js';
 import { SPREAD_CHIPS, UI_TEXT, AETTS, shakeLevel } from './data.js';
 import { dateKey } from '../../core/rng.js';
 
@@ -60,10 +60,42 @@ export function mount(container, ctx) {
   });
 
   /* ---------- 舞台 ---------- */
-  const st = stage({ cls: 'rn-stage', hint: UI_TEXT.hints.idle, badge: '', minHeight: 430 });
+  const st = stage({ cls: 'rn-stage', badge: '' });
   const ritual = createRitual(ctx, st, ['摇袋', '出石', '翻面', '解读']);
   const wait = ritual.pause;
   const glow = h('div', { class: 'rn-glow' });
+  // 舞台下方只此一行提示：带手势图标的是操作指引，不带的是状态说明（动画进行中）
+  const hintEl = hint('shake', UI_TEXT.hints.idle);
+  hintEl.classList.add('rn-hint');
+  let hintGesture = 'shake';
+  function setHint(text, gesture = null) {
+    const span = hintEl.lastChild;
+    if (span.textContent !== text) span.textContent = text || '';
+    hintEl.classList.toggle('rn-quiet', !gesture);
+    if (gesture && gesture !== hintGesture) {
+      hintGesture = gesture;
+      const g = hintEl.firstChild;
+      g.className = 'hint-glyph ' + gesture;
+      kit.clear(g);
+      g.append(kit.icon('g-' + gesture));
+    }
+  }
+  // 结果条收起时页面会变短，浏览器会把滚动位置硬拉回顶部；用占位撑住，等新结果出现再放开
+  const spacer = h('div', { class: 'rn-spacer', attrs: { 'aria-hidden': 'true' } });
+  function holdSpace() {
+    const r = ritual.receipt;
+    if (r.hidden) return;
+    const cs = getComputedStyle(r);
+    spacer.style.height = `${r.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom)}px`;
+  }
+  function releaseSpace() { spacer.style.height = '0px'; }
+  /** 结果条若被首屏截断，轻轻滚到能看见「展开解读」为止 */
+  function revealScroll() {
+    const r = ritual.receipt.getBoundingClientRect();
+    const vh = window.visualViewport?.height || window.innerHeight;
+    const over = r.bottom - (vh - 12);
+    if (over > 0) window.scrollBy({ top: Math.min(over, Math.max(0, r.top - 84)), behavior: ctx.platform.prefersReducedMotion ? 'instant' : 'smooth' });
+  }
 
   // 皮袋
   const mouthPt = h('div', { class: 'rn-mouth-pt' });
@@ -94,7 +126,7 @@ export function mount(container, ctx) {
       if (ctx.ensureMotion) ctx.ensureMotion().catch(() => {});
       if (state.phase === 'idle') doDraw(20);
       else if (state.phase === 'drawn') flipAll();
-      else if (lastModel) showResult(lastModel);
+      else collect({ silent: true }).then(() => { if (ritual.alive) doDraw(20); });
     },
   });
   const resetBtn = button(UI_TEXT.reset, { variant: 'ghost', icon: 'refresh', disabled: true, onClick: () => !busy && collect() });
@@ -104,8 +136,10 @@ export function mount(container, ctx) {
   container.append(
     h('div', { class: 'rn-top' }, spreadChips.el),
     h('div', { class: 'mt-4' }, st.el),
-    hint('shake', UI_TEXT.gestureHint),
+    hintEl,
     kit.actionBar(primary, resetBtn),
+    ritual.receipt,
+    spacer,
     h('div', { class: 'rn-more' }, indexBtn),
     histEl,
   );
@@ -195,6 +229,7 @@ export function mount(container, ctx) {
     kit.clear(cloth);
     table.style.setProperty('--rn-size', (STONE_SIZE[spread.n] || 64) + 'px');
     table.className = 'rn-table rn-n' + spread.n;
+    container.dataset.rnN = spread.n;
     spread.layout.forEach((p, i) => {
       const pos = spread.positions[i];
       cloth.append(h('div', { class: 'rn-slot', style: { left: p.x + '%', top: p.y + '%' } }, h('span', { class: 'rn-slot-label' }, pos.label)));
@@ -261,7 +296,7 @@ export function mount(container, ctx) {
   async function shakeBag(ms, intensity) {
     const level = shakeLevel(intensity);
     setShakeClass(level);
-    st.setHint(UI_TEXT.hints.shaking);
+    setHint(UI_TEXT.hints.shaking);
     haptic.rattle();
     const step = level === 3 ? 120 : level === 2 ? 150 : 190;
     const end = now() + ms;
@@ -274,7 +309,7 @@ export function mount(container, ctx) {
 
   /* ---------- 出石 ---------- */
   async function pour(draw) {
-    st.setHint(UI_TEXT.hints.pouring);
+    setHint(UI_TEXT.hints.pouring);
     sound.play('whoosh');
     haptic.light();
     bag.getAnimations().forEach((a) => a.cancel());
@@ -382,6 +417,7 @@ export function mount(container, ctx) {
     if (busy || state.phase !== 'drawn') return;
     busy = true;
     setButtons();
+    setHint(UI_TEXT.hints.flipping);
     const pending = stones.map((_, i) => i).filter((i) => !stones[i].flipped);
     await Promise.all(pending.map((i, k) => wait(k * T(170)).then(() => flipStone(i, { chain: true }))));
     if (!ritual.alive) return;
@@ -394,7 +430,7 @@ export function mount(container, ctx) {
     revealing = true;
     busy = true;
     setButtons();
-    st.setHint('');
+    setHint(UI_TEXT.hints.flipping);
     // 等所有仍在翻转的石头停下
     await Promise.all(stones.map((s) => (s.flipAnim ? s.flipAnim.finished.catch(() => {}) : null)));
     if (!await wait(T(400))) return;
@@ -414,10 +450,13 @@ export function mount(container, ctx) {
     history = history.concat([packDraw(draw, spread.id)]).slice(-12);
     storage.set('history', history);
     renderHistory();
+    // 结果条：趁金光亮起的这一拍先浮出一句话小结，页面顺势滚到能看见「展开解读」；读者自己决定何时展开
+    ritual.reveal({ ...receiptOf(lastModel), onRead: () => showResult(lastModel) });
+    releaseSpace();
+    revealScroll();
     if (!await wait(T(640))) return;
     busy = false;
     setPhaseUI();
-    st.setHint('符石已翻开，点解读慢慢读');
   }
 
   /* ---------- 收回 ---------- */
@@ -430,6 +469,9 @@ export function mount(container, ctx) {
     }
     busy = true;
     setButtons();
+    holdSpace();
+    ritual.clear();
+    setHint(UI_TEXT.hints.collecting);
     st.scene.classList.remove('rn-revealed');
     const m = mouthPt.getBoundingClientRect();
     const mouth = { x: m.left + m.width / 2, y: m.top + m.height / 2 };
@@ -461,6 +503,10 @@ export function mount(container, ctx) {
     state = reduceState(state, { type: 'reset' });
     busy = false;
     setPhaseUI();
+    if (window.scrollY > 0 && !ctx.platform.prefersReducedMotion) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      ctx.setTimeout(releaseSpace, 450);
+    } else releaseSpace();
   }
 
   /* ---------- UI 同步 ---------- */
@@ -473,19 +519,31 @@ export function mount(container, ctx) {
   }
   function setPhaseUI() {
     const ph = state.phase;
-    primary.setLabel(ph === 'idle' ? UI_TEXT.primary.idle(spread.n) : ph === 'drawn' ? UI_TEXT.primary.drawn : '展开解读');
+    primary.setLabel(ph === 'idle' ? UI_TEXT.primary.idle(spread.n) : ph === 'drawn' ? UI_TEXT.primary.drawn : UI_TEXT.primary.revealed);
     setButtons();
-    st.setHint(UI_TEXT.hints[ph] || '');
+    setHint(UI_TEXT.hints[ph] || '', UI_TEXT.hintGesture[ph] || null);
     st.setBadge(badgeText());
     container.dataset.rnPhase = ph;
   }
   function renderHistory() {
     kit.clear(histEl);
     const items = history.flatMap((rec) => unpackDraw(rec)).slice(-8);
-    if (items.length) histEl.append(historyBar(items, (d) => (d.reversed ? '逆·' : '') + d.rune.zh));
+    if (items.length) histEl.append(h('span', { class: 't-kicker' }, UI_TEXT.historyKicker), historyBar(items, (d) => (d.reversed ? '逆·' : '') + d.rune.zh));
   }
 
   /* ---------- 结果抽屉 ---------- */
+  /** 抽屉大标题：中文名一行、拉丁名单独一小行，中英混排在窄屏也不会从字中间断开 */
+  function titleNode(zh, latin) {
+    return h('span', { class: 'rn-title' }, h('span', { class: 'rn-title-zh' }, zh), latin ? h('span', { class: 'rn-title-latin' }, latin) : null);
+  }
+  /** 多符的副题：每枚符名一个不可断的小块，逆位者带小标 */
+  function namesNode(items) {
+    return h(
+      'span',
+      { class: 'rn-names' },
+      items.map((it) => h('span', { class: ['rn-name', it.reversed && 'rev'] }, it.rune.zh, it.reversed ? h('i', null, UI_TEXT.reversed) : null)),
+    );
+  }
   function runeSection(it, multi) {
     return h(
       'div',
@@ -517,10 +575,11 @@ export function mount(container, ctx) {
       label: '符文的建议',
       text: model.adviceFrom ? `${model.advice}（取「${model.adviceFrom.position.label}」位 ${model.adviceFrom.rune.zh} 之言）` : model.advice,
     });
+    const only = model.items[0];
     const card = resultCard({
       kicker: model.kicker,
-      title: model.title,
-      sub: model.sub,
+      title: multi ? model.title : titleNode(only.rune.zh, only.rune.name),
+      sub: multi ? namesNode(model.items) : model.sub,
       badge: model.badge,
       seal: model.seal,
       verse: model.verse,
@@ -571,7 +630,7 @@ export function mount(container, ctx) {
             { class: 'rn-detail-meta' },
             h('div', null, h('span', { class: 't-faint' }, '读音 '), h('b', { class: 'rn-sound' }, rune.sound)),
             h('div', null, h('span', { class: 't-faint' }, '象征 '), rune.symbol),
-            h('div', null, h('span', { class: 't-faint' }, '族属 '), rune.aett),
+            h('div', null, h('span', { class: 't-faint' }, '位序 '), `古弗萨克第 ${RUNES.indexOf(rune) + 1} 枚`),
             h('div', { class: 't-faint', style: { fontSize: '12px' } }, rune.reversible ? '可取逆位' : '字形对称，不取逆位'),
           ),
         ),
@@ -582,8 +641,8 @@ export function mount(container, ctx) {
       { label: '建议', text: rune.advice },
     ];
     const card = resultCard({
-      kicker: `${rune.aett} · ${rune.symbol}`,
-      title: `${rune.zh} · ${rune.name}`,
+      kicker: rune.aett,
+      title: titleNode(rune.zh, rune.name),
       badge: reversed ? UI_TEXT.reversed : rune.reversible ? UI_TEXT.upright : '正逆同形',
       sub: rune.line,
       seal: rune.sound,

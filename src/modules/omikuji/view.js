@@ -1,7 +1,8 @@
 import { createStickScene } from '../../ui/stick-scene.js';
 // 御神签 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
-// 节奏：摇筒（起）→ 签棒滑出（飞 / 落）→ 签纸展开盖章（揭）→ 结果抽屉 → 结签 / 带回家。
-import { pickLot, levelOf, isBad, initRack, tieUp, untie, visibleKnots, RACK_MAX, drawnToday, markDrawn, shareText, PHASE, nextPhase, ITEM_KEYS, toneOf } from './core.js';
+// 节奏：摇筒（起）→ 签棒滑出（飞 / 落）→ 签纸展开盖章（揭）→ 结果条「展开解读」→ 抽屉 → 结签 / 带回家。
+// 舞台下方只有一句操作提示（say），随阶段更换；舞台内的 stage-hint 不用。
+import { pickLot, levelOf, isBad, initRack, tieUp, untie, visibleKnots, RACK_MAX, drawnToday, markDrawn, shareText, briefOf, PHASE, nextPhase, ITEM_KEYS, toneOf } from './core.js';
 import { TEXT } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
 import { overRope } from './interaction.js';
@@ -48,7 +49,7 @@ export function mount(container, ctx) {
 
   // 结绳架（みくじ掛け）
   const rackRod = h('div', { class: 'ok-rack-rod' });
-  const dropHint = h('div', { class: 'ok-drop-hint' }, '将签纸拖到绳上');
+  const dropHint = h('div', { class: 'ok-drop-hint', attrs: { 'aria-hidden': 'true' } }, TEXT.dropHint);
   const rackKnots = h('div', { class: 'ok-rack-knots' });
   const rackEl = h('div', { class: 'ok-rack', attrs: { role: 'button', tabindex: '0', 'aria-label': TEXT.btnRack } }, h('span', { class: 'ok-rack-post l' }), h('span', { class: 'ok-rack-post r' }), rackRod, h('div', { class: 'ok-rack-rod2' }), rackKnots, dropHint);
 
@@ -65,11 +66,26 @@ export function mount(container, ctx) {
   const primaryBtn = button(TEXT.btnShake, { variant: 'primary', size: 'large', primary: true, onClick: onPrimary });
   const rackBtn = button(TEXT.btnRack, { variant: 'ghost', onClick: () => openRackSheet() });
   const histWrap = h('div', { class: 'ok-history' });
+  // 唯一的一句操作提示：图标 + 文字，随阶段更换
+  const hintEl = hint('shake', TEXT.hintIdle);
+  hintEl.classList.add('ok-hint');
+  let hintGesture = 'shake';
+  function say(text, gesture = hintGesture) {
+    if (hintEl.lastChild.textContent !== text) hintEl.lastChild.textContent = text;
+    if (gesture !== hintGesture) {
+      const glyph = hintEl.firstChild;
+      glyph.classList.remove(hintGesture);
+      glyph.classList.add(gesture);
+      kit.clear(glyph);
+      glyph.append(kit.icon('g-' + gesture));
+      hintGesture = gesture;
+    }
+  }
 
   container.append(
     ritual.progress,
     h('div', { class: 'mt-3' }, st.el),
-    hint('shake', TEXT.gestureHint),
+    hintEl,
     kit.actionBar(primaryBtn, rackBtn),
     ritual.receipt,
     histWrap,
@@ -80,8 +96,8 @@ export function mount(container, ctx) {
 
   /* ---------- 三条入口：体感 / 手势 / 按钮 ---------- */
   ctx.motion.onShake((e) => onShakeEvent(e));
-  // 倾斜：挂架微视差
-  ctx.motion.onTilt(kit.parallax(rackEl, { max: 4 }));
+  // 倾斜：飘落物微视差（挂架是拖放目标，保持不动）
+  ctx.motion.onTilt(kit.parallax(ambient, { max: 6 }));
   ctx.motion.onMotion((m) => {
     if (dragging || openSheet || tying || !ritual.alive) return;
     if (busy) { bundle.feed(m); return; }
@@ -120,15 +136,13 @@ export function mount(container, ctx) {
       }
       bundle.preview(g.dx / 4);
       dragLastX = g.dx;
-      if (dragReversals >= 3 && dragTravel > 120) {
-        st.setHint('已经摇好了，松手出签');
-      }
+      if (dragReversals >= 3 && dragTravel > 120) say(TEXT.hintDragReady);
     },
     onEnd(g) {
       if (!dragging) return;
       endDrag();
       if (!g.cancelled && dragReversals >= 3 && dragTravel > 120) onShakeEvent({ intensity: clamp(14 + dragTravel / 18, 16, 34), replay: false });
-      else st.setHint('左右摇动签筒，松手出签');
+      else say(TEXT.hintNudge);
     },
   });
   ctx.gesture.tap(tubeWrap, () => nudgeTube());
@@ -142,6 +156,7 @@ export function mount(container, ctx) {
       if (busy || !tying || phase !== PHASE.PAPER) return;
       slipDrag = true; cancelAnims(slip);
       slip.classList.add('ok-slip-dragging'); haptic.tap();
+      dropHint.textContent = TEXT.dropHint; dropHint.classList.add('show');
     },
     onMove(g) {
       if (!slipDrag) return;
@@ -149,7 +164,7 @@ export function mount(container, ctx) {
       const hit = overRope(g, rackEl.getBoundingClientRect());
       if (hit && !rackEl.classList.contains('ok-over')) haptic.tap();
       rackEl.classList.toggle('ok-over', hit);
-      dropHint.textContent = hit ? '松手结签' : '将签纸拖到绳上';
+      dropHint.textContent = hit ? TEXT.dropHintOver : TEXT.dropHint;
     },
     onEnd(g) {
       if (!slipDrag) {
@@ -162,13 +177,13 @@ export function mount(container, ctx) {
         const from = slip.style.transform;
         slip.style.transform = 'translateY(45px) scale(.68)';
         slip.animate([{ transform: from }, { transform: slip.style.transform }], { duration: dur(340), easing: 'cubic-bezier(.2,.8,.3,1)' });
-        rackEl.classList.remove('ok-over'); dropHint.textContent = '将签纸拖到绳上';
-        st.setHint(g.cancelled ? '签纸已放回，继续拖动即可' : '再向上拖一点，松手挂上签绳');
+        rackEl.classList.remove('ok-over'); dropHint.classList.remove('show');
+        say(g.cancelled ? TEXT.hintSlipBack : TEXT.hintSlipMore);
       }
     },
   });
   slip.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && tying && !busy) { tying = false; delete st.el.dataset.tie; rackEl.classList.remove('ok-over'); slip.style.transform = ''; syncUI(); showPaperReceipt(); }
+    if (e.key === 'Escape') cancelTie();
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (busy || phase !== PHASE.PAPER) return; tying ? tieToRack() : showResult(lot); }
   });
   rackEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!busy) openRackSheet(); } });
@@ -195,7 +210,12 @@ export function mount(container, ctx) {
     if (busy || !ritual.alive) return;
     if (phase === PHASE.IDLE) doShake(20 + Math.random() * 6);
     else if (phase === PHASE.STICK) drawPaper();
-    else if (phase === PHASE.PAPER) { if (tying) tieToRack(); else showResult(lot); }
+    else if (phase === PHASE.PAPER) { if (tying) tieToRack(); else again(); }
+  }
+  /** 再摇一签：收起签纸、签棒回筒，随即再摇 */
+  async function again() {
+    await resetStage({ slipDone: slip.hidden });
+    if (ritual.alive) doShake(22);
   }
 
   async function onShakeEvent(e = {}) {
@@ -244,8 +264,6 @@ export function mount(container, ctx) {
     );
     await wait(d);
     if (!ritual.alive) return;
-
-    if (!ritual.alive) return;
     // 盖章
     const level = levelOf(lot.level);
     slipLevelEl.classList.add('ok-stamp');
@@ -278,7 +296,7 @@ export function mount(container, ctx) {
     renderHistory();
     if (repeat) ctx.setTimeout(() => toast(TEXT.sameLotToast), 900);
 
-    if (!await ritual.pause(reduce ? 180 : 950)) return;
+    if (!await ritual.pause(reduce ? 180 : 720)) return;
     cancelAnims(slip);
     setBusy(false);
     syncUI();
@@ -288,10 +306,20 @@ export function mount(container, ctx) {
   function showPaperReceipt() {
     if (!lot || !ritual.alive) return;
     const level = levelOf(lot.level);
-    ritual.reveal({ kicker: lot.no, title: level.name, text: lot.summary.split('。')[0] + '。', actions: [
-      button(isBad(level) ? '把凶签结在这里' : '收好这份祝福', { variant: 'soft', onClick: () => isBad(level) ? beginTie() : takeHome() }),
-      button('再抽一签', { variant: 'ghost', onClick: async () => { await resetStage(); if (ritual.alive) doShake(22); } }),
-    ] });
+    ritual.reveal({
+      kicker: lot.no, title: level.name, text: briefOf(lot),
+      onRead: () => showResult(lot),
+      actions: [button(isBad(level) ? TEXT.receiptTie : TEXT.receiptKeep, { variant: 'soft', onClick: () => (isBad(level) ? beginTie() : takeHome()) })],
+    });
+  }
+  /** 结签中途放弃：签纸放回原位，回到「展开解读」 */
+  function cancelTie() {
+    if (!tying || busy || !ritual.alive) return;
+    tying = false; slipDrag = false;
+    delete st.el.dataset.tie; rackEl.classList.remove('ok-over'); dropHint.classList.remove('show');
+    cancelAnims(slip); slip.style.transform = '';
+    slip.setAttribute('aria-label', '签纸，点击查看解读');
+    haptic.tap(); syncUI(); showPaperReceipt();
   }
   async function beginTie() {
     if (busy || resolved || phase !== PHASE.PAPER || !lot || !ritual.alive) return;
@@ -299,14 +327,14 @@ export function mount(container, ctx) {
     tying = true; ritual.step(3); st.el.dataset.tie = 'ready';
     cancelAnims(slip); slip.style.transform = 'translateY(45px) scale(.68)';
     slip.setAttribute('aria-label', '拖动签纸到上方签绳；也可按回车自动结签');
-    st.setHint('按住签纸，向上拖到签绳，再松手');
-    dropHint.textContent = '将签纸拖到绳上'; primaryBtn.setLabel('帮我结签');
-    ritual.reveal({ kicker: '结缘', title: '把牵挂，留在这里', text: '拖动签纸到上方的绳子，亲手结下这一签。' });
+    dropHint.textContent = TEXT.dropHint; dropHint.classList.remove('show');
+    syncUI();
+    ritual.reveal({ kicker: TEXT.tieKicker, title: TEXT.tieTitle, text: TEXT.tieText, actions: [button(TEXT.btnTieCancel, { variant: 'ghost', onClick: cancelTie })] });
   }
   /** Fold into a paper strip, travel to the rope, then wrap into a visible knot. */
   async function tieToRack() {
     if (busy || resolved || !tying || phase !== PHASE.PAPER || !lot || !ritual.alive) return;
-    setBusy(true); ritual.step(3); rackEl.classList.remove('ok-over');
+    setBusy(true); ritual.step(3); rackEl.classList.remove('ok-over'); dropHint.classList.remove('show');
     const idx = Math.min(visibleKnots(rack).length, RACK_MAX - 1);
     const rr = rackRod.getBoundingClientRect();
     const sr = slip.getBoundingClientRect();
@@ -330,10 +358,10 @@ export function mount(container, ctx) {
     resolved = true;
     rack = tieUp(rack, { no: lot.no, level: lot.level, date: today() }); storage.set('rack', rack);
     renderRack(true); folded.remove(); cancelAnims(slip); sound.play('chime'); haptic.success();
-    dropHint.textContent = '签已结好'; st.setHint('这一签留在这里，带着轻松继续今天');
+    dropHint.textContent = TEXT.dropHintDone; dropHint.classList.add('show');
     st.el.dataset.tie = 'done'; tying = false;
-    ritual.reveal({ kicker: '结签完成', title: '牵挂已放下', text: '你的签纸已留在签绳上。愿接下来的日子，自在一些。', actions: [button('再抽一签', { variant: 'primary', onClick: async () => { await resetStage({ slipDone: true }); if (ritual.alive) doShake(22); } })] });
-    setBusy(false); primaryBtn.setLabel('查看这支签');
+    ritual.reveal({ kicker: TEXT.tiedKicker, title: TEXT.tiedTitle, text: TEXT.tiedText, onRead: () => showResult(lot) });
+    setBusy(false); syncUI();
   }
 
   /** 带回家：签纸收起，喜气纸屑 */
@@ -361,11 +389,10 @@ export function mount(container, ctx) {
     cancelAnims(slip);
     sound.play('chime', { delay: 0.02 });
     if (!ritual.alive) return;
-    setBusy(false);
     resolved = true;
-    st.setHint('祝福已收好，愿今天有好事发生');
-    primaryBtn.setLabel('查看这支签');
-    ritual.reveal({ kicker: '已收好', title: '把这份祝福带走', text: '今天的签已记在抽签记录里。', actions: [button('再抽一签', { variant: 'primary', onClick: async () => { await resetStage({ slipDone: true }); if (ritual.alive) doShake(22); } })] });
+    tubeWrap.classList.remove('ok-dim');
+    setBusy(false); syncUI();
+    ritual.reveal({ kicker: TEXT.takenKicker, title: TEXT.takenTitle, text: TEXT.takenText, onRead: () => showResult(lot) });
   }
 
   /** 回到初始：签纸折起、签棒收回筒中 */
@@ -373,7 +400,7 @@ export function mount(container, ctx) {
     if (busy || !ritual.alive) return;
     setBusy(true);
     ritual.clear(); ritual.step(0); tying = false; slipDrag = false; resolved = false;
-    delete st.el.dataset.tie; rackEl.classList.remove('ok-over'); slip.style.transform = '';
+    delete st.el.dataset.tie; rackEl.classList.remove('ok-over'); dropHint.classList.remove('show'); slip.style.transform = '';
     if (openSheet) {
       openSheet.close();
       openSheet = null;
@@ -384,7 +411,7 @@ export function mount(container, ctx) {
       slip.animate([{ transform: 'scaleY(1)', opacity: 1 }, { transform: 'translateY(-20px) scaleY(0.04)', opacity: 0 }], { duration: d, fill: 'forwards', easing: 'cubic-bezier(.6,0,.9,.4)' });
       sound.play('paper');
       await wait(d);
-    if (!ritual.alive) return;
+      if (!ritual.alive) return;
     }
     slip.hidden = true;
     cancelAnims(slip);
@@ -412,9 +439,14 @@ export function mount(container, ctx) {
   }
 
   function syncUI() {
-    const label = { idle: TEXT.btnShake, shaking: TEXT.btnShaking, stick: TEXT.btnDraw, paper: tying ? '帮我结签' : '展开解读' }[phase];
+    const label = { idle: TEXT.btnShake, shaking: TEXT.btnShaking, stick: TEXT.btnDraw, paper: tying ? TEXT.btnTieHelp : TEXT.btnAgain }[phase];
     primaryBtn.setLabel(label);
-    st.setHint({ idle: TEXT.hintIdle, shaking: TEXT.hintShaking, stick: TEXT.hintStick, paper: '先看看签纸，准备好后展开解读' }[phase]);
+    if (phase === PHASE.PAPER) {
+      if (tying) say(TEXT.hintTie, 'flick');
+      else if (resolved) say(st.el.dataset.tie === 'done' ? TEXT.hintTied : TEXT.hintTaken, 'shake');
+      else say(TEXT.hintPaper, 'tap');
+    } else if (phase === PHASE.STICK) say(TEXT.hintStick, 'tap');
+    else say(phase === PHASE.SHAKING ? TEXT.hintShaking : TEXT.hintIdle, 'shake');
     if (lot && phase === PHASE.STICK) st.setBadge(lot.no);
     else if (lot && phase === PHASE.PAPER) st.setBadge(`${lot.no} · ${levelOf(lot.level).name}`);
     else st.setBadge(badgeText());
@@ -472,7 +504,8 @@ export function mount(container, ctx) {
       ITEM_KEYS.map((k) => h('div', { class: 'ok-item' }, h('span', { class: 'ok-item-k' }, k), h('span', { class: 'ok-item-v' }, l.items[k]))),
     );
     const card = resultCard({
-      kicker: `${l.no} · ${level.kana}`,
+      // 番号与假名各自不断行，窄屏只在「 · 」处换行
+      kicker: h('span', null, h('span', { class: 'ok-nowrap' }, l.no), ' · ', h('span', { class: 'ok-nowrap' }, level.kana)),
       title: level.name,
       titleGold: level.tone === 'gold',
       badge: `运势 · ${level.badge}`,
@@ -488,7 +521,7 @@ export function mount(container, ctx) {
     });
     const wrap = h('div', { class: ['m-omikuji', 'ok-sheet-wrap', 'ok-tone-' + level.tone] }, card);
     const actions = [
-      resolved ? button('回到抽签', { variant: 'primary', onClick: () => sh.close() }) : bad
+      resolved ? button('回到签筒', { variant: 'primary', onClick: () => sh.close() }) : bad
         ? button(TEXT.btnTie, {
             variant: 'primary',
             onClick: () => {
@@ -533,7 +566,7 @@ export function mount(container, ctx) {
     const body = h(
       'div',
       { class: 'm-omikuji ok-sheet-wrap' },
-      h('div', { class: 'ok-rack-hero' }, h('div', { class: 'ok-rack-num gold-text' }, String(count)), h('div', { class: 't-kicker' }, 'MUSUBI · 结签')),
+      h('div', { class: 'ok-rack-hero' }, h('div', { class: 'ok-rack-num gold-text' }, String(count)), h('div', { class: 't-kicker' }, TEXT.rackKicker)),
       h('p', { class: 'ok-p' }, count ? TEXT.rackCount.replace('{n}', count) : TEXT.rackEmpty),
       knots.length
         ? h(

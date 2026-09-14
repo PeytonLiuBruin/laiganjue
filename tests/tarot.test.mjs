@@ -17,6 +17,7 @@ import {
   allFlipped,
   isDone,
   synthesize,
+  synthesizeParts,
   countSynthTemplates,
   describeDraw,
   shareText,
@@ -246,4 +247,28 @@ test('analyze / describeDraw / shareText / sealFor', () => {
   assert.equal(sealFor('single', [draws[0]]), '始');
   assert.equal(sealFor('time', draws), '流');
   assert.equal(sealFor('single', [draws[1]]), '火');
+});
+
+test('synthesizeParts: 分句带标签、拼接后等于 synthesize、分段长度可控', () => {
+  const deck = buildDeck();
+  const KEYS = new Set(['major', 'spread', 'element', 'court', 'reversed', 'tone']);
+  for (const sp of SPREADS) {
+    for (let i = 0; i < 40; i++) {
+      const draws = drawCards(deck, sp.positions.length, seeded('parts' + sp.id + i));
+      const parts = synthesizeParts(sp.id, draws);
+      assert.ok(parts.length >= 2, sp.id);
+      for (const p of parts) assert.ok(KEYS.has(p.key) && typeof p.text === 'string' && p.text.length > 0, sp.id + ' ' + p.key);
+      assert.equal(parts[0].key, 'major');
+      assert.equal(parts[parts.length - 1].key, 'tone');
+      assert.equal(parts.map((p) => p.text).join(''), synthesize(sp.id, draws));
+      if (sp.positions.length > 1) {
+        // 抽屉里分成「综合」与「气息」两段，每段不超过 120 字
+        const main = parts.filter((p) => ['major', 'spread', 'element'].includes(p.key)).map((p) => p.text).join('');
+        const air = parts.filter((p) => ['court', 'reversed', 'tone'].includes(p.key)).map((p) => p.text).join('');
+        assert.ok(len(main) <= 120, sp.id + ' main=' + len(main));
+        assert.ok(len(air) <= 120, sp.id + ' air=' + len(air));
+      }
+    }
+  }
+  assert.deepEqual(synthesizeParts('single', []), []);
 });
