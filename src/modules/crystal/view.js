@@ -1,4 +1,4 @@
-// 水晶球 · 界面：水晶球（是非 / 神谕 / 一字）与灵摆。实物用 3D 模型占位块；逻辑见 core.js。
+// 水晶球 · 界面：水晶球（是非 / 神谕 / 一字）与灵摆。球体与灵摆由交互状态驱动；逻辑见 core.js。
 import { MODE, pickAnswer, pickRephrase, chargeStep, RUB_GAIN, SHAKE_GAIN, reduceRepeat, PENDULUM, decidePendulum, initPendulum, pendulumStep, convergenceBias, pendulumLabel } from './core.js';
 import { TABS, MODES, MODE_LABEL, MODE_SEAL, TONE_LABEL, QUESTION_PLACEHOLDER, EMPTY_QUESTION_KICKER, BALL_HINTS, BALL_HINT_GESTURE, DAY_FOOTER, NIGHT_FOOTER, PENDULUM_HINTS, PENDULUM_HINT_GESTURE, PENDULUM_TEXT, PENDULUM_NOTE, PENDULUM_EXPLAIN, SHEET_TITLE_BALL, SHEET_TITLE_PENDULUM, TAP_WHISPERS } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
@@ -15,10 +15,11 @@ export function mount(container, ctx) {
   let question = '';
   let repeat = { last: '', count: 0 };
   let progress = 0;
-  let phase = 'idle'; // idle | charging | revealed
+  let phase = 'idle'; // idle | charging | revealing | revealed
   let answer = null;
   let resultSheet = null;
   let autoTimer = null;
+  let generation = 0, cancelTyping = null;
 
   const st = stage({ cls: 'cr-stage' });
   const ritual = createRitual(ctx, st, ['问', '充能', '见', '解读']);
@@ -42,8 +43,8 @@ export function mount(container, ctx) {
       haptic.tap();
     },
   });
-  const ballControls = h('div', { class: 'cr-controls' }, qInput, modeChips.el, h('div', { class: 'hint' }, BALL_HINT_GESTURE));
-  const pendControls = h('div', { class: 'cr-controls' }, qInput, h('div', { class: 'hint' }, PENDULUM_HINT_GESTURE), h('p', { class: 'cr-note' }, PENDULUM_EXPLAIN));
+  const ballControls = h('div', { class: 'cr-controls' }, modeChips.el, h('div', { class: 'hint' }, BALL_HINT_GESTURE));
+  const pendControls = h('div', { class: 'cr-controls' }, h('div', { class: 'hint' }, PENDULUM_HINT_GESTURE), h('p', { class: 'cr-note' }, PENDULUM_EXPLAIN));
   const controlsWrap = h('div', null);
   const primaryBtn = button('凝 视', { variant: 'primary', size: 'large', primary: true, onClick: () => primaryAction() });
   const resetBtn = button('擦拭重问', { variant: 'ghost', icon: 'refresh', onClick: () => (tab === 'ball' ? resetBall(true) : resetPendulum(true)) });
@@ -59,8 +60,11 @@ export function mount(container, ctx) {
   container.append(ritual.progress, tabBar.el, controlsWrap, h('div', { class: 'mt-3' }, st.el), kit.actionBar(primaryBtn, resetBtn), ritual.receipt);
 
   function showTab() {
+    generation++; cancelTyping?.(); cancelTyping = null;
+    clearInterval(autoTimer); autoTimer = null; cancelAnimationFrame(pState.raf);
     clear(controlsWrap);
-    controlsWrap.append(tab === 'ball' ? ballControls : pendControls);
+    controlsWrap.append(qInput, tab === 'ball' ? ballControls : pendControls);
+    st.setBadge(tab === 'ball' ? '水晶球' : '灵摆');
     ball.el.hidden = tab !== 'ball';
     pend.el.hidden = tab !== 'pendulum';
     pendLabels.hidden = tab !== 'pendulum';
@@ -93,14 +97,14 @@ export function mount(container, ctx) {
 
   /* ================= 水晶球 ================= */
   function resetBall(silent = false) {
+    generation++; cancelTyping?.(); cancelTyping = null;
     clearInterval(autoTimer);
     autoTimer = null;
     progress = 0;
     phase = 'idle';
     answer = null;
     answerEl.hidden = true;
-    ball.set({ progress: 0, glow: false, active: false, text: BALL_HINTS.idle });
-    ball.el.querySelector('.model-slot-glyph').style.opacity = '';
+    ball.set({ progress: 0, glow: false, active: false, revealed: false, text: BALL_HINTS.idle });
     ritual.clear();
     ritual.step(0);
     primaryBtn.setLabel('凝 视');
@@ -110,7 +114,7 @@ export function mount(container, ctx) {
     haptic.tap();
   }
   function charge(delta, source) {
-    if (tab !== 'ball' || phase === 'revealed' || resultSheet) return;
+    if (tab !== 'ball' || phase === 'revealed' || phase === 'revealing' || resultSheet) return;
     progress = chargeStep(progress, delta);
     phase = 'charging';
     const text = progress < 0.35 ? BALL_HINTS.low : progress < 0.7 ? BALL_HINTS.mid : progress < 1 ? BALL_HINTS.high : BALL_HINTS.charging;
@@ -118,19 +122,19 @@ export function mount(container, ctx) {
     if (source === 'rub' && Math.random() < 0.25) sound.play('shimmer');
     if (progress >= 1) reveal();
   }
-  function autoCharge() {
-    if (phase === 'revealed' || autoTimer) return;
+  async function autoCharge() {
+    if (phase === 'revealed' || phase === 'revealing' || autoTimer || primaryBtn.disabled) return;
+    primaryBtn.disabled = true;
+    const g = generation;
+    if (!await ritual.focus() || g !== generation || phase === 'revealing' || phase === 'revealed') return;
     haptic.light();
     ritual.step(1);
     autoTimer = setInterval(() => {
-      charge(0.05, 'auto');
-      if (progress >= 1) {
-        clearInterval(autoTimer);
-        autoTimer = null;
-      }
+      if (!document.hidden) charge(0.025, 'auto');
     }, 75);
   }
   ctx.gesture.rub(ball.el, ({ intensity }) => {
+    if (phase === 'revealed' && !resultSheet) resetBall();
     if (phase === 'idle') ritual.step(1);
     charge(RUB_GAIN * (0.5 + intensity), 'rub');
   });
@@ -139,42 +143,46 @@ export function mount(container, ctx) {
     toast(TAP_WHISPERS[Math.floor(ctx.rng.random() * TAP_WHISPERS.length)]);
   });
   ctx.motion.onShake(() => {
-    if (tab === 'ball') {
+    if (tab === 'ball' && !resultSheet && phase !== 'revealing') {
+      if (phase === 'revealed') resetBall();
       if (phase === 'idle') ritual.step(1);
       charge(SHAKE_GAIN, 'shake');
       haptic.rattle();
     }
   });
   async function reveal() {
-    phase = 'revealed';
-    clearInterval(autoTimer);
-    autoTimer = null;
+    phase = 'revealing';
+    primaryBtn.disabled = true;
+    clearInterval(autoTimer); autoTimer = null;
+    const g = generation;
     repeat = reduceRepeat(repeat, question);
-    answer = pickAnswer(mode, ctx.rng.random, { repeat: repeat.count });
+    const selected = pickAnswer(mode, ctx.rng.random, { repeat: repeat.count });
+    answer = selected;
     ritual.step(2);
-    ball.set({ progress: 1, glow: true, active: false, text: '雾散了' });
-    ball.el.querySelector('.model-slot-glyph').style.opacity = '0.15';
-    sound.play('shimmer');
-    haptic.settle();
+    ball.set({ progress: 1, glow: true, active: false, text: '凝视球心' });
+    if (!await ritual.focus() || g !== generation) return;
+    if (!await ritual.pause(ctx.platform.simpleMotion ? 400 : 950) || g !== generation) return;
+    ball.set({ revealed: true, text: '雾散了' });
+    sound.play('shimmer'); haptic.settle();
     answerEl.hidden = false;
     answerEl.dataset.mode = mode;
     clear(answerEl);
     const big = h('div', { class: ['cr-answer-text', mode === MODE.WORD && 'word'] });
     answerEl.append(big);
-    await new Promise((r) => typewriter(big, answer.text, { speed: mode === MODE.WORD ? 200 : 55, onDone: r }));
-    if (!ritual.alive) return;
-    await ritual.pause(ctx.platform.simpleMotion ? 100 : 500);
-    ball.set({ text: BALL_HINTS.revealed });
-    ritual.reveal({
-      kicker: question || EMPTY_QUESTION_KICKER,
-      title: answer.text,
-      text: answer.note,
-      onRead: openBallSheet,
+    const written = await new Promise(resolve => {
+      const stop = typewriter(big, selected.text, { speed: mode === MODE.WORD ? 200 : 55, onDone: () => resolve(true) });
+      cancelTyping = () => { stop(); resolve(false); };
     });
-    primaryBtn.setLabel('展开解读');
+    if (!written || !ritual.alive || g !== generation) return;
+    cancelTyping = null;
+    if (!await ritual.pause(ctx.platform.simpleMotion ? 100 : 500) || g !== generation) return;
+    phase = 'revealed';
+    ball.set({ text: '摩擦球面可重新问询' });
+    ritual.reveal({ kicker: question || EMPTY_QUESTION_KICKER, title: selected.text, text: selected.note, onRead: openBallSheet });
+    primaryBtn.setLabel('展开解读'); primaryBtn.disabled = false;
   }
   function openBallSheet() {
-    if (!answer || resultSheet) return;
+    if (!answer || phase !== 'revealed' || resultSheet) return;
     ritual.step(3);
     const tone = answer.tone;
     const seal = mode === MODE.YESNO ? MODE_SEAL.yesno[tone] || '待' : MODE_SEAL[mode];
@@ -201,9 +209,10 @@ export function mount(container, ctx) {
   const ASK_SECONDS = 4.6;
 
   function resetPendulum(silent = false) {
+    generation++; prevTilt = null;
     cancelAnimationFrame(pState.raf);
     pState = { phase: 'idle', s: initPendulum(), target: null, startedAt: 0, raf: 0, last: 0, result: null };
-    pend.set({ x: 0, y: 0, glow: false, active: false, text: PENDULUM_HINTS.idle, progress: 0 });
+    pend.set({ x: 0, y: 0, glow: false, active: false, result: null, text: PENDULUM_HINTS.idle, progress: 0 });
     pendLabels.dataset.result = '';
     ritual.clear();
     ritual.step(0);
@@ -214,9 +223,13 @@ export function mount(container, ctx) {
       haptic.tap();
     }
   }
-  function startAsk(kick) {
+  async function startAsk(kick) {
     if (pState.phase === 'asking' || resultSheet) return;
-    pState.phase = 'asking';
+    if (pState.phase === 'done') resetPendulum();
+    const g = generation;
+    pState.phase = 'asking'; primaryBtn.disabled = true;
+    if (!await ritual.focus() || g !== generation) return;
+    pState.elapsed = 0;
     pState.target = decidePendulum(ctx.rng.random);
     pState.s = { x: 0, y: 0, vx: kick.vx, vy: kick.vy, t: 0 };
     pState.startedAt = performance.now();
@@ -230,9 +243,10 @@ export function mount(container, ctx) {
   }
   function tick(now) {
     if (pState.phase !== 'asking') return;
-    const dt = Math.min(1 / 30, (now - pState.last) / 1000);
+    const dt = document.hidden ? 0 : Math.min(1 / 30, (now - pState.last) / 1000);
     pState.last = now;
-    const t = (now - pState.startedAt) / 1000;
+    pState.elapsed += dt;
+    const t = pState.elapsed;
     const ramp = Math.max(0, Math.min(1, (t - 0.6) / 1.4));
     const cb = convergenceBias(pState.s, pState.target, ramp);
     const fade = Math.max(0, 1 - t / ASK_SECONDS);
@@ -244,16 +258,17 @@ export function mount(container, ctx) {
     pState.raf = requestAnimationFrame(tick);
   }
   async function finishAsk() {
+    const g = generation;
     pState.phase = 'done';
     const result = pState.target;
     pState.result = result;
     const txt = PENDULUM_TEXT[result];
     pendLabels.dataset.result = result;
-    pend.set({ glow: true, active: false, text: `${txt.badge}`, progress: 1 });
+    pend.set({ glow: true, active: false, result, text: `${txt.badge}`, progress: 1 });
     sound.play(result === PENDULUM.YES ? 'chime' : result === PENDULUM.NO ? 'low' : 'pop');
     haptic.settle();
     ritual.step(2);
-    await ritual.pause(ctx.platform.simpleMotion ? 100 : 500);
+    if (!await ritual.pause(ctx.platform.simpleMotion ? 100 : 500) || g !== generation) return;
     ritual.reveal({ kicker: question || EMPTY_QUESTION_KICKER, title: pendulumLabel(result), text: txt.conclusion, onRead: openPendulumSheet });
     primaryBtn.setLabel('展开解读');
     primaryBtn.disabled = false;
@@ -266,7 +281,6 @@ export function mount(container, ctx) {
     },
     onEnd: (g) => {
       if (tab !== 'pendulum' || pState.phase === 'asking' || g.cancelled) return;
-      if (pState.phase === 'done') return;
       const speed = Math.hypot(g.vx, g.vy);
       if (speed < 0.15 && Math.hypot(g.dx, g.dy) < 20) {
         pend.set({ x: 0, y: 0 });
@@ -281,7 +295,7 @@ export function mount(container, ctx) {
       const dx = (gamma - prevTilt.gamma) * 0.06;
       const dy = (beta - prevTilt.beta) * 0.06;
       tiltBias = { x: Math.max(-2, Math.min(2, tiltBias.x + dx)), y: Math.max(-2, Math.min(2, tiltBias.y + dy)) };
-      if (pState.phase === 'idle' && Math.hypot(dx, dy) > 0.9 && !resultSheet) startAsk({ vx: dx * 1.5, vy: dy * 1.5 });
+      if ((pState.phase === 'idle' || pState.phase === 'done') && Math.hypot(dx, dy) > 0.9 && !resultSheet) startAsk({ vx: dx * 1.5, vy: dy * 1.5 });
     }
     prevTilt = { beta, gamma };
   });
@@ -316,7 +330,7 @@ export function mount(container, ctx) {
           variant: 'primary',
           onClick: () => {
             resultSheet.close();
-            setTimeout(again, 300);
+            ctx.setTimeout(() => { if (ritual.alive) again(); }, 300);
           },
         }),
         button('分享', {
@@ -338,6 +352,7 @@ export function mount(container, ctx) {
 
   showTab();
   return () => {
+    generation++; cancelTyping?.();
     clearInterval(autoTimer);
     cancelAnimationFrame(pState.raf);
     resultSheet?.close();

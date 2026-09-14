@@ -2,6 +2,7 @@
 import { computeChart, elementRatios, shareText, daysInMonth, ELEMENTS } from './core.js';
 import { HOURS, GENDERS, DAY_MASTER, ELEMENT_INFO, SHISHEN_TEXT, TODAY_TEXT, NAYIN_TEXT, STRENGTH_TEXT, UI } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
+import { createModelSlot } from '../../ui/model-slot.js';
 
 const YEAR_NOW = new Date().getFullYear();
 
@@ -48,9 +49,9 @@ export function mount(container, ctx) {
   /* ---------- 舞台：四柱 ---------- */
   const st = stage({ cls: 'bz-stage', badge: '四柱' });
   const ritual = createRitual(ctx, st, ['生辰', '排盘', '详批']);
-  const pillarsEl = h('div', { class: 'bz-pillars' });
-  const emptyEl = h('div', { class: 'bz-empty' }, h('div', { class: 'bz-empty-glyph' }, '命'), h('div', null, '填好生辰，点「排盘」'));
-  st.scene.append(emptyEl, pillarsEl);
+  const slot = createModelSlot(ctx, { id: 'bazi.pillars', label: '四柱命牌', hint: '填好生辰后排盘' });
+  const pillarsEl = h('div', { class: 'sr-only' });
+  st.scene.append(slot.el, pillarsEl);
 
   /* ---------- 结果区 ---------- */
   const barsEl = h('div', { class: 'bz-bars', hidden: true });
@@ -76,9 +77,12 @@ export function mount(container, ctx) {
     }
     haptic.light();
     sound.play('flip');
-    emptyEl.hidden = true;
     st.setBadge(`${chart.lunarText} · ${chart.shengXiao}年生`);
-    await renderPillars();
+    if (!await ritual.focus()) return;
+    form.querySelectorAll('select, button').forEach(el => el.disabled = true);
+    barsEl.hidden = masterEl.hidden = todayEl.hidden = true;
+    if (!await renderPillars()) return;
+    form.querySelectorAll('select, button').forEach(el => el.disabled = false);
     renderBars();
     renderMaster();
     renderToday();
@@ -97,31 +101,16 @@ export function mount(container, ctx) {
 
   async function renderPillars() {
     clear(pillarsEl);
-    const reduce = ctx.platform.prefersReducedMotion || ctx.platform.simpleMotion;
-    for (const [i, p] of chart.pillars.entries()) {
-      const card = h(
-        'div',
-        { class: 'bz-pillar', dataset: { el: p.ganElement } },
-        h('div', { class: 'bz-pillar-label' }, p.label),
-        h('div', { class: 'bz-gan', dataset: { el: p.ganElement } }, p.gan),
-        h('div', { class: 'bz-zhi', dataset: { el: p.zhiElement } }, p.zhi),
-        h('div', { class: 'bz-hide' }, p.hideGan.join(' ')),
-        h('div', { class: 'bz-shishen' }, p.shiShen),
-        h('div', { class: 'bz-nayin' }, p.naYin),
-      );
-      pillarsEl.append(card);
-      if (!reduce) {
-        card.style.opacity = '0';
-        card.style.transform = 'rotateY(80deg)';
-        await ritual.pause(90 * (i ? 1 : 0.2));
-        card.style.transition = 'opacity .4s, transform .5s cubic-bezier(.2,.8,.2,1)';
-        card.style.opacity = '1';
-        card.style.transform = 'none';
-        sound.play('tick');
-      }
+    const duration = ctx.platform.simpleMotion ? 1400 : 2400;
+    slot.set({ pillars: chart.pillars, active: true, duration: duration / 1000, text: '四柱正在翻转' });
+    for (const p of chart.pillars) pillarsEl.append(h('p', null, `${p.label} ${p.ganZhi}，${p.shiShen}，${p.naYin}`));
+    for (let i = 0; i < 4; i++) {
+      if (!await ritual.pause(duration / 4)) return false;
+      sound.play('tick'); haptic.impact(.35 + i * .08);
     }
-    if (!chart.hasHour) pillarsEl.append(h('div', { class: 'bz-pillar ghost' }, h('div', { class: 'bz-pillar-label' }, '时柱'), h('div', { class: 'bz-gan' }, '?'), h('div', { class: 'bz-zhi' }, '?'), h('div', { class: 'bz-hide' }, '未知时辰')));
-    await ritual.pause(reduce ? 10 : 200);
+    slot.set({ active: false, text: chart.pillars.map(p => `${p.label} ${p.ganZhi}`).join('，') });
+    haptic.settle();
+    return true;
   }
 
   function renderBars() {

@@ -1,4 +1,4 @@
-// 风水 · 界面。实物（罗盘）用 3D 模型占位块，逻辑全在 core.js。
+// 风水 · 界面。立体罗盘随朝向和拨动旋转，逻辑全在 core.js。
 import { directionAt, mountainAt, mingGua, guaInfo, houseMap, annualStars, toGrid, normalizeHeading, starFor, luckyDirections, compassShareText } from './core.js';
 import { UI, STARS8, GROUP_TEXT, DIRECTIONS } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
@@ -46,7 +46,7 @@ export function mount(container, ctx) {
     slot.set({ angle: -normalizeHeading(heading), glyph: dir.name.length === 1 ? dir.name : dir.name[0], text: `${Math.round(normalizeHeading(heading))}° · ${dir.full} · ${mtn}山${live ? '' : ' · 手动'}` });
   }
   function manualTurn(delta) {
-    live = false;
+    live = false; target = null; cancelAnimationFrame(raf); raf = 0;
     heading = normalizeHeading(heading + delta);
     haptic.tap();
     sound.play('tick');
@@ -75,11 +75,11 @@ export function mount(container, ctx) {
     }
     renderCompass();
   }
-  // 屏幕拨动占位块 = 手动转罗盘
+  // 屏幕拨动罗盘 = 手动转罗盘
   ctx.gesture.spin(slot.el, () => {}, {
     onMove: (dRad) => {
       if (tab !== 'compass') return;
-      live = false;
+      live = false; target = null; cancelAnimationFrame(raf); raf = 0;
       heading = normalizeHeading(heading + (dRad * 180) / Math.PI);
       renderCompass();
     },
