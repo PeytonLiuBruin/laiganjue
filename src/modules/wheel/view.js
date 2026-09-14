@@ -104,6 +104,9 @@ export function mount(container, ctx) {
   nameInput.setAttribute('aria-label', '转盘名称');
   textarea.setAttribute('aria-label', '转盘选项，每行一项');
   const countEl = h('span', { class: 'wh-count' });
+  countEl.id = 'wheel-option-count';
+  countEl.setAttribute('role', 'status');
+  textarea.setAttribute('aria-describedby', countEl.id);
   const templateBtn = button('用个模板', { variant: 'ghost', size: 'small', onClick: useTemplate });
   const saveBtn = button('保存并使用', { variant: 'primary', size: 'small', onClick: saveCustom });
   const deleteBtn = button('删除', { variant: 'ghost', size: 'small', cls: 'wh-del', onClick: deleteCustom });
@@ -463,6 +466,7 @@ export function mount(container, ctx) {
     savedWrap.classList.toggle('locked', v);
     gestureHint.classList.toggle('dim', v);
     [deleteBtn, nameInput, textarea].forEach((el) => { el.disabled = v; });
+    [presetChips.el, savedWrap].forEach((el) => el.querySelectorAll('button').forEach((b) => { b.disabled = v; }));
   }
 
   /* ---------- 历史 ---------- */

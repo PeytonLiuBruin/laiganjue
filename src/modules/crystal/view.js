@@ -14,7 +14,7 @@ export function mount(container, ctx) {
   if (!TABS.some((t) => t.value === tab)) tab = 'ball';
   let mode = storage.get('mode', MODE.YESNO);
   if (!MODES.some((m) => m.value === mode)) mode = MODE.YESNO;
-  let question = '';
+  let question = String(storage.get('question', '') || '').slice(0, 40);
   let repeat = { last: '', count: 0 };
   let progress = 0;
   let phase = 'idle'; // idle | charging | revealing | revealed
@@ -50,7 +50,7 @@ export function mount(container, ctx) {
   }
 
   /* ---------- 控件 ---------- */
-  const qInput = input({ placeholder: QUESTION_PLACEHOLDER, maxlength: 40, onInput: (v) => (question = v.trim()) });
+  const qInput = input({ placeholder: QUESTION_PLACEHOLDER, value: question, maxlength: 40, onInput: (v) => { question = v.trim(); storage.set('question', question); } });
   qInput.setAttribute('aria-label', '想问的问题（选填）');
   const modeChips = chips(MODES, {
     value: mode,
@@ -81,6 +81,7 @@ export function mount(container, ctx) {
   function setButtons({ primary, busy = false, canReset = true, ghost = null }) {
     primaryBtn.setLabel(primary);
     primaryBtn.disabled = busy;
+    qInput.disabled = busy || (tab === 'ball' ? phase !== 'idle' : pState.phase !== 'idle');
     if (ghost) resetBtn.setLabel(ghost);
     resetBtn.disabled = !canReset;
   }
@@ -142,6 +143,7 @@ export function mount(container, ctx) {
       resetBtn.disabled = false;
     }
     phase = 'charging';
+    qInput.disabled = true;
     const text = progress < 0.35 ? BALL_HINTS.low : progress < 0.7 ? BALL_HINTS.mid : progress < 1 ? BALL_HINTS.high : BALL_HINTS.charging;
     ball.set({ progress, text, glow: progress > 0.6, active: progress > 0.3 });
     setHint(text, progress);
@@ -396,21 +398,7 @@ export function mount(container, ctx) {
     resultSheet.open();
   }
 
-  /** 内置渲染器在"未进入视口 → 已进入"两条交叉记录并成一批送达时只读第一条，会停止绘制、留下空舞台。
-   *  挂载后隔两帧让当前实物离开视口再回来，两条记录分开送达，绘制必定重新开始；淡入动画盖住这几帧。 */
-  async function wakeModel() {
-    await nextFrame();
-    if (!ritual.alive) return;
-    (tab === 'ball' ? ball : pend).el.hidden = true;
-    await nextFrame();
-    await nextFrame();
-    if (!ritual.alive) return;
-    ball.el.hidden = tab !== 'ball';
-    pend.el.hidden = tab !== 'pendulum';
-  }
-
   showTab();
-  wakeModel();
   return () => {
     generation++; cancelTyping?.();
     clearInterval(autoTimer);

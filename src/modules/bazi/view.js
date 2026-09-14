@@ -40,10 +40,15 @@ export function mount(container, ctx) {
     if (k === 'y' || k === 'm') fillDays();
     storage.set('birth', input);
     haptic.tap();
-    // 已排过盘再改生辰：旧命盘留着看，但按钮与提示告诉你它已经过期。
     if (chart && !busy) {
+      chart = null;
+      ritual.clear();
+      barsEl.hidden = todayEl.hidden = true;
+      clear(pillarsEl);
+      slot.set({ pillars: [], active: false, text: '等待排盘' });
       primaryBtn.setLabel(UI.primary);
-      st.setHint(UI.stageHintStale);
+      st.setBadge(UI.badgeIdle);
+      st.setHint(UI.stageHint);
     }
   }
   const form = h(
@@ -70,10 +75,6 @@ export function mount(container, ctx) {
   const slot = createModelSlot(ctx, { id: 'bazi.pillars', label: '四柱命牌', hint: UI.stageHint });
   slot.el.classList.add('bz-slot');
   st.scene.append(slot.el, pillarsEl);
-  // 模型在挂上舞台之前就开始观察自己的可见性，首批记录可能把「尚未挂载」当成「不可见」而停笔，
-  // 舞台就会空着。挂好后先藏几帧再显示，让它重新拿到一条干净的「可见」记录（此时页面还在淡入，看不出来）。
-  slot.el.hidden = true;
-  ctx.setTimeout(() => { slot.el.hidden = false; }, 90);
 
   /* ---------- 三条入口：主按钮 / 点命牌 / 摇一摇 ---------- */
   ctx.gesture.tap(slot.el, () => compute());

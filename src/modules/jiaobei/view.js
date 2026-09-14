@@ -84,12 +84,14 @@ export function mount(container, ctx) {
   });
 
   function setBusy(value) {
-    busy = value; tossBtn.disabled = value; resetBtn.disabled = value; qInput.disabled = value;
+    busy = value; tossBtn.disabled = value; resetBtn.disabled = value;
+    qInput.disabled = value || mode === 'three' && session.throws.length > 0;
     modeChips.el.querySelectorAll('button').forEach((b) => { b.disabled = value; });
   }
   /** 主按钮文案跟着状态走：掷筊 → 再掷一次 / 继续掷筊 → 重新问事（定局后） */
   function syncButtons() {
     const started = lastResult || session.throws.length > 0;
+    qInput.disabled = busy || mode === 'three' && session.throws.length > 0;
     tossBtn.setLabel(session.done ? '重新问事' : !started ? '掷筊' : mode === 'three' ? '继续掷筊' : '再掷一次');
     resetBtn.hidden = session.done;
     tossBtn.disabled = busy;
@@ -103,7 +105,7 @@ export function mount(container, ctx) {
     sound.play('whoosh'); haptic.release();
     const result = throwJiaobei(ctx.rng.random);
     const ok = await model.toss(result, intensity, (phase) => { if (phase === 'settling') setHint(HINTS.settling); });
-    if (!ok || !ritual.alive) return;
+    if (!ok || !ritual.alive) { if (ritual.alive) { setBusy(false); syncButtons(); setHint(idleHint()); } return; }
     ritual.step(2); ritual.power(0);
     const o = OUTCOMES[result.outcome];
     canvas.setAttribute('aria-label', `筊杯落地：${o.kicker}，${o.name}`);

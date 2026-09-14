@@ -150,7 +150,7 @@ export function mount(container, ctx) {
     storage.set('choice.' + which, which === 'a' ? optA : optB);
     presetChips.set(presetKey(optA, optB));
     coin.setChoice(optA, optB);
-    updateBadge();
+    forgetResult();
   };
   const inA = input({ placeholder: CHOICE_DEFAULT[0], value: optA, maxlength: 8, onInput: onOption('a'), onEnter: () => inB.focus() });
   const inB = input({ placeholder: CHOICE_DEFAULT[1], value: optB, maxlength: 8, onInput: onOption('b'), onEnter: () => {} });
@@ -168,7 +168,7 @@ export function mount(container, ctx) {
         storage.set('choice.a', optA);
         storage.set('choice.b', optB);
         coin.setChoice(optA, optB);
-        updateBadge();
+        forgetResult();
         haptic.tap();
         sound.play('tick');
       },
@@ -298,6 +298,7 @@ export function mount(container, ctx) {
     primaryBtn.disabled = b;
     container.classList.toggle('cn-busy', b);
     inA.disabled = b; inB.disabled = b; resetBtn.disabled = b;
+    for (const controls of [tabsUI.el, burstChips.el, countChips.el, typeChips.el, presetChips.el]) controls.querySelectorAll('button').forEach((node) => { node.disabled = b; });
   }
   /** 主按钮文案跟着状态走：抛硬币 → 再抛一次 */
   function syncButtons() {

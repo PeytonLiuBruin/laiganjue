@@ -14,7 +14,7 @@ export function mount(container, ctx) {
   const { h, button, stage, hint, resultCard, sheet, toast, confetti, historyBar } = kit;
   const reduce = !!ctx.platform.simpleMotion;
   const dur = (ms) => (reduce ? Math.max(100, ms * .55) : ms);
-  const cancelAnims = (el) => el.getAnimations && el.getAnimations().forEach((a) => a.cancel());
+  const cancelAnims = (el) => el.getAnimations?.().forEach((a) => { a.finished.catch(() => {}); a.cancel(); });
 
   /* ---------- 状态 ---------- */
   let phase = PHASE.IDLE;
@@ -198,6 +198,8 @@ export function mount(container, ctx) {
   function setBusy(v) {
     busy = v;
     primaryBtn.disabled = v;
+    rackBtn.disabled = v;
+    rackEl.setAttribute('aria-disabled', String(v));
     tubeWrap.disabled = v || phase !== PHASE.IDLE; stick.disabled = v;
   }
   function go(action) {

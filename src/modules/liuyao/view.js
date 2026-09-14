@@ -80,7 +80,7 @@ export function mount(container, ctx) {
   ctx.motion.onTilt(par);
   let lastTremble = 0;
   ctx.motion.onMotion((m) => {
-    if (busy || session.done) return;
+    if (busy || session.done || resultSheet) return;
     const now = performance.now();
     if (now - lastTremble < 260 || m.smooth < 2.2) return;
     lastTremble = now;
@@ -123,11 +123,12 @@ export function mount(container, ctx) {
     if (session.done) {
       auto = false;
       lastReading = buildReading(sessionValues(session));
-      // 按钮先就位（展开解读 / 再起一卦），揭示本身留一个呼吸再来
-      busy = false;
+      // The sixth coin must settle before any reading action becomes usable.
       setButtons();
       if (!await wait(reduce() ? 10 : 460) || g !== gen) return;
       finish(lastReading);
+      busy = false;
+      setButtons();
       return;
     }
     busy = false;
@@ -300,11 +301,13 @@ export function mount(container, ctx) {
   /** 按钮文案跟着状态走：掷钱起卦 → 掷第 N 爻 → 展开解读；连掷六次 → 连掷余下 / 停止；重起在未掷前不出现 */
   function setButtons() {
     const n = session.tosses.length, done = session.done;
+    qInput.disabled = busy || n > 0;
     tossBtn.setLabel(done ? UI.readLabel : n ? `掷第${CN_NUM[n]}爻` : UI.tossLabel);
     tossBtn.disabled = busy || auto;
     autoBtn.hidden = done;
     autoBtn.setLabel(auto ? UI.autoStop : n ? UI.autoRest : UI.autoLabel);
     autoBtn.classList.toggle('soft', auto);
+    autoBtn.setAttribute('aria-pressed', String(auto));
     resetBtn.hidden = !n && !done;
     resetBtn.setLabel(done ? UI.againLabel : '');
     resetBtn.setAttribute('aria-label', done ? UI.againLabel : UI.resetLabel);

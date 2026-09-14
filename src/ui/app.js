@@ -7,6 +7,7 @@ import { MODULE_LIST, REGIONS, GESTURE_LABEL, getModuleMeta } from '../modules/l
 import { MODULES } from '../modules/registry.js';
 import { createZen } from './zen.js';
 import { registerModel, hasModel } from './model-slot.js';
+import { ritualArt } from './ritual-art.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -310,7 +311,7 @@ export function startApp(root) {
                 navigate('#/m/' + m.id);
               },
             },
-            h('span', { class: 'tile-head' }, h('span', { class: 'medal' }, m.glyph), h('span', { class: 'tile-gest' }, m.gestures.slice(0, 1).map((g) => GESTURE_LABEL[g]).join(' · '))),
+            h('span', { class: 'tile-head' }, ritualArt(m.id), h('span', { class: 'tile-gest' }, m.gestures.slice(0, 1).map((g) => GESTURE_LABEL[g]).join(' · '))),
             h('span', { class: 'col grow', style: { gap: '4px' } }, h('span', { class: 'tile-title' }, m.title), h('span', { class: 'tile-sub' }, m.subtitle)),
           ),
         );
