@@ -13,8 +13,8 @@ const HEAVY = new Set(['M16', 'M15', 'M13']); // 高塔 恶魔 死神：正位�
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage, rng } = ctx;
   const { h, button, chips, stage, hint, resultCard, sheet, input, toast, confetti } = kit;
-  const reduce = ctx.platform.prefersReducedMotion;
-  const D = (ms) => (reduce ? 1 : ms);
+  const reduce = ctx.platform.simpleMotion;
+  const D = (ms) => (reduce ? Math.max(100, ms * .55) : ms);
   const { backArt, frontArt, makeCard, slotOrnament } = createCardArt(kit);
 
   /* ---------- 状态 ---------- */
@@ -105,8 +105,8 @@ export function mount(container, ctx) {
   renderHistory();
 
   /* ---------- 体感 / 手势 ---------- */
-  ctx.motion.onShake((e) => { if (!resultSheet && !isFull(session)) doShuffle(e.intensity); });
-  ctx.motion.onToss((e) => { if (!isFull(session)) doPrimary(true, e.intensity); });
+  ctx.motion.onShake(async (e) => { if (busy || flippingAll || resultSheet) return; if (session.draws.length) await reset(); if (ritual.alive) doShuffle(e.intensity); });
+  ctx.motion.onToss(async (e) => { if (busy || flippingAll || resultSheet) return; if (isDone(session)) await reset(); doPrimary(true, e.intensity); });
   ctx.gesture.flick(
     deckZone,
     (g) => {
@@ -156,11 +156,13 @@ export function mount(container, ctx) {
     });
     const n = spread.positions.length;
     table.dataset.n = String(n);
-    st.el.style.minHeight = n === 1 ? '340px' : '420px';
+    st.el.style.removeProperty('min-height');
     table.classList.remove('unveiled');
   }
 
   function updateCount() {
+    table.classList.toggle('has-draws', session.draws.length > 0);
+    table.classList.toggle('is-full', isFull(session));
     const spread = getSpread(spreadId);
     countEl.textContent = TEXT.shuffledTimes(session.shuffles);
     const d = new Date();
@@ -295,6 +297,7 @@ export function mount(container, ctx) {
     sound.play('paper');
     haptic.medium();
     slots[idx].wrap.classList.add('filled');
+    updateCount();
     let draggingCard = false;
     c.off = ctx.gesture.drag(c.el, {
       onStart() { draggingCard = !busy; if (draggingCard) haptic.tap(); },
@@ -614,7 +617,7 @@ export function mount(container, ctx) {
   }
   function pileRest(i, jit = pileJitter) {
     const j = jit[i];
-    return `translate(${j.x.toFixed(1)}px, ${(j.y - i * 1.15).toFixed(1)}px) rotate(${j.r.toFixed(1)}deg)`;
+    return `translate(${((i - 2.5) * 6 + j.x).toFixed(1)}px, ${(Math.abs(i - 2.5) * 2 - i * .8).toFixed(1)}px) rotate(${((i - 2.5) * 5 + j.r * .25).toFixed(1)}deg)`;
   }
   function applyPileRest() {
     if (!ritual.alive) return;

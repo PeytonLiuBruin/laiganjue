@@ -314,3 +314,62 @@ button:disabled { cursor: default; }
 .setting-desc { overflow-wrap: anywhere; }
 .m-coin .cn-jitter { transition: transform 80ms linear; }
 @media (max-width: 380px) { .setting-haptic-controls { flex-direction: column; } }
+
+/* The objects carry the interaction; instructions occupy one quiet line. */
+.ritual-progress, .ritual-energy { display: none !important; }
+.m-coin .stage-hint, .m-jiaobei .stage-hint, .m-qian .stage-hint,
+.m-omikuji .stage-hint, .m-tarot .stage-hint, .m-runes .stage-hint { display: none; }
+.m-coin .cn-stage, .m-jiaobei .jb-stage { height: clamp(300px, 48svh, 390px); min-height: 300px; }
+.cn-solid, .object-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.m-coin .cn-jitter { inset: 0; transform-style: flat; }
+.m-coin .cn-ambient { display: none; }
+.m-coin .cn-result { min-height: 0; margin: 14px 0 0; padding: 0; }
+.m-coin .cn-result:not(.show) { display: none; }
+.m-coin .cn-res-big { font-size: 36px; line-height: 1.25; }
+.m-coin .cn-res-sub { margin-top: 6px; }
+.m-coin .cn-ctl-row { gap: 12px; }
+.m-coin .cn-stage .stage-floor, .m-jiaobei .jb-stage .stage-floor { display: none; }
+.m-jiaobei .jb-canvas { inset: 0; width: 100%; height: 100%; }
+.m-jiaobei .jb-face-labels { bottom: 18px; }
+.m-qian .qn-vessel { width: 132px; left: calc(50% - 66px); }
+.m-qian .qn-bamboo { width: 8px; height: 152px; box-shadow: 1px 1px 2px #39281730; }
+.m-qian .qn-sticks { z-index: 1; }
+.m-qian .qn-cylinder { z-index: 2; }
+.m-qian .qn-rim { z-index: 0; }
+.m-omikuji .ok-bundle { position: absolute; inset: 0; z-index: 1; }
+.m-omikuji .ok-bamboo { position: absolute; width: 7px; height: 142px; bottom: 86px; border-radius: 2px; transform-origin: 50% 100%; background: linear-gradient(90deg,#a58254,#e3ca9f 45%,#c5a171); box-shadow: 1px 0 2px #35200e33; }
+.m-omikuji .ok-bamboo::before { content: ''; position: absolute; inset: 0 0 auto; height: 14px; background: #a04d3c; border-radius: 2px 2px 0 0; }
+.m-omikuji .ok-tube-body { z-index: 2; }
+.m-omikuji .ok-tube-cap { z-index: 0; }
+.m-omikuji .ok-ambient { opacity: .3; }
+.sticks-in-motion { transition: none !important; }
+
+/* An engraved midnight back and a clean, generously sized print. */
+.m-tarot .tr-stage { --cw: 148px; --ch: 252px; min-height: 340px; background: radial-gradient(ellipse at 50% 70%,var(--surface-2),transparent 72%); border-color: var(--line); box-shadow: none; }
+.m-tarot .tr-stage .stage-floor, .m-tarot .tr-deck-count { display: none; }
+.m-tarot .tr-table[data-n='1'] { display: grid; place-items: center; padding: 30px 20px; }
+.m-tarot .tr-table[data-n='1'] .tr-spread, .m-tarot .tr-table[data-n='1'] .tr-deck-zone { grid-area: 1 / 1; }
+.m-tarot .tr-table[data-n='1']:not(.has-draws) .tr-spread { opacity: 0; pointer-events: none; }
+.m-tarot .tr-table[data-n='1'].has-draws .tr-deck-zone { visibility: hidden; pointer-events: none; }
+.m-tarot .tr-table.unveiled[data-n='1'] { --cw: 156px; --ch: 265px; }
+.m-tarot .tr-back-art { background: #20363c; border: 1px solid #cbbd95; border-radius: 6px; box-shadow: 0 3px 5px #16202422, 0 14px 24px #1620241a; }
+.m-tarot .tr-back-art::before { display: none; }
+.m-tarot .tr-back-engraving { width: 100%; height: 100%; color: #d4c39b; }
+.m-tarot .tr-front-art { padding: 0; border-radius: 5px; background: #f7f1e2; box-shadow: 0 2px 3px #251e1820, 0 14px 25px #251e181c; }
+.m-tarot .tr-front-art::before { display: none; }
+.m-tarot .tr-illustration { inset: 4.5%; filter: saturate(.84) contrast(1.04); border-radius: 1px; }
+.m-tarot .tr-illustration::after { background: #d6bb8110; mix-blend-mode: multiply; }
+.m-tarot .tr-card.flipped .tr-front-art { box-shadow: 0 3px 5px #251e181c, 0 16px 28px #251e1820; }
+.m-tarot .tr-slot { border: 0; border-radius: 5px; }
+.m-tarot .tr-slot::before { border: 1px solid var(--line); border-radius: 5px; inset: 0; }
+.m-tarot .tr-slot-ornament { width: 20%; opacity: .16; }
+.m-tarot .tr-sheen { display: none; }
+.m-tarot .tr-slot-label { font-size: 12px; color: var(--text-2); letter-spacing: .08em; }
+.m-tarot .tr-table[data-n='3'] { --cw: clamp(84px,24vw,112px); --ch: clamp(143px,40.8vw,190px); padding: 32px 8px 20px; gap: 24px; }
+.m-tarot .tr-table[data-n='3'] .tr-spread { gap: 12px; }
+.m-tarot .tr-table[data-n='3'] .tr-deck-zone { --cw: 88px; --ch: 150px; }
+.m-tarot .tr-stage:has(.tr-table[data-n='3']) { min-height: 435px; }
+.m-tarot .tr-stage:has(.tr-table.unveiled[data-n='3']) { min-height: 300px; }
+.m-tarot .tr-table.unveiled[data-n='3'] { justify-content: center; }
+.m-tarot .tr-actions .btn { min-height: 48px; }
+@media(max-width:375px) { .m-tarot .tr-table[data-n='3'] .tr-spread { gap: 8px; } .m-coin .cn-ctl-row .chip { min-width: 34px; padding-inline: 8px; } }

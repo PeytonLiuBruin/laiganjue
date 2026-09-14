@@ -19,8 +19,8 @@ function runeSvg(fromHTML, rune, { size = 32, reversed = false, cls = '' } = {})
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
   const { h, button, chips, stage, hint, resultCard, sheet, toast, confetti, historyBar, fromHTML, nextFrame } = kit;
-  const reduce = !!ctx.platform.prefersReducedMotion;
-  const T = (ms) => (reduce ? 1 : ms);
+  const reduce = !!ctx.platform.simpleMotion;
+  const T = (ms) => (reduce ? Math.max(100, ms * .55) : ms);
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
   const glyph = (rune, opts) => runeSvg(fromHTML, rune, opts);
 
@@ -179,16 +179,14 @@ export function mount(container, ctx) {
   function onShakeInput(intensity = 20) {
     if (busy) return;
     if (state.phase === 'idle') doDraw(intensity);
-    else if (state.phase === 'revealed') return;
-    else {
-      wobble(shakeLevel(intensity));
-      toast(UI_TEXT.toastFlipFirst);
-    }
+    else if (state.phase === 'revealed') collect({ silent: true }).then(() => { if (ritual.alive) doDraw(intensity); });
+    else if (state.phase === 'drawn') flipAll();
   }
   function onTossInput() {
     if (busy) return;
     if (state.phase === 'idle') doDraw(22);
     else if (state.phase === 'drawn') flipAll();
+    else if (state.phase === 'revealed') collect({ silent: true }).then(() => { if (ritual.alive) doDraw(22); });
   }
 
   /* ---------- 槽位 ---------- */

@@ -15,7 +15,7 @@ const RADIAL = 112;
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
   const { h, button, chips, stage, hint, resultCard, sheet, input, toast, confetti, historyBar, fromHTML, clear } = kit;
-  const reduce = !!ctx.platform.prefersReducedMotion;
+  const reduce = !!ctx.platform.simpleMotion;
   const pick = (arr) => ctx.rng.pick(arr);
 
   /* ---------- 状态 ---------- */
@@ -454,7 +454,7 @@ export function mount(container, ctx) {
 
   /* ---------- 旋转：起 → 飞 → 落 → 揭 ---------- */
   async function spin(omega0, source) {
-    if (!ritual.alive || activeSheet?.opened || (source === 'motion' && !ritual.receipt.hidden)) return;
+    if (!ritual.alive || activeSheet?.opened) return;
     if (busy) {
       if (source === 'button') toast(pick(BUSY_LINES));
       return;
@@ -486,12 +486,6 @@ export function mount(container, ctx) {
     wrap.classList.add('spinning');
     halo.classList.add('on');
 
-    if (reduce) {
-      angle = finalAngle;
-      setAngle(angle);
-      ctx.setTimeout(() => land(), 80);
-      return;
-    }
     let elapsed = 0, previous = null;
     let prev = start;
     let lastTick = 0;
@@ -502,7 +496,7 @@ export function mount(container, ctx) {
     let coasting = false;
     const frame = (now) => {
       if (!ritual.alive) return;
-      if (previous !== null && !document.hidden) elapsed += Math.min(50, now - previous);
+      if (previous !== null && !document.hidden) elapsed += Math.min(50, now - previous) * (reduce ? 2.4 : 1);
       previous = now;
       const t = elapsed;
       let a;

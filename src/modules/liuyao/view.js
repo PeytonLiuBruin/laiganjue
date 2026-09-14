@@ -16,7 +16,7 @@ const REST_FACE = [COIN.ZI, COIN.HUA, COIN.ZI];
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
   const { h, button, stage, hint, resultCard, sheet, input, toast, confetti } = kit;
-  const reduce = () => ctx.platform.prefersReducedMotion;
+  const reduce = () => ctx.platform.simpleMotion;
 
   /* ---------- 状态 ---------- */
   let session = initSession();
@@ -66,8 +66,8 @@ export function mount(container, ctx) {
   renderHistory();
 
   /* ---------- 体感 / 手势：三条入口同一件事 ---------- */
-  ctx.motion.onToss((e) => { if (!session.done) doToss(e.intensity); });
-  ctx.motion.onShake((e) => { if (!session.done) doToss(e.intensity, { rattle: true }); });
+  ctx.motion.onToss((e) => doToss(e.intensity));
+  ctx.motion.onShake((e) => doToss(e.intensity, { rattle: true }));
   ctx.gesture.flick(pit, (g) => doToss(g.intensity), { minSpeed: 0.5 });
   // 倾斜：钱盘轻微视差；持机微动：铜钱在手里轻颤
   const par = kit.parallax(mat, { max: 5 });
@@ -433,14 +433,14 @@ export function mount(container, ctx) {
       if (delay && !await wait(reduce() ? 1 : delay)) return;
       if (!ritual.alive) return;
       cancel();
-      const dur = reduce() ? 10 : 2850 + power * 300;
+      const dur = reduce() ? 1500 : 2850 + power * 300;
       const finalRot = face === COIN.ZI ? 0 : 180;
       const target = (Math.floor(faceRot / 360) + 3) * 360 + finalRot;
       const from = pose, end = { x: rest.x + (ctx.rng.random() - .5) * 18, y: rest.y + (ctx.rng.random() - .5) * 12, r: (ctx.rng.random() - .5) * 50 };
       const height = Math.max(32, Math.min(105, st.el.getBoundingClientRect().height * .28));
       const position = [], rotation = [], shadows = [];
       for (let i = 0; i <= 100; i++) {
-        const offset = i / 100, t = reduce() ? 1 : offset;
+        const offset = i / 100, t = offset;
         const p = coinPose(t, { start: faceRot, target, height, drift: 12, wobble: from.r, endWobble: end.r });
         position.push({ offset, transform: `translate(${from.x * (1-t) + end.x * t + p.x}px,${from.y * (1-t) + end.y * t + p.y}px) rotateZ(${p.rz}deg)` });
         rotation.push({ offset, transform: `rotateX(${p.rx}deg) rotateY(${p.ry}deg)` });

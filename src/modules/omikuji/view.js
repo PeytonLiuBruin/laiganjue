@@ -1,3 +1,4 @@
+import { createStickBundle } from '../../ui/stick-bundle.js';
 // 御神签 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 节奏：摇筒（起）→ 签棒滑出（飞 / 落）→ 签纸展开盖章（揭）→ 结果抽屉 → 结签 / 带回家。
 import { pickLot, levelOf, isBad, initRack, tieUp, untie, visibleKnots, RACK_MAX, drawnToday, markDrawn, shareText, PHASE, nextPhase, ITEM_KEYS, toneOf } from './core.js';
@@ -12,8 +13,8 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
   const { h, button, stage, hint, resultCard, sheet, toast, confetti, historyBar } = kit;
-  const reduce = !!ctx.platform.prefersReducedMotion;
-  const dur = (ms) => (reduce ? 1 : ms);
+  const reduce = !!ctx.platform.simpleMotion;
+  const dur = (ms) => (reduce ? Math.max(100, ms * .55) : ms);
   const cancelAnims = (el) => el.getAnimations && el.getAnimations().forEach((a) => a.cancel());
 
   /* ---------- 状态 ---------- */
@@ -74,8 +75,11 @@ export function mount(container, ctx) {
     ),
     h('div', { class: 'ok-tube-cap' }),
   );
+  const bambooStems = Array.from({length:21},(_,i) => h('i',{class:'ok-bamboo',style:{left:`${5+i%11*8}%`,transform:`rotate(${(i%11-5)*1.7}deg) translateY(${i%4*4}px)`}}));
+  tube.prepend(h('div',{class:'ok-bundle'},bambooStems));
   const tubeAnim = h('div', { class: 'ok-tube-anim' }, tube);
   const tubeWrap = h('div', { class: 'ok-tube-wrap', attrs: { role: 'button', 'aria-label': TEXT.btnShake } }, tubeAnim);
+  const bundle = createStickBundle(ctx, tubeAnim, bambooStems);
   const stickLabel = h('span', { class: 'ok-stick-label' });
   const stick = h('div', { class: 'ok-stick', attrs: { role: 'button', 'aria-label': TEXT.btnDraw } }, h('span', { class: 'ok-stick-tip' }), stickLabel);
   const slip = h('div', { class: 'ok-slip paper-slip', hidden: true, attrs: { role: 'button', tabindex: '0', 'aria-label': '签纸，点击查看解读' } });
@@ -111,6 +115,7 @@ export function mount(container, ctx) {
     if (t - lastSway < 90) return;
     lastSway = t;
     if (busy || dragging || phase !== PHASE.IDLE || reduce) return;
+    bundle.preview(m.ax || 0);
     const ax = clamp(m.ax || 0, -5, 5);
     tubeWrap.style.transform = Math.abs(ax) < 0.5 ? '' : `rotate(${(-ax * 1.6).toFixed(1)}deg)`;
   });
@@ -145,6 +150,7 @@ export function mount(container, ctx) {
           dragTravel += Math.abs(d);
         }
       }
+      bundle.preview(g.dx / 4);
       dragLastX = g.dx;
       tubeWrap.style.transform = `translateY(-10px) rotate(${clamp(g.dx / 5, -18, 18)}deg)`;
       if (dragReversals >= 3 && dragTravel > 120) {
@@ -201,7 +207,7 @@ export function mount(container, ctx) {
   function endDrag() {
     dragging = false;
     tubeWrap.classList.remove('ok-grab');
-    tubeWrap.style.transform = '';
+    tubeWrap.style.transform = ''; bundle.reset();
   }
 
   /* ---------- 流程 ---------- */
@@ -223,13 +229,9 @@ export function mount(container, ctx) {
   }
 
   async function onShakeEvent(e = {}) {
-    if (busy || openSheet || tying || !ritual.alive || phase === PHASE.PAPER) return;
-    if (phase === PHASE.STICK) {
-      nudgeStick();
-      return;
-    }
-    if (phase === PHASE.PAPER) await resetStage();
-    if (phase !== PHASE.IDLE) return;
+    if (busy || openSheet || tying || !ritual.alive) return;
+    if (phase !== PHASE.IDLE) await resetStage();
+    if (!ritual.alive) return;
     doShake(e.intensity || 20);
   }
 
@@ -246,22 +248,7 @@ export function mount(container, ctx) {
 
     const power = clamp(intensity / 20, 0.7, 1.6);
     const lvl = power < 0.95 ? 1 : power < 1.25 ? 2 : 3;
-    tubeAnim.classList.add('ok-shaking', 'ok-s' + lvl);
-    tubeAnim.getAnimations().forEach((a) => ritual.track(a));
-    sound.play('shake');
-    haptic.rattle();
-    const total = dur(2300 + lvl * 160);
-    let elapsed = 0;
-    while (elapsed < total) {
-      const step = Math.min(360, total - elapsed);
-      if (!await wait(step)) return;
-      elapsed += step;
-      if (elapsed < total) { sound.play('rattle'); haptic.impact(.25); }
-    }
-    if (!ritual.alive) return;
-    tubeAnim.classList.remove('ok-shaking', 'ok-s1', 'ok-s2', 'ok-s3');
-
-    if (!ritual.alive) return;
+    if (!await bundle.shake(power, ctx.platform.simpleMotion ? 1500 : 2600)) return;
     lot = pickLot(ctx.rng.random);
     stickLabel.textContent = '';
 

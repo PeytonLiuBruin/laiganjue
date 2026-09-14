@@ -1,5 +1,6 @@
+import { createSolidScene } from '../../ui/solid-scene.js';
+import { cubeMesh, d20Mesh, coinMesh, faceUp } from '../../core/solids.js';
 import { createRitual } from '../../ui/ritual.js';
-import { coinPose, COIN_IMPACTS, COIN_SETTLING, dicePose, DICE_IMPACTS, DICE_SETTLING } from './motion.js';
 import { createShakeMeter } from '../qian/core.js';
 // 硬币骰子 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 三个标签页共用一座舞台：硬币 / 骰子托盘 两组实物按模式切换显示。
@@ -63,7 +64,7 @@ const DIE_SIZE = 52;
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage, rng } = ctx;
   const { h, button, chips, tabs, stage, hint, resultCard, sheet, input, toast, confetti, historyBar, fromHTML } = kit;
-  const reduce = !!ctx.platform.prefersReducedMotion;
+  const reduce = !!ctx.platform.simpleMotion;
   let alive = true;
 
   /* ---------- 状态 ---------- */
@@ -203,7 +204,7 @@ export function mount(container, ctx) {
   const choicePanel = h('div', { class: 'cn-panel' }, h('div', { class: 'cn-vs' }, inA, h('span', { class: 'cn-vs-mark' }, '或'), inB), presets);
 
   /* ---------- 舞台 ---------- */
-  const st = stage({ cls: 'cn-stage', minHeight: 380 });
+  const st = stage({ cls: 'cn-stage' });
   const ritual = createRitual(ctx, st, ['心念', '抛出', '落定', '揭晓']);
   const wait = ritual.pause;
   const ambient = h('div', { class: 'cn-ambient' });
@@ -241,8 +242,8 @@ export function mount(container, ctx) {
   renderStats();
 
   // Shaking belongs to the dice tray; an upward release belongs to a coin.
-  ctx.motion.onToss((e) => { if (mode !== 'dice' && !last) act(e.intensity); });
-  ctx.motion.onShake((e) => { if (mode === 'dice' && !last) act(e.intensity); });
+  ctx.motion.onToss((e) => { if (mode !== 'dice') act(e.intensity); });
+  ctx.motion.onShake((e) => act(e.intensity));
   let held = false, charged = false;
   const shakeMeter = createShakeMeter({ need: 2, minSwing: 22 });
   ctx.gesture.drag(st.scene, {
@@ -269,7 +270,7 @@ export function mount(container, ctx) {
   });
   ctx.motion.onTilt(kit.parallax(ambient, { max: 14 }));
   ctx.motion.onMotion((m) => {
-    if (busy || held || last || openSheetRef?.opened || reduce) return;
+    if (busy || held || openSheetRef?.opened || reduce) return;
     // Inertia follows the measured direction; random jitter felt disconnected.
     const dx = Math.max(-14, Math.min(14, -(m.ax || 0) * 1.2));
     const dy = Math.max(-18, Math.min(5, -(m.ay || 0)));
@@ -722,242 +723,42 @@ export function mount(container, ctx) {
 
   /* ---------- 实物：一枚硬币 ---------- */
   function makeCoin() {
-    const edges = [];
-    for (let i = -3; i <= 3; i++) edges.push(h('div', { class: 'cn-edge', style: { transform: `translateZ(${i}px)` } }));
-    const chars = Object.entries(COIN_INSCRIPTION).map(([pos, ch]) => h('span', { class: ['cn-ch', 'cn-at-' + pos] }, ch));
-    const optAEl = h('div', { class: 'cn-opt' });
-    const optBEl = h('div', { class: 'cn-opt' });
-    const heads = h('div', { class: 'cn-face cn-heads' }, h('div', { class: 'cn-rim' }), h('div', { class: 'cn-hole' }), chars, optAEl);
-    const tails = h('div', { class: 'cn-face cn-tails' }, h('div', { class: 'cn-rim' }), flowerSvg(), optBEl);
-    const body = h('div', { class: 'cn-coin' }, edges, heads, tails);
-    const wrap = h('div', { class: 'cn-coin-wrap' }, body);
-    const shadow = h('div', { class: 'cn-coin-shadow' });
-    const el = h('div', { class: 'cn-coin-zone' }, shadow, wrap);
-
-    let angle = 0; // 当前静止角度（0 正 / 180 反 / 90 立）
-    let wob = 0; // 落地后的轻微歪斜
-    let anims = [];
-    const cancelAll = () => {
-      for (const a of anims) a.cancel();
-      anims = [];
-    };
-    const setBase = () => {
-      body.style.transform = `rotateX(${angle}deg) rotateZ(${wob}deg)`;
-      wrap.style.transform = '';
-      shadow.style.transform = '';
-      shadow.style.opacity = '';
-    };
-    setBase();
-
-    /** Airborne tumble, rebound, then a long roll before the face settles. */
-    async function fly(face, intensity = 20, { quick = false, spins: forced } = {}) {
-      cancelAll();
-      el.classList.remove('standing');
-      const power = powerOf(intensity);
-      const spins = forced ?? Math.max(3, Math.round(spinsForIntensity(intensity) * 0.65));
-      const dur = reduce ? 1 : quick ? 2400 : Math.round(3300 + power * 420);
-      const clearance = st.el.clientHeight - 46 - el.offsetHeight - 68;
-      const height = Math.max(26, Math.min(quick ? 85 : 100 + power * 16, clearance));
-      const target = flipAngle(face, spins);
-      const nextWob = (rng.random() - 0.5) * 12;
-      const wrapFrames = [], bodyFrames = [], shadowFrames = [];
-      for (let i = 0; i <= 100; i++) {
-        const t = reduce ? 1 : i / 100;
-        const p = coinPose(t, { start: angle, target, height, wobble: wob, endWobble: nextWob });
-        wrapFrames.push({ transform: `translate(${p.x}px,${p.y}px)`, offset: i / 100 });
-        bodyFrames.push({ transform: `rotateX(${p.rx}deg) rotateY(${p.ry}deg) rotateZ(${p.rz}deg)`, offset: i / 100 });
-        shadowFrames.push({ transform: `translateX(${p.x}px) scale(${p.shadowScale})`, opacity: p.shadowOpacity, offset: i / 100 });
-      }
-      sound.play('coin'); sound.play('whoosh', { delay: 0.02 }); haptic.release();
-      anims = [
-        ritual.track(wrap.animate(wrapFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
-        ritual.track(body.animate(bodyFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
-        ritual.track(shadow.animate(shadowFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
-      ];
-      el.dataset.phase = 'flight'; delete el.dataset.face;
-      let previous = 0;
-      const cues = [...COIN_IMPACTS.map((t, i) => ({ t, i })), { t: COIN_SETTLING, settle: true }].sort((a, b) => a.t - b.t);
-      for (const cue of cues) {
-        if (!await wait(dur * (cue.t - previous))) return;
-        if (cue.settle) {
-          el.dataset.phase = 'settling'; ritual.step(2); st.setHint('币沿还在晃，等它倒向最后一面');
-        } else {
-          sound.play(cue.i ? 'tick' : 'coin'); haptic.impact([1, .55, .25, .12][cue.i]);
-          if (!cue.i) { el.dataset.phase = 'rolling'; st.setHint('轻弹，翻滚，慢慢停下来'); }
-        }
-        previous = cue.t;
-      }
-      if (!await wait(dur * (1 - previous) + 30)) return;
-      await Promise.all(anims.map((a) => a.finished.catch(() => {})));
-      if (!alive) return;
-      angle = restAngle(face); wob = nextWob;
-      cancelAll(); setBase();
-      el.dataset.face = face; el.dataset.phase = 'settled'; haptic.settle();
-      if (face === EDGE) el.classList.add('standing');
+    const canvas = h('canvas', { class: 'object-canvas', attrs: { role: 'img', 'aria-label': '立体铜钱' } });
+    const el = h('div', { class: 'cn-solid cn-solid-coin' }, canvas);
+    const scene = createSolidScene(canvas, ctx, { ground: .79 });
+    scene.set([{ kind: 'coin', mesh: coinMesh(), size: 68, x: 0, y: 0 }]);
+    async function fly(face, intensity = 20, { quick = false } = {}) {
+      delete el.dataset.face;
+      sound.play('whoosh'); haptic.release();
+      const ok = await scene.throwTo([face], intensity, { duration: ctx.platform.simpleMotion ? 1500 : quick ? 2500 : 3300, onPhase: (phase) => { el.dataset.phase = phase; if (phase === 'settling') ritual.step(2); } });
+      if (ok) { el.dataset.face = face; el.dataset.phase = 'settled'; }
     }
-
-    /** 二选一：两面写字（自动缩字）；传 null 恢复铸币面 */
-    function setChoice(a, b) {
-      const on = a != null;
-      body.classList.toggle('choice', on);
-      if (!on) return;
-      for (const [node, text] of [
-        [optAEl, a],
-        [optBEl, b],
-      ]) {
-        const fit = fitFontSize(text);
-        node.textContent = text;
-        node.style.fontSize = fit.size + 'px';
-        node.dataset.lines = fit.lines;
-      }
-    }
-
-    function rest() {
-      cancelAll();
-      setBase();
-      el.classList.remove('standing');
-    }
-    return { el, fly, setChoice, rest };
+    function setChoice(a,b) { scene.objects[0].choice = a == null ? null : [a,b]; scene.render(); }
+    return { el, fly, setChoice, rest: scene.rest };
   }
 
-  /** 花面纹样：八瓣莲纹 + 双环 + 点饰 */
-  function flowerSvg() {
-    const petals = [];
-    const dots = [];
-    for (let i = 0; i < 8; i++) {
-      petals.push(`<path d="M0,-12 C-13,-24 -13,-42 0,-53 C13,-42 13,-24 0,-12Z" transform="rotate(${i * 45})"/>`);
-      dots.push(`<circle cy="-46" r="2.2" transform="rotate(${22.5 + i * 45})"/>`);
-    }
-    return fromHTML(
-      `<svg class="cn-flower" xmlns="http://www.w3.org/2000/svg" viewBox="-75 -75 150 150" aria-hidden="true">` +
-        `<g class="cn-fl-ring"><circle r="61"/><circle r="56.5"/></g>` +
-        `<g class="cn-fl-petals">${petals.join('')}</g>` +
-        `<g class="cn-fl-dots">${dots.join('')}</g>` +
-        `<circle class="cn-fl-core" r="9"/><circle class="cn-fl-core2" r="4"/>` +
-        `</svg>`,
-    );
-  }
-
-  /* ---------- 实物：骰子托盘 ---------- */
   function makeTray() {
-    const disc = h('div', { class: 'cn-tray-disc' });
-    const field = h('div', { class: 'cn-tray-field' });
-    const el = h('div', { class: 'cn-tray' }, disc, field);
-    let dice = [];
-    let count = 0;
-    let sides = 6;
-    const half = DIE_SIZE / 2;
-
-    function makeFace(f) {
-      const face = h('div', { class: ['cn-df', 'cn-f' + f] });
-      for (const [r, c] of PIP_LAYOUT[f]) face.append(h('span', { class: 'cn-pip', style: { gridRow: r, gridColumn: c } }));
-      return face;
+    const canvas = h('canvas', { class: 'object-canvas', attrs: { role: 'img', 'aria-label': '立体骰子，摇动后滚落' } });
+    const el = h('div', { class: 'cn-solid cn-solid-dice' }, canvas);
+    const scene = createSolidScene(canvas, ctx, { plate: true, ground: .76 });
+    let count=0, sides=6;
+    function setDice(n,s) {
+      count=n;sides=s;
+      const mesh=s===20?d20Mesh():cubeMesh(), small=n>3;
+      const size=s===20?(small?36:44):(small?25:30);
+      const columns=Math.min(n,3), spacing=small?82:92;
+      scene.set(Array.from({length:n},(_,i)=>{
+        const value=1+Math.floor(rng.random()*s);
+        return { kind:'dice', mesh, size, x:(i%columns-(columns-1)/2)*spacing, y:small?(i<3?50:-38):0, q:faceUp(mesh,value) };
+      }));
+      canvas.setAttribute('aria-label', `${count}颗 D${sides} 立体骰子`);
     }
-
-    function setDieBase(d) {
-      d.lift.style.transform = `translate3d(0, 0, ${half}px)`;
-      d.cube.style.transform = `rotateX(${d.rot.rx}deg) rotateY(${d.rot.ry}deg)`;
-      d.el.style.transform = `rotateZ(${d.zr}deg)`;
-      d.shadow.style.transform = '';
-      d.shadow.style.opacity = '';
+    async function roll(values,intensity=20) {
+      sound.play('whoosh'); haptic.release();
+      const ok=await scene.throwTo(values,intensity,{duration:ctx.platform.simpleMotion?1600:3400,onPhase:(phase)=>{el.dataset.phase=phase;if(phase==='settling')ritual.step(2);}});
+      if(ok) { el.dataset.values=values.join(',');el.dataset.phase='settled'; }
     }
-
-    function build() {
-      kit.clear(field);
-      dice = [];
-      const slots = diceSlots(count, DIE_SIZE);
-      for (const s of slots) {
-        const cube = h('div', { class: 'cn-cube' });
-        let value;
-        if (sides === 20) {
-          value = 1 + Math.floor(rng.random() * 20);
-          cube.append(h('div', { class: 'cn-df cn-f20a' }, h('span', { class: 'cn-num' }, String(value))), h('div', { class: 'cn-df cn-f20b' }, h('span', { class: 'cn-num' }, String(21 - value))));
-        } else {
-          value = 1 + Math.floor(rng.random() * 6);
-          for (let f = 1; f <= 6; f++) cube.append(makeFace(f));
-        }
-        const lift = h('div', { class: 'cn-lift' }, h('div', { class: 'cn-up' }, cube));
-        const shadow = h('div', { class: 'cn-dshadow' });
-        const jx = (rng.random() - 0.5) * 8;
-        const jy = (rng.random() - 0.5) * 8;
-        const dieEl = h('div', { class: ['cn-die', sides === 20 && 'cn-d20'], style: { left: s.x + jx + 'px', top: s.y + jy + 'px' } }, shadow, lift);
-        field.append(dieEl);
-        const d = { el: dieEl, lift, cube, shadow, rot: sides === 20 ? { rx: 0, ry: 0 } : diceRotation(value), zr: sides === 20 ? 0 : (rng.random() - 0.5) * 50, value, anims: [] };
-        setDieBase(d);
-        dice.push(d);
-      }
-    }
-
-    function setDice(n, s) {
-      if (n === count && s === sides && dice.length) return;
-      count = n;
-      sides = s;
-      build();
-    }
-
-    async function rollOne(d, value, power, dur, delay) {
-      if (delay && !await wait(delay)) return;
-      if (!alive) return;
-      for (const a of d.anims) a.cancel();
-      d.anims = [];
-      const target = sides === 20 ? { rx: 0, ry: 0 } : diceRotation(value);
-      const sign = () => rng.random() < .5 ? 1 : -1;
-      const opts = {
-        start: d.rot, target: { rx: target.rx + 360 * (2 + Math.round(power)) * sign(), ry: target.ry + 360 * (2 + Math.round(power)) * sign() },
-        power, half, driftX: (rng.random() - .5) * 54, driftY: -16 - rng.random() * 16,
-        startZ: d.zr, endZ: sides === 20 ? 0 : (rng.random() - .5) * 55,
-      };
-      const liftFrames = [], cubeFrames = [], turnFrames = [], shadowFrames = [];
-      for (let i = 0; i <= 150; i++) {
-        const offset = i / 150, p = dicePose(reduce ? 1 : offset, opts);
-        liftFrames.push({ offset, transform: `translate3d(${p.x}px,${p.y}px,${p.z}px)` });
-        cubeFrames.push({ offset, transform: `rotateX(${p.rx}deg) rotateY(${p.ry}deg)` });
-        turnFrames.push({ offset, transform: `rotateZ(${p.rz}deg)` });
-        shadowFrames.push({ offset, transform: `translate(${p.x}px,${p.y}px) scale(${p.shadowScale})`, opacity: p.shadowOpacity });
-      }
-      d.el.dataset.phase = 'flight'; delete d.el.dataset.value;
-      const numbers = d.cube.querySelectorAll('.cn-num');
-      // The simplified D20 has two drawn faces. Change those numbers while it is
-      // tumbling, then fix both faces before the final edge hesitation.
-      numbers.forEach((node, i) => { node.textContent = String(i ? 21 - value : value); });
-      d.anims = [[d.lift, liftFrames], [d.cube, cubeFrames], [d.el, turnFrames], [d.shadow, shadowFrames]].map(([el, frames]) => ritual.track(el.animate(frames, { duration: dur, fill: 'forwards', easing: 'linear' })));
-      const cues = [...DICE_IMPACTS.map((t, i) => ({ t, i })), { t: DICE_SETTLING, settle: true }].sort((a, b) => a.t - b.t);
-      let previous = 0;
-      for (const cue of cues) {
-        if (!await wait(dur * (cue.t - previous))) return;
-        if (cue.settle) {
-          d.el.dataset.phase = 'settling'; ritual.step(2); st.setHint('还倚在棱边，等最后一下');
-        } else {
-          sound.play(cue.i ? 'tick' : 'thud'); haptic.impact([1, .6, .3, .25, .1][cue.i]);
-          if (!cue.i) d.el.dataset.phase = 'rolling';
-        }
-        previous = cue.t;
-      }
-      if (!await wait(dur * (1 - previous))) return;
-      await Promise.all(d.anims.map((a) => a.finished.catch(() => {})));
-      if (!alive) return;
-      d.rot = target; d.zr = opts.endZ; d.value = value;
-      for (const a of d.anims) a.cancel();
-      d.anims = []; setDieBase(d);
-      d.el.dataset.phase = 'settled'; d.el.dataset.value = String(value);
-    }
-
-    async function roll(values, intensity = 20) {
-      const power = powerOf(intensity);
-      const dur = reduce ? 10 : Math.round(3200 + power * 420);
-      haptic.release();
-      await Promise.all(dice.map((d, i) => rollOne(d, values[i] ?? values[0], power, dur, reduce ? 0 : i * 110)));
-      if (alive) haptic.settle();
-    }
-
-    function rest() {
-      for (const d of dice) {
-        for (const a of d.anims) a.cancel();
-        d.anims = [];
-        setDieBase(d);
-      }
-    }
-    return { el, setDice, roll, rest };
+    return {el,setDice,roll,rest:scene.rest};
   }
 
   /* ---------- 卸载 ---------- */

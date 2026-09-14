@@ -21,7 +21,13 @@ export function createCardArt(kit) {
   atlas.onerror = () => fronts.clear();
 
   function backArt() {
-    return h('div', { class: 'tr-back-art' }, h('div', { class: 'tr-back-frame' }), svg(BACK_EMBLEM, { viewBox: '0 0 48 48', size: 48, strokeWidth: 1.1, cls: 'tr-back-emblem' }));
+    const ornament = '<rect x="9" y="9" width="142" height="254" rx="4"/><rect x="14" y="14" width="132" height="244" rx="2" opacity=".35"/>' +
+      '<path d="M80 31C117 50 137 88 126 132C137 176 117 219 80 241C43 219 23 176 34 132C23 88 43 50 80 31Z"/>' +
+      '<circle cx="80" cy="132" r="38"/><circle cx="80" cy="132" r="31" opacity=".35"/>' +
+      '<path d="M88 108A26 26 0 1 0 88 156A29 29 0 0 1 88 108Z" fill="currentColor" stroke="none"/>' +
+      '<path d="M80 48v20m-10-10h20M80 198v20m-10-10h20M41 132h-15M119 132h15M80 77l3 6-3 6-3-6ZM80 177l3 6-3 6-3-6Z"/>' +
+      '<g fill="currentColor" stroke="none"><circle cx="46" cy="78" r="1.5"/><circle cx="114" cy="78" r="1.5"/><circle cx="46" cy="186" r="1.5"/><circle cx="114" cy="186" r="1.5"/></g>';
+    return h('div', { class: 'tr-back-art' }, svg(ornament, { viewBox: '0 0 160 272', size: 272, strokeWidth: .8, cls: 'tr-back-engraving' }));
   }
 
   function suitSvg(suit, cls = '') {

@@ -446,6 +446,13 @@ function createSound(storage) {
   }
 
   const recipes = {
+    bamboo(t) {
+      for (let i=0;i<5;i++) {
+        const at=t+i*.017;
+        tone(at,{freq:760+i*137,dur:.045,peak:.10-i*.012,type:'triangle',sweepTo:310+i*41});
+        noise(at,{dur:.027,freq:2100+i*250,q:5,peak:.12-i*.014});
+      }
+    },
     // 木块/筊杯落地
     clack(t) {
       noise(t, { dur: 0.09, freq: 1500, q: 5, peak: 0.6 });
@@ -637,6 +644,8 @@ export function createPlatform() {
     name: 'web',
     isIOS,
     isTouch: isBrowser && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window),
+    get simpleMotion() { return storage.get('motion.style', 'full') === 'gentle'; },
+    setMotionStyle(value) { storage.set('motion.style', value); },
     prefersReducedMotion: isBrowser && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     motion,
     gesture,

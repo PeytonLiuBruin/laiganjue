@@ -152,7 +152,7 @@ export function startApp(root) {
     } else {
       backBtn.hidden = false;
       zenBtn.hidden = true;
-      titleEl.append(h('span', null, meta.title), h('small', null, meta.gestures.map((g) => GESTURE_LABEL[g]).join(' · ')));
+      titleEl.append(h('span', null, meta.title));
     }
   }
 
@@ -167,11 +167,6 @@ export function startApp(root) {
         // not typing or reading a sheet. Turning the phone must not reset a result.
         if (document.hidden || document.querySelector('.sheet.open') || document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) {
           platform.motion.resetInput(); return;
-        }
-        const stage = el.querySelector('.stage');
-        if (stage) {
-          const r = stage.getBoundingClientRect(), height = window.visualViewport?.height || window.innerHeight;
-          if (Math.min(r.bottom, height) - Math.max(r.top, 64) < r.height * 0.5) { platform.motion.resetInput(); return; }
         }
         cb(event);
       });
@@ -407,6 +402,7 @@ export function startApp(root) {
     const content = h(
       'div',
       null,
+      row('器物动画', '投掷、翻滚与翻牌', kit.chips([{ value: 'full', label: '完整' }, { value: 'gentle', label: '轻柔' }], { value: platform.simpleMotion ? 'gentle' : 'full', onChange: (v) => platform.setMotionStyle(v) }).el),
       row('音效', '合成音效：木块、铜钱、洗牌…', toggle(platform.sound.enabled, (v) => platform.sound.setEnabled(v))),
       h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '震动反馈'), hapticDesc), hapticControls),
       h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '体感（摇一摇 / 甩一甩）'), motionDesc), motionControl),
