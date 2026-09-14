@@ -73,7 +73,7 @@ export function mount(container, ctx) {
     ritual.step(3); kit.clear(paper);
     const seal = h('b', { class: 'qn-seal' }, lot.level);
     paper.append(h('span', { class: 'qn-paper-no' }, lotLabel(lot)), h('h2', null, lot.title), h('div', { class: 'qn-poem' }, lot.poem.map((line) => h('p', null, line))), seal);
-    paper.hidden = false; vessel.classList.add('qn-dim'); picked.classList.add('qn-dim');
+    paper.hidden = false; picked.hidden = true; vessel.classList.add('qn-dim'); picked.classList.add('qn-dim');
     sound.play('paper');
     await ritual.animate(paper, [
       { transform: 'translateY(-16px) rotateX(-68deg) scaleY(.15)', opacity: 0 },
