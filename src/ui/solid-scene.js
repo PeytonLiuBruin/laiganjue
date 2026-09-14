@@ -1,5 +1,6 @@
 import {add,mul,dot,rotate,axisAngle,multiply,IDENTITY,faceUp,supportHeight,throwPose,flightHeight,projectSolidPoint,CONTACTS} from '../core/solids.js';
 import {PIP_LAYOUT} from '../modules/coin/core.js';
+import {createDiceShake} from '../modules/coin/dice-shake.js';
 
 const VIEW=[0,-.6,.8], LIGHT=[-.35,-.45,.82];
 const COLORS={ivory:[244,238,218],edge:[214,202,176],brass:[191,154,89],'gold-edge':[151,112,58],wood:[158,49,33],cut:[194,79,49]};
@@ -66,14 +67,50 @@ export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock
 }
 
 export function createSolidScene(canvas,ctx,{plate=false,ground=.76}={}) {
-  const c=canvas.getContext('2d');let objects=[],width=350,height=360,frame=0,alive=true,pending=null,active=false,shock=0;
+  const c=canvas.getContext('2d');let objects=[],width=350,height=360,frame=0,alive=true,pending=null,active=false,shock=0,diceShake=null,diceOrigin=null;
   function render(){if(!alive||!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);c.setTransform(dpr,0,0,dpr,0,0);paintSolids(c,width,height,objects,{plate,ground,shock});}
   function resize(){const r=canvas.getBoundingClientRect();if(r.width>0&&r.height>0){width=r.width;height=r.height;}const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);render();}
   const observer=new ResizeObserver(resize);observer.observe(canvas);
-  function set(specs){objects=specs.map(s=>({...s,q:s.q||IDENTITY,lift:0}));resize();}
+  function set(specs){cancel();objects=specs.map(s=>({...s,homeX:s.x,homeY:s.y,q:s.q||IDENTITY,lift:0}));resize();}
   function preview(dx=0,dy=0){if(active)return;objects.forEach(o=>{o.previewQ??=o.q;o.q=multiply(axisAngle([0,1,0],Math.max(-.3,Math.min(.3,dx/150))),o.previewQ);o.lift=Math.max(0,Math.min(36,-dy*.45));});render();}
   function rest(){objects.forEach(o=>{if(o.previewQ){o.q=o.previewQ;delete o.previewQ;}o.lift=0;});render();}
-  function cancel(){cancelAnimationFrame(frame);active=false;pending?.(false);pending=null;}
+  function cancel(){cancelAnimationFrame(frame);active=false;diceShake=null;diceOrigin=null;pending?.(false);pending=null;}
+  function startDiceShake(chooseValues,{onPhase=()=>{}}={}) {
+    cancel(); active=true;shock=0;
+    diceOrigin={poses:objects.map(o=>({q:[...o.q],x:o.x,y:o.y})),values:canvas.getAttribute('data-values'),label:canvas.getAttribute('aria-label')};
+    diceShake=createDiceShake(objects,{now:performance.now(),chooseValues,duration:ctx.platform.simpleMotion?950:1300});
+    canvas.dataset.phase='shaking';canvas.removeAttribute('data-values');
+    canvas.setAttribute('aria-label','骰子随晃动翻滚');onPhase('shaking');
+    let previous='shaking';
+    return new Promise(resolve=>{
+      pending=resolve;
+      function tick(now) {
+        if(!alive||!diceShake)return;
+        if(document.hidden){cancel();return;}
+        const state=diceShake.advance(now);
+        if(state.phase!==previous){previous=state.phase;canvas.dataset.phase=state.phase;onPhase(state.phase);}
+        if(state.impact){ctx.sound.play(state.impact>.5?'clack':'tick');ctx.haptic.impact(state.impact);}
+        render();
+        if(state.phase==='settled'){
+          active=false;diceShake=null;diceOrigin=null;pending=null;
+          canvas.dataset.values=state.values.join(',');canvas.setAttribute('aria-label',`落定：${state.values.join('、')}`);
+          ctx.haptic.settle();resolve(state.values);
+        } else frame=requestAnimationFrame(tick);
+      }
+      frame=requestAnimationFrame(tick);
+    });
+  }
+  function driveDice(sample){diceShake?.feed(sample);}
+  function releaseDice(){diceShake?.endInput(performance.now());}
+  function cancelDice(){
+    if(!diceShake)return;
+    const origin=diceOrigin;cancel();
+    origin.poses.forEach((pose,i)=>Object.assign(objects[i],pose,{lift:0}));render();
+    canvas.dataset.phase='idle';canvas.setAttribute('aria-label',origin.label||'立体骰子');
+    if(origin.values!==null)canvas.dataset.values=origin.values;else canvas.removeAttribute('data-values');
+  }
+  const visibility=()=>{if(document.hidden)cancelDice();};
+  document.addEventListener('visibilitychange',visibility);
   function throwTo(values,intensity=20,{duration=3400,onPhase=()=>{}}={}){
     cancel();rest();active=true;const power=Math.max(.65,Math.min(1.5,intensity/20)),baseWidth=360,scale=Math.min(1,width/baseWidth);
     const starts=objects.map(o=>({...o,q:[...o.q]})),targets=objects.map((o,i)=>o.kind==='coin'?axisAngle([1,0,0],values[i]==='tails'?Math.PI:values[i]==='edge'?Math.PI/2:0):o.kind==='jiaobei'?axisAngle([1,0,0],values[i]==='round'?Math.PI:values[i]==='stand'?Math.PI/2:0):faceUp(o.mesh,values[i]));
@@ -100,7 +137,7 @@ export function createSolidScene(canvas,ctx,{plate=false,ground=.76}={}) {
       frame=requestAnimationFrame(tick);
     });
   }
-  function dispose(){alive=false;cancel();observer.disconnect();}
+  function dispose(){alive=false;cancel();observer.disconnect();document.removeEventListener('visibilitychange',visibility);}
   ctx.addCleanup(dispose);
-  return {set,throwTo,preview,rest,render,dispose,get objects(){return objects;},get width(){return width;}};
+  return {set,throwTo,startDiceShake,driveDice,releaseDice,cancelDice,preview,rest,render,dispose,get objects(){return objects;},get width(){return width;}};
 }

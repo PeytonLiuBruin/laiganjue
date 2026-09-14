@@ -2,6 +2,7 @@ import { createSolidScene } from '../../ui/solid-scene.js';
 import { cubeMesh, d20Mesh, coinMesh, faceUp } from '../../core/solids.js';
 import { createRitual } from '../../ui/ritual.js';
 import { createShakeMeter } from '../qian/core.js';
+import { DICE_WAKE } from './dice-shake.js';
 // 硬币骰子 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 三个标签页共用一座舞台：硬币 / 骰子托盘 两组实物按模式切换显示。
 import {
@@ -71,6 +72,7 @@ export function mount(container, ctx) {
   let mode = storage.get('mode', 'coin');
   if (!MODES.some((m) => m.value === mode)) mode = 'coin';
   let busy = false;
+  let diceRun = 0, diceDriven = false;
   let burst = Number(storage.get('burst', 1)) || 1;
   let tally = Object.assign({ heads: 0, tails: 0, edge: 0 }, storage.get('coin.tally', {}));
   let coinHistory = storage.get('coin.history', []);
@@ -241,18 +243,27 @@ export function mount(container, ctx) {
   setMode(mode, true);
   renderStats();
 
-  // Shaking belongs to the dice tray; an upward release belongs to a coin.
+  // Dice consume the live acceleration stream. A completed sensor gesture must
+  // not start a second canned throw after that live session has finished.
   ctx.motion.onToss((e) => { if (mode !== 'dice') act(e.intensity); });
-  ctx.motion.onShake((e) => act(e.intensity));
-  let held = false, charged = false;
+  ctx.motion.onShake((e) => { if (mode !== 'dice' || e.source !== 'sensor') act(e.intensity); });
+  let held = false, charged = false, dragX = 0, dragY = 0, dragAt = 0;
   const shakeMeter = createShakeMeter({ need: 2, minSwing: 22 });
   ctx.gesture.drag(st.scene, {
     onStart() {
-      if (busy || openSheetRef?.opened) return;
+      if ((busy && !(mode === 'dice' && diceDriven)) || openSheetRef?.opened) return;
       held = true; charged = false; shakeMeter.reset(); haptic.tap();
+      dragX = dragY = 0; dragAt = performance.now();
     },
     onMove(g) {
-      if (!held || reduce) return;
+      if (!held) return;
+      if (mode === 'dice') {
+        const now = performance.now(), dt = Math.max(16, now - dragAt);
+        if (diceDriven || Math.hypot(g.dx, g.dy) > 8) driveDiceInput({ ax: -(g.dx - dragX) / dt * 18, ay: -(g.dy - dragY) / dt * 18, az: 0, t: now, holding: true });
+        dragX = g.dx; dragY = g.dy; dragAt = now;
+        return;
+      }
+      if (reduce) return;
       const dx = Math.max(-26, Math.min(26, g.dx * .25));
       const dy = Math.max(-32, Math.min(8, g.dy * .25));
       jitter.style.transform = `translate(${dx}px,${dy}px) rotate(${dx * .2}deg)`;
@@ -263,6 +274,10 @@ export function mount(container, ctx) {
     onEnd(g) {
       if (!held) return;
       held = false; jitter.style.transform = '';
+      if (mode === 'dice' && diceDriven) {
+        if (g.cancelled) tray.cancelDice(); else tray.releaseDice();
+        return;
+      }
       const ready = mode === 'dice' ? shakeMeter.state.done || Math.hypot(g.dx, g.dy) > 40 : g.dy < -32;
       if (!g.cancelled && ready) act(Math.max(14, Math.min(36, 14 + Math.hypot(g.dx, g.dy) / 9)));
       else st.setHint(STAGE_HINT[mode]);
@@ -270,6 +285,10 @@ export function mount(container, ctx) {
   });
   ctx.motion.onTilt(kit.parallax(ambient, { max: 14 }));
   ctx.motion.onMotion((m) => {
+    if (mode === 'dice') {
+      if (!held && !openSheetRef?.opened) driveDiceInput(m);
+      return;
+    }
     if (busy || held || openSheetRef?.opened || reduce) return;
     // Inertia follows the measured direction; random jitter felt disconnected.
     const dx = Math.max(-14, Math.min(14, -(m.ax || 0) * 1.2));
@@ -455,19 +474,46 @@ export function mount(container, ctx) {
   }
 
   /* ---------- 骰子 ---------- */
+  function driveDiceInput(m) {
+    if (!alive || document.hidden || openSheetRef?.opened) return;
+    const ax = m.ax ?? 0, ay = m.ay ?? 0, az = m.az ?? 0;
+    if (![ax, ay, az].every(Number.isFinite)) return;
+    if (!diceDriven) {
+      if (Math.hypot(ax, ay, az) < DICE_WAKE && !m.holding) return;
+      const run = ++diceRun;
+      diceDriven = true; busy = true; lock(true); hideResult();
+      jitter.style.transform = ''; ritual.clear(); ritual.step(1);
+      ritual.focus();
+      tray.shake(() => rollDice(diceCount, diceSides, rng.random)).then(values => {
+        if (!alive || run !== diceRun) return;
+        diceDriven = false;
+        if (values) finishDice(values);
+        else { busy = false; lock(false); }
+      });
+    }
+    tray.driveDice({ ax, ay, az, t: m.t ?? performance.now(), holding: !!m.holding });
+  }
+
   async function doRoll(intensity) {
+    const run = ++diceRun;
     busy = true;
     lock(true);
     hideResult();
     st.setHint('');
-    if (!await ritual.focus()) return;
+    if (!await ritual.focus() || run !== diceRun) return;
     ritual.step(1);
     const values = rollDice(diceCount, diceSides, rng.random);
     sound.play('shake');
     haptic.rattle();
-    await tray.roll(values, intensity);
-    if (!alive) return;
+    const completed = await tray.roll(values, intensity);
+    if (!alive || run !== diceRun) return;
+    if (!completed) { busy = false; lock(false); return; }
     if (!await wait(reduce ? 30 : 260)) return;
+    if (run !== diceRun) return;
+    finishDice(values);
+  }
+
+  function finishDice(values) {
     const a = analyzeDice(values, diceSides);
     const keys = diceSpecialKeys(values, diceSides);
     const size = DICE_SIZE[a.size];
@@ -757,13 +803,23 @@ export function mount(container, ctx) {
       sound.play('whoosh'); haptic.release();
       const ok=await scene.throwTo(values,intensity,{duration:ctx.platform.simpleMotion?1600:3400,onPhase:(phase)=>{el.dataset.phase=phase;if(phase==='settling')ritual.step(2);}});
       if(ok) { el.dataset.values=values.join(',');el.dataset.phase='settled'; }
+      return ok;
     }
-    return {el,setDice,roll,rest:scene.rest};
+    function shake(chooseValues) {
+      delete el.dataset.values;
+      return scene.startDiceShake(chooseValues,{onPhase:phase=>{el.dataset.phase=phase;ritual.step(phase==='shaking'?1:2);}}).then(values=>{
+        if(values)el.dataset.values=values.join(',');
+        else el.dataset.phase='idle';
+        return values;
+      });
+    }
+    return {el,setDice,roll,shake,driveDice:scene.driveDice,releaseDice:scene.releaseDice,cancelDice:scene.cancelDice,rest:scene.rest};
   }
 
   /* ---------- 卸载 ---------- */
   return () => {
     alive = false;
+    diceRun++; tray.cancelDice();
     coin.rest();
     tray.rest();
     if (openSheetRef) openSheetRef.close();
