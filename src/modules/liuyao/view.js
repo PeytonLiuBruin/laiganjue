@@ -1,17 +1,11 @@
 import { createRitual } from '../../ui/ritual.js';
-import { coinPose, COIN_IMPACTS } from '../coin/motion.js';
+import { createLiuyaoCoins } from './coins.js';
 // 六爻 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
-import { COIN, tossCoins, initSession, reduceSession, sessionValues, buildReading, luckLabel, formatShareText, formatBrief } from './core.js';
+import { tossCoins, initSession, reduceSession, sessionValues, buildReading, luckLabel, formatShareText, formatBrief } from './core.js';
 import { UI, LINE_POSITIONS } from './data.js';
 import { lunarFromDate } from '../../core/lunar.js';
 
 const CN_NUM = ['一', '二', '三', '四', '五', '六'];
-const REST = [
-  { x: -54, y: 16, r: -14 },
-  { x: 0, y: -24, r: 6 },
-  { x: 54, y: 16, r: 18 },
-];
-const REST_FACE = [COIN.ZI, COIN.HUA, COIN.ZI];
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
@@ -21,7 +15,7 @@ export function mount(container, ctx) {
   /* ---------- 状态 ---------- */
   let session = initSession();
   let busy = false;
-  let auto = false;
+  let auto = false, autoTimer = null, resultSheet = null;
   let question = '';
   let startedAt = null; // 首掷时间（用于记录干支）
   let lastReading = null;
@@ -32,18 +26,19 @@ export function mount(container, ctx) {
   const qInput = input({ placeholder: UI.questionPlaceholder, maxlength: 40, onInput: (v) => (question = v.trim()) });
 
   /* ---------- 舞台 ---------- */
-  const st = stage({ cls: 'ly-stage', hint: UI.hintIdle, badge: '金钱课 · 待掷', minHeight: 350 });
+  const st = stage({ cls: 'ly-stage', hint: UI.hintIdle, badge: '金钱课 · 待掷', minHeight: null });
   const ritual = createRitual(ctx, st, ['问事', '掷钱', '见爻', '解读']);
   const wait = ritual.pause;
   const mat = h('div', { class: 'ly-mat' }, h('span', { class: 'ly-mat-ring' }));
   const pit = h('div', { class: 'ly-pit' });
-  const coins = [0, 1, 2].map(makeCoin);
-  pit.append(...coins.map((c) => c.el));
+  const canvas = h('canvas', { class: 'ly-canvas', attrs: { role: 'img', 'aria-label': '三枚铜钱' } });
+  pit.append(canvas);
+  const coins = createLiuyaoCoins(canvas, ctx);
   const board = makeBoard();
   const counter = h('div', { class: 'ly-count' }, h('span', { class: 'ly-count-n' }, '○'), h('span', { class: 'ly-count-t' }, '待掷'));
   const reveal = h(
-    'div',
-    { class: 'ly-reveal', hidden: true, attrs: { role: 'button', tabindex: '0' }, onClick: () => lastReading && showResult(lastReading) },
+    'button',
+    { type: 'button', class: 'ly-reveal', hidden: true, onClick: () => lastReading && showResult(lastReading) },
     h('div', { class: 'ly-reveal-sym' }),
     h('div', { class: 'ly-reveal-name' }),
     h('div', { class: 'ly-reveal-sub' }),
@@ -89,47 +84,40 @@ export function mount(container, ctx) {
     const g = gen;
     setButtons();
     st.setHint('');
-    if (!await ritual.focus()) return;
+    if (!await ritual.focus() || g !== gen) return;
     if (!startedAt) startedAt = new Date();
 
-    const power = Math.max(0.7, Math.min(1.5, intensity / 20));
     if (rattle) {
       sound.play('shake');
       haptic.rattle();
       await tremble(1, reduce() ? 10 : 220);
     }
-    if (!ritual.alive) return;
-    const toss = tossCoins();
+    if (!ritual.alive || g !== gen) return;
+    const toss = tossCoins(ctx.rng.random);
     sound.play('whoosh');
     haptic.light();
-    await Promise.all(coins.map((c, i) => c.fly(toss.coins[i], power, i * 60)));
-    if (!ritual.alive) return;
-    if (g !== gen) {
-      // 飞行途中被"重起"：这一掷作废
-      busy = false;
-      setButtons();
-      return;
-    }
+    const completed = await coins.toss(toss.coins, intensity);
+    if (!ritual.alive || g !== gen) return;
+    if (!completed) { busy = false; setButtons(); return; }
 
-    haptic.settle();
     session = reduceSession(session, toss);
     const idx = session.tosses.length - 1;
     board.light(idx, toss.value);
     sound.play('tick', { delay: 0.02 });
     haptic.tap();
     setCounter(idx + 1);
-    st.setBadge(`第 ${idx + 1} 掷 · ${LINE_POSITIONS[idx].short} · ${toss.name}${toss.mark ? ' ' + toss.mark : ''}`);
+    st.setBadge(`第 ${idx + 1} 掷 · ${toss.name}${toss.mark ? ' ' + toss.mark : ''}`);
 
     if (session.done) {
       auto = false;
-      if (!await wait(reduce() ? 10 : 480)) return;
+      if (!await wait(reduce() ? 10 : 480) || g !== gen) return;
       await finish();
     } else if (!auto) {
       st.setHint(`还需 ${6 - session.tosses.length} 掷`);
     }
     busy = false;
     setButtons();
-    if (auto && !session.done) ctx.setTimeout(() => auto && doToss(20), reduce() ? 200 : 1400);
+    if (auto && !session.done) autoTimer = ctx.setTimeout(() => { autoTimer = null; if (auto && g === gen) doToss(20); }, reduce() ? 200 : 1400);
   }
 
   async function finish() {
@@ -140,9 +128,10 @@ export function mount(container, ctx) {
     haptic.success();
     pit.classList.add('dim');
     board.setTitle(ben.name);
-    reveal.querySelector('.ly-reveal-sym').textContent = ben.symbol;
+    const glyph = reveal.querySelector('.ly-reveal-sym');
+    kit.clear(glyph); glyph.append(hexLines(ben, moving));
     reveal.querySelector('.ly-reveal-name').textContent = ben.fullName;
-    reveal.querySelector('.ly-reveal-sub').textContent = bian ? `${moving.length} 爻动 → ${bian.symbol} ${bian.fullName}` : UI.eggs.noneMoving;
+    reveal.querySelector('.ly-reveal-sub').textContent = bian ? `${moving.length} 爻动 → ${bian.fullName}` : UI.eggs.noneMoving;
     reveal.hidden = false;
     reveal.classList.remove('in');
     void reveal.offsetWidth;
@@ -170,6 +159,7 @@ export function mount(container, ctx) {
 
   /* ---------- 结果抽屉 ---------- */
   function showResult(reading, { fromHistory = false, when = startedAt, q = question } = {}) {
+    if (busy || resultSheet || !ritual.alive) return;
     const { ben, bian, moving, lines, rule, focus } = reading;
     const L = luckLabel(focus.luck);
     const dateText = ganzhiText(when);
@@ -222,7 +212,8 @@ export function mount(container, ctx) {
         },
       }),
     ];
-    const sh = sheet({ title: fromHistory ? '往日卦象' : UI.sheetTitle, content, actions });
+    const sh = sheet({ title: fromHistory ? '往日卦象' : UI.sheetTitle, content, actions, onClose: () => { resultSheet = null; } });
+    resultSheet = sh;
     sh.open();
     return sh;
   }
@@ -235,10 +226,13 @@ export function mount(container, ctx) {
     else wrap.append(h('span', { class: 'ly-pair-still' }, '六爻皆静'));
     return wrap;
   }
-  function miniHex(hex, moving, label) {
+  function hexLines(hex, moving) {
     const lines = h('div', { class: 'ly-mini' });
     for (let i = 5; i >= 0; i--) lines.append(h('span', { class: ['ly-mini-line', hex.bits[i] === '1' ? 'yang' : 'yin', moving.includes(i) && 'moving'] }));
-    return h('div', { class: 'ly-mini-wrap' }, h('span', { class: 'ly-mini-label' }, label), lines, h('span', { class: 'ly-mini-name' }, `${hex.symbol} ${hex.fullName}`));
+    return lines;
+  }
+  function miniHex(hex, moving, label) {
+    return h('div', { class: 'ly-mini-wrap' }, h('span', { class: 'ly-mini-label' }, label), hexLines(hex, moving), h('span', { class: 'ly-mini-name' }, hex.fullName));
   }
   function movingNode(reading) {
     const { moving, lines, rule } = reading;
@@ -286,6 +280,7 @@ export function mount(container, ctx) {
   function toggleAuto() {
     if (session.done) reset(true);
     auto = !auto;
+    clearTimeout(autoTimer); autoTimer = null;
     setButtons();
     haptic.tap();
     if (auto && !busy) doToss(20);
@@ -298,12 +293,13 @@ export function mount(container, ctx) {
     resetBtn.disabled = busy && !auto;
   }
   function reset(silent = false) {
-    auto = false;
+    auto = false; busy = false;
+    clearTimeout(autoTimer); autoTimer = null;
     gen++;
     session = initSession();
     startedAt = null;
     lastReading = null;
-    coins.forEach((c) => c.rest());
+    coins.reset();
     board.reset();
     pit.classList.remove('dim');
     reveal.hidden = true;
@@ -336,7 +332,7 @@ export function mount(container, ctx) {
   }
   function tremble(strength = 1, dur = 200) {
     if (reduce()) return Promise.resolve();
-    const a = pit.animate(
+    const a = ritual.track(pit.animate(
       [
         { transform: 'translate(0,0) rotate(0)' },
         { transform: `translate(${-3 * strength}px, ${2 * strength}px) rotate(${-2 * strength}deg)` },
@@ -345,7 +341,7 @@ export function mount(container, ctx) {
         { transform: 'translate(0,0) rotate(0)' },
       ],
       { duration: dur, iterations: 1, easing: 'ease-in-out' },
-    );
+    ));
     return a.finished.catch(() => {});
   }
 
@@ -384,6 +380,7 @@ export function mount(container, ctx) {
         const yang = value === 7 || value === 9;
         const moving = value === 6 || value === 9;
         row.className = ['ly-line', yang ? 'yang' : 'yin', moving && 'moving', 'lit'].filter(Boolean).join(' ');
+        row.setAttribute('aria-label', `${LINE_POSITIONS[i].short}，${session.tosses[i].name}`);
         row.querySelector('.ly-mark').textContent = moving ? (value === 9 ? '○' : '×') : '';
       },
       setTitle(t) {
@@ -391,98 +388,19 @@ export function mount(container, ctx) {
       },
       reset() {
         title.textContent = '六爻';
-        rows.forEach((row) => {
+        rows.forEach((row, i) => {
           row.className = 'ly-line empty';
+          row.setAttribute('aria-label', LINE_POSITIONS[i].short);
           row.querySelector('.ly-mark').textContent = '';
         });
       },
     };
   }
 
-  /* ---------- 铜钱 ---------- */
-  function makeCoin(i) {
-    const front = h(
-      'div',
-      { class: 'ly-face ly-front' },
-      h('span', { class: 'ly-char t' }, UI.coinFront[0]),
-      h('span', { class: 'ly-char b' }, UI.coinFront[1]),
-      h('span', { class: 'ly-char r' }, UI.coinFront[2]),
-      h('span', { class: 'ly-char l' }, UI.coinFront[3]),
-    );
-    const back = h('div', { class: 'ly-face ly-back' }, manchu());
-    const body = h('div', { class: 'ly-coin-body' }, front, back);
-    const shadow = h('div', { class: 'ly-coin-shadow' });
-    const el = h('div', { class: 'ly-coin', dataset: { i } }, body, shadow);
-    const rest = REST[i];
-    let pose = { ...rest };
-    let faceRot = REST_FACE[i] === COIN.ZI ? 0 : 180;
-    let anims = [];
-    const T = (p) => `translate(${p.x}px, ${p.y}px) rotateZ(${p.r}deg)`;
-    const apply = () => {
-      el.style.transform = T(pose);
-      body.style.transform = `rotateX(${faceRot}deg)`;
-      el.dataset.face = faceRot === 0 ? 'zi' : 'hua';
-    };
-    apply();
-    const cancel = () => {
-      anims.forEach((a) => a.cancel());
-      anims = [];
-    };
-
-    async function fly(face, power = 1, delay = 0) {
-      if (delay && !await wait(reduce() ? 1 : delay)) return;
-      if (!ritual.alive) return;
-      cancel();
-      const dur = reduce() ? 1500 : 2850 + power * 300;
-      const finalRot = face === COIN.ZI ? 0 : 180;
-      const target = (Math.floor(faceRot / 360) + 3) * 360 + finalRot;
-      const from = pose, end = { x: rest.x + (ctx.rng.random() - .5) * 18, y: rest.y + (ctx.rng.random() - .5) * 12, r: (ctx.rng.random() - .5) * 50 };
-      const height = Math.max(32, Math.min(105, st.el.getBoundingClientRect().height * .28));
-      const position = [], rotation = [], shadows = [];
-      for (let i = 0; i <= 100; i++) {
-        const offset = i / 100, t = offset;
-        const p = coinPose(t, { start: faceRot, target, height, drift: 12, wobble: from.r, endWobble: end.r });
-        position.push({ offset, transform: `translate(${from.x * (1-t) + end.x * t + p.x}px,${from.y * (1-t) + end.y * t + p.y}px) rotateZ(${p.rz}deg)` });
-        rotation.push({ offset, transform: `rotateX(${p.rx}deg) rotateY(${p.ry}deg)` });
-        shadows.push({ offset, transform: `scale(${p.shadowScale})`, opacity: p.shadowOpacity });
-      }
-      anims = [[el, position], [body, rotation], [shadow, shadows]].map(([node, frames]) => ritual.track(node.animate(frames, { duration: dur, fill: 'forwards', easing: 'linear' })));
-      delete el.dataset.face;
-      let previous = 0;
-      for (const [i, t] of COIN_IMPACTS.entries()) {
-        if (!await wait(dur * (t - previous))) return;
-        sound.play(i ? 'tick' : 'coin'); haptic.impact([1, .5, .25, .1][i]);
-        if (i === 2) st.setHint('铜钱还在晃，等三枚都停下');
-        previous = t;
-      }
-      if (!await wait(dur * (1 - previous))) return;
-      await Promise.all(anims.map((a) => a.finished.catch(() => {})));
-      if (!ritual.alive) return;
-      pose = end; faceRot = finalRot; cancel(); apply();
-    }
-    function restore() {
-      cancel();
-      pose = { ...rest };
-      faceRot = REST_FACE[i] === COIN.ZI ? 0 : 180;
-      apply();
-    }
-    return { el, fly, rest: restore };
-  }
-
-  /** 花面：两道满文样式的花纹 */
-  function manchu() {
-    return kit.fromHTML(
-      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" class="ly-manchu" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M13 17c3 3 3 8 0 12s-3 8 0 12c1.5 2 1.5 4 0 6"/><path d="M10 22h4M10 34h4M10 44h3"/>
-        <path d="M51 17c-3 3-3 8 0 12s3 8 0 12c-1.5 2-1.5 4 0 6"/><path d="M50 22h4M50 34h4M51 44h3"/>
-        <circle cx="32" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="32" cy="55" r="1.2" fill="currentColor" stroke="none"/>
-      </svg>`,
-    );
-  }
-
   return () => {
-    auto = false;
-    coins.forEach((c) => c.rest());
+    auto = false; gen++;
+    clearTimeout(autoTimer); resultSheet?.close();
+    coins.dispose();
     pit.getAnimations().forEach((a) => a.cancel());
   };
 }

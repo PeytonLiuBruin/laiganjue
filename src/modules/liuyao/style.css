@@ -7,187 +7,58 @@
   letter-spacing: 0.08em;
 }
 
-/* —— 舞台 —— */
+/* —— 舞台：铜钱与卦象各有独立空间 —— */
 .m-liuyao .ly-stage {
-  min-height: 350px;
+  min-height: 390px;
 }
-
-/* 钱盘：一方深色衬布，四角金线 */
+.m-liuyao .ly-stage .stage-scene {
+  transform-style: flat;
+}
+.m-liuyao .ly-stage .stage-floor,
+.m-liuyao .ly-stage .stage-hint {
+  display: none;
+}
+.m-liuyao .ly-stage .stage-badge {
+  max-width: calc(100% - 110px);
+}
+.m-liuyao .ly-mat,
+.m-liuyao .ly-pit,
+.m-liuyao .ly-reveal {
+  position: absolute;
+  left: 14px;
+  right: 118px;
+  top: 52px;
+  bottom: 26px;
+}
 .m-liuyao .ly-mat {
-  position: absolute;
-  left: 4%;
-  right: 33%;
-  top: 15%;
-  bottom: 13%;
   border-radius: 18px;
-  background:
-    radial-gradient(120% 90% at 50% 20%, var(--card-back-1), var(--card-back-2) 75%),
-    var(--card-back-2);
-  box-shadow: inset 0 0 0 1px var(--line), inset 0 10px 30px rgba(0, 0, 0, 0.35), 0 6px 18px rgba(0, 0, 0, 0.25);
-  transition: transform 0.5s var(--ease-out);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
   pointer-events: none;
-}
-.m-liuyao .ly-mat::before {
-  /* 衬布上的云纹 */
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0 1px, transparent 1.5px);
-  background-size: 14px 14px;
-  opacity: 0.6;
 }
 .m-liuyao .ly-mat-ring {
   position: absolute;
   inset: 9px;
   border-radius: 12px;
-  border: 1px solid var(--line-strong);
-  opacity: 0.55;
+  border: 1px solid var(--line);
+  opacity: 0.4;
 }
-.m-liuyao .ly-mat-ring::before,
-.m-liuyao .ly-mat-ring::after {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border: 1px solid var(--accent);
-}
-.m-liuyao .ly-mat-ring::before {
-  top: -1px;
-  left: -1px;
-  border-right: 0;
-  border-bottom: 0;
-}
-.m-liuyao .ly-mat-ring::after {
-  right: -1px;
-  bottom: -1px;
-  border-left: 0;
-  border-top: 0;
-}
-
-/* 铜钱区（手势区） */
 .m-liuyao .ly-pit {
-  position: absolute;
-  left: 4%;
-  right: 33%;
-  top: 15%;
-  bottom: 13%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-style: preserve-3d;
-  transition: opacity 0.6s, filter 0.6s;
+  z-index: 1;
+  transform-style: flat;
+  transition: opacity 0.6s;
   cursor: grab;
 }
 .m-liuyao .ly-pit.dim {
-  opacity: 0.22;
-  filter: blur(1px) saturate(0.6);
+  opacity: 0.1;
   pointer-events: none;
 }
-
-/* —— 铜钱 —— */
-.m-liuyao .ly-coin {
-  position: absolute;
-  left: 50%;
-  top: 52%;
-  width: 62px;
-  height: 62px;
-  margin: -31px 0 0 -31px;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.m-liuyao .ly-coin-body {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.m-liuyao .ly-face {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  color: #4a3410;
-  background: radial-gradient(circle at 36% 30%, #f3dc94 0%, #d3ab52 38%, #a37c2c 72%, #6b4c19 100%);
-  box-shadow:
-    inset 0 0 0 2px rgba(255, 236, 170, 0.35),
-    inset 0 0 0 5px rgba(90, 60, 15, 0.35),
-    inset 0 -4px 8px rgba(60, 35, 5, 0.45),
-    inset 0 3px 6px rgba(255, 255, 255, 0.35);
-}
-.m-liuyao .ly-face::before {
-  /* 内圈细线 */
-  content: '';
-  position: absolute;
-  inset: 8px;
-  border-radius: 50%;
-  border: 1px solid rgba(70, 45, 10, 0.5);
-  box-shadow: inset 0 0 0 1px rgba(255, 236, 170, 0.35);
-}
-.m-liuyao .ly-face::after {
-  /* 中间方孔 */
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 15px;
-  height: 15px;
-  margin: -7.5px 0 0 -7.5px;
-  background: #1b1409;
-  box-shadow: inset 0 0 0 1.5px rgba(255, 230, 160, 0.35), 0 0 0 1px rgba(60, 35, 5, 0.5), inset 0 2px 4px rgba(0, 0, 0, 0.8);
-}
-.m-liuyao .ly-back {
-  transform: rotateX(180deg);
-  background: radial-gradient(circle at 60% 66%, #efd48b 0%, #c9a24a 40%, #98722a 74%, #634515 100%);
-}
-.m-liuyao .ly-char {
-  position: absolute;
-  font-family: var(--font-serif);
-  font-weight: 900;
-  font-size: 12px;
-  line-height: 1;
-  letter-spacing: 0;
-  text-shadow: 0 1px 0 rgba(255, 240, 190, 0.45), 0 -0.5px 0 rgba(0, 0, 0, 0.35);
-}
-.m-liuyao .ly-char.t {
-  top: 9px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.m-liuyao .ly-char.b {
-  bottom: 9px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.m-liuyao .ly-char.r {
-  right: 9px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.m-liuyao .ly-char.l {
-  left: 9px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.m-liuyao .ly-manchu {
+.m-liuyao .ly-canvas {
+  display: block;
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 1px 0 rgba(255, 240, 190, 0.4));
-}
-.m-liuyao .ly-coin-shadow {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: -10px;
-  height: 12px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
-  filter: blur(4px);
-  opacity: 0.5;
-  transform-origin: center;
 }
 
 /* —— 卦象台 —— */
@@ -196,7 +67,8 @@
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  width: 96px;
+  width: 100px;
+  z-index: 2;
   padding: 10px 6px 8px;
   border-radius: 14px;
   background: var(--surface);
@@ -205,8 +77,6 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
 }
 .m-liuyao .ly-board-title {
   font-family: var(--font-display);
@@ -223,16 +93,18 @@
   text-indent: 0.3em;
 }
 .m-liuyao .ly-lines {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 .m-liuyao .ly-line {
   display: grid;
-  grid-template-columns: 12px 56px 12px;
+  width: 100%;
+  grid-template-columns: 12px minmax(0, 1fr) 12px;
   align-items: center;
   gap: 4px;
-  height: 14px;
+  height: 24px;
   border-radius: 4px;
   color: var(--text);
 }
@@ -354,49 +226,45 @@
 
 /* —— 揭示：大卦符 + 卦名 —— */
 .m-liuyao .ly-reveal {
-  position: absolute;
-  left: 4%;
-  right: 33%;
-  top: 15%;
-  bottom: 13%;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 18px;
   text-align: center;
+  color: var(--text);
   cursor: pointer;
   opacity: 0;
 }
 .m-liuyao .ly-reveal.in {
   animation: ly-reveal-in 0.9s var(--ease-spring) both;
 }
-/* 揭示文字压在深色钱盘上：无论皮肤，衬布都是深材质，故用永远偏亮的 --accent-2 / --paper */
-.m-liuyao .ly-reveal-sym {
-  font-size: 96px;
-  line-height: 1;
-  color: var(--accent-2);
-  text-shadow: 0 0 26px var(--glow), 0 2px 0 rgba(0, 0, 0, 0.35);
-  font-family: var(--font-serif), 'Segoe UI Symbol', 'Noto Sans Symbols2', 'DejaVu Sans', sans-serif;
+.m-liuyao .ly-reveal-sym .ly-mini {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+.m-liuyao .ly-reveal-sym .ly-mini-line {
+  width: 72px;
+  height: 8px;
 }
 .m-liuyao .ly-reveal-name {
   font-family: var(--font-display);
-  font-weight: 900;
-  font-size: var(--fs-2xl);
-  letter-spacing: 0.22em;
-  text-indent: 0.22em;
-  background: linear-gradient(120deg, var(--accent-2), var(--paper) 50%, var(--accent-2));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
+  font-weight: 700;
+  font-size: clamp(20px, 4vw, 28px);
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: var(--text);
 }
 .m-liuyao .ly-reveal-sub {
   font-size: var(--fs-xs);
-  letter-spacing: 0.14em;
-  color: var(--paper);
-  opacity: 0.8;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.06em;
+  color: var(--text-2);
 }
 @keyframes ly-reveal-in {
   0% {
@@ -560,14 +428,4 @@
 .m-liuyao .ly-mv-text {
   font-size: var(--fs-s);
   line-height: 1.7;
-}
-
-/* 浅色皮肤：铜钱阴影与衬布更柔和 */
-[data-theme='paper'] .m-liuyao .ly-coin-shadow,
-[data-theme='celadon'] .m-liuyao .ly-coin-shadow {
-  background: rgba(40, 25, 10, 0.55);
-}
-[data-theme='paper'] .m-liuyao .ly-mat,
-[data-theme='celadon'] .m-liuyao .ly-mat {
-  box-shadow: inset 0 0 0 1px var(--line-strong), inset 0 10px 30px rgba(0, 0, 0, 0.25), 0 6px 18px rgba(60, 40, 20, 0.2);
 }
