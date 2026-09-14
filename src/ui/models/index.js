@@ -47,7 +47,7 @@ function createModelRenderer(el,ctx,id) {
       metal:dark?'#c8ab72':'#ae9462',stone:dark?'#b9b7ac':'#e4dfd3',glass:dark?'#a0b4cf':'#889eae'};lastPaint=-Infinity;schedule();
   }
   const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(el);
-  const intersection=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting!==false;if(visible){last=null;schedule();}else{cancelAnimationFrame(frame);frame=0;last=null;}},{rootMargin:'80px'}):null;
+  const intersection=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{visible=entries[entries.length-1]?.isIntersecting!==false;if(visible){last=null;schedule();}else{cancelAnimationFrame(frame);frame=0;last=null;}},{rootMargin:'80px'}):null;
   intersection?.observe(el);
   const visibility=()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;last=null;}else schedule();};
   document.addEventListener('visibilitychange',visibility);
