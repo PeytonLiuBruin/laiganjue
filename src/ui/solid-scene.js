@@ -1,4 +1,5 @@
-import {add,mul,dot,rotate,axisAngle,multiply,IDENTITY,faceUp,supportHeight,throwPose,flightHeight,projectSolidPoint,CONTACTS} from '../core/solids.js';
+import {createThrowPhysics} from '../core/throw-physics.js';
+import {add,mul,dot,rotate,axisAngle,multiply,IDENTITY,faceUp,supportHeight,flightHeight,projectSolidPoint} from '../core/solids.js';
 import {PIP_LAYOUT} from '../modules/coin/core.js';
 import {createDiceShake} from '../modules/coin/dice-shake.js';
 
@@ -22,7 +23,7 @@ export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock
   }
   const faces=[];
   for(const o of objects){
-    const z=supportHeight(o.mesh,o.q,o.size)+(o.lift||0),pos=[o.x,o.y,z];
+    const z=o.z??(supportHeight(o.mesh,o.q,o.size)+(o.lift||0)),pos=[o.x,o.y,z];
     const objectDepth=dot(pos,VIEW);
     const world=p=>add(mul(rotate(p,o.q),o.size),pos);
     for(const f of o.mesh){
@@ -73,11 +74,11 @@ export function createSolidScene(canvas,ctx,{plate=false,ground=.76,worldWidth=3
   function resize(){const r=canvas.getBoundingClientRect();if(r.width>0&&r.height>0){width=r.width;height=r.height;}const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);render();}
   const observer=new ResizeObserver(resize);observer.observe(canvas);
   function set(specs){cancel();objects=specs.map(s=>({...s,homeX:s.x,homeY:s.y,q:s.q||IDENTITY,lift:0}));resize();}
-  function preview(dx=0,dy=0){if(active)return;objects.forEach(o=>{o.previewQ??=o.q;o.q=multiply(axisAngle([0,1,0],Math.max(-.3,Math.min(.3,dx/150))),o.previewQ);o.lift=Math.max(0,Math.min(36,-dy*.45));});render();}
-  function rest(){objects.forEach(o=>{if(o.previewQ){o.q=o.previewQ;delete o.previewQ;}o.lift=0;});render();}
+  function preview(dx=0,dy=0){if(active)return;objects.forEach(o=>{delete o.z;o.previewQ??=o.q;o.q=multiply(axisAngle([0,1,0],Math.max(-.3,Math.min(.3,dx/150))),o.previewQ);o.lift=Math.max(0,Math.min(36,-dy*.45));});render();}
+  function rest(){objects.forEach(o=>{if(o.previewQ){o.q=o.previewQ;delete o.previewQ;}o.lift=0;delete o.z;});render();}
   function cancel(){cancelAnimationFrame(frame);active=false;diceShake=null;diceOrigin=null;pending?.(false);pending=null;}
   function startDiceShake(chooseValues,{onPhase=()=>{}}={}) {
-    cancel(); active=true;shock=0;
+    cancel(); objects.forEach(o=>{delete o.z;});active=true;shock=0;
     diceOrigin={poses:objects.map(o=>({q:[...o.q],x:o.x,y:o.y})),values:canvas.getAttribute('data-values'),label:canvas.getAttribute('aria-label')};
     diceShake=createDiceShake(objects,{now:performance.now(),chooseValues,duration:ctx.platform.simpleMotion?950:1300});
     canvas.dataset.phase='shaking';canvas.removeAttribute('data-values');
@@ -113,26 +114,28 @@ export function createSolidScene(canvas,ctx,{plate=false,ground=.76,worldWidth=3
   const visibility=()=>{if(document.hidden)cancelDice();};
   document.addEventListener('visibilitychange',visibility);
   function throwTo(values,intensity=20,{duration=3400,onPhase=()=>{}}={}){
-    cancel();rest();active=true;const power=Math.max(.65,Math.min(1.5,intensity/20)),baseWidth=360,scale=Math.min(1,width/baseWidth);
-    const starts=objects.map(o=>({...o,q:[...o.q]})),targets=objects.map((o,i)=>o.kind==='coin'?axisAngle([1,0,0],values[i]==='tails'?Math.PI:values[i]==='edge'?Math.PI/2:0):o.kind==='jiaobei'?axisAngle([1,0,0],values[i]==='round'?Math.PI:values[i]==='stand'?Math.PI/2:0):faceUp(o.mesh,values[i]));
-    let elapsed=0,last=null,phase='',hits=objects.map(()=>0);
+    cancel();active=true;
+    const power=Math.max(.65,Math.min(1.5,intensity/20));
+    const targets=objects.map((o,i)=>o.kind==='coin'?axisAngle([1,0,0],values[i]==='tails'?Math.PI:values[i]==='edge'?Math.PI/2:0):o.kind==='jiaobei'?axisAngle([1,0,0],values[i]==='round'?Math.PI:values[i]==='stand'?Math.PI/2:0):faceUp(o.mesh,values[i]));
+    const physics=createThrowPhysics(objects,targets,{power,height:flightHeight(height,power),worldWidth,seed:performance.now()%997});
+    let last=null,phase='',lastHit=-1;
     canvas.dataset.phase='flight';canvas.removeAttribute('data-values');
     return new Promise(resolve=>{pending=resolve;
       function tick(now){
         if(!alive)return;
-        if(last!==null&&!document.hidden)elapsed+=Math.min(64,now-last);last=now;
-        shock=0;
-        objects.forEach((o,i)=>{
-          const t=Math.max(0,Math.min(1,(elapsed-i*110)/duration)),s=starts[i];
-          const pose=throwPose(t,{start:s.q,target:targets[i],power,axis:o.kind==='coin'?[1,.16,.12]:[1,.48+i*.2,.21],x:s.x,y:s.y,drift:s.x ? -s.x*.18 : (i%2?1:-1)*18*scale,height:flightHeight(height,power)});
-          Object.assign(o,pose);
-          if(t>=CONTACTS[hits[i]]){ctx.sound.play(hits[i]? 'tick':o.kind==='coin'?'coin':o.kind==='jiaobei'?'clack':'thud');ctx.haptic.impact([1,.5,.25,.12][hits[i]]);hits[i]++;}
-          const after=t-CONTACTS[Math.max(0,hits[i]-1)];if(after>=0&&after<.045)shock=Math.sin(after/.045*Math.PI)*2*(1-t);
-          if(i===objects.length-1&&pose.phase!==phase){phase=pose.phase;canvas.dataset.phase=phase;onPhase(phase);}
-          if(t===1)o.q=targets[i];
-        });
+        const dt=last===null||document.hidden?0:Math.min(.064,(now-last)/1000);last=now;
+        // Slow the physical clock as a whole, preserving the relation between
+        // speed, gravity and impact. Do not ease each section of the trajectory.
+        const state=physics.advance(dt*Math.min(1.4,3400/duration));
+        const hit=state.contacts.sort((a,b)=>b.speed-a.speed)[0];
+        if(hit&&state.elapsed-lastHit>.085){
+          const o=objects[hit.index],strength=Math.min(1,hit.speed/420);
+          ctx.sound.play(strength<.22?'tick':o.kind==='coin'?'coin':o.kind==='jiaobei'?'clack':'thud');
+          ctx.haptic.impact(strength);lastHit=state.elapsed;
+        }
+        if(state.phase!==phase){phase=state.phase;canvas.dataset.phase=phase;onPhase(phase);}
         render();
-        if(elapsed<duration+(objects.length-1)*110)frame=requestAnimationFrame(tick);
+        if(state.phase!=='settled')frame=requestAnimationFrame(tick);
         else{active=false;pending=null;canvas.dataset.values=values.join(',');canvas.setAttribute('aria-label',`落定：${values.join('、')}`);ctx.haptic.settle();resolve(true);}
       }
       frame=requestAnimationFrame(tick);

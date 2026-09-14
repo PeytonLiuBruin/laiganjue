@@ -426,9 +426,20 @@ export function mount(container, ctx) {
     for (const el of labelEls) el.classList.remove('hit');
     cap.classList.remove('pulse');
   }
+  let flapFrame = 0, flapAngle = 0, flapSpeed = 0, flapLast = null;
   function kickFlapper(amp) {
     if (reduce) return;
-    flapper.animate([{ transform: 'rotate(0deg)' }, { transform: `rotate(${amp}deg)`, offset: 0.35 }, { transform: 'rotate(0deg)' }], { duration: 130, easing: 'ease-out' });
+    flapSpeed = Math.max(-340, Math.min(340, flapSpeed + amp * 11));
+    if (!flapFrame) flapFrame = requestAnimationFrame(stepFlapper);
+  }
+  function stepFlapper(now) {
+    flapFrame = 0;
+    if (!ritual.alive) return;
+    const dt = flapLast === null || document.hidden ? 0 : Math.min(.025, (now - flapLast) / 1000); flapLast = now;
+    flapSpeed += (-190 * flapAngle - 14 * flapSpeed) * dt;
+    flapAngle += flapSpeed * dt; flapper.style.transform = `rotate(${flapAngle}deg)`;
+    if (Math.abs(flapAngle) > .025 || Math.abs(flapSpeed) > .2) flapFrame = requestAnimationFrame(stepFlapper);
+    else { flapAngle = flapSpeed = 0; flapLast = null; flapper.style.transform = ''; }
   }
   function updateBadge() {
     const n = items.length;
@@ -477,10 +488,9 @@ export function mount(container, ctx) {
     const speed = Math.sign(omega0) * Math.max(8, Math.min(22, Math.abs(omega0) * 0.62));
     const plan = simulateSpin(speed, { k: 0.48, c: 0.3 });
     const start = angle;
-    const sign = omega0 < 0 ? -1 : 1;
-    const PULL = reduce ? 0 : 7 * sign; // 起：先往反方向拉一点，像拉弓
-    const PRE = reduce ? 0 : 280;
-    const finalAngle = start - PULL + plan.angle;
+    const PRE = source === 'gesture' ? 0 : 220;
+    const leadAngle = plan.omegaAt(0) * 180 / Math.PI * PRE / 2000;
+    const finalAngle = start + leadAngle + plan.angle;
     sound.play('whoosh');
     haptic.light();
     wrap.classList.add('spinning');
@@ -491,8 +501,8 @@ export function mount(container, ctx) {
     let lastTick = 0;
     let lastHap = 0;
     let laps = 0;
-    const tailStart = plan.duration * .82, tailDuration = 1100;
-    const total = PRE + tailStart + tailDuration;
+    const tailStart = plan.duration * .76;
+    const total = PRE + plan.duration;
     let coasting = false;
     const frame = (now) => {
       if (!ritual.alive) return;
@@ -502,12 +512,10 @@ export function mount(container, ctx) {
       let a;
       if (t < PRE) {
         const p = t / PRE;
-        a = start - PULL * (1 - (1 - p) * (1 - p));
+        a = start + leadAngle * p * p;
       } else {
         const elapsedSpin = t - PRE;
-        const tail = Math.max(0, Math.min(1, (elapsedSpin - tailStart) / tailDuration));
-        const physicalTime = elapsedSpin < tailStart ? elapsedSpin : tailStart + (plan.duration - tailStart) * (1 - (1 - tail) ** 2);
-        a = start - PULL + plan.angleAt(physicalTime);
+        a = start + leadAngle + plan.angleAt(elapsedSpin);
         if (elapsedSpin >= tailStart && !coasting) {
           coasting = true; ritual.step(2); st.setHint('还在缓缓走，等最后一格');
         }
@@ -772,6 +780,7 @@ export function mount(container, ctx) {
   return () => {
     activeSheet?.close();
     if (raf) cancelAnimationFrame(raf);
+    cancelAnimationFrame(flapFrame);
     clearTimeout(typeTimer);
     rotor.getAnimations?.().forEach((a) => a.cancel());
   };

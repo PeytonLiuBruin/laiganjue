@@ -28,7 +28,8 @@ function createModelRenderer(el,ctx,id) {
     frame=0;if(!alive||document.hidden||!visible||el.closest('[hidden]')||!el.isConnected){last=null;return;}
     const dt=last===null?0:Math.min(.064,(now-last)/1000);last=now;time+=dt;activeTime+=dt;
     state.revealMix = (state.revealMix || 0) + ((state.revealed ? 1 : 0) - (state.revealMix || 0)) * Math.min(1, dt * 4);
-    tilt.x+=(targetTilt.x-tilt.x)*.15;tilt.y+=(targetTilt.y-tilt.y)*.15;
+    const response=1-Math.exp(-9*dt);
+    tilt.x+=(targetTilt.x-tilt.x)*response;tilt.y+=(targetTilt.y-tilt.y)*response;
     if(now-lastPaint>=(state.active?15:30)){
       const dpr=Math.min(window.devicePixelRatio||1,2);c.setTransform(dpr,0,0,dpr,0,0);
       paintModel(c,width,height,id,state,id==='bazi.pillars'?activeTime:time,palette,tilt);lastPaint=now;

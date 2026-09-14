@@ -78,29 +78,19 @@ export function faceUp(mesh, value) {
   const u=rotate(f.u,q);
   return multiply(axisAngle([0,0,1],-Math.atan2(u[1],u[0])),q);
 }
+const meshVertices = new WeakMap();
 export function supportHeight(mesh,q,size) {
-  return -Math.min(...mesh.flatMap(f=>f.points.map(p=>rotate(p,q)[2]*size)));
+  let vertices = meshVertices.get(mesh);
+  if (!vertices) { vertices = [...new Map(mesh.flatMap(f=>f.points).map(p=>[p.join(','),p])).values()]; meshVertices.set(mesh,vertices); }
+  const [x,y,z,w]=q, a=2*(x*z-w*y), b=2*(y*z+w*x), c=1-2*(x*x+y*y);
+  let minimum=Infinity;
+  for(const p of vertices) minimum=Math.min(minimum,a*p[0]+b*p[1]+c*p[2]);
+  return -minimum*size;
 }
 
-export const CONTACTS=[.30,.48,.63,.92];
 export const flightHeight = (height, power) => Math.min(125, height * .32) * Math.min(1.15, power);
 export function projectSolidPoint(point, width, height, ground = .76, worldWidth = 350) {
   const p = mul(point, Math.min(1, width / worldWidth, height / 320));
   const depth = dot(p, [0, -.6, .8]), perspective = 850 / (850 - depth);
   return [width / 2 + p[0] * perspective, height * ground + (-p[1] * .8 - p[2] * .6) * perspective, depth];
-}
-export function throwPose(t,{start=IDENTITY,target=IDENTITY,power=1,axis=[1,.45,.18],x=0,y=0,drift=18,height=150}={}) {
-  t=Math.max(0,Math.min(1,t));
-  const mix=Math.min(1,t/.7), base=mixRotation(start,target,mix*mix*(3-2*mix));
-  const total=Math.PI*2*4;
-  let angle;
-  if(t<.3)angle=(total-Math.PI*2*1.4)*t/.3;
-  else if(t<.63){const u=(t-.3)/.33;angle=total-(Math.PI*2*1.4*(1-u)+1.1*u);}
-  else if(t<.82){const u=(t-.63)/.19;angle=total-(1.1*(1-u)+.68*u);}
-  else {const u=(t-.82)/.18;angle=total-.68*(1-u)**2+Math.sin(u*Math.PI*2)*.13*(1-u);}
-  const q=multiply(axisAngle(axis,angle),base);
-  let lift=0;
-  for(const [a,b,h] of [[0,.3,height],[.3,.48,38*power],[.48,.63,11*power]])if(t>=a&&t<=b){const u=(t-a)/(b-a);lift=4*h*u*(1-u);break;}
-  const driftProgress=t<.3?t/.3:(1-t)/.7;
-  return {q,x:x+Math.sin(t*Math.PI)*drift,y:y+driftProgress*10,lift,phase:t<.3?'flight':t<.63?'rolling':t<1?'settling':'settled'};
 }

@@ -1,5 +1,5 @@
 // 水晶球 · 界面：水晶球（是非 / 神谕 / 一字）与灵摆。球体与灵摆由交互状态驱动；逻辑见 core.js。
-import { MODE, pickAnswer, pickRephrase, chargeStep, RUB_GAIN, SHAKE_GAIN, reduceRepeat, PENDULUM, decidePendulum, initPendulum, pendulumStep, convergenceBias, pendulumLabel } from './core.js';
+import { MODE, pickAnswer, pickRephrase, chargeStep, RUB_GAIN, SHAKE_GAIN, reduceRepeat, PENDULUM, decidePendulum, initPendulum, PENDULUM_PARAMS, pendulumStep, convergenceBias, pendulumLabel } from './core.js';
 import { TABS, MODES, MODE_LABEL, MODE_SEAL, TONE_LABEL, QUESTION_PLACEHOLDER, EMPTY_QUESTION_KICKER, BALL_HINTS, BALL_HINT_GESTURE, DAY_FOOTER, NIGHT_FOOTER, PENDULUM_HINTS, PENDULUM_HINT_GESTURE, PENDULUM_TEXT, PENDULUM_NOTE, PENDULUM_EXPLAIN, SHEET_TITLE_BALL, SHEET_TITLE_PENDULUM, TAP_WHISPERS } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
 import { createModelSlot } from '../../ui/model-slot.js';
@@ -89,7 +89,7 @@ export function mount(container, ctx) {
       autoCharge();
     } else {
       if (pState.phase === 'done') return openPendulumSheet();
-      if (pState.phase === 'asking') return;
+      if (['asking', 'settling'].includes(pState.phase)) return;
       const ang = ctx.rng.random() * Math.PI * 2;
       startAsk({ vx: Math.cos(ang) * 1.6, vy: Math.sin(ang) * 1.6 });
     }
@@ -224,14 +224,14 @@ export function mount(container, ctx) {
     }
   }
   async function startAsk(kick) {
-    if (pState.phase === 'asking' || resultSheet) return;
+    if (['asking', 'settling'].includes(pState.phase) || resultSheet) return;
     if (pState.phase === 'done') resetPendulum();
     const g = generation;
     pState.phase = 'asking'; primaryBtn.disabled = true;
     if (!await ritual.focus() || g !== generation) return;
     pState.elapsed = 0;
     pState.target = decidePendulum(ctx.rng.random);
-    pState.s = { x: 0, y: 0, vx: kick.vx, vy: kick.vy, t: 0 };
+    pState.s = { x: kick.x || 0, y: kick.y || 0, vx: kick.vx, vy: kick.vy, t: 0 };
     pState.startedAt = performance.now();
     pState.last = pState.startedAt;
     ritual.step(1);
@@ -242,7 +242,7 @@ export function mount(container, ctx) {
     pState.raf = requestAnimationFrame(tick);
   }
   function tick(now) {
-    if (pState.phase !== 'asking') return;
+    if (!['asking', 'settling'].includes(pState.phase)) return;
     const dt = document.hidden ? 0 : Math.min(1 / 30, (now - pState.last) / 1000);
     pState.last = now;
     pState.elapsed += dt;
@@ -252,9 +252,11 @@ export function mount(container, ctx) {
     const fade = Math.max(0, 1 - t / ASK_SECONDS);
     const bias = { x: cb.x + tiltBias.x * fade + (ctx.rng.random() - 0.5) * 0.4 * fade, y: cb.y + tiltBias.y * fade + (ctx.rng.random() - 0.5) * 0.4 * fade };
     tiltBias = { x: tiltBias.x * 0.85, y: tiltBias.y * 0.85 };
-    pState.s = pendulumStep(pState.s, dt, bias);
+    const settling = t >= ASK_SECONDS;
+    if (settling) pState.phase = 'settling';
+    pState.s = pendulumStep(pState.s, dt, settling ? null : bias, settling ? { ...PENDULUM_PARAMS, damping: 3.5 } : PENDULUM_PARAMS);
     pend.set({ x: pState.s.x / 1.4, y: pState.s.y / 1.4, progress: t / ASK_SECONDS });
-    if (t >= ASK_SECONDS) return finishAsk();
+    if (settling && Math.hypot(pState.s.x, pState.s.y, pState.s.vx, pState.s.vy) < .018) return finishAsk();
     pState.raf = requestAnimationFrame(tick);
   }
   async function finishAsk() {
@@ -276,17 +278,17 @@ export function mount(container, ctx) {
   // 拖动锥体给初速度；倾斜手机给扰动
   ctx.gesture.drag(pend.el, {
     onMove: (g) => {
-      if (tab !== 'pendulum' || pState.phase === 'asking') return;
+      if (tab !== 'pendulum' || ['asking', 'settling'].includes(pState.phase)) return;
       pend.set({ x: Math.max(-1, Math.min(1, g.dx / 90)), y: Math.max(-1, Math.min(1, g.dy / 90)) });
     },
     onEnd: (g) => {
-      if (tab !== 'pendulum' || pState.phase === 'asking' || g.cancelled) return;
+      if (tab !== 'pendulum' || ['asking', 'settling'].includes(pState.phase) || g.cancelled) return;
       const speed = Math.hypot(g.vx, g.vy);
       if (speed < 0.15 && Math.hypot(g.dx, g.dy) < 20) {
         pend.set({ x: 0, y: 0 });
         return;
       }
-      startAsk({ vx: Math.max(-2.2, Math.min(2.2, g.vx * 2.4 || g.dx / 60)), vy: Math.max(-2.2, Math.min(2.2, g.vy * 2.4 || g.dy / 60)) });
+      startAsk({ x: Math.max(-1, Math.min(1, g.dx / 90)) * 1.4, y: Math.max(-1, Math.min(1, g.dy / 90)) * 1.4, vx: Math.max(-2.2, Math.min(2.2, g.vx * 2.4 || g.dx / 60)), vy: Math.max(-2.2, Math.min(2.2, g.vy * 2.4 || g.dy / 60)) });
     },
   });
   ctx.motion.onTilt(({ beta, gamma }) => {

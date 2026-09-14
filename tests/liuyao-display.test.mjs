@@ -1,7 +1,8 @@
+import { createThrowPhysics } from '../src/core/throw-physics.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { coinFaces, coinLayout, COIN_VIEW } from '../src/modules/liuyao/coins.js';
-import { axisAngle, rotate, throwPose, supportHeight, flightHeight, projectSolidPoint } from '../src/core/solids.js';
+import { axisAngle, rotate, supportHeight, flightHeight, projectSolidPoint } from '../src/core/solids.js';
 
 test('all eight three-coin outcomes display the same faces used to calculate the line', () => {
   for (let mask = 0; mask < 8; mask++) {
@@ -23,12 +24,11 @@ test('three coins stay fully visible throughout strong throws in narrow phone an
     const height = 310;
     for (const coin of coinLayout()) for (const startSide of [0, Math.PI]) for (const endSide of [0, Math.PI]) {
       const start = axisAngle([1, 0, 0], startSide), target = axisAngle([1, 0, 0], endSide);
-      for (let frame = 0; frame <= 60; frame++) {
-        const pose = throwPose(frame / 60, {
-          start, target, power: 1.5, axis: [1, .16, .12], x: coin.x, y: coin.y,
-          drift: coin.x ? -coin.x * .18 : 18 * Math.min(1, width / 360), height: flightHeight(height, 1.5),
-        });
-        const z = supportHeight(coin.mesh, pose.q, coin.size) + pose.lift;
+      const pose={...coin,q:start,lift:0};
+      const simulation=createThrowPhysics([pose],[target],{power:1.5,height:flightHeight(height,1.5),worldWidth:COIN_VIEW.worldWidth});
+      for (let frame = 0; frame <= 240; frame++) {
+        simulation.advance(1/60);
+        const z = pose.z;
         for (const face of coin.mesh) for (const vertex of face.points) {
           const p = rotate(vertex, pose.q).map(n => n * coin.size);
           p[0] += pose.x; p[1] += pose.y; p[2] += z;

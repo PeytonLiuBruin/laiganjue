@@ -1,4 +1,4 @@
-import { createStickBundle } from '../../ui/stick-bundle.js';
+import { createStickScene } from '../../ui/stick-scene.js';
 // 御神签 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 节奏：摇筒（起）→ 签棒滑出（飞 / 落）→ 签纸展开盖章（揭）→ 结果抽屉 → 结签 / 带回家。
 import { pickLot, levelOf, isBad, initRack, tieUp, untie, visibleKnots, RACK_MAX, drawnToday, markDrawn, shareText, PHASE, nextPhase, ITEM_KEYS, toneOf } from './core.js';
@@ -6,8 +6,6 @@ import { TEXT } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
 import { overRope } from './interaction.js';
 
-const STICK_IN = 'translate(0px, -4px) rotate(90deg)';
-const STICK_OUT = 'translate(-8px, 104px) rotate(-5deg)';
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 export function mount(container, ctx) {
@@ -54,38 +52,14 @@ export function mount(container, ctx) {
   const rackKnots = h('div', { class: 'ok-rack-knots' });
   const rackEl = h('div', { class: 'ok-rack', attrs: { role: 'button', tabindex: '0', 'aria-label': TEXT.btnRack } }, h('span', { class: 'ok-rack-post l' }), h('span', { class: 'ok-rack-post r' }), rackRod, h('div', { class: 'ok-rack-rod2' }), rackKnots, dropHint);
 
-  // 案几 + 签筒 + 签棒 + 签纸，全部相对 .ok-set 原点定位
-  const shelf = h('div', { class: 'ok-shelf' });
-  const tube = h(
-    'div',
-    { class: 'ok-tube' },
-    h('div', { class: 'ok-tube-shadow' }),
-    h(
-      'div',
-      { class: 'ok-tube-body' },
-      h('span', { class: 'ok-tube-band' }),
-      h('span', { class: 'ok-tube-band b2' }),
-      h(
-        'div',
-        { class: 'ok-tube-label' },
-        h('span', { class: 'ok-tube-kanji' }, Array.from('御神签').map((c) => h('i', null, c))),
-        h('span', { class: 'ok-tube-kana' }, Array.from('おみくじ').map((c) => h('i', null, c))),
-      ),
-      h('span', { class: 'ok-tube-hole' }),
-    ),
-    h('div', { class: 'ok-tube-cap' }),
-  );
-  const bambooStems = Array.from({length:21},(_,i) => h('i',{class:'ok-bamboo',style:{left:`${5+i%11*8}%`,transform:`rotate(${(i%11-5)*1.7}deg) translateY(${i%4*4}px)`}}));
-  tube.prepend(h('div',{class:'ok-bundle'},bambooStems));
-  const tubeAnim = h('div', { class: 'ok-tube-anim' }, tube);
-  const tubeWrap = h('div', { class: 'ok-tube-wrap', attrs: { role: 'button', 'aria-label': TEXT.btnShake } }, tubeAnim);
-  const bundle = createStickBundle(ctx, tubeAnim, bambooStems);
-  const stickLabel = h('span', { class: 'ok-stick-label' });
-  const stick = h('div', { class: 'ok-stick', attrs: { role: 'button', 'aria-label': TEXT.btnDraw } }, h('span', { class: 'ok-stick-tip' }), stickLabel);
+  const canvas = h('canvas', { class: 'stick-canvas', attrs: { 'aria-hidden': 'true' } });
+  const tubeWrap = h('button', { type: 'button', class: 'ok-tube-wrap stick-scene', attrs: { 'aria-label': TEXT.btnShake } }, canvas);
+  const stick = h('button', { type: 'button', class: 'stick-pick-target', hidden: true, attrs: { 'aria-label': TEXT.btnDraw } });
+  const bundle = createStickScene(ctx, canvas, { kind: 'omikuji', pickTarget: stick });
   const slip = h('div', { class: 'ok-slip paper-slip', hidden: true, attrs: { role: 'button', tabindex: '0', 'aria-label': '签纸，点击查看解读' } });
   let slipLevelEl = null;
-  const set = h('div', { class: 'ok-set' }, shelf, stick, tubeWrap, slip);
-  st.scene.append(ambient, rackEl, set);
+  const set = h('div', { class: 'ok-set' }, slip);
+  st.scene.append(ambient, rackEl, tubeWrap, stick, set);
 
   /* ---------- 操作区 ---------- */
   const primaryBtn = button(TEXT.btnShake, { variant: 'primary', size: 'large', primary: true, onClick: onPrimary });
@@ -108,16 +82,12 @@ export function mount(container, ctx) {
   ctx.motion.onShake((e) => onShakeEvent(e));
   // 倾斜：挂架微视差
   ctx.motion.onTilt(kit.parallax(rackEl, { max: 4 }));
-  // 原始加速度：静止时签筒随手轻晃（节流）
-  let lastSway = 0;
   ctx.motion.onMotion((m) => {
-    const t = Date.now();
-    if (t - lastSway < 90) return;
-    lastSway = t;
-    if (busy || dragging || phase !== PHASE.IDLE || reduce) return;
-    bundle.preview(m.ax || 0);
-    const ax = clamp(m.ax || 0, -5, 5);
-    tubeWrap.style.transform = Math.abs(ax) < 0.5 ? '' : `rotate(${(-ax * 1.6).toFixed(1)}deg)`;
+    if (dragging || openSheet || tying || !ritual.alive) return;
+    if (busy) { bundle.feed(m); return; }
+    const moving = Math.hypot(m.ax || 0, m.ay || 0, m.az || 0) > 5.5;
+    if (phase === PHASE.IDLE) { bundle.feed(m); if (moving) doShake(20, { continuous: true }); }
+    else if (moving) onShakeEvent({ intensity: 20, continuous: true });
   });
 
   // 在签筒上左右来回拖动 = 摇签
@@ -143,8 +113,6 @@ export function mount(container, ctx) {
           const s = Math.sign(d);
           if (dragDir && s !== dragDir) {
             dragReversals++;
-            sound.play('rattle');
-            haptic.tap();
           }
           dragDir = s;
           dragTravel += Math.abs(d);
@@ -152,7 +120,6 @@ export function mount(container, ctx) {
       }
       bundle.preview(g.dx / 4);
       dragLastX = g.dx;
-      tubeWrap.style.transform = `translateY(-10px) rotate(${clamp(g.dx / 5, -18, 18)}deg)`;
       if (dragReversals >= 3 && dragTravel > 120) {
         st.setHint('已经摇好了，松手出签');
       }
@@ -160,7 +127,7 @@ export function mount(container, ctx) {
     onEnd(g) {
       if (!dragging) return;
       endDrag();
-      if (!g.cancelled && dragReversals >= 3 && dragTravel > 120) onShakeEvent({ intensity: clamp(14 + dragTravel / 18, 16, 34) });
+      if (!g.cancelled && dragReversals >= 3 && dragTravel > 120) onShakeEvent({ intensity: clamp(14 + dragTravel / 18, 16, 34), replay: false });
       else st.setHint('左右摇动签筒，松手出签');
     },
   });
@@ -207,13 +174,13 @@ export function mount(container, ctx) {
   function endDrag() {
     dragging = false;
     tubeWrap.classList.remove('ok-grab');
-    tubeWrap.style.transform = ''; bundle.reset();
   }
 
   /* ---------- 流程 ---------- */
   function setBusy(v) {
     busy = v;
     primaryBtn.disabled = v;
+    tubeWrap.disabled = v || phase !== PHASE.IDLE; stick.disabled = v;
   }
   function go(action) {
     const n = nextPhase(phase, action);
@@ -232,67 +199,19 @@ export function mount(container, ctx) {
     if (busy || openSheet || tying || !ritual.alive) return;
     if (phase !== PHASE.IDLE) await resetStage();
     if (!ritual.alive) return;
-    doShake(e.intensity || 20);
+    doShake(e.intensity || 20, { continuous: !!e.continuous, replay: e.replay !== false });
   }
 
-  /** 摇签：签筒提起摇动 → 签棒从筒底滑出落在案上 */
-  async function doShake(intensity) {
+  /** A rod slides through the raised cylinder's outlet, then tips onto the table. */
+  async function doShake(intensity, { continuous = false, replay = true } = {}) {
     if (busy || phase !== PHASE.IDLE) return;
-    setBusy(true);
-    endDrag();
-    ritual.clear();
+    setBusy(true); endDrag(); ritual.clear();
     if (!await ritual.focus()) return;
-    ritual.step(0);
-    go('shake');
-    if (drawnToday(daily, today())) toast(TEXT.dailyToast);
-
-    const power = clamp(intensity / 20, 0.7, 1.6);
-    const lvl = power < 0.95 ? 1 : power < 1.25 ? 2 : 3;
-    if (!await bundle.shake(power, ctx.platform.simpleMotion ? 1500 : 2600)) return;
-    lot = pickLot(ctx.rng.random);
-    stickLabel.textContent = '';
-
-    // 提起签筒，签棒从底部小口滑出
-    tubeAnim.classList.add('ok-lift');
-    sound.play('tick', { delay: 0.05 });
-    await wait(dur(380));
-    if (!ritual.alive) return;
-    await slideOutStick();
-    tubeAnim.classList.remove('ok-lift');
-    await wait(dur(420));
-    if (!ritual.alive) return;
-    haptic.light();
-    if (!ritual.alive) return;
-    stickLabel.textContent = lot.no; haptic.settle();
-    ritual.step(1);
-    go('out');
-    setBusy(false);
-  }
-
-  async function slideOutStick() {
-    cancelAnims(stick);
-    const d = dur(2000);
-    const falling = ritual.animate(stick,
-      [
-        { transform: STICK_IN, offset: 0 },
-        { transform: 'translate(3px, 54px) rotate(86deg)', offset: 0.48, easing: 'cubic-bezier(.3,.8,.5,1)' },
-        { transform: 'translate(-2px, 92px) rotate(34deg)', offset: 0.68, easing: 'cubic-bezier(.5,0,.8,.5)' },
-        { transform: 'translate(-8px, 96px) rotate(-22deg)', offset: 0.8 },
-        { transform: 'translate(-7px, 98px) rotate(-18deg)', offset: 0.88 },
-        { transform: 'translate(1px, 100px) rotate(5deg)', offset: 0.96 },
-        { transform: STICK_OUT, offset: 1 },
-      ],
-      { duration: d, fill: 'forwards', easing: 'linear' },
-    );
-    if (!await wait(d * 0.68)) return;
-    if (!ritual.alive) return;
-    sound.play('clack');
-    haptic.impact(.8);
-    if (!await wait(d * 0.28)) return;
-    sound.play('tick'); haptic.impact(.2);
-    await falling;
-    if (!ritual.alive) return;
-    stick.classList.add('ok-stick-glow');
+    ritual.step(0); go('shake');
+    if (!await bundle.draw({ power: intensity / 20, continuous, replay })) return;
+    if (!await wait(320)) return;
+    lot = pickLot(ctx.rng.random); bundle.setLabel(lot.no); stick.hidden = false;
+    ritual.step(1); go('out'); setBusy(false);
   }
 
   /** 取签纸：和纸从筒侧展开 → 盖章 → 结果抽屉 */
@@ -468,22 +387,7 @@ export function mount(container, ctx) {
     cancelAnims(slip);
     tubeWrap.classList.remove('ok-dim');
     stick.classList.remove('ok-dim', 'ok-stick-glow');
-    if (phase !== PHASE.IDLE) {
-      const d = dur(440);
-      cancelAnims(stick);
-      ritual.animate(stick,
-        [
-          { transform: STICK_OUT, opacity: 1 },
-          { transform: 'translate(0px, 40px) rotate(70deg)', opacity: 0.5, offset: 0.6 },
-          { transform: STICK_IN, opacity: 0 },
-        ],
-        { duration: d, fill: 'forwards', easing: 'cubic-bezier(.4,0,.6,1)' },
-      );
-      sound.play('tick');
-      await wait(d);
-    if (!ritual.alive) return;
-      cancelAnims(stick);
-    }
+    stick.hidden = true; bundle.reset();
     if (!ritual.alive) return;
     lot = null;
     if (phase !== PHASE.IDLE) go('reset');
@@ -493,18 +397,8 @@ export function mount(container, ctx) {
 
   /* ---------- 小反馈 ---------- */
   function nudgeTube() {
-    if (busy || dragging || phase !== PHASE.IDLE || reduce) return;
-    sound.play('tick');
-    haptic.tap();
-    tubeAnim.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-4deg)', offset: 0.3 }, { transform: 'rotate(3deg)', offset: 0.62 }, { transform: 'rotate(0)' }], { duration: dur(380), easing: 'ease-out' });
-    st.setHint(TEXT.hintNudge);
-  }
-  function nudgeStick() {
-    if (busy || phase !== PHASE.STICK) return;
-    sound.play('tick');
-    haptic.tap();
-    stick.animate([{ transform: STICK_OUT }, { transform: 'translate(-6px, 101px) rotate(-3deg)', offset: 0.4 }, { transform: STICK_OUT }], { duration: dur(320), easing: 'ease-out' });
-    st.setHint(TEXT.hintStickNudge);
+    if (busy || dragging || phase !== PHASE.IDLE) return;
+    doShake(20);
   }
 
   /* ---------- 渲染 ---------- */
@@ -522,6 +416,7 @@ export function mount(container, ctx) {
     else if (lot && phase === PHASE.PAPER) st.setBadge(`${lot.no} · ${levelOf(lot.level).name}`);
     else st.setBadge(badgeText());
     container.dataset.okPhase = phase;
+    tubeWrap.disabled = busy || phase !== PHASE.IDLE;
   }
 
   function renderSlip(l) {
@@ -707,6 +602,6 @@ export function mount(container, ctx) {
       openSheet.close();
       openSheet = null;
     }
-    [slip, stick, tubeAnim, tubeWrap, ...st.el.querySelectorAll('.ok-folding-paper')].forEach(cancelAnims);
+    [slip, stick, tubeWrap, ...st.el.querySelectorAll('.ok-folding-paper')].forEach(cancelAnims);
   };
 }

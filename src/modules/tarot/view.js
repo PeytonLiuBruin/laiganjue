@@ -1,3 +1,4 @@
+import { hingeMotion } from '../../core/hinge-motion.js';
 // 塔罗 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 流程：洗牌（摇 / 摩擦牌堆 / 按钮）→ 抽牌（甩 / 向上快滑 / 主按钮）→ 翻牌（点牌 / 按钮）→ 全部翻开 → 解读抽屉。
 import { initSession, shuffleSession, drawNext, flipCard, isFull, allFlipped, isDone, getSpread, SPREADS, synthesize, keywordsOf, meaningOf, sealFor, shareText, cardById, analyze } from './core.js';
@@ -339,12 +340,11 @@ export function mount(container, ctx) {
     const rot = (rng.random() - 0.5) * 18 * power;
     await ritual.animate(
       el,
-      [
-        { transform: 'translate(0,0) rotate(0deg) scale(1)', offset: 0 },
-        { transform: `translate(${dx * 0.42}px, ${dy * 0.5 - 30 * power}px) rotate(${rot}deg) scale(1.07)`, offset: 0.5, easing: 'cubic-bezier(.3,.7,.4,1)' },
-        { transform: `translate(${dx}px, ${dy}px) rotate(${rot * 0.25}deg) scale(1)`, offset: 1 },
-      ],
-      { duration: D(1100 + 180 * power), easing: 'cubic-bezier(.45,0,.2,1)' },
+      Array.from({ length: 61 }, (_, i) => {
+        const t = i / 60, u = 1 - (1-t)**3, lift = Math.sin(u*Math.PI)*25*power;
+        return { offset: t, transform: `translate(${dx*u}px, ${dy*u-lift}px) rotate(${rot*Math.sin(u*Math.PI)}deg) scale(${1+Math.sin(u*Math.PI)*.035})` };
+      }),
+      { duration: D(1250 + 180 * power), easing: 'linear' },
     );
     if (!ritual.alive) return;
     // 落地：归位到牌位内，由布局接管
@@ -352,7 +352,6 @@ export function mount(container, ctx) {
     el.style.cssText = '';
     slotEl.append(el);
     el.classList.add('placed');
-    if (!reduce) ritual.animate(el, [{ transform: 'translateY(-3px) scale(1.02)' }, { transform: 'translateY(0) scale(1)' }], { duration: 180 }).then((a) => a && a.cancel());
   }
 
   /* ---------- 翻牌 ---------- */
@@ -379,8 +378,8 @@ export function mount(container, ctx) {
     haptic.light();
     await ritual.animate(
       c.inner,
-      [{ transform: c.inner.style.transform || 'rotateY(0deg) translateZ(0)' }, { transform: 'rotateY(78deg) translateZ(28px)', offset: 0.36 }, { transform: 'rotateY(84deg) translateZ(30px)', offset: 0.62 }, { transform: 'rotateY(180deg) translateZ(0)' }],
-      { duration: D(1900), easing: 'cubic-bezier(.32,.2,.25,1)' },
+      hingeMotion((parseFloat(c.inner.style.transform.match(/rotateY\(([-.\d]+)/)?.[1]) || 0) * Math.PI / 180).map(({offset,angle,lift}) => ({ offset, transform: `translateZ(${lift}px) rotateY(${angle*180/Math.PI}deg)` })),
+      { duration: D(1900), easing: 'linear' },
     );
     if (!ritual.alive) return;
     c.inner.getAnimations().forEach((a) => a.cancel());
