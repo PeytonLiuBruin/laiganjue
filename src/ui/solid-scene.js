@@ -4,10 +4,10 @@ import {createDiceShake} from '../modules/coin/dice-shake.js';
 
 const VIEW=[0,-.6,.8], LIGHT=[-.35,-.45,.82];
 const COLORS={ivory:[244,238,218],edge:[214,202,176],brass:[191,154,89],'gold-edge':[151,112,58],wood:[158,49,33],cut:[194,79,49]};
-export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock=0}={}) {
+export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock=0,worldWidth=350}={}) {
   c.clearRect(0,0,width,height);
-  const cy=height*ground+shock, sceneScale=Math.min(1,width/350,height/320);
-  const project=p=>{const projected=projectSolidPoint(p,width,height,ground);projected[1]+=shock;return projected;};
+  const cy=height*ground+shock, sceneScale=Math.min(1,width/worldWidth,height/320);
+  const project=p=>{const projected=projectSolidPoint(p,width,height,ground,worldWidth);projected[1]+=shock;return projected;};
   if(plate){
     c.save();c.translate(width/2,cy+12);
     const g=c.createRadialGradient(0,-8,15,0,0,Math.min(width*.44,188));g.addColorStop(0,'#d9cbb444');g.addColorStop(1,'#b6a38511');
@@ -23,19 +23,20 @@ export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock
   const faces=[];
   for(const o of objects){
     const z=supportHeight(o.mesh,o.q,o.size)+(o.lift||0),pos=[o.x,o.y,z];
+    const objectDepth=dot(pos,VIEW);
     const world=p=>add(mul(rotate(p,o.q),o.size),pos);
     for(const f of o.mesh){
       const normal=rotate(f.normal,o.q);if(dot(normal,VIEW)<.015)continue;
       const pts=f.points.map(p=>project(world(p))),center=world(f.center);
-      faces.push({f,o,pts,normal,world,depth:dot(center,VIEW)});
+      faces.push({f,o,pts,normal,world,objectDepth,depth:dot(center,VIEW)});
     }
     if(o.kind==='coin')for(const side of [1,-1]){
       const normal=rotate([0,0,side],o.q);if(dot(normal,VIEW)<.05)continue;
       const center=[0,0,side*.087],u=[side,0,0],v=[0,1,0];
-      faces.push({f:{points:[],center,u,v,ink:{type:'coin',side,choice:o.choice},material:'brass'},o,pts:[],normal,world,depth:dot(world(center),VIEW)+o.size*3});
+      faces.push({f:{points:[],center,u,v,ink:{type:'coin',side,choice:o.choice,inscription:o.inscription},material:'brass'},o,pts:[],normal,world,objectDepth,depth:dot(world(center),VIEW)+o.size*3});
     }
   }
-  faces.sort((a,b)=>a.depth-b.depth);
+  faces.sort((a,b)=>a.o!==b.o&&a.o.kind==='coin'&&b.o.kind==='coin' ? a.objectDepth-b.objectDepth : a.depth-b.depth);
   for(const item of faces){
     const {f,o,pts,normal,world}=item;
     c.save();
@@ -58,7 +59,7 @@ export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock
         c.strokeStyle='#6b481e';c.lineWidth=.02;
         for(const r of [.89,.79]){c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.stroke();}
         if(f.ink.choice){c.fillStyle='#e9cd8b';c.fillRect(-.71,-.36,1.42,.72);c.fillStyle='#483016';c.save();c.scale(.01,.01);c.font='500 30px serif';c.fillText(f.ink.choice[f.ink.side===1?0:1],0,0,130);c.restore();}
-        else if(f.ink.side===1){c.save();c.scale(.01,.01);c.font='600 40px serif';for(const [char,x,y] of [['来',0,-52],['感',0,52],['通',52,0],['宝',-52,0]])c.fillText(char,x,y);c.restore();}
+        else if(f.ink.side===1){c.save();c.scale(.01,.01);c.font='600 40px serif';const letters=f.ink.inscription||['来','感','通','宝'];[[0,-52],[0,52],[52,0],[-52,0]].forEach(([x,y],i)=>c.fillText(letters[i],x,y));c.restore();}
         else for(let i=0;i<8;i++){c.save();c.rotate(i*Math.PI/4);c.beginPath();c.ellipse(0,-.54,.12,.18,0,0,Math.PI*2);c.stroke();c.restore();}
       }
     }
@@ -66,9 +67,9 @@ export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock
   }
 }
 
-export function createSolidScene(canvas,ctx,{plate=false,ground=.76}={}) {
+export function createSolidScene(canvas,ctx,{plate=false,ground=.76,worldWidth=350}={}) {
   const c=canvas.getContext('2d');let objects=[],width=350,height=360,frame=0,alive=true,pending=null,active=false,shock=0,diceShake=null,diceOrigin=null;
-  function render(){if(!alive||!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);c.setTransform(dpr,0,0,dpr,0,0);paintSolids(c,width,height,objects,{plate,ground,shock});}
+  function render(){if(!alive||!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);c.setTransform(dpr,0,0,dpr,0,0);paintSolids(c,width,height,objects,{plate,ground,shock,worldWidth});}
   function resize(){const r=canvas.getBoundingClientRect();if(r.width>0&&r.height>0){width=r.width;height=r.height;}const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);render();}
   const observer=new ResizeObserver(resize);observer.observe(canvas);
   function set(specs){cancel();objects=specs.map(s=>({...s,homeX:s.x,homeY:s.y,q:s.q||IDENTITY,lift:0}));resize();}

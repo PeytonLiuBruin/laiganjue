@@ -84,8 +84,8 @@ export function supportHeight(mesh,q,size) {
 
 export const CONTACTS=[.30,.48,.63,.92];
 export const flightHeight = (height, power) => Math.min(125, height * .32) * Math.min(1.15, power);
-export function projectSolidPoint(point, width, height, ground = .76) {
-  const p = mul(point, Math.min(1, width / 350, height / 320));
+export function projectSolidPoint(point, width, height, ground = .76, worldWidth = 350) {
+  const p = mul(point, Math.min(1, width / worldWidth, height / 320));
   const depth = dot(p, [0, -.6, .8]), perspective = 850 / (850 - depth);
   return [width / 2 + p[0] * perspective, height * ground + (-p[1] * .8 - p[2] * .6) * perspective, depth];
 }
