@@ -2,3 +2,8 @@ node_modules/
 dist/
 .DS_Store
 *.log
+
+# 临时截图目录（冒烟测试 / 打磨过程产生）
+/paper/
+/shots*/
+/*-shots/
