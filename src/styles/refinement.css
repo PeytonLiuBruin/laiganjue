@@ -432,3 +432,7 @@ button:disabled { cursor: default; }
 .m-omikuji .ok-stage[data-tie] .stick-pick-target { pointer-events: none; }
 .m-qian .qn-vessel.stick-scene.qn-dim,
 .m-omikuji .ok-tube-wrap.stick-scene.ok-dim { opacity: .13; }
+
+/* The rope sits behind the raised cylinder; it remains tappable at rest. */
+[data-ok-phase='shaking'] .ok-rack { z-index: 2; pointer-events: none; }
+.m-qian .stage-scene, .m-omikuji .stage-scene { transform-style: flat; }

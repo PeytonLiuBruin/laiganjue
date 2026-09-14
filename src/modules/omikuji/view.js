@@ -53,8 +53,8 @@ export function mount(container, ctx) {
   const rackEl = h('div', { class: 'ok-rack', attrs: { role: 'button', tabindex: '0', 'aria-label': TEXT.btnRack } }, h('span', { class: 'ok-rack-post l' }), h('span', { class: 'ok-rack-post r' }), rackRod, h('div', { class: 'ok-rack-rod2' }), rackKnots, dropHint);
 
   const canvas = h('canvas', { class: 'stick-canvas', attrs: { 'aria-hidden': 'true' } });
-  const tubeWrap = h('button', { type: 'button', class: 'ok-tube-wrap stick-scene', attrs: { 'aria-label': TEXT.btnShake } }, canvas);
-  const stick = h('button', { type: 'button', class: 'stick-pick-target', hidden: true, attrs: { 'aria-label': TEXT.btnDraw } });
+  const tubeWrap = h('button', { type: 'button', class: 'ok-tube-wrap stick-scene', attrs: { 'aria-label': '摇动御神签筒' } }, canvas);
+  const stick = h('button', { type: 'button', class: 'stick-pick-target', hidden: true, attrs: { 'aria-label': '拾起签棒，取签纸' } });
   const bundle = createStickScene(ctx, canvas, { kind: 'omikuji', pickTarget: stick });
   const slip = h('div', { class: 'ok-slip paper-slip', hidden: true, attrs: { role: 'button', tabindex: '0', 'aria-label': '签纸，点击查看解读' } });
   let slipLevelEl = null;
@@ -134,6 +134,9 @@ export function mount(container, ctx) {
   ctx.gesture.tap(tubeWrap, () => nudgeTube());
   ctx.gesture.longPress(tubeWrap, () => openHowto());
   ctx.gesture.tap(stick, () => drawPaper());
+  for (const [el, act] of [[tubeWrap, nudgeTube], [stick, drawPaper]]) el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); }
+  });
   ctx.gesture.drag(slip, {
     onStart() {
       if (busy || !tying || phase !== PHASE.PAPER) return;
@@ -221,7 +224,7 @@ export function mount(container, ctx) {
     if (!await ritual.focus()) return;
     ritual.step(2);
     go('draw');
-    stick.classList.remove('ok-stick-glow');
+    stick.classList.remove('ok-stick-glow'); stick.hidden = true;
     sound.play('paper');
     haptic.light();
     renderSlip(lot);
