@@ -2,12 +2,15 @@ import { springRotation, rotationError } from '../../core/throw-physics.js';
 import { axisAngle, multiply, faceUp, unit } from '../../core/solids.js';
 
 export const DICE_WAKE = 5.5;
-const KEEP_MOVING = 2.8, QUIET_MS = 320;
+const KEEP_MOVING = 2.8, QUIET_MS = 240;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 // A live input session has no playback deadline. Every sample supplies force;
 // only a quiet interval starts the final roll, which new motion can interrupt.
-export function createDiceShake(objects, { now = 0, chooseValues, duration = 1300 } = {}) {
+export function createDiceShake(objects, { now = 0, chooseValues, duration = 900 } = {}) {
+  // Commit this round before motion starts. Resuming, changing direction or
+  // timing a release changes the animation, never the pending outcome.
+  const values = [...chooseValues()];
   const bodies = objects.map((o, i) => ({
     o, homeX: o.homeX ?? o.x, homeY: o.homeY ?? o.y,
     vx: 0, vy: 0, vz: 0, w: [0, 0, 0], seed: i,
@@ -15,7 +18,7 @@ export function createDiceShake(objects, { now = 0, chooseValues, duration = 130
   }));
   let phase = 'shaking', last = now, lastActive = now, inputAt = now;
   let input = [0, 0, 0], direction = null, lastKick = -Infinity, held = false;
-  let settlingAt = null, release = [], values = null, lastContact = -Infinity;
+  let settlingAt = null, targets = [], lastContact = -Infinity;
 
   function feed({ ax = 0, ay = 0, az = 0, t = last, holding = false } = {}) {
     if (![ax, ay, az, t].every(Number.isFinite) || phase === 'settled') return;
@@ -23,7 +26,7 @@ export function createDiceShake(objects, { now = 0, chooseValues, duration = 130
     const mag = Math.hypot(...input);
     if (mag > KEEP_MOVING) {
       lastActive = t;
-      if (phase === 'settling') { phase = 'shaking'; settlingAt = null; values = null; }
+      if (phase === 'settling') { phase = 'shaking'; settlingAt = null; }
     }
     if (mag >= DICE_WAKE) {
       const next = unit(input);
@@ -42,8 +45,8 @@ export function createDiceShake(objects, { now = 0, chooseValues, duration = 130
     const dt = clamp((now - last) / 1000, 0, .04); last = now;
     if (phase === 'settled') return { phase, values, impact: 0 };
     if (phase === 'shaking' && !held && now - lastActive >= QUIET_MS) {
-      phase = 'settling'; settlingAt = now; values = chooseValues();
-      release = bodies.map((b, i) => ({ q: [...b.o.q], w: [...b.w], target: faceUp(b.o.mesh, values[i]) }));
+      phase = 'settling'; settlingAt = now;
+      targets = bodies.map((b, i) => faceUp(b.o.mesh, values[i]));
     }
     const freshness = clamp(1 - (now - inputAt - 60) / 100, 0, 1);
     const [ax, ay, az] = input.map(v => v * freshness);
@@ -68,12 +71,19 @@ export function createDiceShake(objects, { now = 0, chooseValues, duration = 130
       }
       if (driving) {
         const sign = b.seed % 2 ? 1 : -1;
-        const spin = [ay * .36 + mag * .38 * sign, -ax * .55 + az * .25, (ax + ay) * .18 * sign];
-        const response = 1 - Math.exp(-(mag > KEEP_MOVING ? 9 : 2.5) * dt);
+        const tumble = now / 600 + b.seed * 2.1;
+        const axis = unit([sign * (1.1 + .18 * Math.sin(tumble)), .72 * Math.cos(tumble * .7) + ay * .012, .58 * Math.sin(tumble * .9) + az * .01]);
+        const speed = mag > KEEP_MOVING ? clamp(18 + mag * .7, 20, 40) * (1 + b.seed * .025) : 0;
+        const spin = axis.map(v => v * speed);
+        const response = 1 - Math.exp(-(mag > KEEP_MOVING ? 13 : 2.5) * dt);
         b.w = b.w.map((v, i) => v + (spin[i] - v) * response);
         o.q = unit(multiply(axisAngle(b.w, Math.hypot(...b.w) * dt), o.q));
+      } else if (now - settlingAt < 160) {
+        // Keep the release velocity briefly before ground friction catches it.
+        b.w = b.w.map(v => v * Math.exp(-4 * dt));
+        o.q = unit(multiply(axisAngle(b.w, Math.hypot(...b.w) * dt), o.q));
       } else {
-        const next = springRotation(o.q, b.w, release[b.seed].target, dt, 85, 14);
+        const next = springRotation(o.q, b.w, targets[b.seed], dt, 180, 24);
         o.q = next.q; b.w = next.w;
       }
     }
@@ -93,8 +103,8 @@ export function createDiceShake(objects, { now = 0, chooseValues, duration = 130
         }
       }
     }
-    if (phase === 'settling' && progress >= 1 && bodies.every((b,i) => b.o.lift < .05 && rotationError(b.o.q, release[i].target).angle < .006)) {
-      phase = 'settled'; bodies.forEach((b, i) => { b.o.q = release[i].target; b.o.lift = 0; });
+    if (phase === 'settling' && progress >= 1 && bodies.every((b,i) => b.o.lift < .05 && rotationError(b.o.q, targets[i]).angle < .006)) {
+      phase = 'settled'; bodies.forEach((b, i) => { b.o.q = targets[i]; b.o.lift = 0; });
     }
     if (impact < .15 || now - lastContact < 100) impact = 0;
     else lastContact = now;

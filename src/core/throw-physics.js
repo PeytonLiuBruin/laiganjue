@@ -25,7 +25,7 @@ export function createThrowPhysics(objects, targets, { power=1, height=115*Math.
     vx:(random(seed+i*3)-.5)*42,
     vy:(random(seed+i*7)-.5)*26,
     vz:Math.sqrt(2*GRAVITY*height)*(1+random(seed+i)*.10),
-    w:[8+random(seed+i*2)*7,(random(seed+i*4)-.5)*(o.kind==='coin'?2:10),2+random(seed+i*6)*4],
+    w:[8+random(seed+i*2)*7,(random(seed+i*4)-.5)*(o.kind==='coin'?2:10),2+random(seed+i*6)*4].map(v=>v*(o.kind==='dice'?2:1)),
     z:supportHeight(o.mesh,o.q,o.size)+(o.lift||0),
     hits:0, rest:0, settled:false, age:0,
   }));

@@ -65,6 +65,7 @@ export function mount(container, ctx) {
     if (busy || resultSheet) return;
     busy = true;
     primaryBtn.disabled = true;
+    form.querySelectorAll('select, button').forEach(el => el.disabled = true);
     ritual.clear();
     try {
       chart = computeChart(input);
@@ -73,13 +74,13 @@ export function mount(container, ctx) {
       toast('这个日期排不出来，请检查一下');
       busy = false;
       primaryBtn.disabled = false;
+      form.querySelectorAll('select, button').forEach(el => el.disabled = false);
       return;
     }
     haptic.light();
     sound.play('flip');
     st.setBadge(`${chart.lunarText} · ${chart.shengXiao}年生`);
     if (!await ritual.focus()) return;
-    form.querySelectorAll('select, button').forEach(el => el.disabled = true);
     barsEl.hidden = masterEl.hidden = todayEl.hidden = true;
     if (!await renderPillars()) return;
     form.querySelectorAll('select, button').forEach(el => el.disabled = false);

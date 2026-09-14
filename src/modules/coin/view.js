@@ -72,7 +72,7 @@ export function mount(container, ctx) {
   let mode = storage.get('mode', 'coin');
   if (!MODES.some((m) => m.value === mode)) mode = 'coin';
   let busy = false;
-  let diceRun = 0, diceDriven = false;
+  let diceRun = 0, diceDriven = false, diceRoundValues = null;
   let burst = Number(storage.get('burst', 1)) || 1;
   let tally = Object.assign({ heads: 0, tails: 0, edge: 0 }, storage.get('coin.tally', {}));
   let coinHistory = storage.get('coin.history', []);
@@ -481,14 +481,16 @@ export function mount(container, ctx) {
     if (!diceDriven) {
       if (Math.hypot(ax, ay, az) < DICE_WAKE && !m.holding) return;
       const run = ++diceRun;
+      // A live shake can take over a button throw without drawing new faces.
+      const values = diceRoundValues ??= rollDice(diceCount, diceSides, rng.random);
       diceDriven = true; busy = true; lock(true); hideResult();
       jitter.style.transform = ''; ritual.clear(); ritual.step(1);
       ritual.focus();
-      tray.shake(() => rollDice(diceCount, diceSides, rng.random)).then(values => {
+      tray.shake(() => values).then(values => {
         if (!alive || run !== diceRun) return;
         diceDriven = false;
         if (values) finishDice(values);
-        else { busy = false; lock(false); }
+        else { diceRoundValues = null; busy = false; lock(false); }
       });
     }
     tray.driveDice({ ax, ay, az, t: m.t ?? performance.now(), holding: !!m.holding });
@@ -496,24 +498,25 @@ export function mount(container, ctx) {
 
   async function doRoll(intensity) {
     const run = ++diceRun;
+    const values = diceRoundValues = rollDice(diceCount, diceSides, rng.random);
     busy = true;
     lock(true);
     hideResult();
     st.setHint('');
     if (!await ritual.focus() || run !== diceRun) return;
     ritual.step(1);
-    const values = rollDice(diceCount, diceSides, rng.random);
     sound.play('shake');
     haptic.rattle();
     const completed = await tray.roll(values, intensity);
     if (!alive || run !== diceRun) return;
-    if (!completed) { busy = false; lock(false); return; }
+    if (!completed) { diceRoundValues = null; busy = false; lock(false); return; }
     if (!await wait(reduce ? 30 : 260)) return;
     if (run !== diceRun) return;
     finishDice(values);
   }
 
   function finishDice(values) {
+    diceRoundValues = null;
     const a = analyzeDice(values, diceSides);
     const keys = diceSpecialKeys(values, diceSides);
     const size = DICE_SIZE[a.size];
@@ -801,7 +804,7 @@ export function mount(container, ctx) {
     }
     async function roll(values,intensity=20) {
       sound.play('whoosh'); haptic.release();
-      const ok=await scene.throwTo(values,intensity,{duration:ctx.platform.simpleMotion?1600:3400,onPhase:(phase)=>{el.dataset.phase=phase;if(phase==='settling')ritual.step(2);}});
+      const ok=await scene.throwTo(values,intensity,{duration:ctx.platform.simpleMotion?1600:2450,onPhase:(phase)=>{el.dataset.phase=phase;if(phase==='settling')ritual.step(2);}});
       if(ok) { el.dataset.values=values.join(',');el.dataset.phase='settled'; }
       return ok;
     }
