@@ -1,3 +1,6 @@
+import { createMotionRecognizer } from './motion.js';
+import { createHaptic } from './haptic.js';
+
 // 平台层（Web 实现）。模块只通过这里拿"体感 / 手势 / 震动 / 音效 / 存储 / 分享"，
 // 迁移微信小程序时只需实现同名接口的 weapp.js（映射表见 docs/PORTING_WEAPP.md）。
 //
@@ -37,48 +40,16 @@ function createMotion() {
     lastEventAt: 0,
   };
 
-  // 阈值（m/s²，去重力后的线性加速度）
-  const PEAK = 13;
-  const REFRACTORY = 90; // ms，两次峰值最小间隔
-  const WINDOW = 900; // ms，峰值统计窗口
-  const TOSS_WAIT = 380; // ms，单次爆发后等待多久确认为"甩"
-  const SHAKE_COOLDOWN = 800;
-
-  const grav = { x: 0, y: 0, z: 9.8 };
-  let peaks = [];
-  let lastPeakAt = 0;
-  let lastShakeAt = 0;
-  let tossTimer = null;
-  let peakSum = 0;
-
-  function handlePeak(t, mag, vec) {
-    peaks.push({ t, mag, vec });
-    peaks = peaks.filter((p) => t - p.t < WINDOW);
-    if (peaks.length >= 3) {
-      clearTimeout(tossTimer);
-      tossTimer = null;
-      if (t - lastShakeAt > SHAKE_COOLDOWN) {
-        lastShakeAt = t;
-        const intensity = peaks.reduce((s, p) => s + p.mag, 0) / peaks.length;
-        emit('shake', { intensity, count: peaks.length, source: 'sensor' });
-      }
-      peaks = [];
-      return;
-    }
-    if (peaks.length === 1) {
-      clearTimeout(tossTimer);
-      tossTimer = setTimeout(() => {
-        tossTimer = null;
-        if (peaks.length && peaks.length <= 2 && performance.now() - lastShakeAt > SHAKE_COOLDOWN) {
-          const p = peaks.reduce((a, b) => (b.mag > a.mag ? b : a), peaks[0]);
-          emit('toss', { intensity: p.mag, vec: p.vec, source: 'sensor' });
-        }
-        peaks = [];
-      }, TOSS_WAIT);
-    }
+  const recognizer = createMotionRecognizer();
+  const grav = { x: 0, y: 0, z: 0 };
+  let gravityReady = false, peakSum = 0, warmUntil = 0;
+  function resetInput() {
+    recognizer.reset(); gravityReady = false; peakSum = 0;
+    warmUntil = performance.now() + 350;
   }
 
   function onDeviceMotion(e) {
+    if (document.hidden) return;
     const t = performance.now();
     state.live = true;
     state.lastEventAt = t;
@@ -91,6 +62,9 @@ function createMotion() {
       az = e.acceleration.z;
     } else if (e.accelerationIncludingGravity && e.accelerationIncludingGravity.x != null) {
       const a = e.accelerationIncludingGravity;
+      if (!gravityReady) {
+        Object.assign(grav, a); gravityReady = true; warmUntil = t + 350;
+      }
       const k = 0.85;
       grav.x = k * grav.x + (1 - k) * a.x;
       grav.y = k * grav.y + (1 - k) * a.y;
@@ -101,13 +75,17 @@ function createMotion() {
     } else {
       return;
     }
-    const mag = Math.hypot(ax || 0, ay || 0, az || 0);
+    ax ||= 0; ay ||= 0; az ||= 0;
+    // Device acceleration uses the portrait axes. Map the upward gesture to the
+    // current screen orientation, so landscape users get the same interaction.
+    const angle = (window.screen?.orientation?.angle ?? window.orientation ?? 0) * Math.PI / 180;
+    const x = ax * Math.cos(angle) - ay * Math.sin(angle);
+    const y = ax * Math.sin(angle) + ay * Math.cos(angle);
+    const mag = Math.hypot(x, y, az);
     peakSum = peakSum * 0.8 + mag * 0.2;
-    emit('motion', { mag, smooth: peakSum, ax, ay, az, t });
-    if (mag > PEAK && t - lastPeakAt > REFRACTORY) {
-      lastPeakAt = t;
-      handlePeak(t, mag, { x: ax, y: ay, z: az });
-    }
+    const input = t < warmUntil ? { phase: 'idle', progress: 0 } : recognizer.push({ ax: x, ay: y, az, t });
+    emit('motion', { mag, smooth: peakSum, ax: x, ay: y, az, t, phase: input.phase, progress: input.progress, kind: input.kind });
+    if (input.event) emit(input.event.type, input.event);
   }
 
   function onOrientation(e) {
@@ -131,6 +109,8 @@ function createMotion() {
   function start() {
     if (!isBrowser || state.started) return;
     state.started = true;
+    resetInput();
+    document.addEventListener('visibilitychange', resetInput);
     window.addEventListener('devicemotion', onDeviceMotion, { passive: true });
     if ('ondeviceorientationabsolute' in window) {
       window.addEventListener('deviceorientationabsolute', onOrientation, { passive: true });
@@ -187,6 +167,7 @@ function createMotion() {
     onTilt: on('tilt'),
     onHeading: on('heading'),
     requestPermission,
+    resetInput,
     simulate,
     get state() {
       return state.permission;
@@ -391,40 +372,6 @@ function createGesture() {
   }
 
   return { track, flick, drag, spin, rub, tap, longPress };
-}
-
-/* ---------------------------------- 震动 ---------------------------------- */
-function createHaptic(storage) {
-  let enabled = storage.get('haptic', true);
-  const can = isBrowser && typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
-  const pattern = (p) => {
-    if (!enabled || !can) return false;
-    try {
-      return navigator.vibrate(p);
-    } catch {
-      return false;
-    }
-  };
-  return {
-    pattern,
-    tap: () => pattern(10),
-    light: () => pattern(15),
-    medium: () => pattern(30),
-    heavy: () => pattern([55]),
-    success: () => pattern([20, 40, 20]),
-    double: () => pattern([15, 60, 15]),
-    rattle: () => pattern([8, 18, 8, 18, 8, 18, 8]),
-    get enabled() {
-      return enabled;
-    },
-    setEnabled(v) {
-      enabled = !!v;
-      storage.set('haptic', enabled);
-    },
-    get supported() {
-      return can;
-    },
-  };
 }
 
 /* ---------------------------------- 音效（合成） ---------------------------------- */

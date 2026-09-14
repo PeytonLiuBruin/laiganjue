@@ -1,5 +1,6 @@
 // A small, real 3D mesh renderer. The crescent has a flat cut face and a curved
 // wooden back; both use the same vertices. No WebGL dependency or external model.
+import { motionCurve } from '../../core/motion.js';
 export const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const TAU = Math.PI * 2;
 export const FIRST_IMPACT = 0.4;
@@ -43,7 +44,7 @@ export function tossPose(t, { side = 1, power = 1, face = 'flat', spread = 68, h
   return {
     x: f < FIRST_IMPACT ? (start?.x ?? side * 61) * (1 - flight) + impactX * flight : impactX * decay + side * spread * (1 - decay),
     y: (start?.y ?? 0) * (1 - flight) - lift - Math.abs(rocking) * 3,
-    rx: f < FIRST_IMPACT ? startRot * (1 - flight) + landingRot * flight : finishRot - TAU * 0.75 * decay + rocking * 0.38,
+    rx: f < FIRST_IMPACT ? startRot * (1 - flight) + landingRot * flight : finishRot + motionCurve(f, [[.4, -270], [.508, -160], [.68, -68], [.81, -58], [.95, 6], [1, 0]]) * Math.PI / 180,
     rz: (start?.rz ?? side * 0.3) * (1 - flight) - side * 0.3 * flight + Math.sin(flight * Math.PI) * side * 0.9 + rocking * side * 0.26,
     ry: (start?.ry ?? 0) * (1 - flight) + Math.sin(flight * Math.PI) * side * 0.55 + rocking * side * 0.22,
   };
@@ -112,7 +113,8 @@ export function createJiaobeiScene(canvas, ctx) {
     if (active) return;
     poses = [-1, 1].map((side) => ({ x: side * 61 + clamp(dx * 0.25, -22, 22), y: clamp(dy * 0.4, -44, 10), rx: 0.18 + clamp(-dy / 180, 0, 0.4), ry: dx / 280, rz: side * 0.3 + dx / 360 })); render();
   }
-  function toss(result, intensity) {
+  function toss(result, intensity, onPhase = () => {}) {
+    let lastPhase = null;
     active = true;
     const power = clamp(intensity / 20, 0.65, 1.65);
     const total = ctx.platform.prefersReducedMotion ? 160 : 3400 + power * 360;
@@ -130,9 +132,16 @@ export function createJiaobeiScene(canvas, ctx) {
         poses = [result.a, result.b].map((face, i) => {
           const delay = ctx.platform.prefersReducedMotion ? 0 : i * 180;
           const t = ctx.platform.prefersReducedMotion ? 1 : clamp((elapsed - delay) / total, 0, 1);
-          const thresholds = [FIRST_IMPACT, 0.508, 0.592, 0.76];
-          if (t >= thresholds[impacts[i]]) { ctx.sound.play(impacts[i] ? 'tick' : 'clack'); if (!impacts[i]) ctx.haptic.medium(); impacts[i]++; }
-          if (i === 0) canvas.dataset.phase = t < FIRST_IMPACT ? 'flight' : t < 0.95 ? 'rolling' : 'settled';
+          const thresholds = [FIRST_IMPACT, 0.508, 0.592, 0.95];
+          if (t >= thresholds[impacts[i]]) {
+            ctx.sound.play(impacts[i] ? 'tick' : 'clack');
+            ctx.haptic.impact([1, .55, .25, .15][impacts[i]]); impacts[i]++;
+          }
+          if (i === 1) {
+            const phase = t < FIRST_IMPACT ? 'flight' : t < .68 ? 'rolling' : t < 1 ? 'settling' : 'settled';
+            canvas.dataset.phase = phase;
+            if (phase !== lastPhase) { lastPhase = phase; onPhase(phase); }
+          }
           return tossPose(t, { side: i ? 1 : -1, face, power, start: starts[i], spread: Math.min(width * 0.22, 82), height: ctx.platform.prefersReducedMotion ? 0 : Math.max(30, height * 0.70 - scaleClearance()) * (0.68 + power * 0.16) });
         });
         render();

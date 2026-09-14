@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createBlockMesh, tossPose, FIRST_IMPACT } from '../src/modules/jiaobei/model.js';
-import { coinPose, COIN_IMPACTS } from '../src/modules/coin/motion.js';
+import { coinPose, COIN_IMPACTS, dicePose, DICE_SETTLING, DICE_IMPACTS } from '../src/modules/coin/motion.js';
+import { diceRotation } from '../src/modules/coin/core.js';
 import { overRope } from '../src/modules/omikuji/interaction.js';
 import { buildDeck } from '../src/modules/tarot/core.js';
 import { readFile } from 'node:fs/promises';
@@ -101,4 +102,31 @@ test('图集覆盖 78 张牌且映射唯一，力量与正义沿用经典牌号'
   assert.equal(map.M11.name, 'justice');
   assert.equal(map.W11.name, 'page-of-wands');
   assert.equal(map.P14.name, 'king-of-pentacles');
+});
+
+test('骰子每个点数都先倚在棱边，再倾倒；任何旋转下都不穿透托盘', () => {
+  for (let value = 1; value <= 6; value++) for (const power of [.7, 1.5]) for (const sign of [-1, 1]) {
+    const rot = diceRotation(value), target = { rx: rot.rx + sign * 1080, ry: rot.ry + sign * 1080 };
+    const opts = { target, power };
+    const near = dicePose(DICE_SETTLING, opts), hold = dicePose(.83, opts), final = dicePose(1, opts);
+    assert(Math.abs(final.rx - near.rx) >= 40);
+    assert(Math.abs(hold.rx - near.rx) <= 6, '棱边短暂慢下来');
+    assert.equal(final.rx, target.rx); assert.equal(final.ry, target.ry);
+    assert(Math.abs(final.z - 26) < 1e-8); assert(Math.abs(final.x) < 1e-8); assert(Math.abs(final.y) < 1e-8);
+    for (let i = 0; i <= 300; i++) {
+      const p = dicePose(i / 300, opts), x = p.rx * Math.PI / 180, y = p.ry * Math.PI / 180;
+      assert(Object.values(p).every(Number.isFinite));
+      const bottom = p.z - 26 * (Math.abs(Math.cos(x) * Math.sin(y)) + Math.abs(Math.sin(x)) + Math.abs(Math.cos(x) * Math.cos(y)));
+      assert(bottom > -1e-8, '骰子棱角不能没入桌面');
+    }
+    for (const t of DICE_IMPACTS) {
+      const before = dicePose(t - 1e-8, opts), after = dicePose(t + 1e-8, opts);
+      for (const key of Object.keys(before)) assert(Math.abs(before[key] - after[key]) < .001, key);
+    }
+  }
+});
+
+test('硬币与筊杯在结果落定之前保留可见的倾斜，随后才回到最终面', () => {
+  assert(Math.abs(coinPose(.8).rx - coinPose(1).rx) > 50);
+  assert(Math.abs(tossPose(.8).rx - tossPose(1).rx) > .9);
 });

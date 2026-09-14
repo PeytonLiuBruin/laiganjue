@@ -1,3 +1,5 @@
+import { createRitual } from '../../ui/ritual.js';
+import { coinPose, COIN_IMPACTS } from '../coin/motion.js';
 // 六爻 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 import { COIN, tossCoins, initSession, reduceSession, sessionValues, buildReading, luckLabel, formatShareText, formatBrief } from './core.js';
 import { UI, LINE_POSITIONS } from './data.js';
@@ -13,7 +15,7 @@ const REST_FACE = [COIN.ZI, COIN.HUA, COIN.ZI];
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
-  const { h, button, stage, hint, resultCard, sheet, input, toast, wait, confetti } = kit;
+  const { h, button, stage, hint, resultCard, sheet, input, toast, confetti } = kit;
   const reduce = () => ctx.platform.prefersReducedMotion;
 
   /* ---------- 状态 ---------- */
@@ -31,6 +33,8 @@ export function mount(container, ctx) {
 
   /* ---------- 舞台 ---------- */
   const st = stage({ cls: 'ly-stage', hint: UI.hintIdle, badge: '金钱课 · 待掷', minHeight: 350 });
+  const ritual = createRitual(ctx, st, ['问事', '掷钱', '见爻', '解读']);
+  const wait = ritual.pause;
   const mat = h('div', { class: 'ly-mat' }, h('span', { class: 'ly-mat-ring' }));
   const pit = h('div', { class: 'ly-pit' });
   const coins = [0, 1, 2].map(makeCoin);
@@ -47,7 +51,7 @@ export function mount(container, ctx) {
   st.scene.append(mat, pit, board.el, counter, reveal);
 
   /* ---------- 操作 ---------- */
-  const tossBtn = button(UI.tossLabel, { variant: 'primary', size: 'large', primary: true, onClick: () => doToss(22) });
+  const tossBtn = button(UI.tossLabel, { variant: 'primary', size: 'large', primary: true, onClick: () => session.done && lastReading ? showResult(lastReading) : doToss(22) });
   const autoBtn = button(UI.autoLabel, { variant: 'ghost', onClick: toggleAuto });
   const resetBtn = button(UI.resetLabel, { variant: 'ghost', icon: 'refresh', onClick: () => reset() });
   const histEl = h('div', { class: 'ly-hist' });
@@ -62,8 +66,8 @@ export function mount(container, ctx) {
   renderHistory();
 
   /* ---------- 体感 / 手势：三条入口同一件事 ---------- */
-  ctx.motion.onToss((e) => doToss(e.intensity));
-  ctx.motion.onShake((e) => doToss(e.intensity, { rattle: true }));
+  ctx.motion.onToss((e) => { if (!session.done) doToss(e.intensity); });
+  ctx.motion.onShake((e) => { if (!session.done) doToss(e.intensity, { rattle: true }); });
   ctx.gesture.flick(pit, (g) => doToss(g.intensity), { minSpeed: 0.5 });
   // 倾斜：钱盘轻微视差；持机微动：铜钱在手里轻颤
   const par = kit.parallax(mat, { max: 5 });
@@ -79,12 +83,13 @@ export function mount(container, ctx) {
 
   /* ---------- 掷钱 ---------- */
   async function doToss(intensity = 20, { rattle = false } = {}) {
-    if (busy) return;
+    if (busy || !ritual.alive || document.querySelector('.sheet.open')) return;
     if (session.done) reset(true);
     busy = true;
     const g = gen;
     setButtons();
     st.setHint('');
+    if (!await ritual.focus()) return;
     if (!startedAt) startedAt = new Date();
 
     const power = Math.max(0.7, Math.min(1.5, intensity / 20));
@@ -93,10 +98,12 @@ export function mount(container, ctx) {
       haptic.rattle();
       await tremble(1, reduce() ? 10 : 220);
     }
+    if (!ritual.alive) return;
     const toss = tossCoins();
     sound.play('whoosh');
     haptic.light();
     await Promise.all(coins.map((c, i) => c.fly(toss.coins[i], power, i * 60)));
+    if (!ritual.alive) return;
     if (g !== gen) {
       // 飞行途中被"重起"：这一掷作废
       busy = false;
@@ -104,6 +111,7 @@ export function mount(container, ctx) {
       return;
     }
 
+    haptic.settle();
     session = reduceSession(session, toss);
     const idx = session.tosses.length - 1;
     board.light(idx, toss.value);
@@ -114,7 +122,7 @@ export function mount(container, ctx) {
 
     if (session.done) {
       auto = false;
-      await wait(reduce() ? 10 : 480);
+      if (!await wait(reduce() ? 10 : 480)) return;
       await finish();
     } else if (!auto) {
       st.setHint(`还需 ${6 - session.tosses.length} 掷`);
@@ -157,8 +165,7 @@ export function mount(container, ctx) {
     storage.set('history', history);
     renderHistory();
 
-    await wait(reduce() ? 10 : 900);
-    showResult(reading);
+    st.setHint('卦象已成，点击卦名展开解读');
   }
 
   /* ---------- 结果抽屉 ---------- */
@@ -284,6 +291,7 @@ export function mount(container, ctx) {
     if (auto && !busy) doToss(20);
   }
   function setButtons() {
+    tossBtn.setLabel(session.done ? '展开解读' : UI.tossLabel);
     tossBtn.disabled = busy || auto;
     autoBtn.setLabel(auto ? UI.autoStop : UI.autoLabel);
     autoBtn.classList.toggle('soft', auto);
@@ -422,54 +430,35 @@ export function mount(container, ctx) {
     };
 
     async function fly(face, power = 1, delay = 0) {
-      if (delay) await wait(delay);
+      if (delay && !await wait(reduce() ? 1 : delay)) return;
+      if (!ritual.alive) return;
       cancel();
-      const dur = reduce() ? 10 : 760 + power * 160;
-      const height = -(150 + 90 * power);
-      const spins = (2 + Math.round(power * 2)) * 360;
+      const dur = reduce() ? 10 : 2850 + power * 300;
       const finalRot = face === COIN.ZI ? 0 : 180;
-      const end = { x: rest.x + (Math.random() - 0.5) * 24, y: rest.y + (Math.random() - 0.5) * 16, r: (Math.random() - 0.5) * 70 };
-      const from = pose;
-      anims.push(
-        el.animate(
-          [
-            { transform: T(from), offset: 0 },
-            { transform: `translate(${(from.x + end.x) / 2}px, ${height}px) rotateZ(${end.r / 2}deg)`, offset: 0.42, easing: 'cubic-bezier(.2,.9,.4,1)' },
-            { transform: T(end), offset: 0.78, easing: 'cubic-bezier(.6,0,.9,.4)' },
-            { transform: `translate(${end.x}px, ${end.y - 8}px) rotateZ(${end.r}deg)`, offset: 0.87 },
-            { transform: T(end), offset: 1 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-      );
-      anims.push(
-        shadow.animate(
-          [
-            { transform: 'scale(1)', opacity: 0.5 },
-            { transform: 'scale(0.35)', opacity: 0.12, offset: 0.42 },
-            { transform: 'scale(1.06)', opacity: 0.5, offset: 0.78 },
-            { transform: 'scale(1)', opacity: 0.5 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-      );
-      anims.push(
-        body.animate(
-          [
-            { transform: `rotateX(${faceRot}deg) rotateY(0deg)` },
-            { transform: `rotateX(${spins + finalRot}deg) rotateY(${(Math.random() - 0.5) * 30}deg)`, offset: 0.78, easing: 'cubic-bezier(.3,.7,.5,1)' },
-            { transform: `rotateX(${spins + finalRot}deg) rotateY(0deg)` },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-      );
-      pose = end;
-      faceRot = finalRot;
-      await wait(dur * 0.78);
-      sound.play('coin');
-      haptic.medium();
-      await wait(dur * 0.22 + 10);
-      el.dataset.face = finalRot === 0 ? 'zi' : 'hua';
+      const target = (Math.floor(faceRot / 360) + 3) * 360 + finalRot;
+      const from = pose, end = { x: rest.x + (ctx.rng.random() - .5) * 18, y: rest.y + (ctx.rng.random() - .5) * 12, r: (ctx.rng.random() - .5) * 50 };
+      const height = Math.max(32, Math.min(105, st.el.getBoundingClientRect().height * .28));
+      const position = [], rotation = [], shadows = [];
+      for (let i = 0; i <= 100; i++) {
+        const offset = i / 100, t = reduce() ? 1 : offset;
+        const p = coinPose(t, { start: faceRot, target, height, drift: 12, wobble: from.r, endWobble: end.r });
+        position.push({ offset, transform: `translate(${from.x * (1-t) + end.x * t + p.x}px,${from.y * (1-t) + end.y * t + p.y}px) rotateZ(${p.rz}deg)` });
+        rotation.push({ offset, transform: `rotateX(${p.rx}deg) rotateY(${p.ry}deg)` });
+        shadows.push({ offset, transform: `scale(${p.shadowScale})`, opacity: p.shadowOpacity });
+      }
+      anims = [[el, position], [body, rotation], [shadow, shadows]].map(([node, frames]) => ritual.track(node.animate(frames, { duration: dur, fill: 'forwards', easing: 'linear' })));
+      delete el.dataset.face;
+      let previous = 0;
+      for (const [i, t] of COIN_IMPACTS.entries()) {
+        if (!await wait(dur * (t - previous))) return;
+        sound.play(i ? 'tick' : 'coin'); haptic.impact([1, .5, .25, .1][i]);
+        if (i === 2) st.setHint('铜钱还在晃，等三枚都停下');
+        previous = t;
+      }
+      if (!await wait(dur * (1 - previous))) return;
+      await Promise.all(anims.map((a) => a.finished.catch(() => {})));
+      if (!ritual.alive) return;
+      pose = end; faceRot = finalRot; cancel(); apply();
     }
     function restore() {
       cancel();

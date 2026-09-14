@@ -106,7 +106,7 @@ export function mount(container, ctx) {
 
   /* ---------- 体感 / 手势 ---------- */
   ctx.motion.onShake((e) => { if (!resultSheet && !isFull(session)) doShuffle(e.intensity); });
-  ctx.motion.onToss((e) => doPrimary(true, e.intensity));
+  ctx.motion.onToss((e) => { if (!isFull(session)) doPrimary(true, e.intensity); });
   ctx.gesture.flick(
     deckZone,
     (g) => {
@@ -135,12 +135,11 @@ export function mount(container, ctx) {
   });
   ctx.motion.onTilt(kit.parallax(spreadEl, { max: 5 }));
   // 实时抖动：手机轻晃时牌堆跟着颤（节流）
-  ctx.motion.onMotion(({ mag }) => {
+  ctx.motion.onMotion(({ mag, ax, ay }) => {
     const t = Date.now();
     if (busy || resultSheet || isFull(session) || reduce || mag < 5 || t - lastMotionAt < 90) return;
     lastMotionAt = t;
-    const k = Math.min(mag, 20) * 0.35;
-    pile.style.transform = `translate(${(rng.random() - 0.5) * k}px, ${(rng.random() - 0.5) * k * 0.6}px)`;
+    pile.style.transform = `translate(${Math.max(-10, Math.min(10, -(ax || 0) * .5))}px, ${Math.max(-8, Math.min(8, -(ay || 0) * .4))}px)`;
     ctx.setTimeout(() => (pile.style.transform = ''), 110);
   });
 
@@ -377,8 +376,8 @@ export function mount(container, ctx) {
     haptic.light();
     await ritual.animate(
       c.inner,
-      [{ transform: c.inner.style.transform || 'rotateY(0deg) translateZ(0)' }, { transform: 'rotateY(78deg) translateZ(28px)', offset: 0.4 }, { transform: 'rotateY(100deg) translateZ(28px)', offset: 0.6 }, { transform: 'rotateY(180deg) translateZ(0)' }],
-      { duration: D(1700), easing: 'cubic-bezier(.32,.2,.25,1)' },
+      [{ transform: c.inner.style.transform || 'rotateY(0deg) translateZ(0)' }, { transform: 'rotateY(78deg) translateZ(28px)', offset: 0.36 }, { transform: 'rotateY(84deg) translateZ(30px)', offset: 0.62 }, { transform: 'rotateY(180deg) translateZ(0)' }],
+      { duration: D(1900), easing: 'cubic-bezier(.32,.2,.25,1)' },
     );
     if (!ritual.alive) return;
     c.inner.getAnimations().forEach((a) => a.cancel());
@@ -387,7 +386,7 @@ export function mount(container, ctx) {
     if (!ritual.alive) return;
     c.el.setAttribute('aria-label', `${d.card.name}，${d.reversed ? '逆位' : '正位'}，点击查看解读`);
     slots[idx].label.textContent = `${getSpread(spreadId).positions[idx].label} · ${d.reversed ? '逆位' : '正位'}`;
-    haptic.tap();
+    haptic.settle();
     omen(d);
     if (isDone(session)) await onAllFlipped();
     busy = false;
