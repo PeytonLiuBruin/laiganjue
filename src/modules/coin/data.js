@@ -207,7 +207,7 @@ export const STAGE_HINT = {
 
 export const GESTURE_TEXT = {
   coin: '向上轻甩手机后收住，或上滑硬币后松手',
-  dice: '轻摇手机后收住，或拖动骰子后松手',
+  dice: '摇动手机或拖动骰子，停下后落定',
   choice: '向上轻甩手机后收住，或上滑硬币后松手',
 };
 
