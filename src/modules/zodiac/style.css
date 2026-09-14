@@ -1,24 +1,65 @@
 /* 星座 模块样式：所有选择器以 .m-zodiac 开头 */
-.m-zodiac .zd-stage { min-height: 300px; }
+
+/* —— 舞台：星仪居中，四周留白；首屏（含 SE）看得到舞台与主按钮 —— */
+.m-zodiac .stage.zd-stage { min-height: clamp(300px, 44svh, 360px); margin-top: 14px; }
 .m-zodiac .zd-stage .stage-floor { display: none; }
-.m-zodiac .zd-picker { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
-.m-zodiac .zd-picker .chips.scroll { padding: 2px 2px 6px; }
-.m-zodiac .zd-bday .input { font-size: 14px; }
-.m-zodiac .zd-map { position: absolute; inset: 0; pointer-events: none; }
-.m-zodiac .zd-map-svg { width: 100%; height: 100%; }
-.m-zodiac .zd-lines line { stroke: var(--line-strong); stroke-width: 0.6; }
-.m-zodiac .zd-dots circle { fill: var(--accent); }
+.m-zodiac .zd-slot { cursor: pointer; }
 .m-zodiac .zd-slot .model-slot-glyph { opacity: 0.35; }
-.m-zodiac .zd-quick { margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
-.m-zodiac .zd-qhead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-.m-zodiac .zd-qtitle { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.1em; }
-.m-zodiac .zd-qlevel { color: var(--accent); font-size: 13px; letter-spacing: 0.1em; }
-.m-zodiac .zd-qrow { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text-2); }
-.m-zodiac .zd-lucky { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); margin-top: 8px; flex-wrap: wrap; }
-.m-zodiac .zd-swatch { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line-strong); vertical-align: middle; margin-right: 6px; }
-.m-zodiac .zd-sec-title { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.14em; margin: 22px 0 8px; }
-.m-zodiac .zd-meta { font-size: 12px; color: var(--text-3); letter-spacing: 0.04em; line-height: 1.7; }
-.m-zodiac .zd-traits { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
-.m-zodiac .zd-trait { font-size: 12px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--accent); }
-.m-zodiac .zd-text { font-size: 14px; line-height: 1.85; color: var(--text-2); }
+
+/* —— 选择器：一行横滑芯片 + 生日按钮，控件不超过两行 —— */
+.m-zodiac .zd-picker { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.m-zodiac .zd-picker-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.m-zodiac .zd-strip { flex: 1; min-width: 0; }
+.m-zodiac .zd-picker .zd-strip .chips.scroll {
+  display: flex; flex-wrap: nowrap; justify-content: flex-start; gap: 6px;
+  overflow-x: auto; padding: 2px 10px; scroll-snap-type: x proximity; scroll-padding-inline: 10px;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10px, #000 calc(100% - 14px), transparent);
+}
+.m-zodiac .zd-picker .zd-strip .chip { flex: none; min-height: 44px; padding: 8px 12px; font-size: 14px; white-space: nowrap; scroll-snap-align: center; }
+.m-zodiac .zd-picker .zd-strip .chip.active { background: var(--surface-2); border-color: var(--line-strong); color: var(--accent); }
+.m-zodiac .zd-bday-btn { flex: none; min-height: 44px; padding-inline: 12px; gap: 6px; color: var(--text-2); }
+.m-zodiac .zd-bday-btn.active { color: var(--accent); background: var(--surface-2); }
+.m-zodiac .zd-bday { animation: ritual-appear 0.3s ease both; }
+.m-zodiac .zd-bday .field-label { font-size: 12px; letter-spacing: 0.04em; }
+.m-zodiac .zd-bday .input { font-size: 15px; }
+
+/* —— 舞台下唯一一句提示：忙碌 / 完成时收起手势图标 —— */
+.m-zodiac .zd-hint { min-height: 22px; }
+.m-zodiac .zd-hint.zd-quiet .hint-glyph { display: none; }
+.m-zodiac .zd-spacer { height: 0; }
+
+/* —— 结果条里的星级（与 ritual-receipt 同一块，标题 → 一句话 → 星级 → 幸运 → 展开解读）—— */
+.m-zodiac .zd-quick { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.m-zodiac .zd-qrow { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 14px; color: var(--text-2); }
+.m-zodiac .zd-qlabel { flex: none; letter-spacing: 0.06em; }
+.m-zodiac .zd-qrow .stars { font-size: 14px; letter-spacing: 0.04em; }
+.m-zodiac .zd-qmain { font-size: 15px; color: var(--text); }
+.m-zodiac .zd-qmain .stars { font-size: 18px; }
+.m-zodiac .zd-qgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; }
+.m-zodiac .zd-lucky { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 13px; line-height: 1.6; color: var(--text-2); }
+.m-zodiac .zd-swatch { flex: none; display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--line-strong); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35); }
+
+/* —— 档案：结果之后的静态资料，一条细线分开 —— */
+.m-zodiac .zd-profile { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); }
+.m-zodiac .zd-sec-title { font: 500 16px/1.4 var(--font-serif); letter-spacing: 0.09em; margin: 0 0 8px; color: var(--text); }
+.m-zodiac .zd-meta { font-size: 12px; color: var(--text-3); letter-spacing: 0.02em; line-height: 1.7; }
+.m-zodiac .zd-traits { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.m-zodiac .zd-trait { font-size: 12px; line-height: 1.5; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--accent); }
+.m-zodiac .zd-text { margin: 0; font-size: 15px; line-height: 1.85; color: var(--text-2); }
+
+/* —— 解读抽屉：印章不压字，分段紧凑 —— */
+.m-zodiac .result-kicker { padding-inline: 64px; }
+.m-zodiac .zd-sec { display: flex; flex-direction: column; gap: 4px; }
+.m-zodiac .zd-sec p { margin: 0; }
+.m-zodiac .zd-sec b { font-weight: 600; color: var(--text); }
 .m-zodiac .zd-sheet-stars .stars { font-size: 14px; }
+.m-zodiac .zd-sec .zd-lucky, .m-zodiac .zd-kw { font-size: 13px; color: var(--text-3); }
+.m-zodiac .zd-quote { font-family: var(--font-serif); color: var(--text); }
+.m-zodiac .zd-advice { color: var(--text-2); }
+
+@media (max-width: 375px) {
+  .m-zodiac .zd-qgrid { gap: 6px 10px; }
+  .m-zodiac .zd-picker .zd-strip .chip { padding-inline: 10px; }
+  .m-zodiac .zd-bday-btn { padding-inline: 10px; }
+}

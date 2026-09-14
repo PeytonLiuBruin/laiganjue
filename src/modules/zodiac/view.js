@@ -1,4 +1,5 @@
 // 星座 · 界面：西方十二星座 / 东方十二生肖。逻辑与文案见 core.js / data.js（星仪随所选星座变化）。
+// 节奏：选好 → 点星仪 / 看运势 / 摇一摇 → 星光聚拢 → 揭示（结果条 + 星级）→「展开解读」抽屉。
 import { signFromDate, animalFromYmd, signFortune, animalFortune, shareText, formatDate, signById, animalById, stepIn } from './core.js';
 import { SIGNS, ANIMALS, ASPECT_LABEL, ELEMENTS, QUALITIES, UI, BRANCH_HOUR } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
@@ -12,69 +13,49 @@ export function mount(container, ctx) {
   if (!UI.tabs.some((t) => t.value === tab)) tab = 'sign';
   let signId = storage.get('sign', 'aries');
   let animalId = storage.get('animal', 'shu');
+  let bday = String(storage.get('bday', '') || '');
   let fortune = null;
   let resultSheet = null;
   let busy = false;
 
+  /* ---------- 舞台 ---------- */
   const st = stage({ cls: 'zd-stage', badge: '星座' });
   const ritual = createRitual(ctx, st, ['选择', '看运势', '解读']);
-  const slot = createModelSlot(ctx, { id: 'zodiac.sky', label: '星空', glyph: '♈', hint: UI.stageHint.sign });
-  slot.el.classList.add('zd-slot');
-  st.scene.append(slot.el);
+  // 星仪延后一拍再挂到舞台上（见 mountSky），先把界面画出来。
+  let slot = null;
+  let pendingSky = {};
+  const sky = {
+    set(state) {
+      pendingSky = { ...pendingSky, ...state };
+      slot?.set(state);
+    },
+  };
 
-  /* ---------- 选择器 ---------- */
+  /* ---------- 选择器：一行横滑芯片 + 生日 ---------- */
   const signChips = chips(
     SIGNS.map((s) => ({ value: s.id, label: `${s.glyph} ${s.short}` })),
-    {
-      value: signId,
-      scroll: true,
-      onChange: (v) => {
-        signId = v;
-        storage.set('sign', v);
-        refreshStage();
-        haptic.tap();
-      },
-    },
+    { value: signId, scroll: true, onChange: (v) => pick(v, true) },
   );
-  const bdayInput = input({
-    type: 'date',
-    onInput: (v) => {
-      if (!v) return;
-      const [, m, d] = v.split('-').map(Number);
-      if (!m || !d) return;
-      if (tab === 'sign') {
-        const s = signFromDate(m, d);
-        signId = s.id;
-        storage.set('sign', s.id);
-        signChips.set(s.id);
-      } else {
-        const y = Number(v.split('-')[0]);
-        const a = animalFromYmd(y, m, d);
-        animalId = a.id;
-        storage.set('animal', a.id);
-        animalChips.set(a.id);
-        toast(`${a.ganzhi}年 · 属${a.name}`);
-      }
-      refreshStage();
-    },
-  });
   const animalChips = chips(
     ANIMALS.map((a) => ({ value: a.id, label: `${a.glyph}${a.name}` })),
-    {
-      value: animalId,
-      scroll: true,
-      onChange: (v) => {
-        animalId = v;
-        storage.set('animal', v);
-        refreshStage();
-        haptic.tap();
-      },
-    },
+    { value: animalId, scroll: true, onChange: (v) => pick(v, true) },
   );
-  const pickerWrap = h('div', { class: 'zd-picker' });
-  const profileEl = h('div', { class: 'zd-profile' });
-  const quickEl = h('div', { class: 'zd-quick', hidden: true });
+  const strip = h('div', { class: 'zd-strip' });
+  const bdayInput = input({ type: 'date', value: bday, onInput: applyBirthday });
+  bdayInput.setAttribute('aria-label', '生日');
+  const bdayField = h('div', { class: 'zd-bday', hidden: true });
+  const bdayBtn = button(UI.birthToggle, { variant: 'ghost', cls: 'zd-bday-btn', onClick: toggleBirthday });
+  bdayBtn.prepend(kit.svg('<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>', { size: 18 }));
+  bdayBtn.setAttribute('aria-expanded', 'false');
+  const pickerWrap = h('div', { class: 'zd-picker' }, h('div', { class: 'zd-picker-row' }, strip, bdayBtn), bdayField);
 
+  /* ---------- 提示 / 按钮 / 结果 ---------- */
+  const hintEl = kit.hint('tap', UI.gestureHint[tab]);
+  hintEl.classList.add('zd-hint');
+  const setHint = (text, quiet = false) => {
+    if (hintEl.lastChild.textContent !== text) hintEl.lastChild.textContent = text;
+    hintEl.classList.toggle('zd-quiet', quiet);
+  };
   const primaryBtn = button(UI.primary, { variant: 'primary', size: 'large', primary: true, onClick: () => look() });
   const randomBtn = button(UI.random, { variant: 'ghost', icon: 'refresh', onClick: () => randomPick() });
   const tabBar = tabs(UI.tabs, {
@@ -83,69 +64,159 @@ export function mount(container, ctx) {
       tab = v;
       storage.set('tab', v);
       showTab();
+      sound.play('paper');
       haptic.tap();
     },
   });
-  container.append(ritual.progress, tabBar.el, pickerWrap, h('div', { class: 'mt-3' }, st.el), kit.actionBar(primaryBtn, randomBtn), quickEl, ritual.receipt, profileEl);
+  const quickEl = h('div', { class: 'zd-quick' });
+  const spacer = h('div', { class: 'zd-spacer', attrs: { 'aria-hidden': 'true' } });
+  const profileEl = h('div', { class: 'zd-profile' });
+  container.append(ritual.progress, tabBar.el, pickerWrap, st.el, hintEl, kit.actionBar(primaryBtn, randomBtn), ritual.receipt, spacer, profileEl);
 
-  function current() {
-    return tab === 'sign' ? signById(signId) || SIGNS[0] : animalById(animalId) || ANIMALS[0];
+  /* ---------- 状态 ---------- */
+  const currentId = () => (tab === 'sign' ? signId : animalId);
+  const current = () => (tab === 'sign' ? signById(signId) || SIGNS[0] : animalById(animalId) || ANIMALS[0]);
+  const displayName = (cur) => (tab === 'sign' ? cur.name : `属${cur.name}`);
+
+  function setBusy(value) {
+    busy = value;
+    primaryBtn.disabled = value;
+    randomBtn.disabled = value;
+    bdayBtn.disabled = value;
+    bdayInput.disabled = value;
+    [signChips.el, animalChips.el, tabBar.el].forEach((el) => el.querySelectorAll('button').forEach((b) => { b.disabled = value; }));
   }
 
   function showTab() {
-    clear(pickerWrap);
-    pickerWrap.append(tab === 'sign' ? signChips.el : animalChips.el, h('div', { class: 'zd-bday' }, field(tab === 'sign' ? '或输入生日自动判定' : '或输入生日判定生肖（以春节为界）', bdayInput)));
-    st.setBadge(tab === 'sign' ? '西方星座' : '东方生肖');
+    clear(strip);
+    strip.append(tab === 'sign' ? signChips.el : animalChips.el);
+    bdayField.replaceChildren(field(UI.birthLabel[tab], bdayInput));
+    hintEl.querySelector('.hint-glyph')?.setAttribute('aria-hidden', 'true');
     refreshStage();
+    centerChip(false);
+  }
+
+  /** 把选中的芯片滚到横条中间（只滚横条，不动页面） */
+  function centerChip(smooth = true) {
+    const list = tab === 'sign' ? signChips.el : animalChips.el;
+    const active = list.querySelector('.chip.active');
+    if (!active) return;
+    const left = active.offsetLeft - (list.clientWidth - active.offsetWidth) / 2;
+    list.scrollTo({ left: Math.max(0, left), behavior: smooth && !ctx.platform.prefersReducedMotion ? 'smooth' : 'instant' });
+  }
+
+  function pick(id, fromChip = false) {
+    if (busy) {
+      (tab === 'sign' ? signChips : animalChips).set(currentId());
+      return;
+    }
+    if (tab === 'sign') {
+      signId = id;
+      storage.set('sign', id);
+      signChips.set(id);
+    } else {
+      animalId = id;
+      storage.set('animal', id);
+      animalChips.set(id);
+    }
+    if (fromChip) {
+      sound.play('tick');
+      haptic.tap();
+    }
+    centerChip();
+    refreshStage();
+  }
+
+  /** 左右滑 / 摇一摇用：按顺序切到相邻的一个 */
+  function switchBy(step) {
+    if (busy || resultSheet) return;
+    const list = tab === 'sign' ? SIGNS : ANIMALS;
+    pick(stepIn(list, currentId(), step).id);
+    sound.play('tick');
+    haptic.tap();
   }
 
   function refreshStage() {
     const cur = current();
     fortune = null;
-    quickEl.hidden = true;
+    holdSpace();
     ritual.clear();
     ritual.step(0);
     primaryBtn.setLabel(UI.primary);
     if (tab === 'sign') {
-      slot.set({ kind: tab, stars: cur.stars || [], lines: cur.lines || [], glyph: cur.glyph, active: false, text: `${cur.name} · ${cur.dates} · ${ELEMENTS[cur.element].name}` });
+      sky.set({ kind: tab, stars: cur.stars || [], lines: cur.lines || [], glyph: cur.glyph, active: false, text: `${cur.name} · ${cur.dates} · ${ELEMENTS[cur.element].name}` });
     } else {
-      slot.set({ kind: tab, stars: cur.stars || [], lines: cur.lines || [], glyph: cur.glyph, active: false, text: `属${cur.name} · ${cur.element}${cur.element ? '' : ''} · ${BRANCH_HOUR[cur.glyph] || ''}` });
+      sky.set({ kind: tab, stars: [], lines: [], glyph: cur.glyph, active: false, text: `属${cur.name} · 五行属${cur.element} · ${cur.glyph}时 ${BRANCH_HOUR[cur.glyph] || ''}` });
     }
-    st.setBadge(tab === 'sign' ? cur.name : `属${cur.name}`);
+    st.setBadge(displayName(cur));
+    setHint(UI.gestureHint[tab]);
     renderProfile(cur);
+    // 结果条收起后页面变短，先用占位撑住再放开，避免滚动位置跳动。
+    if (window.scrollY > 0 && !ctx.platform.prefersReducedMotion) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      ctx.setTimeout(releaseSpace, 450);
+    } else releaseSpace();
+  }
+
+  function holdSpace() {
+    const r = ritual.receipt;
+    if (r.hidden) return;
+    const cs = getComputedStyle(r);
+    spacer.style.height = `${r.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom)}px`;
+  }
+  function releaseSpace() {
+    spacer.style.height = '0px';
   }
 
   function renderProfile(cur) {
     clear(profileEl);
     const title = UI.profileTitle[tab];
+    const meta = tab === 'sign'
+      ? `${cur.en} · ${cur.dates} · ${ELEMENTS[cur.element].name} · 守护星 ${cur.ruler} · ${QUALITIES[cur.quality].split(' ')[0]}`
+      : `地支 ${cur.glyph} · 五行属${cur.element} · 相合 ${cur.match.join('、')} · 相冲 ${cur.clash}`;
+    profileEl.append(
+      h('div', { class: 'zd-sec-title' }, title),
+      h('div', { class: 'zd-meta' }, meta),
+      h('div', { class: 'zd-traits' }, cur.traits.map((t) => h('span', { class: 'zd-trait' }, t))),
+      h('p', { class: 'zd-text' }, cur.profile),
+    );
+  }
+
+  /* ---------- 生日 ---------- */
+  function toggleBirthday() {
+    if (busy) return;
+    const open = bdayField.hidden;
+    bdayField.hidden = !open;
+    bdayBtn.setAttribute('aria-expanded', String(open));
+    bdayBtn.classList.toggle('active', open);
+    haptic.tap();
+    if (open) ctx.setTimeout(() => { try { bdayInput.focus({ preventScroll: true }); } catch { /* ignore */ } }, 60);
+  }
+  function applyBirthday(v) {
+    if (!v || busy) return;
+    const [y, m, d] = v.split('-').map(Number);
+    if (!m || !d || !y || y < 1900 || y > 2100) return;
+    bday = v;
+    storage.set('bday', v);
     if (tab === 'sign') {
-      profileEl.append(
-        h('div', { class: 'zd-sec-title' }, title),
-        h('div', { class: 'zd-meta' }, `${cur.en} · ${cur.dates} · ${ELEMENTS[cur.element].name} · 守护星 ${cur.ruler} · ${QUALITIES[cur.quality].split(' ')[0]}`),
-        h('div', { class: 'zd-traits' }, cur.traits.map((t) => h('span', { class: 'zd-trait' }, t))),
-        h('p', { class: 'zd-text' }, cur.profile),
-      );
+      const s = signFromDate(m, d);
+      pick(s.id);
+      toast(`${m}月${d}日 · ${s.name}`);
     } else {
-      profileEl.append(h('div', { class: 'zd-sec-title' }, title), h('div', { class: 'zd-meta' }, `地支 ${cur.glyph} · 五行属${cur.element} · 相合 ${cur.match.join('、')} · 相冲 ${cur.clash}`), h('div', { class: 'zd-traits' }, cur.traits.map((t) => h('span', { class: 'zd-trait' }, t))), h('p', { class: 'zd-text' }, cur.profile));
+      const a = animalFromYmd(y, m, d);
+      pick(a.id);
+      toast(`${a.ganzhi}年 · 属${a.name}`);
     }
+    sound.play('tick');
+    haptic.light();
   }
 
   function randomPick() {
-    if (busy) return;
+    if (busy || resultSheet) return;
     const list = tab === 'sign' ? SIGNS : ANIMALS;
-    const pick = stepIn(list, tab === 'sign' ? signId : animalId, 1 + Math.floor(ctx.rng.random() * (list.length - 1)));
-    if (tab === 'sign') {
-      signId = pick.id;
-      storage.set('sign', pick.id);
-      signChips.set(pick.id);
-    } else {
-      animalId = pick.id;
-      storage.set('animal', pick.id);
-      animalChips.set(pick.id);
-    }
+    pick(stepIn(list, currentId(), 1 + Math.floor(ctx.rng.random() * (list.length - 1))).id);
     sound.play('pop');
     haptic.tap();
-    refreshStage();
   }
   ctx.motion.onShake(() => {
     if (busy || resultSheet) return;
@@ -153,74 +224,103 @@ export function mount(container, ctx) {
     look();
   });
 
+  /* ---------- 看运势 ---------- */
   async function look() {
-    if (busy || resultSheet) return;
-    busy = true;
-    primaryBtn.disabled = true;
-    signChips.el.querySelectorAll('button').forEach(b => b.disabled = true);
-    animalChips.el.querySelectorAll('button').forEach(b => b.disabled = true);
-    tabBar.el.querySelectorAll('button').forEach(b => b.disabled = true);
-    randomBtn.disabled = true; bdayInput.disabled = true;
+    if (busy || resultSheet || !ritual.alive) return;
+    setBusy(true);
     const cur = current();
+    holdSpace();
+    ritual.clear();
     haptic.light();
     sound.play('shimmer');
-    slot.set({ active: true });
+    sky.set({ active: true });
+    st.setBadge(`${displayName(cur)} · 观星中`);
+    setHint(UI.busyHint, true);
     if (!await ritual.focus()) return;
     if (!await ritual.pause(ctx.platform.simpleMotion ? 900 : 1800)) return;
-    slot.set({ active: false });
     fortune = tab === 'sign' ? signFortune(cur, new Date()) : animalFortune(cur, new Date());
+    sky.set({ active: false });
     sound.play(fortune.sound || 'chime');
     haptic.settle();
-    renderQuick(cur);
+    st.setBadge(`${displayName(cur)} · ${fortune.label}`);
     ritual.step(1);
     ritual.reveal({
-      kicker: `${formatDate(new Date())} · ${tab === 'sign' ? cur.name : '属' + cur.name}`,
+      kicker: `${formatDate(new Date())} · ${displayName(cur)}${fortune.sunIn ? ' · ' + UI.sunInBadge : ''}`,
       title: fortune.label,
       text: fortune.summary,
       onRead: openSheet,
     });
-    primaryBtn.setLabel('再看一次');
-    primaryBtn.disabled = false;
-    [signChips.el, animalChips.el, tabBar.el].forEach(el => el.querySelectorAll('button').forEach(b => b.disabled = false));
-    randomBtn.disabled = false; bdayInput.disabled = false;
-    busy = false;
+    renderQuick();
+    ritual.receipt.insertBefore(quickEl, ritual.receipt.querySelector('.ritual-receipt-actions'));
+    releaseSpace();
+    primaryBtn.setLabel(UI.again);
+    setBusy(false);
+    setHint(UI.doneHint[tab], true);
+    revealScroll();
   }
 
-  function renderQuick(cur) {
+  /** 结果条若被首屏截断，轻轻滚到能看见「展开解读」为止。 */
+  function revealScroll() {
+    const r = ritual.receipt.getBoundingClientRect();
+    const vh = window.visualViewport?.height || window.innerHeight;
+    const over = r.bottom - (vh - 12);
+    if (over > 0) window.scrollBy({ top: Math.min(over, Math.max(0, r.top - 84)), behavior: ctx.platform.prefersReducedMotion ? 'instant' : 'smooth' });
+  }
+
+  const swatch = (hex) => h('span', { class: 'zd-swatch', style: { background: hex }, attrs: { 'aria-hidden': 'true' } });
+  const luckyText = (f) => `幸运色 ${f.color.name} · 幸运数字 ${f.number}${f.matchSign ? ' · 速配 ' + f.matchSign.short : f.matchAnimal ? ' · 速配 属' + f.matchAnimal.name : ''}`;
+
+  function renderQuick() {
     clear(quickEl);
-    quickEl.hidden = false;
-    const row = (label, n) => h('div', { class: 'zd-qrow' }, h('span', null, label), stars(n));
+    const f = fortune;
+    const row = (label, n) => h('div', { class: 'zd-qrow' }, h('span', { class: 'zd-qlabel' }, label), stars(n));
     quickEl.append(
-      h('div', { class: 'zd-qhead' }, h('span', { class: 'zd-qtitle' }, `${tab === 'sign' ? cur.name : '属' + cur.name} · 今日`), h('span', { class: 'zd-qlevel' }, fortune.label)),
-      row('综合', fortune.overall),
-      row(ASPECT_LABEL.love, fortune.love),
-      row(ASPECT_LABEL.career, fortune.career),
-      row(ASPECT_LABEL.wealth, fortune.wealth),
-      row(ASPECT_LABEL.health, fortune.health),
-      h('div', { class: 'zd-lucky' }, h('span', { class: 'zd-swatch', style: { background: fortune.color.hex } }), `幸运色 ${fortune.color.name} · 幸运数字 ${fortune.number}`, fortune.matchSign ? ` · 速配 ${fortune.matchSign.short}` : fortune.matchAnimal ? ` · 速配 属${fortune.matchAnimal.name}` : ''),
+      h('div', { class: 'zd-qrow zd-qmain' }, h('span', { class: 'zd-qlabel' }, '综合'), stars(f.overall)),
+      h('div', { class: 'zd-qgrid' }, row(ASPECT_LABEL.love, f.love), row(ASPECT_LABEL.career, f.career), row(ASPECT_LABEL.wealth, f.wealth), row(ASPECT_LABEL.health, f.health)),
+      h('div', { class: 'zd-lucky' }, swatch(f.color.hex), luckyText(f)),
     );
   }
 
+  /* ---------- 解读抽屉 ---------- */
   function openSheet() {
-    if (!fortune || resultSheet) return;
+    if (!fortune || resultSheet || busy) return;
     ritual.step(2);
     const cur = current();
     const f = fortune;
-    const starRow = (n) => h('span', { class: 'zd-sheet-stars' }, stars(n));
+    const aspect = (n, text) => h('div', { class: 'zd-sec' }, h('span', { class: 'zd-sheet-stars' }, stars(n)), h('p', null, text));
     const sections = [
-      { label: '综合', node: h('div', null, starRow(f.overall), h('div', { class: 'mt-1' }, f.summary)) },
-      { label: ASPECT_LABEL.love, node: h('div', null, starRow(f.love), h('div', { class: 'mt-1' }, f.text.love)) },
-      { label: ASPECT_LABEL.career, node: h('div', null, starRow(f.career), h('div', { class: 'mt-1' }, f.text.career)) },
-      { label: ASPECT_LABEL.wealth, node: h('div', null, starRow(f.wealth), h('div', { class: 'mt-1' }, f.text.wealth)) },
-      { label: ASPECT_LABEL.health, node: h('div', null, starRow(f.health), h('div', { class: 'mt-1' }, f.text.health)) },
-      { label: '幸运', node: h('div', { class: 'row wrap' }, h('span', { class: 'zd-swatch', style: { background: f.color.hex } }), `${f.color.name} · 数字 ${f.number}${f.matchSign ? ' · 速配 ' + f.matchSign.name : f.matchAnimal ? ' · 速配 属' + f.matchAnimal.name : ''}`) },
-      { label: '今日一句', text: f.quote },
-      { label: '宜 · 忌', text: `宜 ${f.yi}；忌 ${f.ji}。` },
+      {
+        label: '综合',
+        node: h('div', { class: 'zd-sec' },
+          h('span', { class: 'zd-sheet-stars' }, stars(f.overall)),
+          h('p', null, f.summary + (f.sunIn ? ' ' + UI.sunInSign : '')),
+          h('div', { class: 'zd-lucky' }, swatch(f.color.hex), luckyText(f)),
+          h('div', { class: 'zd-kw' }, `${UI.keywords} ${f.keywords.join(' · ')}`),
+        ),
+      },
+      { label: ASPECT_LABEL.love, node: aspect(f.love, f.text.love) },
+      { label: ASPECT_LABEL.career, node: aspect(f.career, f.text.career) },
+      { label: ASPECT_LABEL.wealth, node: aspect(f.wealth, f.text.wealth) },
+      { label: ASPECT_LABEL.health, node: aspect(f.health, f.text.health) },
+      { label: UI.todayLabel, node: h('div', { class: 'zd-sec' }, h('p', { class: 'zd-quote' }, `「${f.quote}」`), h('p', null, `宜 ${f.yi} · 忌 ${f.ji}`)) },
     ];
-    if (f.kind === 'animal' && f.year) sections.push({ label: `${f.year.year.ganzhi}年`, text: `${f.year.name}${f.year.extra.length ? '（兼' + f.year.extra.join('、') + '）' : ''}。${f.year.text} ${f.year.advice}` });
-    if (f.kind === 'sign' && f.sunIn) sections.push({ label: '生日月', text: UI.sunInSign });
-    sections.push({ label: UI.profileTitle[tab], text: cur.profile });
-    const card = resultCard({ kicker: `${formatDate(new Date())} · ${f.keywords.join(' · ')}`, title: tab === 'sign' ? cur.name : `属${cur.name}`, sub: tab === 'sign' ? `${cur.glyph} ${cur.en} · ${cur.dates}` : `${cur.glyph} · ${cur.element}`, badge: f.label, seal: f.seal, verse: f.verse, sections, footer: UI.footer });
+    if (f.kind === 'animal' && f.year) {
+      const y = f.year;
+      sections.push({
+        label: `${y.year.ganzhi}年运`,
+        node: h('div', { class: 'zd-sec' }, h('p', null, h('b', null, `${y.name}${y.extra.length ? '（兼' + y.extra.join('、') + '）' : ''}。`), y.text), h('p', { class: 'zd-advice' }, y.advice)),
+      });
+    }
+    const card = resultCard({
+      kicker: formatDate(new Date()),
+      title: displayName(cur),
+      sub: tab === 'sign' ? `${cur.glyph} ${cur.en} · ${cur.dates}${f.sunIn ? ' · ' + UI.sunInBadge : ''}` : `${cur.glyph} · 五行属${cur.element}`,
+      badge: f.label,
+      seal: f.seal,
+      verse: f.verse,
+      sections,
+      footer: UI.footer,
+    });
     resultSheet = sheet({
       title: UI.sheetTitle,
       content: h('div', { class: 'm-zodiac' }, card),
@@ -228,8 +328,14 @@ export function mount(container, ctx) {
         button(tab === 'sign' ? UI.changeSign : UI.changeAnimal, {
           variant: 'primary',
           onClick: () => {
-            resultSheet.close();
-            ctx.setTimeout(() => { if (ritual.alive) randomPick(); }, 300);
+            const s = resultSheet;
+            resultSheet = null;
+            s.close();
+            ctx.setTimeout(() => {
+              if (!ritual.alive) return;
+              randomPick();
+              look();
+            }, 350);
           },
         }),
         button(UI.share, {
@@ -249,7 +355,24 @@ export function mount(container, ctx) {
     resultSheet.open();
   }
 
+  /* ---------- 星仪 ---------- */
+  function mountSky() {
+    if (slot || !ritual.alive) return;
+    const cur = current();
+    slot = createModelSlot(ctx, { id: 'zodiac.sky', label: '星仪', glyph: cur.glyph, hint: UI.stageHint[tab] });
+    slot.el.classList.add('zd-slot');
+    st.scene.append(slot.el);
+    slot.set(pendingSky);
+    ctx.gesture.tap(slot.el, () => look());
+    ctx.gesture.flick(slot.el, (g) => switchBy(g.direction === 'left' ? 1 : -1), { axis: 'x', direction: 'any', minDist: 36 });
+    // 共享渲染器只读可见性回调的首条记录；实物先挂后见时两条记录若合并到一次回调，
+    // 画布会一直空着。挂好后把实物挪出视口再挪回来，让「可见」单独到达一次。
+    ctx.setTimeout(() => { if (slot) slot.el.style.transform = 'translateX(-300vw)'; }, 80);
+    ctx.setTimeout(() => { if (slot) slot.el.style.transform = ''; }, 200);
+  }
+
   showTab();
+  ctx.setTimeout(mountSky, 0);
   return () => {
     resultSheet?.close();
   };
