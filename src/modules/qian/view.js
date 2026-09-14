@@ -1,3 +1,4 @@
+import { createStickBundle } from '../../ui/stick-bundle.js';
 import { drawLot, getLot, lotLabel, formatPoem, createShakeMeter, shareText } from './core.js';
 import { ITEM_KEYS } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
@@ -5,7 +6,7 @@ import { createRitual } from '../../ui/ritual.js';
 export function mount(container, ctx) {
   const { kit, sound, haptic, storage } = ctx;
   const { h, button, input, stage, sheet, resultCard } = kit;
-  const reduce = ctx.platform.prefersReducedMotion;
+  const reduce = ctx.platform.simpleMotion;
   let suppressClickUntil = 0;
   let phase = 'idle', busy = false, held = false, lot = null, reading = null, question = '';
   let history = storage.get('history', []).filter((x) => getLot(x.no)).slice(-8);
@@ -13,10 +14,11 @@ export function mount(container, ctx) {
   const ritual = createRitual(ctx, st, ['问事', '摇签', '出签', '展签']);
   const q = input({ placeholder: '心中所问之事（选填）', maxlength: 60, onInput: (v) => { question = v.trim(); } });
   q.setAttribute('aria-label', '灵签所问之事');
-  const bamboos = Array.from({ length: 9 }, (_, i) => h('i', { class: 'qn-bamboo', style: { left: `${12 + i * 9}%`, transform: `rotate(${(i - 4) * 3}deg) translateY(${i % 3 * 8}px)` } }));
+  const bamboos = Array.from({ length: 23 }, (_, i) => h('i', { class: 'qn-bamboo', style: { left: `${5 + i % 12 * 7.4}%`, transform: `rotate(${(i % 12 - 5.5) * 1.8}deg) translateY(${i % 4 * 5}px)` } }));
   const vessel = h('button', { type: 'button', class: 'qn-vessel', attrs: { 'aria-label': '摇动灵签筒' }, onClick: () => { if (phase === 'idle' && performance.now() > suppressClickUntil) shake(); } },
     h('span', { class: 'qn-sticks' }, bamboos), h('span', { class: 'qn-rim' }),
     h('span', { class: 'qn-cylinder' }, h('i', { class: 'qn-band' }), h('b', { class: 'qn-sign' }, '灵签'), h('i', { class: 'qn-band lower' })));
+  const bundle = createStickBundle(ctx, vessel, bamboos);
   const stickLabel = h('span');
   const picked = h('button', { type: 'button', class: 'qn-picked', hidden: true, attrs: { 'aria-label': '取出灵签，展开签纸' }, onClick: () => unfold() }, stickLabel);
   const paper = h('div', { class: 'qn-paper paper-slip', hidden: true });
@@ -33,20 +35,21 @@ export function mount(container, ctx) {
     onMove(g) {
       if (!held) return;
       if (Math.abs(g.dx) > 8) suppressClickUntil = performance.now() + 500;
-      const state = meter.push(g.dx);
+      const state = meter.push(g.dx); bundle.preview(g.dx / 4);
       vessel.style.transform = `translateX(${Math.max(-24, Math.min(24, g.dx * 0.35))}px) rotate(${Math.max(-9, Math.min(9, g.dx / 7))}deg)`;
       ritual.power(state.progress, state.done ? '松手出签' : '左右轻摇');
     },
     onEnd(g) {
-      if (!held) return; held = false; vessel.style.transform = '';
+      if (!held) return; held = false; bundle.reset();
       if (g.cancelled || Math.abs(g.dx || 0) > 8) suppressClickUntil = performance.now() + 500;
       if (!g.cancelled && meter.state.done) shake(24);
       else ritual.power(0, '左右轻摇签筒');
     },
   });
-  ctx.motion.onShake((e) => { if (phase === 'idle') shake(e.intensity); });
+  ctx.motion.onShake((e) => { if (busy || reading) return; if (phase !== 'idle') reset(); shake(e.intensity); });
   ctx.motion.onMotion((m) => {
     if (busy || held || reading || phase !== 'idle' || reduce) return;
+    bundle.preview(m.ax || 0);
     const tilt = Math.max(-8, Math.min(8, -(m.ax || 0) * .7));
     vessel.style.transform = m.phase === 'idle' ? '' : `rotate(${tilt}deg)`;
     ritual.power(m.progress || 0, m.phase === 'ready' ? '收住动作，准备出签' : '左右轻摇，收住后出签');
@@ -60,21 +63,10 @@ export function mount(container, ctx) {
     ritual.step(1); st.setHint('竹签轻碰，心念渐明');
     const power = Math.max(0.7, Math.min(1.4, intensity / 20));
     ritual.power(power / 1.4, '摇签中'); sound.play('shake'); haptic.rattle();
-    const duration = 2500 + power * 200;
-    const motion = Array.from({ length: 49 }, (_, i) => {
-      const t = i / 48, wave = Math.sin(t * Math.PI * 12) * Math.sin(t * Math.PI);
-      return { transform: `translate(${wave * 10 * power}px,${-Math.abs(wave) * 8}px) rotate(${wave * 8 * power}deg)`, offset: t };
-    });
-    const shuffle = ritual.animate(vessel, motion, { duration, easing: 'linear' });
-    const stems = bamboos.map((stem, i) => ritual.animate(stem, [
-      { transform: stem.style.transform }, { transform: stem.style.transform + ` translateY(${-8 - i % 3 * 3}px)` }, { transform: stem.style.transform },
-    ], { duration: reduce ? 1 : 450 + i * 12, iterations: reduce ? 1 : 5, easing: 'ease-in-out' }));
-    for (let i = 0; i < 4; i++) { if (!await ritual.pause(reduce ? 1 : 510)) return; sound.play('rattle'); haptic.impact(.25); }
-    await shuffle; await Promise.all(stems);
-    if (!ritual.alive) return;
-    vessel.getAnimations().forEach((a) => a.cancel()); bamboos.forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+    if (!await bundle.shake(power, ctx.platform.simpleMotion ? 1500 : 2600)) return;
     lot = drawLot(ctx.rng.random); picked.hidden = false; stickLabel.textContent = '';
     const final = 'translate(65px,70px) rotate(12deg)';
+    const fallDuration = reduce ? 1150 : 2100;
     const falling = ritual.animate(picked, [
       { transform: 'translate(0,0) rotate(0)', opacity: 1 },
       { transform: 'translate(6px,-58px) rotate(4deg)', offset: 0.46 },
@@ -83,10 +75,10 @@ export function mount(container, ctx) {
       { transform: 'translate(62px,67px) rotate(22deg)', offset: 0.82 },
       { transform: 'translate(65px,72px) rotate(8deg)', offset: 0.92 },
       { transform: final },
-    ].map((frame) => ({ ...frame, easing: 'cubic-bezier(.35,.1,.32,1)' })), { duration: 2100, easing: 'linear' });
-    if (!await ritual.pause(reduce ? 1 : 2100 * .68)) return;
+    ].map((frame) => ({ ...frame, easing: 'cubic-bezier(.35,.1,.32,1)' })), { duration: fallDuration, easing: 'linear' });
+    if (!await ritual.pause(fallDuration * .68)) return;
     sound.play('clack'); haptic.impact(.8); ritual.power(0, '竹签轻弹，等它停下');
-    if (!await ritual.pause(reduce ? 1 : 2100 * .24)) return;
+    if (!await ritual.pause(fallDuration * .24)) return;
     sound.play('tick'); haptic.impact(.2);
     await falling;
     if (!ritual.alive) return;

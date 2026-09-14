@@ -3,12 +3,11 @@
 export function createRitual(ctx, stage, labels) {
   const { h, button, clear } = ctx.kit;
   let alive = true;
-  const steps = labels.map((label, i) => h('span', { class: 'ritual-step' }, h('i', null, String(i + 1).padStart(2, '0')), label));
-  const progress = h('div', { class: 'ritual-progress', attrs: { 'aria-label': '体验进度' } }, steps);
+  const progress = h('span', { hidden: true });
   const receipt = h('div', { class: 'ritual-receipt', hidden: true, attrs: { 'aria-live': 'polite' } });
   const energyFill = h('i');
   const energyText = h('span', null, '轻触或上滑');
-  const energy = h('div', { class: 'ritual-energy', attrs: { 'aria-hidden': 'true' } }, h('span', { class: 'ritual-energy-track' }, energyFill), energyText);
+  const energy = h('div', { class: 'ritual-energy', hidden: true, attrs: { 'aria-hidden': 'true' } }, h('span', { class: 'ritual-energy-track' }, energyFill), energyText);
   const pending = new Set();
   const animations = new Set();
   const pausedAnimations = new Set();
@@ -40,7 +39,7 @@ export function createRitual(ctx, stage, labels) {
   }
   async function animate(el, keyframes, options = {}) {
     if (!alive) return null;
-    const a = el.animate(keyframes, { fill: 'forwards', easing: 'cubic-bezier(.2,.8,.2,1)', ...options, duration: ctx.platform.prefersReducedMotion ? 1 : options.duration ?? 300 });
+    const a = el.animate(keyframes, { fill: 'forwards', easing: 'cubic-bezier(.2,.8,.2,1)', ...options, duration: Math.max(240, options.duration ?? 300) });
     track(a);
     await a.finished.catch(() => {});
     animations.delete(a); pausedAnimations.delete(a);
@@ -48,7 +47,6 @@ export function createRitual(ctx, stage, labels) {
     return a;
   }
   function step(index) {
-    steps.forEach((el, i) => { el.classList.toggle('current', i === index); el.classList.toggle('complete', i < index); el.setAttribute('aria-current', i === index ? 'step' : 'false'); });
     stage.el.dataset.step = String(index);
   }
   function power(value, text = '蓄力中') {

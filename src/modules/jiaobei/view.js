@@ -1,6 +1,7 @@
 import { throwJiaobei, initSession, reduceSession, OUTCOME } from './core.js';
 import { OUTCOMES, MODES, SESSION_TEXT } from './data.js';
-import { createJiaobeiScene, clamp } from './model.js';
+import { clamp } from './model.js';
+import { createJiaobeiPhysical } from './physical.js';
 import { createRitual } from '../../ui/ritual.js';
 
 export function mount(container, ctx) {
@@ -22,7 +23,7 @@ export function mount(container, ctx) {
   const canvas = h('canvas', { class: 'jb-canvas', attrs: { role: 'img', 'aria-label': '两枚朱红色月牙筊杯，平面与弧面组成完整立体木块' } });
   const faceLabels = h('div', { class: 'jb-face-labels', hidden: true }, h('span'), h('span'));
   st.scene.append(canvas, faceLabels);
-  const model = createJiaobeiScene(canvas, ctx);
+  const model = createJiaobeiPhysical(canvas, ctx);
   st.el.append(ritual.energy);
   const streak = h('div', { class: 'jb-streak', hidden: mode !== 'three' });
   const tossBtn = button('掷筊', { variant: 'primary', size: 'large', primary: true, onClick: () => doThrow(22) });
@@ -32,10 +33,12 @@ export function mount(container, ctx) {
   renderStreak(); renderHistory();
   st.setBadge(mode === 'three' ? '连掷三圣杯 · 第 1 掷' : '单掷问事');
 
-  ctx.motion.onToss((e) => { if (!resultSheet && !lastResult) doThrow(e.intensity); });
-  ctx.motion.onTilt(({ gamma }) => { if (!ctx.platform.prefersReducedMotion) model.tilt((gamma || 0) / 160); });
+  ctx.motion.onToss(sensorThrow);
+  ctx.motion.onShake(sensorThrow);
+  function sensorThrow(e) { if (busy || resultSheet) return; if (session.done) reset(); doThrow(e.intensity); }
+  ctx.motion.onTilt(({ gamma }) => { if (!ctx.platform.simpleMotion) model.tilt((gamma || 0) / 160); });
   ctx.motion.onMotion(({ mag, ax, ay, phase, progress }) => {
-    if (busy || held || lastResult || resultSheet || ctx.platform.prefersReducedMotion) return;
+    if (busy || held || resultSheet || ctx.platform.simpleMotion) return;
     model.preview(-clamp(ax || 0, -8, 8) * 2, -clamp(ay || 0, -4, 20));
     ritual.power(progress || 0, phase === 'ready' ? '收住动作，筊杯即将出手' : '向上轻甩，收住后掷出');
   });
@@ -82,7 +85,7 @@ export function mount(container, ctx) {
     st.setHint('看看两枚筊杯朝上的一面');
     history = history.concat(result.outcome).slice(-12); storage.set('history', history); renderHistory();
     // Always leave time to see the final face before any reading control appears.
-    if (!await ritual.pause(ctx.platform.prefersReducedMotion ? 180 : 850)) return;
+    if (!await ritual.pause(ctx.platform.simpleMotion ? 180 : 850)) return;
     restoreResult(); setBusy(false);
     tossBtn.setLabel(mode === 'three' ? (session.done ? '问事已完成' : '继续掷筊') : '再掷一次');
     tossBtn.disabled = session.done;
