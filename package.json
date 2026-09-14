@@ -2,7 +2,7 @@
   "name": "laiganjue",
   "version": "0.1.0",
   "private": true,
-  "description": "来感觉 · 玄学占卜合集 —— 筊杯 / 灵签 / 六爻 / 黄历 / 八字 / 风水 / 转盘 / 塔罗 / 卢恩 / 星座 / 水晶球 / 御神签 / 硬币骰子",
+  "description": "来感觉 · 玄学占卜合集 —— 筊杯 / 灵签 / 六爻 / 黄历 / 八字 / 风水 / 转盘 / 塔罗 / 卢恩 / 星座 / 水晶球 / 御神签 / 硬币骰子 / 落球盘",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
