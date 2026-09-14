@@ -1,0 +1,101 @@
+/* 手机适配与"文字不被实物压住"的全局守则（在 refinement.css 之后加载）。
+   模块级的实物尺寸、间距由各模块自己负责；这里只放跨模块的保底规则。 */
+
+/* 舞台上的徽记与提示：加一层与舞台同色的半透明底，任何实物滑到下面时文字仍可读 */
+.stage-badge,
+.stage-hint {
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-strong) 72%, transparent);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  max-width: calc(100% - 40px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stage-hint {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+}
+.stage-badge:empty,
+.stage-hint:empty {
+  display: none;
+}
+
+/* 舞台内的实物容器与舞台边框至少留 16px */
+.model-slot.has-model {
+  inset: 16px;
+}
+
+/* 矮屏手机（iPhone SE / 小安卓）：压缩头部与留白，让舞台 + 主按钮同屏可见 */
+@media (max-height: 720px) {
+  :root {
+    --header-h: 58px;
+  }
+  .app-header .hd-title {
+    font-size: 18px;
+  }
+  .app-header .hd-title small {
+    display: none;
+  }
+  .view {
+    padding-top: 14px;
+    padding-bottom: 28px;
+  }
+  .view-module {
+    padding-top: 12px;
+  }
+  .stage {
+    min-height: 230px;
+  }
+  .hint {
+    margin-top: 8px;
+    padding-block: 4px;
+  }
+  .action-bar {
+    margin-top: 12px;
+  }
+  .action-bar .btn.large {
+    min-height: 48px;
+  }
+  .ritual-receipt {
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+  .ritual-receipt h2 {
+    font-size: 24px;
+  }
+  .motion-banner {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+  .input {
+    min-height: 44px;
+  }
+}
+
+/* 横屏手机：舞台不超过可视高度的七成，其余内容照常滚动 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .stage {
+    min-height: 200px;
+    max-height: 70svh;
+  }
+  .view-module {
+    max-width: 720px;
+  }
+}
+
+/* 大屏手机 / 平板：内容居中、实物不至于铺满整屏 */
+@media (min-width: 700px) {
+  .view-module {
+    max-width: 620px;
+  }
+}
+
+/* 底部安全区：抽屉操作条与页面底部留白 */
+.sheet-actions {
+  padding-bottom: calc(14px + var(--safe-bottom));
+}
