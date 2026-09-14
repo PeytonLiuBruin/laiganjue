@@ -1,13 +1,13 @@
 // 黄历 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 舞台里挂着一本老黄历：木条挂板 + 铁环 + 带孔的纸头 + 可撕的日历纸。
-// 日期仅由明确的按钮和日期选择器切换，纸面保留原生阅读与滚动。
+// 三条入口做同一件事——翻到另一天：日期条与「撕一页」按钮 / 纸页上左右快滑 / 摇一摇回到今天。
+// 纸面本身保留原生阅读与滚动，宜忌、时辰、方位都能点开一句释义。
 import {
   buildDay,
   shiftDay,
   hourIndex,
   dailyQuote,
   dayRating,
-  summarize,
   pengZuPlain,
   termMeaning,
   jiShenMeaning,
@@ -26,6 +26,8 @@ import {
 } from './core.js';
 import { TIAN_SHEN, ZHI_XING, XIU, POSITIONS, DIRECTION_DEG, HOURS, GLOSSARY, PICK_TERMS, TEXT } from './data.js';
 
+const CALENDAR_ICON = '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>';
+
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
   const { h, button, stage, hint, resultCard, sheet, toast, wait, confetti, stars, clear } = kit;
@@ -40,11 +42,14 @@ export function mount(container, ctx) {
   let pageEl = null;
   let detailSheet = null;
   let heightTimer = null;
+  let swipedAt = 0;
   let recent = (storage.get('recent', []) || []).filter((k) => fromKey(k));
 
-  /* ---------- 顶部：日期选择 ---------- */
+  /* ---------- 顶部：日期条 ---------- */
+  // 原生日期控件负责弹选择器，但它的显示格式随系统而变；上面盖一行统一的中文日期。
+  const dateText = h('span', { class: 'al-date-text' });
   const dateInput = h('input', {
-    class: 'input al-date',
+    class: 'al-date',
     type: 'date',
     value: toKey(current),
     attrs: { min: `${MIN_YEAR}-01-01`, max: `${MAX_YEAR}-12-31`, 'aria-label': '选择日期' },
@@ -54,22 +59,16 @@ export function mount(container, ctx) {
       goTo(d);
     },
   });
+  const dateField = h('label', { class: 'input al-date-field' }, kit.svg(CALENDAR_ICON, { size: 16, strokeWidth: 1.7 }), dateText, dateInput);
   const prevBtn = button('', { variant: 'ghost', icon: 'chevron', cls: 'al-arrow al-prev', onClick: () => flip(-1) });
   prevBtn.setAttribute('aria-label', '前一天');
   const nextBtn = button('', { variant: 'ghost', icon: 'chevron', cls: 'al-arrow', onClick: () => flip(1) });
   nextBtn.setAttribute('aria-label', '后一天');
-  const todayBtn = button('今天', {
-    variant: 'soft',
-    size: 'small',
-    cls: 'al-today',
-    onClick: () => {
-      goToday();
-    },
-  });
-  const dateBar = h('div', { class: 'al-datebar' }, prevBtn, dateInput, todayBtn, nextBtn);
+  const todayBtn = button('今天', { variant: 'soft', size: 'small', cls: 'al-today', onClick: () => goToday() });
+  const dateBar = h('div', { class: 'al-datebar' }, prevBtn, dateField, todayBtn, nextBtn);
 
   /* ---------- 舞台：挂历 ---------- */
-  const st = stage({ cls: 'al-stage', hint: TEXT.stageHint, badge: relativeLabel(current) });
+  const st = stage({ cls: 'al-stage', badge: relativeLabel(current) });
   const board = h('div', { class: 'al-board' });
   const ringL = h('i', { class: 'al-ring al-ring-l' });
   const ringR = h('i', { class: 'al-ring al-ring-r' });
@@ -83,36 +82,49 @@ export function mount(container, ctx) {
   pageEl = renderPage(day, quote);
   holder.append(pageEl);
 
-  /* ---------- 操作 ---------- */
-  const tomorrowBtn = button('后一天', {
-    variant: 'ghost',
-    onClick: () => {
-      flip(1);
-    },
-  });
-  const detailBtn = button('查看这一天', { variant: 'primary', size: 'large', primary: true, onClick: () => openDetail() });
+  /* ---------- 操作：解读（主）+ 撕一页 ---------- */
+  const detailBtn = button(TEXT.readFar, { variant: 'primary', size: 'large', primary: true, onClick: () => openDetail() });
+  const tearBtn = button(TEXT.tear, { variant: 'ghost', cls: 'al-tear', onClick: () => flip(1) });
+  const actions = kit.actionBar(detailBtn, tearBtn);
+  actions.classList.add('al-actions');
   const recentEl = h('div', { class: 'al-recent' });
 
-  container.append(
-    dateBar,
-    h('div', { class: 'mt-3' }, st.el),
-    hint('tap', TEXT.hint),
-    kit.actionBar(detailBtn, tomorrowBtn),
-    recentEl,
-  );
+  container.append(dateBar, h('div', { class: 'al-body' }, st.el, hint('flick', TEXT.hint), actions), recentEl);
+  syncControls();
   renderRecent();
   ctx.setTitle(`黄历 · ${day.lunar.text}`);
 
+  /* ---------- 三条入口 ---------- */
+  // 纸页上左右快滑：向左撕掉这页看后一天，向右翻回前一天。竖向滚动交给浏览器（touch-action: pan-y）。
+  ctx.gesture.flick(
+    wall,
+    (g) => {
+      if (busy || !alive || detailSheet) return;
+      swipedAt = performance.now();
+      flip(g.direction === 'left' ? 1 : -1, null, g.intensity);
+    },
+    { axis: 'x', direction: 'any', minDist: 56, minSpeed: 0.5 },
+  );
+  // 摇一摇：翻回今天；已是今天则纸页在环上晃两下。
+  ctx.motion.onShake(() => {
+    if (busy || !alive || detailSheet) return;
+    goToday(true);
+  });
+
   // Native clicks preserve scrolling, text selection and keyboard activation.
+  // 手势跟踪可能把 click 的 target 记到挂板上，所以按坐标再找一次真正被点的元素。
   wall.addEventListener('click', (e) => {
     if (busy || !alive) return;
-    const chip = e.target.closest('.al-chip[data-term]');
+    if (performance.now() - swipedAt < 400) return;
+    const target = e.target === wall || e.target === holder ? document.elementFromPoint(e.clientX, e.clientY) : e.target;
+    if (!target) return;
+    const chip = target.closest('.al-chip[data-term]');
     if (chip) return explain(chip.dataset.term, chip.dataset.kind);
-    const hr = e.target.closest('.al-hour');
+    const hr = target.closest('.al-hour');
     if (hr) return explainHour(Number(hr.dataset.index));
-    const pos = e.target.closest('.al-pos-item');
+    const pos = target.closest('.al-pos-item');
     if (pos) return explainPos(pos.dataset.key);
-    const cell = e.target.closest('.al-cell');
+    const cell = target.closest('.al-cell, .al-fine-row');
     if (cell?.dataset.term) explainCell(cell.dataset.term);
   });
 
@@ -145,8 +157,7 @@ export function mount(container, ctx) {
     }
     dir = n > 0 ? 1 : -1;
     busy = true;
-    setBusy(true);
-    st.setHint('');
+    syncControls();
 
     const nextDay = buildDay(to);
     const q = dailyQuote(to);
@@ -224,8 +235,6 @@ export function mount(container, ctx) {
     current = to;
     day = nextDay;
     quote = q;
-    dateInput.value = toKey(current);
-    st.setBadge(relativeLabel(current));
     ctx.setTitle(`黄历 · ${day.lunar.text}`);
     markNow();
     pushRecent();
@@ -246,9 +255,8 @@ export function mount(container, ctx) {
     } else if (day.allBad) {
       sound.play('low', { delay: 0.15 });
     }
-    st.setHint(TEXT.stageHint);
     busy = false;
-    setBusy(false);
+    syncControls();
     return true;
   }
 
@@ -265,7 +273,8 @@ export function mount(container, ctx) {
       if (byShake) shiver();
       return;
     }
-    flip(0, t).then((ok) => ok && toast(TEXT.backToday));
+    if (byShake) haptic.light();
+    flip(0, t, byShake ? 26 : 20).then((ok) => ok && toast(TEXT.backToday));
   }
 
   /** 摇一摇但已是今天：纸在环上晃两下 */
@@ -279,13 +288,26 @@ export function mount(container, ctx) {
     stub.animate([{ transform: 'rotateZ(0)' }, { transform: 'rotateZ(-0.8deg)' }, { transform: 'rotateZ(0.6deg)' }, { transform: 'rotateZ(0)' }], { duration: D(760), easing: 'ease-in-out' });
   }
 
-  function setBusy(b) {
-    tomorrowBtn.disabled = b;
-    detailBtn.disabled = b;
-    prevBtn.disabled = b;
-    nextBtn.disabled = b;
-    todayBtn.disabled = b;
-    dateInput.disabled = b;
+  /** 所有控件跟着状态走：主按钮写明解读的是哪一天，「今天」在今天时不可点，翻页中一律禁用。 */
+  function syncControls() {
+    const rel = relativeLabel(current);
+    const isToday = isSameDay(current, new Date());
+    detailBtn.setLabel(rel.length <= 2 ? `${TEXT.readPrefix}${rel}` : TEXT.readFar);
+    detailBtn.disabled = busy;
+    tearBtn.disabled = busy;
+    prevBtn.disabled = busy;
+    nextBtn.disabled = busy;
+    todayBtn.disabled = busy || isToday;
+    dateInput.disabled = busy;
+    dateInput.value = toKey(current);
+    dateText.textContent = dateLabel();
+    st.setBadge(rel);
+  }
+
+  /** 日期条上的中文日期：今年只写月日与星期，往年 / 来年带年份。 */
+  function dateLabel() {
+    const s = day.solar;
+    return s.year === new Date().getFullYear() ? `${s.month}月${s.day}日 · 周${s.week}` : `${s.year}年${s.month}月${s.day}日`;
   }
 
   function stampIn(page, silent = false) {
@@ -322,21 +344,25 @@ export function mount(container, ctx) {
     recentEl.hidden = false;
     recentEl.append(
       h('span', { class: 'al-recent-label' }, TEXT.recentLabel),
-      ...recent.map((k) => {
-        const d = fromKey(k);
-        return h(
-          'button',
-          {
-            type: 'button',
-            class: 'chip al-recent-chip',
-            onClick: () => {
-              haptic.tap();
-              goTo(d);
+      h(
+        'div',
+        { class: 'chips scroll al-recent-row' },
+        recent.map((k) => {
+          const d = fromKey(k);
+          return h(
+            'button',
+            {
+              type: 'button',
+              class: 'chip al-recent-chip',
+              onClick: () => {
+                haptic.tap();
+                goTo(d);
+              },
             },
-          },
-          `${d.getMonth() + 1}月${d.getDate()}日`,
-        );
-      }),
+            `${d.getMonth() + 1}月${d.getDate()}日`,
+          );
+        }),
+      ),
     );
   }
 
@@ -363,11 +389,12 @@ export function mount(container, ctx) {
     kit.toast(`${p.name} ${day.positions[key].desc} · ${p.text}`, { duration: 3000 });
   }
   function explainCell(term) {
-    const g = GLOSSARY[term];
-    if (!g) return;
+    // 彭祖百忌直接给两句白话，比名词定义更有用
+    const text = term === '彭祖百忌' ? pengZuPlain(day).join('') : GLOSSARY[term];
+    if (!text) return;
     haptic.tap();
     sound.play('tick');
-    kit.toast(`${term} · ${g}`, { duration: 3000 });
+    kit.toast(`${term} · ${text}`, { duration: 3200 });
   }
 
   /* ---------- 渲染一页黄历纸 ---------- */
@@ -386,7 +413,8 @@ export function mount(container, ctx) {
         items.length ? items.map((t) => h('button', { type: 'button', class: ['al-chip', kind], dataset: { term: t, kind } }, t)) : h('span', { class: 'al-chip empty' }, '无'),
       );
     const col = (label, items, kind) => h('div', { class: ['al-col', kind] }, h('span', { class: 'al-mark' }, label), chipList(items, kind));
-    const cell = (label, value, tone = '', cls = '') => h('button', { type: 'button', class: ['al-cell', tone === '吉' && 'good', tone === '凶' && 'bad', cls], dataset: { term: label } }, h('i', null, label), h('b', null, value));
+    const cell = (label, value, tone = '') => h('button', { type: 'button', class: ['al-cell', tone === '吉' && 'good', tone === '凶' && 'bad'], dataset: { term: label } }, h('i', null, label), h('b', null, value));
+    const fine = (label, value) => h('button', { type: 'button', class: 'al-fine-row', dataset: { term: label } }, h('i', null, label), h('b', null, value));
     const posVal = (key) => {
       const p = dd.positions[key];
       if (key === 'tai') return p.desc.split(' ').pop();
@@ -423,9 +451,9 @@ export function mount(container, ctx) {
         cell('值神', `${dd.tianShen.name} ${dd.tianShen.type}${dd.tianShen.luck}`, dd.tianShen.luck),
         cell('建除', `${dd.zhiXing}日`),
         cell('星宿', `${dd.xiu.full} ${dd.xiu.luck}`, dd.xiu.luck),
-        cell('纳音', dd.naYin.day),
-        cell('彭祖百忌', dd.pengZu.join('\n'), '', 'pz'),
       ),
+      // 小字两行：纳音与彭祖百忌，像老黄历纸下方的细印
+      h('div', { class: 'al-fine' }, fine('纳音', dd.naYin.day), fine('彭祖百忌', dd.pengZu.join(' · '))),
       h(
         'div',
         { class: 'al-pos' },
@@ -440,78 +468,46 @@ export function mount(container, ctx) {
     );
   }
 
-  /* ---------- 黄历详解抽屉 ---------- */
+  /* ---------- 黄历详解抽屉：七个章节 ---------- */
   function openDetail() {
     if (busy || !alive || detailSheet?.opened) return;
     const rating = dayRating(day);
     const isToday = isSameDay(current, new Date());
     const nowIdx = hourIndex(new Date());
-    const ts = TIAN_SHEN[day.tianShen.name];
-    const zx = ZHI_XING[day.zhiXing];
-    const xiuText = XIU[day.xiu.full] || '';
-    const [pzGan, pzZhi] = pengZuPlain(day);
     const tags = [day.jieqi, ...day.festivals].filter(Boolean);
 
-    const termList = (items, kind, meaningOf) =>
-      h(
-        'div',
-        { class: 'al-terms' },
-        items.length
-          ? items.map((t) =>
-              h(
-                'button',
-                {
-                  type: 'button',
-                  class: ['al-term', kind],
-                  onClick: () => {
-                    haptic.tap();
-                    sound.play('tick');
-                    kit.toast(`${t} · ${meaningOf(t)}`, { duration: 2600 });
-                  },
-                },
-                t,
-              ),
-            )
-          : h('span', { class: 't-faint' }, '无'),
-      );
-
     const sections = [
-      { label: '今日气象', node: h('div', { class: 'al-rating' }, h('div', { class: 'row' }, stars(rating.score), h('b', { class: 'al-rating-label' }, rating.label)), h('div', null, rating.text)) },
-      { label: '解曰', text: summarize(day) },
-      { label: '宜', node: termList(day.yi, 'yi', termMeaning), stack: true },
-      { label: '忌', node: termList(day.ji, 'ji', termMeaning), stack: true },
+      { label: '气象', node: h('div', { class: 'al-rating' }, h('div', { class: 'row' }, stars(rating.score), h('b', { class: 'al-rating-label' }, rating.label)), h('div', null, rating.text)) },
+      { label: '解曰', text: readingText() },
       {
-        label: '冲煞',
-        text: `冲${day.chong.shengXiao}（${day.chong.ganZhi}）煞${day.sha}。属${day.chong.shengXiao}的朋友今天办大事多留一分心；${day.sha}方不宜作为出行、动土的朝向。${GLOSSARY.冲煞}`,
-      },
-      { label: '值神', text: `${day.tianShen.name} · ${day.tianShen.type}${day.tianShen.luck === '吉' ? '吉日' : ''}。${ts ? ts.text : ''}${GLOSSARY.值神}` },
-      { label: '建除', text: `${day.zhiXing}日。${zx ? zx.text : ''}` },
-      {
-        label: '星宿',
-        node: h('div', null, h('div', null, `${day.xiu.full}（${day.xiu.luck}）· ${day.xiu.gong}方${day.xiu.shou}。${xiuText}`), day.xiu.song ? h('div', { class: 'al-song' }, day.xiu.song) : null),
-      },
-      { label: '纳音', text: `日 ${day.naYin.day} · 月 ${day.naYin.month} · 年 ${day.naYin.year}。${GLOSSARY.纳音}` },
-      {
-        label: '彭祖百忌',
-        node: h('div', { class: 'al-pz' }, h('div', null, h('b', null, day.pengZu[0]), h('span', null, pzGan)), h('div', null, h('b', null, day.pengZu[1]), h('span', null, pzZhi))),
+        label: '宜忌',
+        node: h(
+          'div',
+          { class: 'al-yiji-read' },
+          h('div', { class: 'al-yj-row yi' }, h('span', { class: 'al-mark' }, '宜'), termList(day.yi, 'yi', termMeaning)),
+          h('div', { class: 'al-yj-row ji' }, h('span', { class: 'al-mark' }, '忌'), termList(day.ji, 'ji', termMeaning)),
+        ),
         stack: true,
       },
-      { label: '吉神宜趋', node: termList(day.jiShen, 'jishen', jiShenMeaning), stack: true },
-      { label: '凶神宜忌', node: termList(day.xiongSha, 'xiongsha', xiongShaMeaning), stack: true },
-      { label: '吉神方位', node: compassNode(), stack: true },
-      { label: '时辰吉凶', node: hoursNode(isToday ? nowIdx : -1), stack: true },
-      isToday ? { label: '此刻', text: nowText(nowIdx) } : null,
       {
-        label: '月相物候',
-        text: `${day.yueXiang}月 · ${day.wuHou} · ${day.hou}${day.shuJiu ? ' · ' + day.shuJiu : ''}${day.fu ? ' · ' + day.fu : ''}。六曜「${day.liuYao}」：${liuYaoMeaning(day.liuYao)}${day.lu ? ` 日禄：${day.lu}。` : ''}`,
+        label: '冲煞方位',
+        node: h(
+          'div',
+          { class: 'al-chong' },
+          h('p', { class: 'al-chong-text' }, `冲${day.chong.shengXiao}（${day.chong.ganZhi}）煞${day.sha}。属${day.chong.shengXiao}的朋友当日办大事多留一分心，${day.sha}方不宜作为出行、动土的朝向。`),
+          compassNode(),
+        ),
+        stack: true,
       },
+      { label: '时辰吉凶', node: hoursNode(isToday ? nowIdx : -1), stack: true },
+      { label: '细目', node: fineNode(), stack: true },
       { label: '择日', node: pickNode(), stack: true },
     ];
 
     const card = resultCard({
       kicker: `${day.solar.text} · ${day.solar.weekText}`,
       title: day.lunar.text,
-      badge: `${day.tianShen.name} · ${day.tianShen.type}${day.tianShen.luck === '吉' ? '吉日' : ''} · ${relativeLabel(current)}`,
+      badge: `${relativeLabel(current)} · ${rating.label}`,
       sub: `${day.lunar.yearText} ${day.lunar.monthGanZhi}月 ${day.lunar.dayGanZhi}日 · 属${day.lunar.zodiac} · ${day.xingzuo}${tags.length ? ' · ' + tags.join(' · ') : ''}`,
       seal: rating.seal,
       verse: `${quote.text}\n—— ${quote.source}`,
@@ -520,10 +516,13 @@ export function mount(container, ctx) {
     });
 
     const actions = [
-      button('回到黄历', {
+      button(TEXT.tear, {
         variant: 'primary',
         onClick: () => {
-          detailSheet.close();
+          const s = detailSheet;
+          if (!s) return;
+          s.close();
+          wait(D(420)).then(() => alive && flip(1));
         },
       }),
       button('分享', {
@@ -541,12 +540,35 @@ export function mount(container, ctx) {
     sound.play('pop');
   }
 
-  function nowText(idx) {
-    const hr = day.hours[idx];
-    if (!hr) return '';
-    const yi = hr.yi.length ? hr.yi.join(' ') : '无';
-    const ji = hr.ji.length ? hr.ji.join(' ') : '无';
-    return `${hr.zhi}时（${HOURS[idx].name} ${hr.range}）· ${hr.ganZhi} · ${hr.tianShen}${hr.luck}。此时宜：${yi}；忌：${ji}。喜神${hr.xi}，财神${hr.cai}。${HOURS[idx].text}`;
+  /** 解曰：值神 + 建除两句，控制在一百二十字内；星宿与神煞放到「细目」。 */
+  function readingText() {
+    const ts = TIAN_SHEN[day.tianShen.name];
+    const zx = ZHI_XING[day.zhiXing];
+    return `${day.tianShen.name}值日，${day.tianShen.type}${day.tianShen.luck === '吉' ? '吉日' : '之日'}。${ts ? ts.text : ''}建除逢「${day.zhiXing}」，${zx ? zx.text : ''}`;
+  }
+
+  function termList(items, kind, meaningOf) {
+    return h(
+      'div',
+      { class: 'al-terms' },
+      items.length
+        ? items.map((t) =>
+            h(
+              'button',
+              {
+                type: 'button',
+                class: ['al-term', kind],
+                onClick: () => {
+                  haptic.tap();
+                  sound.play('tick');
+                  kit.toast(`${t} · ${meaningOf(t)}`, { duration: 2600 });
+                },
+              },
+              t,
+            ),
+          )
+        : h('span', { class: 't-faint' }, '无'),
+    );
   }
 
   function hoursNode(nowIdx) {
@@ -568,12 +590,46 @@ export function mount(container, ctx) {
         h('small', null, hr.range),
       ),
     );
+    const hr = day.hours[nowIdx];
+    const now = hr
+      ? h(
+          'div',
+          { class: 'al-now' },
+          h('b', null, `此刻 ${hr.zhi}时 · ${HOURS[nowIdx].name} ${hr.range}`),
+          h('span', null, `${hr.ganZhi} ${hr.tianShen}${hr.luck}。宜 ${hr.yi.slice(0, 4).join(' ') || '无'}，忌 ${hr.ji.slice(0, 3).join(' ') || '无'}。${HOURS[nowIdx].text}`),
+        )
+      : null;
     return h(
       'div',
       null,
+      now,
       h('div', { class: 'al-hgrid' }, cells),
       day.lateZi ? h('div', { class: 'al-latezi' }, `晚子时 ${day.lateZi.range} · ${day.lateZi.ganZhi} · ${day.lateZi.tianShen}${day.lateZi.luck}`) : null,
       h('div', { class: 'al-note' }, GLOSSARY.时辰),
+    );
+  }
+
+  /** 细目：星宿 / 纳音 / 彭祖百忌 / 吉神 / 凶煞 / 月相物候，一行一条，点左侧名目看解释。 */
+  function fineNode() {
+    const [pzGan, pzZhi] = pengZuPlain(day);
+    const row = (label, ...content) =>
+      h(
+        'div',
+        { class: 'al-dl-row' },
+        h('button', { type: 'button', class: 'al-dl-label', onClick: () => explainCell(label) }, label),
+        h('div', { class: 'al-dl-text' }, ...content),
+      );
+    const xiuText = XIU[day.xiu.full] || '';
+    const moon = [`${day.yueXiang}月`, day.wuHou, day.hou, day.shuJiu, day.fu].filter(Boolean).join(' · ');
+    return h(
+      'div',
+      { class: 'al-dl' },
+      row('星宿', h('div', null, `${day.xiu.full}（${day.xiu.luck}）· ${day.xiu.gong}方${day.xiu.shou}。${xiuText}`), day.xiu.song ? h('div', { class: 'al-song' }, day.xiu.song) : null),
+      row('纳音', `日 ${day.naYin.day} · 月 ${day.naYin.month} · 年 ${day.naYin.year}`),
+      row('彭祖百忌', h('div', { class: 'al-pz' }, h('div', null, h('b', null, day.pengZu[0]), h('span', null, pzGan)), h('div', null, h('b', null, day.pengZu[1]), h('span', null, pzZhi)))),
+      row('吉神宜趋', termList(day.jiShen, 'jishen', jiShenMeaning)),
+      row('凶神宜忌', termList(day.xiongSha, 'xiongsha', xiongShaMeaning)),
+      row('月相物候', `${moon}。六曜「${day.liuYao}」：${liuYaoMeaning(day.liuYao)}${day.lu ? ` 日禄：${day.lu}。` : ''}`),
     );
   }
 
@@ -614,7 +670,7 @@ export function mount(container, ctx) {
       });
     }
     const inner = `<circle cx="${R}" cy="${R}" r="72" opacity=".9"/><circle cx="${R}" cy="${R}" r="58" opacity=".35" stroke-dasharray="2 4"/><circle cx="${R}" cy="${R}" r="2" style="fill:currentColor;stroke:none"/>${ticks}${ring}${marks}`;
-    const svg = kit.svg(inner, { viewBox: '0 0 200 200', size: 220, strokeWidth: 1, cls: 'al-rose' });
+    const svg = kit.svg(inner, { viewBox: '0 0 200 200', size: 200, strokeWidth: 1, cls: 'al-rose' });
     const legend = h(
       'div',
       { class: 'al-legend' },
@@ -638,15 +694,15 @@ export function mount(container, ctx) {
   }
 
   function pickNode() {
-    const chipsEl = h(
+    const row = h(
       'div',
-      { class: 'al-terms' },
+      { class: 'chips scroll al-picks' },
       PICK_TERMS.map((t) =>
         h(
           'button',
           {
             type: 'button',
-            class: 'al-term pick',
+            class: 'chip al-pick',
             onClick: () => {
               haptic.tap();
               const r = findGoodDay(t.value, current);
@@ -657,19 +713,20 @@ export function mount(container, ctx) {
               sound.play('coin');
               toast(`最近宜${t.label}：${r.day.solar.month}月${r.day.solar.day}日 · ${r.daysAhead} 天后`);
               detailSheet.close();
-              wait(D(420)).then(() => flip(0, r.date));
+              wait(D(420)).then(() => alive && flip(0, r.date));
             },
           },
           t.label,
         ),
       ),
     );
-    return h('div', null, h('div', { class: 'al-note', style: { marginBottom: '8px' } }, TEXT.pickLabel), chipsEl);
+    return h('div', null, h('div', { class: 'al-note al-pick-note' }, TEXT.pickLabel), row);
   }
 
   /* ---------- 卸载 ---------- */
   return () => {
-    alive = false; clearTimeout(heightTimer);
+    alive = false;
+    clearTimeout(heightTimer);
     holder.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     if (pageEl) pageEl.getAnimations().forEach((a) => a.cancel());
     if (detailSheet && detailSheet.opened) detailSheet.close();

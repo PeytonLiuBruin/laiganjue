@@ -30,7 +30,7 @@ export function createLiuyaoCoins(canvas, ctx) {
     async toss(values, intensity) {
       delete canvas.dataset.coins;
       canvas.setAttribute('aria-label', '三枚铜钱正在翻滚');
-      const completed = await scene.throwTo(coinFaces(values), intensity, { duration: ctx.platform.simpleMotion ? 1600 : 3300 });
+      const completed = await scene.throwTo(coinFaces(values), intensity, { duration: ctx.platform.simpleMotion ? 1500 : 2450 });
       if (completed) {
         canvas.dataset.coins = values.join(',');
         canvas.setAttribute('aria-label', `三枚铜钱落定：${values.map(v => v === COIN.ZI ? '字面' : '花面').join('、')}`);

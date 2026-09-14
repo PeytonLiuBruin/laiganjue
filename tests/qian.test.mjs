@@ -10,6 +10,7 @@ import {
   lotNumeral,
   lotLabel,
   formatPoem,
+  formatPoemLines,
   validateLots,
   createShakeMeter,
   pushHistory,
@@ -149,6 +150,13 @@ test('formatPoem 两句一行，加逗号句号', () => {
   assert.equal(s, '甲甲甲甲甲甲甲，乙乙乙乙乙乙乙。\n丙丙丙丙丙丙丙，丁丁丁丁丁丁丁。');
   assert.equal(formatPoem(['一一一一一一一']), '一一一一一一一。');
   assert.equal(formatPoem([]), '');
+});
+
+test('formatPoemLines 四句各占一行，逗号句号交替，每行恰 8 字', () => {
+  const s = formatPoemLines(['甲甲甲甲甲甲甲', '乙乙乙乙乙乙乙', '丙丙丙丙丙丙丙', '丁丁丁丁丁丁丁']);
+  assert.equal(s, '甲甲甲甲甲甲甲，\n乙乙乙乙乙乙乙。\n丙丙丙丙丙丙丙，\n丁丁丁丁丁丁丁。');
+  for (const lot of LOTS) for (const line of formatPoemLines(lot.poem).split('\n')) assert.equal(Array.from(line).length, 8, lot.no + ' ' + line);
+  assert.equal(formatPoemLines([]), '');
 });
 
 test('shareText 含签号、典故、等级、签诗与所问', () => {

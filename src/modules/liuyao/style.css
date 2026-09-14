@@ -1,15 +1,19 @@
 /* 六爻 模块样式：所有选择器以 .m-liuyao 开头。
-   颜色一律取自皮肤变量；唯铜钱（黄铜）与方孔为材质色。 */
+   颜色一律取自皮肤变量；唯铜钱（黄铜）为材质色，画在画布里。 */
 
+.m-liuyao .ly-top {
+  margin-bottom: 16px;
+}
 .m-liuyao .ly-top .input {
   text-align: center;
   font-family: var(--font-serif);
   letter-spacing: 0.08em;
 }
 
-/* —— 舞台：铜钱与卦象各有独立空间 —— */
+/* —— 舞台：左为钱盘（铜钱起落），右为卦象台（六爻逐条点亮）；徽记落在钱盘左上角 —— */
 .m-liuyao .ly-stage {
-  min-height: 390px;
+  height: clamp(330px, 44svh, 372px);
+  min-height: 330px;
 }
 .m-liuyao .ly-stage .stage-scene {
   transform-style: flat;
@@ -19,39 +23,37 @@
   display: none;
 }
 .m-liuyao .ly-stage .stage-badge {
-  max-width: calc(100% - 110px);
+  max-width: calc(100% - 156px);
 }
 .m-liuyao .ly-mat,
-.m-liuyao .ly-pit,
-.m-liuyao .ly-reveal {
+.m-liuyao .ly-pit {
   position: absolute;
   left: 14px;
-  right: 118px;
-  top: 52px;
-  bottom: 26px;
+  right: 132px;
+  top: 14px;
+  bottom: 14px;
 }
 .m-liuyao .ly-mat {
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--surface-2);
   border: 1px solid var(--line);
   pointer-events: none;
 }
 .m-liuyao .ly-mat-ring {
   position: absolute;
-  inset: 9px;
-  border-radius: 12px;
+  inset: 8px;
+  border-radius: 11px;
   border: 1px solid var(--line);
-  opacity: 0.4;
+  opacity: 0.45;
 }
 .m-liuyao .ly-pit {
   z-index: 1;
   transform-style: flat;
-  transition: opacity 0.6s;
+  touch-action: none;
   cursor: grab;
 }
-.m-liuyao .ly-pit.dim {
-  opacity: 0.1;
-  pointer-events: none;
+.m-liuyao .ly-pit:active {
+  cursor: grabbing;
 }
 .m-liuyao .ly-canvas {
   display: block;
@@ -64,57 +66,69 @@
 /* —— 卦象台 —— */
 .m-liuyao .ly-board {
   position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 100px;
+  right: 14px;
+  top: 14px;
+  bottom: 14px;
+  width: 106px;
   z-index: 2;
-  padding: 10px 6px 8px;
-  border-radius: 14px;
+  padding: 12px 8px 10px;
+  border-radius: 16px;
   background: var(--surface);
-  border: var(--hairline) solid var(--line);
+  border: 1px solid var(--line);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  transition: border-color 0.4s;
+}
+.m-liuyao .ly-board.done {
+  border-color: var(--line-strong);
 }
 .m-liuyao .ly-board-title {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--fs-s);
-  letter-spacing: 0.3em;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.25em;
+  text-indent: 0.25em;
   color: var(--accent);
-  text-indent: 0.3em;
+  white-space: nowrap;
+}
+.m-liuyao .ly-board.done .ly-board-title {
+  animation: ritual-appear 0.6s ease both;
 }
 .m-liuyao .ly-board-foot {
-  font-size: 9px;
-  letter-spacing: 0.3em;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-indent: 0.25em;
   color: var(--text-3);
-  text-indent: 0.3em;
 }
 .m-liuyao .ly-lines {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 .m-liuyao .ly-line {
   display: grid;
   width: 100%;
-  grid-template-columns: 12px minmax(0, 1fr) 12px;
+  grid-template-columns: 13px minmax(0, 1fr) 13px;
   align-items: center;
-  gap: 4px;
-  height: 24px;
-  border-radius: 4px;
+  gap: 5px;
+  height: 34px;
+  border-radius: 6px;
   color: var(--text);
+}
+.m-liuyao .ly-line.lit:active {
+  background: var(--surface-2);
 }
 .m-liuyao .ly-line-pos {
   font-family: var(--font-serif);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-3);
   text-align: center;
   line-height: 1;
-  opacity: 0.55;
+  opacity: 0.6;
 }
 .m-liuyao .ly-line.lit .ly-line-pos {
   opacity: 1;
@@ -126,7 +140,7 @@
   border-radius: 2px;
   background: transparent;
   border: 1px dashed var(--line-strong);
-  opacity: 0.55;
+  opacity: 0.5;
 }
 .m-liuyao .ly-line.lit .ly-bar {
   border: 0;
@@ -150,7 +164,7 @@
   background: linear-gradient(90deg, var(--accent) 0 40%, transparent 40% 60%, var(--accent) 60% 100%);
 }
 .m-liuyao .ly-mark {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
   text-align: center;
   color: var(--accent);
@@ -177,145 +191,77 @@
   }
 }
 
-/* —— 第 N 掷 徽记 —— */
-.m-liuyao .ly-count {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 4px;
-  border-radius: var(--r-pill);
-  border: var(--hairline) solid var(--line);
-  background: var(--surface);
-  color: var(--text-3);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  pointer-events: none;
+/* —— 只此一行提示，随状态更替；固定高度避免跳动 —— */
+.m-liuyao .ly-hint {
+  min-height: 22px;
 }
-.m-liuyao .ly-count-n {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-serif);
-  font-weight: 900;
-  font-size: 12px;
-  letter-spacing: 0;
-  color: var(--accent-ink);
-  background: radial-gradient(circle at 35% 30%, var(--accent-2), var(--accent) 60%, var(--accent-3));
-  box-shadow: 0 2px 8px var(--glow);
-}
-.m-liuyao .ly-count.done {
-  color: var(--accent);
-  border-color: var(--line-strong);
-}
-.m-liuyao .ly-count.bump .ly-count-n {
-  animation: ly-bump 0.45s var(--ease-bounce);
-}
-@keyframes ly-bump {
-  0% {
-    transform: scale(1.7);
-  }
-  100% {
-    transform: scale(1);
-  }
+.m-liuyao .ly-hint.ly-quiet .hint-glyph {
+  display: none;
 }
 
-/* —— 揭示：大卦符 + 卦名 —— */
-.m-liuyao .ly-reveal {
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 18px;
-  text-align: center;
-  color: var(--text);
-  cursor: pointer;
-  opacity: 0;
+/* —— 卦成后的结果行：在提示之下、按钮之上 —— */
+.m-liuyao .ritual-receipt {
+  margin: 18px 0 0;
+  padding-bottom: 0;
 }
-.m-liuyao .ly-reveal.in {
-  animation: ly-reveal-in 0.9s var(--ease-spring) both;
-}
-.m-liuyao .ly-reveal-sym .ly-mini {
-  border: 0;
-  background: transparent;
+
+/* —— 操作条：未卦成时「重起」只是一枚小图标，三枚按钮同排 —— */
+.m-liuyao .action-bar .ly-reset.ly-reset-icon {
+  flex: 0 0 auto;
+  min-width: 46px;
+  width: 46px;
   padding: 0;
-  gap: 7px;
-  margin-bottom: 12px;
 }
-.m-liuyao .ly-reveal-sym .ly-mini-line {
-  width: 72px;
-  height: 8px;
-}
-.m-liuyao .ly-reveal-name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(20px, 4vw, 28px);
-  line-height: 1.5;
-  letter-spacing: 0.08em;
-  color: var(--text);
-}
-.m-liuyao .ly-reveal-sub {
-  font-size: var(--fs-xs);
-  letter-spacing: 0.06em;
-  color: var(--text-2);
-}
-@keyframes ly-reveal-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.5) translateY(20px);
-    filter: blur(6px);
-  }
-  60% {
-    opacity: 1;
-    filter: blur(0);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+.m-liuyao .action-bar .ly-reset.ly-reset-icon > span {
+  display: none;
 }
 
-/* —— 历史 —— */
+/* —— 历史：一行横向滑动，少时居中 —— */
 .m-liuyao .ly-hist {
-  margin-top: var(--sp-4);
+  margin-top: 22px;
+  text-align: center;
 }
 .m-liuyao .ly-hist-title {
-  text-align: center;
-  font-size: 10px;
-  letter-spacing: 0.3em;
+  font-size: 11px;
+  letter-spacing: 0.12em;
   color: var(--text-3);
-  margin-bottom: var(--sp-2);
+  margin-bottom: 8px;
 }
-.m-liuyao .ly-hist-row {
+.m-liuyao .ly-hist-scroll {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
   justify-content: center;
 }
+.m-liuyao .ly-hist-row {
+  display: inline-flex;
+  gap: 6px;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 2px 2px 6px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.m-liuyao .ly-hist-row::-webkit-scrollbar {
+  display: none;
+}
 .m-liuyao .ly-hist-item {
-  font-size: var(--fs-xs);
+  flex: none;
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 12px;
   color: var(--text-2);
-  border: var(--hairline) solid var(--line);
-  border-radius: var(--r-pill);
-  padding: 4px 12px;
-  letter-spacing: 0.06em;
-  min-height: 30px;
-  transition: all var(--dur-fast);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  letter-spacing: 0.04em;
+  transition: transform var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast);
 }
 .m-liuyao .ly-hist-item:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
   border-color: var(--accent);
   color: var(--accent);
 }
 
-/* —— 结果抽屉里的卦象对照 / 动爻列表 —— */
+/* —— 结果抽屉里的卦象对照 / 象曰 / 动爻 / 变卦 / 四格分项 —— */
 .m-liuyao .ly-pair {
   display: flex;
   align-items: center;
@@ -339,8 +285,8 @@
   gap: 6px;
 }
 .m-liuyao .ly-mini-label {
-  font-size: 10px;
-  letter-spacing: 0.3em;
+  font-size: 11px;
+  letter-spacing: 0.25em;
   color: var(--text-3);
 }
 .m-liuyao .ly-mini {
@@ -349,7 +295,7 @@
   gap: 5px;
   padding: 8px 10px;
   border-radius: 10px;
-  border: var(--hairline) solid var(--line);
+  border: 1px solid var(--line);
   background: var(--surface);
 }
 .m-liuyao .ly-mini-line {
@@ -374,6 +320,24 @@
   font-size: var(--fs-s);
   letter-spacing: 0.1em;
   color: var(--text);
+}
+.m-liuyao .ly-xiang {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  text-align: left;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.8;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+.m-liuyao .ly-xiang-k {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
 }
 .m-liuyao .ly-gist {
   font-family: var(--font-serif);
@@ -428,4 +392,35 @@
 .m-liuyao .ly-mv-text {
   font-size: var(--fs-s);
   line-height: 1.7;
+}
+.m-liuyao .ly-aspects {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+  margin-top: 4px;
+}
+.m-liuyao .ly-aspect {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.m-liuyao .ly-aspect b {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+.m-liuyao .ly-aspect span {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+@media (max-width: 360px) {
+  .m-liuyao .ly-aspects {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

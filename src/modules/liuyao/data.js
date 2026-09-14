@@ -742,14 +742,22 @@ export const HEXAGRAMS = [
 /** 界面文案 */
 export const UI = {
   questionPlaceholder: '（可选）写下所问之事，一事一占',
-  hintIdle: '心中默念所问，铜钱在手',
-  hintReady: '向上甩动手机，或在铜钱上向上快滑',
-  hintDone: '六爻已成，点卦名或“再起一卦”',
+  badgeIdle: '金钱课 · 待掷',
+  /** 舞台正下方唯一的一句提示：闲时是操作指引，飞行与卦成时是状态说明 */
+  hints: {
+    idle: '上滑铜钱，或向上甩动手机',
+    flight: '静候铜钱落定',
+    done: '六爻已成，展开解读或再起一卦',
+  },
+  tossLabel: '掷钱起卦',
+  readLabel: '展开解读',
+  againLabel: '再起一卦',
   autoLabel: '连掷六次',
-  autoStop: '停 止',
-  tossLabel: '掷 钱',
-  resetLabel: '重起',
+  autoRest: '连掷余下',
+  autoStop: '停止',
+  resetLabel: '重新起卦',
   sheetTitle: '六爻断卦',
+  historySheetTitle: '往日卦象',
   footer: '仅供娱乐 · 卦由心生，事在人为',
   historyTitle: '近来所得',
   coinFront: ['乾', '隆', '通', '宝'],

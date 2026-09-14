@@ -88,6 +88,14 @@ export function formatPoem(poem, { sep = '\n' } = {}) {
   return out.join(sep);
 }
 
+/**
+ * 四句各占一行，逗号/句号交替：「句一，」「句二。」「句三，」「句四。」
+ * 窄屏抽屉里用，保证每行 ≤ 8 字，不会在句中折行。
+ */
+export function formatPoemLines(poem, { sep = '\n' } = {}) {
+  return (poem || []).map((s, i) => `${String(s)}${i % 2 ? '。' : '，'}`).join(sep);
+}
+
 /* ------------------------------ 校验 ------------------------------ */
 
 const HAN = /^\p{Script=Han}+$/u;

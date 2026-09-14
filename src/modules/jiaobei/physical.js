@@ -1,10 +1,12 @@
 import {createBlockMesh} from './model.js';
-import {face,axisAngle,multiply} from '../../core/solids.js';
+import {face,axisAngle,multiply,projectSolidPoint} from '../../core/solids.js';
 import {createSolidScene} from '../../ui/solid-scene.js';
+
+const GROUND=.79, WORLD=350;
 
 export function createJiaobeiPhysical(canvas,ctx) {
   const mesh=createBlockMesh(28,10).map(f=>face(f.points,null,f.flat?'cut':'wood'));
-  const scene=createSolidScene(canvas,ctx,{ground:.79});
+  const scene=createSolidScene(canvas,ctx,{ground:GROUND,worldWidth:WORLD});
   function reset(){scene.set([-1,1].map(side=>({kind:'jiaobei',mesh,size:43,x:side*65,y:side*8,q:multiply(axisAngle([0,0,1],side*.32),axisAngle([1,0,0],.14))})));}
   reset();
   return {reset,rest:scene.rest,preview:scene.preview,tilt:()=>{},dispose:scene.dispose,
@@ -12,6 +14,12 @@ export function createJiaobeiPhysical(canvas,ctx) {
       const ok=await scene.throwTo([result.a,result.b],intensity,{duration:ctx.platform.simpleMotion?1700:3500,onPhase});
       if(ok)canvas.dataset.faces=`${result.a},${result.b}`;
       return ok;
+    },
+    /** 每枚筊杯落点在画布上的横坐标（CSS px），用来把面向标签放到杯子正下方。 */
+    landing(){
+      const w=canvas.clientWidth,h=canvas.clientHeight;
+      if(!w||!h)return [];
+      return scene.objects.map(o=>projectSolidPoint([o.x,o.y,0],w,h,GROUND,WORLD)[0]);
     },
   };
 }

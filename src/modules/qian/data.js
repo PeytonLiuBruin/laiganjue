@@ -18,19 +18,24 @@ export const LEVEL_QUOTA = { 上上: 8, 上吉: 12, 中吉: 14, 中平: 14, 中�
 /** 六项分述的固定顺序 */
 export const ITEM_KEYS = ['功名', '求财', '婚姻', '健康', '出行', '失物'];
 
-export const QUESTION_PLACEHOLDER = '（可选）写下所问之事，如：这次换工作顺利吗？';
-export const IDLE_HINT = '心中默念所问，摇动签筒';
-export const SHAKE_HINTS = ['诚心默念…', '心诚则灵…', '默念所问之事…', '静心，再静心…', '一事一问，专心…'];
-export const DRAWN_HINT = '一支签跃出 · 点击竹签取签';
-export const REVEALED_HINT = '点击签纸，再看解签';
+/** 界面文案（单一来源；≤ 18 字、动词开头的操作提示） */
+export const QUESTION_PLACEHOLDER = '心中所问之事（选填）';
+export const IDLE_HINT = '摇一摇手机，或左右拖动签筒';
+export const SHAKING_HINT = '签筒摇动中，停手即出一签';
+export const SENSOR_HINT = '随手轻摇，停手即出签';
+export const DRAWN_HINT = '点一下落下的竹签，取签展开';
+export const UNFOLD_HINT = '签纸展开中，稍候片刻';
+export const REVEALED_HINT = '读完签诗，往下展开解读';
 export const IDLE_BADGE = '灵签 · 六十四签';
-export const SHEET_TITLE = '解签';
-export const FOOTER = '仅供娱乐 · 心诚则灵';
-export const TAKE_LABEL = '取 签';
-export const SHAKE_LABEL = '摇 签';
+export const SHAKING_BADGE = '摇签中';
+export const SHEET_TITLE = '灵签解读';
+export const FOOTER = '原创签诗 · 传统文化演绎 · 仅供娱乐';
+export const TAKE_LABEL = '取签展开';
+export const SHAKE_LABEL = '摇一签';
 export const AGAIN_LABEL = '再求一签';
-export const HOLD_TIP = '长按「摇签」不放可持续摇动，松手出签';
-export const GESTURE_TIP = '摇一摇手机，或左右来回拖动签筒';
+export const SHARE_LABEL = '分享';
+export const HISTORY_KICKER = '最近的签';
+export const ITEMS_LABEL = '分述';
 export const FATED_TOAST = '此签与你有缘 · 三度相逢';
 export const DOUBLE_TOAST = '摇得太急，落了两支 · 静心再摇一次';
 export const REVIEW_KICKER = '回看';

@@ -1,14 +1,33 @@
 .m-jiaobei .jb-top { display: grid; gap: 14px; margin-bottom: 18px; }
+.m-jiaobei .jb-top .chip { min-height: 44px; }
 .m-jiaobei .jb-stage { height: clamp(300px, 45svh, 400px); min-height: 280px; }
 .m-jiaobei .jb-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .m-jiaobei .jb-canvas:active { cursor: grabbing; }
 .m-jiaobei .jb-stage .stage-floor { display: none; }
-.m-jiaobei .jb-stage .stage-hint { bottom: 14px; }
-.m-jiaobei .jb-face-labels { position: absolute; left: 0; right: 0; bottom: 12%; display: flex; justify-content: center; gap: clamp(65px, 20vw, 105px); pointer-events: none; }
-.m-jiaobei .jb-face-labels span { font-size: 12px; color: var(--text-2); letter-spacing: .08em; animation: ritual-appear .45s ease both; }
-.m-jiaobei .jb-streak { display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: 14px; }
-.m-jiaobei .jb-streak > span { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; color: var(--text-3); }
-.m-jiaobei .jb-streak .earned { color: var(--accent); border-color: var(--accent); background: var(--surface-2); }
-.m-jiaobei .jb-streak small { color: var(--text-2); font-size: 12px; }
-.m-jiaobei .jb-history { opacity: .8; }
-@media (max-height: 700px) { .m-jiaobei .jb-stage { height: 280px; } }
+/* 连掷模式：徽记给右上角的三枚小印留位（省略号规则来自全局 fit.css） */
+.m-jiaobei .jb-stage.jb-three .stage-badge { max-width: calc(100% - 132px); }
+/* 画布是唯一的实物层：筊盘在其下，面向标签在其上；不需要 3D 上下文 */
+.m-jiaobei .jb-stage .stage-scene { transform-style: flat; }
+.m-jiaobei .jb-canvas { position: relative; z-index: 1; }
+.m-jiaobei .jb-mat { z-index: 0; }
+.m-jiaobei .jb-face-labels { z-index: 2; }
+/* 案上一方浅浅的筊盘：让杯子有处可落，飞行的空间也有了「桌面」可参照 */
+.m-jiaobei .jb-mat { position: absolute; left: 50%; top: calc(79% + 6px); width: min(84%, 300px); aspect-ratio: 3 / 1; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--line); background: radial-gradient(ellipse at 50% 42%, var(--surface-2), transparent 78%); pointer-events: none; }
+/* 面向标签：由 JS 放到各杯正下方 */
+.m-jiaobei .jb-face-labels { position: absolute; left: 0; right: 0; bottom: 12%; height: 18px; pointer-events: none; }
+.m-jiaobei .jb-face-labels span { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; color: var(--text-2); letter-spacing: .08em; animation: ritual-appear .45s ease both; }
+.m-jiaobei .jb-face-labels span:first-child { left: calc(50% - 65px); }
+.m-jiaobei .jb-face-labels span:last-child { left: calc(50% + 65px); }
+/* 连掷进度：舞台右上角三枚小印 */
+.m-jiaobei .jb-streak { position: absolute; right: 18px; top: 14px; display: flex; gap: 6px; z-index: 10; pointer-events: none; }
+.m-jiaobei .jb-streak > span { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 11px; line-height: 1; color: var(--accent); }
+.m-jiaobei .jb-streak .earned { border-color: var(--accent); background: var(--surface-2); }
+.m-jiaobei .jb-streak .fresh { animation: jb-pip .5s var(--ease-bounce) both; }
+@keyframes jb-pip { from { transform: scale(1.7); opacity: 0; } to { transform: none; opacity: 1; } }
+/* 只此一行操作提示，随状态更替；固定高度避免跳动 */
+.m-jiaobei .jb-hint { min-height: 22px; }
+.m-jiaobei .jb-hint.jb-quiet .hint-glyph { display: none; }
+.m-jiaobei .jb-spacer { height: 0; }
+.m-jiaobei .jb-history { margin-top: 22px; text-align: center; opacity: .85; }
+.m-jiaobei .jb-history .t-kicker { display: block; font-size: 11px; letter-spacing: .12em; color: var(--text-3); }
+.m-jiaobei .jb-history .history { margin-top: 8px; }

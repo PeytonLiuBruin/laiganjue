@@ -19,7 +19,7 @@ import {
   xiongShaMeaning,
   ZHI,
 } from '../src/modules/almanac/core.js';
-import { QUOTES, TIAN_SHEN, ZHI_XING, XIU, PENG_ZU, HOURS, POSITIONS, YIJI_TERMS, JI_SHEN, XIONG_SHA, RATINGS, PICK_TERMS, LIU_YAO, DIRECTION_DEG } from '../src/modules/almanac/data.js';
+import { QUOTES, TIAN_SHEN, ZHI_XING, XIU, PENG_ZU, HOURS, POSITIONS, YIJI_TERMS, JI_SHEN, XIONG_SHA, RATINGS, PICK_TERMS, LIU_YAO, DIRECTION_DEG, GLOSSARY, TEXT } from '../src/modules/almanac/data.js';
 import { Solar } from '../src/core/lunar.js';
 
 const d = (y, m, day, h = 12, mi = 0) => new Date(y, m - 1, day, h, mi);
@@ -283,4 +283,18 @@ test('shareText：含日期、农历、宜忌、值神、一言与署名', () =>
   assert.ok(t.includes('宜：') && t.includes('忌：诸事不宜'));
   assert.ok(t.includes('青龙') && t.includes(q.text));
   assert.ok(t.endsWith('来感觉 · 玄学占卜'));
+});
+
+test('界面文案：操作提示一句 ≤ 18 字且动词开头；纸面与细目的名目都有一句解释；无占位符', () => {
+  assert.ok(TEXT.hint.replace(/[\s·，。]/g, '').length <= 18, TEXT.hint);
+  assert.ok(/^(横滑|滑动|左右滑|点|摇|撕)/.test(TEXT.hint), '动词开头：' + TEXT.hint);
+  assert.ok(TEXT.tear.length <= 4 && TEXT.readPrefix.length <= 2 && TEXT.readFar.length <= 6);
+  for (const k of ['冲煞', '值神', '建除', '星宿', '纳音', '彭祖百忌', '吉神方位', '时辰', '吉神宜趋', '凶神宜忌', '月相物候']) {
+    assert.ok(GLOSSARY[k] && GLOSSARY[k].length >= 8, '名目缺解释：' + k);
+  }
+  for (const [k, v] of Object.entries(TEXT)) {
+    assert.ok(typeof v === 'string' && v.trim().length >= 2, k);
+    assert.ok(!/TODO|待补|示例|xxx|[A-Za-z]/.test(v), '占位或英文残留：' + k + ' = ' + v);
+  }
+  for (const r of Object.values(RATINGS)) assert.ok(r.label.length <= 2 && r.text.length <= 40, '评级一句话 ≤ 40 字：' + r.text);
 });

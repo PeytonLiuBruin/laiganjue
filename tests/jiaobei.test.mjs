@@ -64,3 +64,36 @@ test('tally', () => {
   const t = tally([{ outcome: 'sheng' }, { outcome: 'sheng' }, { outcome: 'yin' }]);
   assert.deepEqual(t, { sheng: 2, xiao: 0, yin: 1, li: 0 });
 });
+
+// —— 文案预算：与产品清单一致（提示 ≤ 18 字、一句话 ≤ 40 字、标题 ≤ 8 字、段落 ≤ 120 字），且不夹英文/占位符 ——
+import { OUTCOMES, SESSION_TEXT, HINTS, BRIEFS, STREAK_BRIEFS, THREE_MODE_INTRO, MODES, SHARE_SIGN } from '../src/modules/jiaobei/data.js';
+
+const len = (s) => [...String(s)].length;
+const clean = (s) => !/[A-Za-z]|TODO|xxx|示例/.test(s) && !/["']/.test(s);
+
+test('文案预算：操作提示 ≤ 18 字，动词或状态开头，无英文', () => {
+  for (const [k, t] of Object.entries(HINTS)) {
+    assert.ok(len(t) <= 18, `HINTS.${k} 太长: ${t}`);
+    assert.ok(clean(t), `HINTS.${k} 含英文/占位: ${t}`);
+  }
+});
+
+test('文案预算：结果条标题 ≤ 8 字、一句话 ≤ 40 字', () => {
+  for (const o of Object.values(OUTCOMES)) assert.ok(len(o.name) <= 8, o.name);
+  for (const t of Object.values(SESSION_TEXT)) { assert.ok(len(t.title) <= 8, t.title); assert.ok(len(t.sub) <= 40, t.sub); }
+  for (const b of Object.values(BRIEFS)) assert.ok(len(b) <= 40 && clean(b), b);
+  for (const b of STREAK_BRIEFS.sheng.slice(1)) assert.ok(len(b) <= 40 && clean(b), b);
+  assert.ok(len(STREAK_BRIEFS.xiao) <= 40 && clean(STREAK_BRIEFS.xiao));
+});
+
+test('文案预算：抽屉每段 ≤ 120 字，引号用中文弯引号', () => {
+  for (const o of Object.values(OUTCOMES)) {
+    for (const k of ['meaning', 'advice']) { assert.ok(len(o[k]) <= 120, `${o.name}.${k}`); assert.ok(clean(o[k]), `${o.name}.${k} 含直引号或英文`); }
+    for (const v of o.verses) assert.ok(len(v) <= 40 && clean(v), v);
+    assert.ok(o.seal && len(o.seal) <= 2, `${o.name} 印章 1–2 字`);
+  }
+  for (const t of Object.values(SESSION_TEXT)) assert.ok(len(t.meaning) <= 120 && clean(t.meaning), t.title);
+  assert.ok(len(THREE_MODE_INTRO) <= 120 && clean(THREE_MODE_INTRO));
+  assert.equal(MODES.length, 2);
+  assert.ok(SHARE_SIGN.includes('来感觉'));
+});
