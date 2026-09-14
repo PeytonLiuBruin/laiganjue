@@ -412,3 +412,23 @@ button:disabled { cursor: default; }
   .m-bazi .bz-row2 .chips { justify-content: flex-start; }
   .m-bazi .bz-row2 .chip { flex: 0 0 72px; }
 }
+
+/* Physical stick scenes use one canvas throughout the draw. The transparent
+   landing target stays at the simulated rod, with a generous touch area. */
+.m-qian .qn-vessel.stick-scene,
+.m-omikuji .ok-tube-wrap.stick-scene {
+  position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+  padding: 0; background: none; box-shadow: none; transform: none;
+  touch-action: pan-y; cursor: grab; z-index: 3;
+}
+.stick-scene .stick-canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
+.stick-pick-target {
+  position: absolute; height: 46px; padding: 0; border: 0;
+  background: transparent; border-radius: 18px; z-index: 4; cursor: pointer;
+}
+.stick-pick-target:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.m-omikuji .ok-set { pointer-events: none; z-index: 5; }
+.m-omikuji .ok-set .ok-slip { pointer-events: auto; }
+.m-omikuji .ok-stage[data-tie] .stick-pick-target { pointer-events: none; }
+.m-qian .qn-vessel.stick-scene.qn-dim,
+.m-omikuji .ok-tube-wrap.stick-scene.ok-dim { opacity: .13; }

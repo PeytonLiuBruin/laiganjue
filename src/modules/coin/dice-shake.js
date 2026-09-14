@@ -1,9 +1,9 @@
-import { axisAngle, multiply, mixRotation, faceUp, unit } from '../../core/solids.js';
+import { springRotation, rotationError } from '../../core/throw-physics.js';
+import { axisAngle, multiply, faceUp, unit } from '../../core/solids.js';
 
 export const DICE_WAKE = 5.5;
 const KEEP_MOVING = 2.8, QUIET_MS = 320;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-const ease = t => t * t * (3 - 2 * t);
 
 // A live input session has no playback deadline. Every sample supplies force;
 // only a quiet interval starts the final roll, which new motion can interrupt.
@@ -53,8 +53,8 @@ export function createDiceShake(objects, { now = 0, chooseValues, duration = 130
 
     for (const b of bodies) {
       const o = b.o, driving = phase === 'shaking', force = driving ? 1 : 0;
-      b.vx += (-ax * 48 * force - b.vx * 5 - (o.x - b.homeX) * 10) * dt;
-      b.vy += (ay * 32 * force - b.vy * 5 - (o.y - b.homeY) * 10) * dt;
+      b.vx += (-ax * 48 * force - b.vx * 5 - (o.x - b.homeX) * 10 * force) * dt;
+      b.vy += (ay * 32 * force - b.vy * 5 - (o.y - b.homeY) * 10 * force) * dt;
       o.x += b.vx * dt; o.y += b.vy * dt;
       const xLimit = 160 - b.radius;
       const bx = clamp(o.x, Math.max(-xLimit, b.homeX - 35), Math.min(xLimit, b.homeX + 35));
@@ -73,11 +73,8 @@ export function createDiceShake(objects, { now = 0, chooseValues, duration = 130
         b.w = b.w.map((v, i) => v + (spin[i] - v) * response);
         o.q = unit(multiply(axisAngle(b.w, Math.hypot(...b.w) * dt), o.q));
       } else {
-        const r = release[b.seed], edge = multiply(axisAngle([1, .4, 0], .28), r.target);
-        const turn = Math.hypot(...r.w) * duration / 4000 * (1 - (1 - progress) ** 4);
-        const drifting = multiply(axisAngle(r.w, turn), r.q);
-        o.q = progress < .72 ? mixRotation(drifting, edge, ease(progress / .72)) : mixRotation(edge, r.target, ease((progress - .72) / .28));
-        b.w = r.w.map(v => v * (1 - progress) ** 3);
+        const next = springRotation(o.q, b.w, release[b.seed].target, dt, 85, 14);
+        o.q = next.q; b.w = next.w;
       }
     }
 
@@ -96,7 +93,7 @@ export function createDiceShake(objects, { now = 0, chooseValues, duration = 130
         }
       }
     }
-    if (phase === 'settling' && progress >= 1) {
+    if (phase === 'settling' && progress >= 1 && bodies.every((b,i) => b.o.lift < .05 && rotationError(b.o.q, release[i].target).angle < .006)) {
       phase = 'settled'; bodies.forEach((b, i) => { b.o.q = release[i].target; b.o.lift = 0; });
     }
     if (impact < .15 || now - lastContact < 100) impact = 0;
