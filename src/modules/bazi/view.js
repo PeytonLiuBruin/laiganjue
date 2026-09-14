@@ -1,0 +1,212 @@
+// 八字 · 界面。数据型模块：表单 → 四柱 → 五行 → 日主 → 详批。
+import { computeChart, elementRatios, shareText, daysInMonth, ELEMENTS } from './core.js';
+import { HOURS, GENDERS, DAY_MASTER, ELEMENT_INFO, SHISHEN_TEXT, TODAY_TEXT, NAYIN_TEXT, STRENGTH_TEXT, UI } from './data.js';
+import { createRitual } from '../../ui/ritual.js';
+
+const YEAR_NOW = new Date().getFullYear();
+
+export function mount(container, ctx) {
+  const { kit, haptic, sound, storage } = ctx;
+  const { h, button, chips, stage, resultCard, sheet, toast, select, field, clear } = kit;
+
+  const saved = storage.get('birth', { y: 1995, m: 6, d: 18, hour: -1, gender: 'male' });
+  let input = { y: Number(saved.y) || 1995, m: Number(saved.m) || 6, d: Number(saved.d) || 18, hour: saved.hour == null ? -1 : Number(saved.hour), gender: saved.gender === 'female' ? 'female' : 'male' };
+  let chart = null;
+  let resultSheet = null;
+  let busy = false;
+
+  /* ---------- 表单 ---------- */
+  const years = [];
+  for (let y = YEAR_NOW; y >= 1930; y--) years.push({ value: y, label: `${y}` });
+  const months = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: `${i + 1} 月` }));
+  const daySel = select([], { value: input.d, onChange: (v) => set('d', Number(v)) });
+  const yearSel = select(years, { value: input.y, onChange: (v) => set('y', Number(v)) });
+  const monthSel = select(months, { value: input.m, onChange: (v) => set('m', Number(v)) });
+  const hourSel = select(HOURS, { value: input.hour, onChange: (v) => set('hour', Number(v)) });
+  const genderChips = chips(GENDERS, { value: input.gender, onChange: (v) => set('gender', v) });
+  function fillDays() {
+    const n = daysInMonth(input.y, input.m);
+    if (input.d > n) input.d = n;
+    clear(daySel);
+    for (let d = 1; d <= n; d++) daySel.append(h('option', { value: d, selected: d === input.d }, `${d} 日`));
+  }
+  fillDays();
+  function set(k, v) {
+    input = { ...input, [k]: v };
+    if (k === 'y' || k === 'm') fillDays();
+    storage.set('birth', input);
+    haptic.tap();
+  }
+  const form = h(
+    'div',
+    { class: 'bz-form' },
+    h('div', { class: 'bz-row3' }, field('年', yearSel), field('月', monthSel), field('日', daySel)),
+    h('div', { class: 'bz-row2' }, field('时辰', hourSel), field('性别', genderChips.el)),
+    h('p', { class: 'bz-note' }, UI.hourNote),
+  );
+
+  /* ---------- 舞台：四柱 ---------- */
+  const st = stage({ cls: 'bz-stage', badge: '四柱' });
+  const ritual = createRitual(ctx, st, ['生辰', '排盘', '详批']);
+  const pillarsEl = h('div', { class: 'bz-pillars' });
+  const emptyEl = h('div', { class: 'bz-empty' }, h('div', { class: 'bz-empty-glyph' }, '命'), h('div', null, '填好生辰，点「排盘」'));
+  st.scene.append(emptyEl, pillarsEl);
+
+  /* ---------- 结果区 ---------- */
+  const barsEl = h('div', { class: 'bz-bars', hidden: true });
+  const masterEl = h('div', { class: 'bz-master', hidden: true });
+  const todayEl = h('div', { class: 'bz-today', hidden: true });
+
+  const primaryBtn = button(UI.primary, { variant: 'primary', size: 'large', primary: true, onClick: () => compute() });
+  container.append(ritual.progress, form, h('div', { class: 'mt-3' }, st.el), kit.actionBar(primaryBtn), barsEl, masterEl, todayEl, ritual.receipt);
+
+  async function compute() {
+    if (busy || resultSheet) return;
+    busy = true;
+    primaryBtn.disabled = true;
+    ritual.clear();
+    try {
+      chart = computeChart(input);
+    } catch (e) {
+      console.error('[bazi]', e);
+      toast('这个日期排不出来，请检查一下');
+      busy = false;
+      primaryBtn.disabled = false;
+      return;
+    }
+    haptic.light();
+    sound.play('flip');
+    emptyEl.hidden = true;
+    st.setBadge(`${chart.lunarText} · ${chart.shengXiao}年生`);
+    await renderPillars();
+    renderBars();
+    renderMaster();
+    renderToday();
+    ritual.step(1);
+    const dm = DAY_MASTER[chart.dayMaster];
+    ritual.reveal({
+      kicker: `日主 ${dm.name} · ${STRENGTH_TEXT[chart.strength].label}`,
+      title: dm.image,
+      text: `${dm.keywords.join(' · ')}。${chart.missing.length ? `五行缺${chart.missing.join('、')}。` : '五行齐全。'}`,
+      onRead: openSheet,
+    });
+    primaryBtn.setLabel(UI.again);
+    primaryBtn.disabled = false;
+    busy = false;
+  }
+
+  async function renderPillars() {
+    clear(pillarsEl);
+    const reduce = ctx.platform.prefersReducedMotion || ctx.platform.simpleMotion;
+    for (const [i, p] of chart.pillars.entries()) {
+      const card = h(
+        'div',
+        { class: 'bz-pillar', dataset: { el: p.ganElement } },
+        h('div', { class: 'bz-pillar-label' }, p.label),
+        h('div', { class: 'bz-gan', dataset: { el: p.ganElement } }, p.gan),
+        h('div', { class: 'bz-zhi', dataset: { el: p.zhiElement } }, p.zhi),
+        h('div', { class: 'bz-hide' }, p.hideGan.join(' ')),
+        h('div', { class: 'bz-shishen' }, p.shiShen),
+        h('div', { class: 'bz-nayin' }, p.naYin),
+      );
+      pillarsEl.append(card);
+      if (!reduce) {
+        card.style.opacity = '0';
+        card.style.transform = 'rotateY(80deg)';
+        await ritual.pause(90 * (i ? 1 : 0.2));
+        card.style.transition = 'opacity .4s, transform .5s cubic-bezier(.2,.8,.2,1)';
+        card.style.opacity = '1';
+        card.style.transform = 'none';
+        sound.play('tick');
+      }
+    }
+    if (!chart.hasHour) pillarsEl.append(h('div', { class: 'bz-pillar ghost' }, h('div', { class: 'bz-pillar-label' }, '时柱'), h('div', { class: 'bz-gan' }, '?'), h('div', { class: 'bz-zhi' }, '?'), h('div', { class: 'bz-hide' }, '未知时辰')));
+    await ritual.pause(reduce ? 10 : 200);
+  }
+
+  function renderBars() {
+    clear(barsEl);
+    barsEl.hidden = false;
+    barsEl.append(h('div', { class: 'bz-sec-title' }, '五行分布'));
+    const list = h('div', { class: 'bz-bar-list' });
+    const max = Math.max(1, ...ELEMENTS.map((e) => chart.elements[e]));
+    for (const r of elementRatios(chart)) {
+      const tag = r.count === 0 ? '缺' : r.count >= 3 ? '旺' : r.count === 1 ? '弱' : '中';
+      list.append(
+        h(
+          'div',
+          { class: 'bz-bar', dataset: { el: r.element } },
+          h('span', { class: 'bz-bar-name' }, r.element),
+          h('span', { class: 'bz-bar-track' }, h('i', { style: { width: `${Math.round((r.count / max) * 100)}%` } })),
+          h('span', { class: 'bz-bar-count t-num' }, `${r.count}`),
+          h('span', { class: ['bz-bar-tag', tag === '缺' && 'lack', tag === '旺' && 'rich'] }, tag),
+        ),
+      );
+    }
+    barsEl.append(list, h('p', { class: 'bz-note' }, `${STRENGTH_TEXT[chart.strength].label} · 同类与生扶占 ${Math.round(chart.supportRatio * 100)}%`));
+  }
+
+  function renderMaster() {
+    const dm = DAY_MASTER[chart.dayMaster];
+    clear(masterEl);
+    masterEl.hidden = false;
+    masterEl.append(
+      h('div', { class: 'bz-sec-title' }, `日主 · ${dm.name}`),
+      h('div', { class: 'bz-master-card', dataset: { el: chart.dayMasterElement } }, h('div', { class: 'bz-master-glyph' }, chart.dayMaster), h('div', { class: 'grow' }, h('div', { class: 'bz-master-image' }, dm.image), h('div', { class: 'bz-master-kw' }, dm.keywords.join(' · ')), h('p', { class: 'bz-master-text' }, dm.text))),
+    );
+  }
+
+  function renderToday() {
+    clear(todayEl);
+    todayEl.hidden = false;
+    const rel = chart.todayRelation;
+    todayEl.append(h('div', { class: 'bz-sec-title' }, '今日与你'), h('p', { class: 'bz-today-text' }, `今日 ${chart.todayGanZhi} 日，日干「${chart.todayGan}」对你的日主是「${rel}」。${TODAY_TEXT[rel] || ''}`));
+  }
+
+  function openSheet() {
+    if (!chart || resultSheet) return;
+    ritual.step(2);
+    const dm = DAY_MASTER[chart.dayMaster];
+    const sections = [
+      { label: '命格概览', text: `${chart.lunarText}生，属${chart.shengXiao}，${chart.xingZuo}座。四柱 ${chart.pillars.map((p) => p.ganZhi).join(' ')}${chart.hasHour ? '' : '（时柱未知）'}。日主 ${dm.name}，${STRENGTH_TEXT[chart.strength].label}。` },
+      { label: '日主性情', text: dm.text },
+      { label: '强弱', text: STRENGTH_TEXT[chart.strength].text },
+    ];
+    for (const e of chart.missing) sections.push({ label: `缺${e}`, text: `${ELEMENT_INFO[e].lack} 颜色可多用${ELEMENT_INFO[e].color}，方位在${ELEMENT_INFO[e].direction}。` });
+    for (const e of chart.strong) sections.push({ label: `${e}旺`, text: ELEMENT_INFO[e].excess });
+    const ss = Object.entries(chart.shiShenCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([k, n]) => `${k}×${n}：${SHISHEN_TEXT[k]}`)
+      .join('\n');
+    if (ss) sections.push({ label: '十神分布', text: ss, stack: true });
+    sections.push({ label: '纳音', text: chart.pillars.map((p) => `${p.label} ${p.naYin}`).join('，') + '。' + (NAYIN_TEXT[chart.pillars[2].naYinElement] || '') });
+    sections.push({ label: '命宫 · 胎元', text: `命宫 ${chart.mingGong}，胎元 ${chart.taiYuan}，身宫 ${chart.shenGong}。命宫看志向所寄，胎元看先天根基，身宫看后天着力之处。` });
+    sections.push({ label: '今日', text: `${chart.todayGanZhi}日 · ${chart.todayRelation}。${TODAY_TEXT[chart.todayRelation] || ''}` });
+    const card = resultCard({ kicker: `${chart.input.y}.${chart.input.m}.${chart.input.d}${chart.hasHour ? ' · ' + chart.pillars[3].zhi + '时' : ''} · ${chart.gender === 'male' ? '男' : '女'}`, title: dm.name, sub: `${dm.image} · ${chart.pillars.map((p) => p.ganZhi).join(' ')}`, badge: STRENGTH_TEXT[chart.strength].label, seal: chart.dayMasterElement, sections, footer: UI.footer });
+    resultSheet = sheet({
+      title: UI.sheetTitle,
+      content: h('div', { class: 'm-bazi' }, card),
+      actions: [
+        button('回到命盘', { variant: 'primary', onClick: () => resultSheet.close() }),
+        button('分享', {
+          variant: 'ghost',
+          icon: 'share',
+          onClick: async () => {
+            const r = await ctx.share(shareText(chart));
+            toast(r === 'shared' ? '已分享' : r === 'copied' ? '已复制' : '分享已取消');
+          },
+        }),
+      ],
+      onClose: () => {
+        resultSheet = null;
+        if (ritual.alive) ritual.step(1);
+      },
+    });
+    resultSheet.open();
+  }
+
+  return () => {
+    resultSheet?.close();
+  };
+}

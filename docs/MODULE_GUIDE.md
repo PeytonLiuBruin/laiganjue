@@ -81,6 +81,10 @@ export function mount(container, ctx) {
 11. **卸载干净**：`mount` 返回的函数里取消动画、清定时器（motion/gesture 订阅由 ctx 自动清）。
 12. 挂载完成后不需要做任何标记——应用壳会在 `mount` resolve 后设置 `data-ready="1"`。因此 `mount` 里**不要**长时间 await（先把界面画出来，再异步做别的）。
 
+## 2.5 实物占位（不建模）
+
+舞台里的实物默认用 `createModelSlot(ctx, { id, label, glyph, hint })`（`src/ui/model-slot.js`）占位：`slot.set({ text, glyph, angle, progress, x, y, glow, active })` 驱动状态。日后由建模同学通过 `window.__lgj.registerModel(id, factory)` 替换渲染，模块无需改动。槽位契约写在 `docs/MODEL_SLOTS.md`，新增槽位请补一行。
+
 ## 3. kit 速查
 
 ```js

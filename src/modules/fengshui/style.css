@@ -1,1 +1,29 @@
-/* fengshui 模块样式：所有选择器必须以 .m-fengshui 开头 */
+/* 风水 模块样式：所有选择器以 .m-fengshui 开头 */
+.m-fengshui .fs-stage { min-height: 300px; }
+.m-fengshui .fs-stage .stage-floor { display: none; }
+.m-fengshui .fs-pane { margin-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+.m-fengshui .fs-readout { text-align: center; padding: 6px 0; }
+.m-fengshui .fs-deg { font-family: var(--font-latin-display); font-size: 44px; line-height: 1.1; color: var(--accent); }
+.m-fengshui .fs-dir { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.1em; margin-top: 4px; }
+.m-fengshui .fs-star { margin-top: 8px; font-size: 13px; color: var(--text-2); min-height: 1.6em; }
+.m-fengshui .fs-star[data-tone='great'], .m-fengshui .fs-star[data-tone='good'] { color: var(--success); }
+.m-fengshui .fs-star[data-tone='warn'], .m-fengshui .fs-star[data-tone='bad'] { color: var(--danger); }
+.m-fengshui .fs-note { font-size: 12px; line-height: 1.7; color: var(--text-3); }
+.m-fengshui .fs-grid-note { font-size: 11px; letter-spacing: 0.1em; color: var(--text-3); text-align: center; margin-bottom: -6px; }
+.m-fengshui .fs-gua-card { text-align: center; padding: 18px 12px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.m-fengshui .fs-gua-symbol { font-size: 40px; line-height: 1; color: var(--accent); }
+.m-fengshui .fs-gua-name { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.12em; margin-top: 10px; }
+.m-fengshui .fs-gua-nature { font-size: 13px; color: var(--text-2); margin-top: 6px; }
+.m-fengshui .fs-gua-lucky { font-size: 13px; color: var(--accent); margin-top: 8px; letter-spacing: 0.04em; }
+.m-fengshui .fs-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.m-fengshui .fs-cell { min-height: 84px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; text-align: center; background: var(--surface); }
+.m-fengshui .fs-cell b { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.08em; font-weight: 600; }
+.m-fengshui .fs-cell i { font-style: normal; font-size: 11px; color: var(--text-3); letter-spacing: 0.08em; }
+.m-fengshui .fs-cell-dir { font-size: 11px; color: var(--text-3); letter-spacing: 0.1em; }
+.m-fengshui .fs-cell[data-tone='great'] { border-color: var(--accent); background: var(--surface-2); }
+.m-fengshui .fs-cell[data-tone='great'] b, .m-fengshui .fs-cell[data-tone='good'] b { color: var(--accent); }
+.m-fengshui .fs-cell[data-tone='warn'] b { color: var(--text-2); }
+.m-fengshui .fs-cell[data-tone='bad'] b { color: var(--danger); }
+.m-fengshui .fs-cell.center { background: var(--bg-2); border-style: dashed; }
+.m-fengshui .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 380px) { .m-fengshui .fs-cell { min-height: 74px; } .m-fengshui .fs-cell b { font-size: 15px; } }

@@ -6,6 +6,7 @@ import { almanacSummary } from '../core/lunar.js';
 import { MODULE_LIST, REGIONS, GESTURE_LABEL, getModuleMeta } from '../modules/list.js';
 import { MODULES } from '../modules/registry.js';
 import { createZen } from './zen.js';
+import { registerModel, hasModel } from './model-slot.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -455,6 +456,8 @@ export function startApp(root) {
     platform,
     kit,
     zen,
+    registerModel,
+    hasModel,
     simulate: (type, payload) => platform.motion.simulate(type, payload),
     setTheme: applyTheme,
     get current() {

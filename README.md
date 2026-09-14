@@ -56,6 +56,17 @@
 3. 到 Actions 页签点开「Deploy to GitHub Pages」→「Run workflow」，或随便再推送一次。
 4. 网址：`https://peytonliubruin.github.io/laiganjue/`
 
+## 3D 模型位（给建模的人）
+
+风水罗盘、星空、水晶球、灵摆等"实物"目前用最简单的占位块（虚线框 + 字 + 状态 + 进度 + 小点）顶着，不做建模。
+建模完成后，只需注册一个渲染器就能替换，模块逻辑一行不改：
+
+```js
+window.__lgj.registerModel('crystal.ball', (slotEl, ctx) => ({ set(state) { /* 收到 progress/glow/... */ }, dispose() {} }));
+```
+
+槽位清单与状态字段见 `docs/MODEL_SLOTS.md`。
+
 ## 目录结构（给工程师）
 
 ```

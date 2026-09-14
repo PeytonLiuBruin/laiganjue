@@ -1,1 +1,42 @@
-/* bazi 模块样式：所有选择器必须以 .m-bazi 开头 */
+/* 八字 模块样式：所有选择器以 .m-bazi 开头 */
+.m-bazi { --wx-木: #3f7f5c; --wx-火: #b8433a; --wx-土: #a0762d; --wx-金: #7d8390; --wx-水: #3a6ea5; }
+[data-theme='ink'] .m-bazi, [data-theme='cinnabar'] .m-bazi, [data-theme='nebula'] .m-bazi { --wx-木: #7fc39b; --wx-火: #e8776c; --wx-土: #d8b46a; --wx-金: #c9cfd8; --wx-水: #7fb0e0; }
+.m-bazi .bz-form { display: flex; flex-direction: column; gap: 12px; }
+.m-bazi .bz-row3 { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; }
+.m-bazi .bz-row2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; align-items: end; }
+.m-bazi .bz-note { font-size: 12px; color: var(--text-3); line-height: 1.7; }
+.m-bazi .bz-stage { min-height: 280px; }
+.m-bazi .bz-stage .stage-floor { display: none; }
+.m-bazi .bz-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--text-3); font-size: 13px; }
+.m-bazi .bz-empty-glyph { font-family: var(--font-display); font-size: 56px; color: var(--accent); opacity: 0.5; }
+.m-bazi .bz-pillars { display: flex; gap: 10px; padding: 40px 14px 20px; width: 100%; justify-content: center; perspective: 800px; }
+.m-bazi .bz-pillar { flex: 1 1 0; max-width: 92px; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 12px 6px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; transform-origin: center; }
+.m-bazi .bz-pillar.ghost { opacity: 0.45; border-style: dashed; }
+.m-bazi .bz-pillar-label { font-size: 11px; letter-spacing: 0.14em; color: var(--text-3); }
+.m-bazi .bz-gan, .m-bazi .bz-zhi { font-family: var(--font-display); font-size: 30px; line-height: 1.1; font-weight: 600; }
+.m-bazi .bz-gan[data-el='木'], .m-bazi .bz-zhi[data-el='木'], .m-bazi .bz-bar[data-el='木'] i, .m-bazi .bz-master-glyph[data-el='木'], .m-bazi .bz-master-card[data-el='木'] .bz-master-glyph { color: var(--wx-木); background-color: var(--wx-木); }
+.m-bazi .bz-gan[data-el='火'], .m-bazi .bz-zhi[data-el='火'], .m-bazi .bz-bar[data-el='火'] i, .m-bazi .bz-master-card[data-el='火'] .bz-master-glyph { color: var(--wx-火); background-color: var(--wx-火); }
+.m-bazi .bz-gan[data-el='土'], .m-bazi .bz-zhi[data-el='土'], .m-bazi .bz-bar[data-el='土'] i, .m-bazi .bz-master-card[data-el='土'] .bz-master-glyph { color: var(--wx-土); background-color: var(--wx-土); }
+.m-bazi .bz-gan[data-el='金'], .m-bazi .bz-zhi[data-el='金'], .m-bazi .bz-bar[data-el='金'] i, .m-bazi .bz-master-card[data-el='金'] .bz-master-glyph { color: var(--wx-金); background-color: var(--wx-金); }
+.m-bazi .bz-gan[data-el='水'], .m-bazi .bz-zhi[data-el='水'], .m-bazi .bz-bar[data-el='水'] i, .m-bazi .bz-master-card[data-el='水'] .bz-master-glyph { color: var(--wx-水); background-color: var(--wx-水); }
+.m-bazi .bz-gan, .m-bazi .bz-zhi { background-color: transparent !important; }
+.m-bazi .bz-hide { font-size: 11px; color: var(--text-3); letter-spacing: 0.1em; min-height: 1.4em; }
+.m-bazi .bz-shishen { font-size: 12px; color: var(--accent); letter-spacing: 0.08em; }
+.m-bazi .bz-nayin { font-size: 10px; color: var(--text-3); letter-spacing: 0.04em; white-space: nowrap; }
+.m-bazi .bz-sec-title { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.14em; margin: 22px 0 10px; color: var(--text); }
+.m-bazi .bz-bar-list { display: flex; flex-direction: column; gap: 8px; }
+.m-bazi .bz-bar { display: grid; grid-template-columns: 1.4em 1fr 1.4em 1.6em; gap: 10px; align-items: center; font-size: 13px; }
+.m-bazi .bz-bar-name { font-family: var(--font-display); font-size: 15px; }
+.m-bazi .bz-bar-track { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.m-bazi .bz-bar-track i { display: block; height: 100%; border-radius: 4px; transition: width 0.6s ease-out; }
+.m-bazi .bz-bar-count { text-align: right; color: var(--text-2); }
+.m-bazi .bz-bar-tag { font-size: 11px; color: var(--text-3); text-align: center; }
+.m-bazi .bz-bar-tag.lack { color: var(--danger); }
+.m-bazi .bz-bar-tag.rich { color: var(--accent); }
+.m-bazi .bz-master-card { display: flex; gap: 14px; align-items: flex-start; border: 1px solid var(--line); border-radius: 16px; padding: 16px; background: var(--surface); }
+.m-bazi .bz-master-glyph { flex: none; width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; font-family: var(--font-display); font-size: 30px; font-weight: 700; color: #fff !important; }
+.m-bazi .bz-master-image { font-family: var(--font-display); font-size: 17px; letter-spacing: 0.1em; }
+.m-bazi .bz-master-kw { font-size: 12px; color: var(--accent); margin-top: 3px; letter-spacing: 0.06em; }
+.m-bazi .bz-master-text { font-size: 14px; line-height: 1.8; color: var(--text-2); margin-top: 8px; }
+.m-bazi .bz-today-text { font-size: 14px; line-height: 1.8; color: var(--text-2); border-left: 2px solid var(--line-strong); padding-left: 12px; }
+@media (max-width: 380px) { .m-bazi .bz-gan, .m-bazi .bz-zhi { font-size: 26px; } .m-bazi .bz-pillars { gap: 6px; padding-inline: 8px; } .m-bazi .bz-nayin { display: none; } }

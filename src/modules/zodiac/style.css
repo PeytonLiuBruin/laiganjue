@@ -1,1 +1,24 @@
-/* zodiac 模块样式：所有选择器必须以 .m-zodiac 开头 */
+/* 星座 模块样式：所有选择器以 .m-zodiac 开头 */
+.m-zodiac .zd-stage { min-height: 300px; }
+.m-zodiac .zd-stage .stage-floor { display: none; }
+.m-zodiac .zd-picker { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+.m-zodiac .zd-picker .chips.scroll { padding: 2px 2px 6px; }
+.m-zodiac .zd-bday .input { font-size: 14px; }
+.m-zodiac .zd-map { position: absolute; inset: 0; pointer-events: none; }
+.m-zodiac .zd-map-svg { width: 100%; height: 100%; }
+.m-zodiac .zd-lines line { stroke: var(--line-strong); stroke-width: 0.6; }
+.m-zodiac .zd-dots circle { fill: var(--accent); }
+.m-zodiac .zd-slot .model-slot-glyph { opacity: 0.35; }
+.m-zodiac .zd-quick { margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; background: var(--surface); display: flex; flex-direction: column; gap: 6px; }
+.m-zodiac .zd-qhead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.m-zodiac .zd-qtitle { font-family: var(--font-display); font-size: 16px; letter-spacing: 0.1em; }
+.m-zodiac .zd-qlevel { color: var(--accent); font-size: 13px; letter-spacing: 0.1em; }
+.m-zodiac .zd-qrow { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--text-2); }
+.m-zodiac .zd-lucky { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); margin-top: 8px; flex-wrap: wrap; }
+.m-zodiac .zd-swatch { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line-strong); vertical-align: middle; margin-right: 6px; }
+.m-zodiac .zd-sec-title { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.14em; margin: 22px 0 8px; }
+.m-zodiac .zd-meta { font-size: 12px; color: var(--text-3); letter-spacing: 0.04em; line-height: 1.7; }
+.m-zodiac .zd-traits { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.m-zodiac .zd-trait { font-size: 12px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--accent); }
+.m-zodiac .zd-text { font-size: 14px; line-height: 1.85; color: var(--text-2); }
+.m-zodiac .zd-sheet-stars .stars { font-size: 14px; }

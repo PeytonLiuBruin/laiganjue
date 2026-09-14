@@ -1033,3 +1033,110 @@
   height: 72px;
   font-size: 36px;
 }
+
+/* —— 3D 模型占位块（见 src/ui/model-slot.js） —— */
+.model-slot {
+  position: absolute;
+  inset: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 16px 28px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 16px;
+  color: var(--text-2);
+  text-align: center;
+  background: repeating-linear-gradient(45deg, transparent 0 16px, var(--surface-2) 16px 17px);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.model-slot.glow {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--glow);
+}
+.model-slot-body {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+}
+.model-slot-glyph {
+  font-family: var(--font-display);
+  font-size: 60px;
+  line-height: 1;
+  color: var(--accent);
+  transition: transform 0.25s ease-out, opacity 0.3s;
+}
+.model-slot.active .model-slot-glyph {
+  animation: slot-pulse 1.1s ease-in-out infinite;
+}
+@keyframes slot-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+.model-slot-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--glow);
+  transition: left 0.06s linear, top 0.06s linear;
+}
+.model-slot-label {
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+.model-slot-status {
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 1.6em;
+  color: var(--text-2);
+  max-width: 260px;
+}
+.model-slot-bar {
+  width: 120px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.model-slot-bar i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.15s linear;
+}
+.model-slot-note {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  font-family: var(--font-latin-display);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+.model-slot.has-model {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+.model-slot.has-model .model-slot-glyph,
+.model-slot.has-model .model-slot-note,
+.model-slot.has-model .model-slot-bar,
+.model-slot.has-model .model-slot-dot {
+  display: none;
+}
