@@ -133,27 +133,24 @@ export function chips(items, { value, onChange, scroll = false } = {}) {
   const norm = items.map((it) => (typeof it === 'string' ? { value: it, label: it } : it));
   let current = value ?? norm[0]?.value;
   const el = h('div', { class: ['chips', scroll && 'scroll'] });
+  const buttons = norm.map((it) => h('button', {
+    type: 'button',
+    class: 'chip',
+    onClick: () => {
+      if (it.value === current) return;
+      current = it.value;
+      render();
+      onChange?.(current, it);
+    },
+  }, it.label));
   const render = () => {
-    clear(el);
-    for (const it of norm) {
-      el.append(
-        h(
-          'button',
-          {
-            type: 'button',
-            class: ['chip', it.value === current && 'active'],
-            onClick: () => {
-              if (it.value === current) return;
-              current = it.value;
-              render();
-              onChange && onChange(current, it);
-            },
-          },
-          it.label,
-        ),
-      );
-    }
+    buttons.forEach((button, i) => {
+      const selected = norm[i].value === current;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
   };
+  el.append(...buttons);
   render();
   return {
     el,
@@ -209,7 +206,13 @@ export function tabs(items, { value, onChange } = {}) {
 
 /* ------------------------------ 表单 ------------------------------ */
 export function field(label, control) {
-  return h('label', { class: 'field' }, h('span', { class: 'field-label' }, label), control);
+  // Keep grouped controls outside label activation so tapping the heading
+  // cannot select the first button. Native inputs still have a real label.
+  const singleControl = /^(INPUT|SELECT|TEXTAREA)$/.test(control.tagName);
+  return h(singleControl ? 'label' : 'div', {
+    class: 'field',
+    attrs: singleControl ? undefined : { role: 'group', 'aria-label': label },
+  }, h('span', { class: 'field-label' }, label), control);
 }
 
 export function input({ placeholder = '', value = '', type = 'text', onInput, onEnter, maxlength, cls = '' } = {}) {

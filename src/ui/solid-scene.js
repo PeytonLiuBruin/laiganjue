@@ -80,7 +80,7 @@ export function createSolidScene(canvas,ctx,{plate=false,ground=.76,worldWidth=3
   function startDiceShake(chooseValues,{onPhase=()=>{}}={}) {
     cancel(); objects.forEach(o=>{delete o.z;});active=true;shock=0;
     diceOrigin={poses:objects.map(o=>({q:[...o.q],x:o.x,y:o.y})),values:canvas.getAttribute('data-values'),label:canvas.getAttribute('aria-label')};
-    diceShake=createDiceShake(objects,{now:performance.now(),chooseValues,duration:ctx.platform.simpleMotion?950:1300});
+    diceShake=createDiceShake(objects,{now:performance.now(),chooseValues,duration:ctx.platform.simpleMotion?750:900});
     canvas.dataset.phase='shaking';canvas.removeAttribute('data-values');
     canvas.setAttribute('aria-label','骰子随晃动翻滚');onPhase('shaking');
     let previous='shaking';
