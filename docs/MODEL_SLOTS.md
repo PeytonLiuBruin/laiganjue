@@ -1,45 +1,17 @@
-# 3D 模型位（Model Slots）—— 给建模 / 特效同学
+# 交互模型
 
-应用里所有"实物"（罗盘、水晶球、灵摆、星空……）现在都用一个最普通的占位块顶着（虚线框 + 一个字 + 一行状态 + 一条进度 + 一个可移动的小点）。占位块的实现在 `src/ui/model-slot.js`，样式在 `src/styles/components.css` 的 `.model-slot`。
+`src/ui/models/` 内置罗盘、水晶球、灵摆、星仪和四柱命牌。模型使用有厚度的旋转体、环体和棱柱，经过三维投影、光照与表面绘制输出到 Canvas；水晶球另有球面高光和按深度排序的内部雾层。全部由代码生成，构建后无需外部模型或纹理请求。
 
-**替换方式**：不需要改任何模块代码。在页面脚本加载后（或打包进 `src/main.js` 之前）注册一个渲染器：
+`createModelSlot` 管理状态传递、无障碍名称与卸载。注册同名工厂可覆盖内置模型，工厂仍返回 `{ set(state), dispose() }`，通过 `window.__lgj.registerModel(id, factory)` 注册。模块仅通过状态驱动模型，不读取模型内部 DOM。
 
-```js
-window.__lgj.registerModel('fengshui.compass', (slotEl, ctx) => {
-  // slotEl：占位块的 DOM 节点（position:absolute，占满舞台）。可以往里放 <canvas>，或替换其内容。
-  // ctx：模块上下文（ctx.theme 当前皮肤 id、ctx.platform.prefersReducedMotion 等）。
-  const canvas = document.createElement('canvas');
-  slotEl.replaceChildren(canvas);
-  // …初始化 three.js / Lottie / 自绘 …
-  return {
-    set(state) { /* 每次状态变化都会调用，见下表 */ },
-    dispose() { /* 模块卸载时调用：停止 rAF、释放 GPU 资源 */ },
-  };
-});
-```
+| 模型 | 状态 | 表现 |
+| --- | --- | --- |
+| `fengshui.compass` | `angle`（负朝向角）、`text` | 带二十四山刻度的盘面和针转到对应方向 |
+| `zodiac.sky` | `kind`、`stars`、`lines`、`glyph`、`active`、`text` | 星仪显示当前星座连线或生肖地支，问询时星光增强 |
+| `crystal.ball` | `progress`、`active`、`revealed`、`text` | 摩擦聚雾，充满后停顿，再消散球心雾层并显字 |
+| `crystal.pendulum` | `x`、`y`、`progress`、`active`、`result`、`glow`、`text` | 恒定链长的晶体随摆动坐标移动，盘面高亮最终方向 |
+| `bazi.pillars` | `pillars`、`active`、`duration`（秒）、`text` | 四块命牌依次翻面，正面文字来自实际排盘结果 |
 
-注册后占位块会加上 `has-model` 类（隐藏虚线框、字、进度和小点），你的渲染器接管全部画面。多个槽位可以复用同一个工厂。
+`geometry.js` 提供网格和投影，`painter.js` 负责统一光照，`objects.js` 组合物体，`index.js` 负责画布尺寸、皮肤、动画和传感器视差。隐藏、离屏及卸载后停止绘制；像素比例上限为 2。舞台随手机宽度缩放。简化动效设置缩短揭晓时间，保留必要的过程。
 
-## 槽位与状态契约
-
-| 槽位 id | 所在模块 | `set(state)` 会收到的字段 | 说明 |
-| --- | --- | --- | --- |
-| `fengshui.compass` | 风水 · 罗盘 | `angle`（度，= −朝向，盘面应按此旋转）、`glyph`（当前方位字）、`text`（读数） | 每次朝向变化都会调用，频率约 60 次/秒（平滑插值后） |
-| `zodiac.sky` | 星座 · 星空 | `glyph`（星座符号 / 地支字）、`text`、`active`（true = 正在"看运势"，可做闪烁） | 切换星座 / 生肖时调用 |
-| `crystal.ball` | 水晶球 | `progress`（0–1 充能）、`glow`（≥0.6 发光）、`active`（雾在加速）、`text` | 摩擦 / 摇动 / 凝视时频繁调用；`progress` 到 1 时模块会在球上方叠加文字，请让球心留空 |
-| `crystal.pendulum` | 灵摆 | `x`、`y`（−1…1，锥尖相对摆盘中心的位置）、`progress`（0–1 问询进度）、`glow`（已判定）、`active`（摆动中）、`text` | 摆动期间每帧调用；摆盘上下 = 是、左右 = 否、画圈 = 不明 |
-
-已有 Canvas 实现的实物（筊杯、硬币、骰子等）暂不走槽位；如需统一，也可以把它们迁到同一套 `registerModel` 机制。
-
-## 尺寸与皮肤
-
-- 占位块占满舞台内边距（`inset: 14px`），舞台高约 300–420px，宽随屏幕（手机约 340px）。
-- 皮肤颜色请从 CSS 变量读：`getComputedStyle(document.documentElement).getPropertyValue('--accent')` 等，变量表见 `src/styles/themes.css` 与 `src/styles/refinement.css`；`ctx.onTheme(cb)` 可监听切换。
-- `ctx.platform.prefersReducedMotion` 为 true 时请把动画降到最低。
-
-## 本地测试
-
-```bash
-npm run dev            # http://localhost:4173
-node scripts/smoke.mjs --module crystal --act --shots dist/shots-crystal   # 无头手机截图
-```
+运行 `npm test` 验证模型法线、链长、窄屏边界和现有玩法；运行 `npm run build` 生成站点。浏览器检查应覆盖当前星座切换、罗盘方向、水晶球充能与重问、灵摆拖动，以及未知时辰和完整四柱两种排盘。

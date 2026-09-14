@@ -1,4 +1,4 @@
-// 星座 · 界面：西方十二星座 / 东方十二生肖。逻辑与文案见 core.js / data.js（星图为简单 SVG，实物位保留占位）。
+// 星座 · 界面：西方十二星座 / 东方十二生肖。逻辑与文案见 core.js / data.js（星仪随所选星座变化）。
 import { signFromDate, animalFromYmd, signFortune, animalFortune, shareText, formatDate, signById, animalById, stepIn } from './core.js';
 import { SIGNS, ANIMALS, ASPECT_LABEL, ELEMENTS, QUALITIES, UI, BRANCH_HOUR } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
@@ -6,7 +6,7 @@ import { createModelSlot } from '../../ui/model-slot.js';
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
-  const { h, button, chips, tabs, stage, resultCard, sheet, toast, input, field, clear, stars, fromHTML } = kit;
+  const { h, button, chips, tabs, stage, resultCard, sheet, toast, input, field, clear, stars } = kit;
 
   let tab = storage.get('tab', 'sign');
   if (!UI.tabs.some((t) => t.value === tab)) tab = 'sign';
@@ -20,8 +20,6 @@ export function mount(container, ctx) {
   const ritual = createRitual(ctx, st, ['选择', '看运势', '解读']);
   const slot = createModelSlot(ctx, { id: 'zodiac.sky', label: '星空', glyph: '♈', hint: UI.stageHint.sign });
   slot.el.classList.add('zd-slot');
-  const map = h('div', { class: 'zd-map' });
-  slot.el.querySelector('.model-slot-body').append(map);
   st.scene.append(slot.el);
 
   /* ---------- 选择器 ---------- */
@@ -108,24 +106,13 @@ export function mount(container, ctx) {
     ritual.clear();
     ritual.step(0);
     primaryBtn.setLabel(UI.primary);
-    clear(map);
     if (tab === 'sign') {
-      slot.set({ glyph: cur.glyph, text: `${cur.name} · ${cur.dates} · ${ELEMENTS[cur.element].name}` });
-      map.append(drawMap(cur));
-      map.hidden = false;
+      slot.set({ kind: tab, stars: cur.stars || [], lines: cur.lines || [], glyph: cur.glyph, active: false, text: `${cur.name} · ${cur.dates} · ${ELEMENTS[cur.element].name}` });
     } else {
-      slot.set({ glyph: cur.glyph, text: `属${cur.name} · ${cur.element}${cur.element ? '' : ''} · ${BRANCH_HOUR[cur.glyph] || ''}` });
-      map.hidden = true;
+      slot.set({ kind: tab, stars: cur.stars || [], lines: cur.lines || [], glyph: cur.glyph, active: false, text: `属${cur.name} · ${cur.element}${cur.element ? '' : ''} · ${BRANCH_HOUR[cur.glyph] || ''}` });
     }
+    st.setBadge(tab === 'sign' ? cur.name : `属${cur.name}`);
     renderProfile(cur);
-  }
-
-  /** 简单 SVG 星图（2D 连线图；3D 星空留给模型位） */
-  function drawMap(sign) {
-    const pts = sign.stars || [];
-    const lines = (sign.lines || []).map(([a, b]) => pts[a] && pts[b] && `<line x1="${pts[a].x}" y1="${pts[a].y}" x2="${pts[b].x}" y2="${pts[b].y}"/>`).filter(Boolean).join('');
-    const dots = pts.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="${p.r || 1.4}"/>`).join('');
-    return fromHTML(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="zd-map-svg" aria-hidden="true"><g class="zd-lines">${lines}</g><g class="zd-dots">${dots}</g></svg>`);
   }
 
   function renderProfile(cur) {
@@ -170,11 +157,16 @@ export function mount(container, ctx) {
     if (busy || resultSheet) return;
     busy = true;
     primaryBtn.disabled = true;
+    signChips.el.querySelectorAll('button').forEach(b => b.disabled = true);
+    animalChips.el.querySelectorAll('button').forEach(b => b.disabled = true);
+    tabBar.el.querySelectorAll('button').forEach(b => b.disabled = true);
+    randomBtn.disabled = true; bdayInput.disabled = true;
     const cur = current();
     haptic.light();
     sound.play('shimmer');
     slot.set({ active: true });
-    await ritual.pause(ctx.platform.simpleMotion ? 120 : 700);
+    if (!await ritual.focus()) return;
+    if (!await ritual.pause(ctx.platform.simpleMotion ? 900 : 1800)) return;
     slot.set({ active: false });
     fortune = tab === 'sign' ? signFortune(cur, new Date()) : animalFortune(cur, new Date());
     sound.play(fortune.sound || 'chime');
@@ -189,6 +181,8 @@ export function mount(container, ctx) {
     });
     primaryBtn.setLabel('再看一次');
     primaryBtn.disabled = false;
+    [signChips.el, animalChips.el, tabBar.el].forEach(el => el.querySelectorAll('button').forEach(b => b.disabled = false));
+    randomBtn.disabled = false; bdayInput.disabled = false;
     busy = false;
   }
 
@@ -235,7 +229,7 @@ export function mount(container, ctx) {
           variant: 'primary',
           onClick: () => {
             resultSheet.close();
-            setTimeout(randomPick, 300);
+            ctx.setTimeout(() => { if (ritual.alive) randomPick(); }, 300);
           },
         }),
         button(UI.share, {

@@ -373,3 +373,42 @@ button:disabled { cursor: default; }
 .m-tarot .tr-table.unveiled[data-n='3'] { justify-content: center; }
 .m-tarot .tr-actions .btn { min-height: 48px; }
 @media(max-width:375px) { .m-tarot .tr-table[data-n='3'] .tr-spread { gap: 8px; } .m-coin .cn-ctl-row .chip { min-width: 34px; padding-inline: 8px; } }
+
+/* Controls retain their complete labels at phone widths and large text sizes. */
+.btn, .btn.small, .btn.large { height: auto; padding-block: 10px; line-height: 1.45; white-space: normal; }
+.btn > span { min-width: 0; overflow-wrap: anywhere; }
+.btn > svg { flex: 0 0 18px; }
+.action-bar .btn { flex: 1 1 112px; min-width: min(100%, 112px); max-width: 100%; }
+.action-bar .btn.primary { flex: 1.5 1 140px; }
+.sheet-actions { flex-wrap: wrap; }
+.sheet-actions .btn { min-width: min(100%, 112px); }
+.tabs { max-width: 100%; border-radius: 12px; gap: 3px; }
+.tab { min-width: 0; min-height: 44px; padding: 9px 6px; line-height: 1.45; letter-spacing: .04em; border-radius: 9px; overflow-wrap: anywhere; }
+.field { min-width: 0; }
+.input, .select, .textarea { min-width: 0; max-width: 100%; font-size: 16px; }
+.select { padding-right: 28px; }
+.chip { max-width: 100%; line-height: 1.45; }
+
+.model-slot.has-model { inset: 14px; display: block; box-shadow: none; touch-action: none; }
+.model-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.m-fengshui .fs-stage, .m-crystal .cr-stage, .m-zodiac .zd-stage, .m-bazi .bz-stage { min-height: 360px; }
+.m-fengshui .stage-scene, .m-crystal .stage-scene, .m-zodiac .stage-scene, .m-bazi .stage-scene { transform-style: flat; }
+.m-zodiac .zd-picker .chips.scroll { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); overflow: visible; padding: 0; }
+.m-zodiac .zd-picker .chip { min-width: 0; padding: 9px 4px; white-space: nowrap; font-size: 13px; }
+.m-zodiac .zd-stage .stage-badge { max-width: calc(100% - 40px); }
+.m-crystal .cr-answer { left: 50%; right: auto; top: 46%; width: min(60%,200px); transform: translate(-50%,-50%); z-index: 2; }
+.m-crystal .cr-answer-text { font-size: clamp(18px,5vw,23px); letter-spacing: .06em; text-wrap: balance; }
+.m-crystal .cr-answer-text.word { font-size: clamp(62px,20vw,84px); }
+.m-crystal .cr-pend-labels { display: none; }
+.m-crystal .cr-controls > .hint { text-align: center; }
+.m-bazi .bz-row3 { grid-template-columns: 1.15fr 1fr 1fr; }
+.m-bazi .bz-row2 { grid-template-columns: minmax(0,1.35fr) minmax(0,1fr); }
+.m-bazi .bz-row2 .chips { flex-wrap: nowrap; }
+.m-bazi .bz-row2 .chip { flex: 1; padding-inline: 8px; }
+@media(max-width:375px){
+  .action-bar { gap: 8px; }
+  .btn, .btn.large { padding-inline: 16px; }
+  .m-bazi .bz-row2 { grid-template-columns: 1fr; }
+  .m-bazi .bz-row2 .chips { justify-content: flex-start; }
+  .m-bazi .bz-row2 .chip { flex: 0 0 72px; }
+}
