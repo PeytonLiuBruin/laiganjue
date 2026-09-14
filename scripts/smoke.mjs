@@ -7,6 +7,7 @@
 //   node scripts/smoke.mjs --shots dist/shots    截图目录（默认 dist/shots）
 //   node scripts/smoke.mjs --module tarot --full 指定模块但仍全量打包（默认只打包指定模块，其余占位）
 //   node scripts/smoke.mjs --module liuyao --act --until-sheet 8   多步模块：持续点主按钮直到结果抽屉出现，截 <id>-3.png
+//   node scripts/smoke.mjs --viewport se                小屏手机 375x667（也可 360x640 / 430x932 / large / small）
 // 退出码：有 console.error / pageerror / 模块未就绪 → 1，否则 0。
 import path from 'node:path';
 import os from 'node:os';
@@ -32,6 +33,11 @@ const only = opt('--module', '')
 const act = flag('--act');
 const theme = opt('--theme', '');
 const untilSheet = Number(opt('--until-sheet', '0')) || 0;
+// --viewport 375x667 | 360x640 | 430x932 | 390x844(默认)；也可用别名 se / small / large / default
+const VIEWPORTS = { se: '375x667', small: '360x640', default: '390x844', large: '430x932', tablet: '768x1024' };
+const vpRaw = opt('--viewport', 'default');
+const [vpW, vpH] = (VIEWPORTS[vpRaw] || vpRaw).split('x').map(Number);
+const viewport = { width: vpW || 390, height: vpH || 844 };
 const shotsDir = path.resolve(root, opt('--shots', 'dist/shots'));
 const tmpOut = path.join(os.tmpdir(), `lgj-smoke-${process.pid}`);
 
@@ -76,7 +82,7 @@ const base = `http://127.0.0.1:${port}/`;
 
 const browser = await launchBrowser();
 const context = await browser.newContext({
-  viewport: { width: 390, height: 844 },
+  viewport,
   deviceScaleFactor: 2,
   isMobile: true,
   hasTouch: true,
@@ -128,6 +134,8 @@ for (const id of ids) {
     .catch(() => false);
   if (!ready) pushErr('timeout', `module "${id}" did not mark itself ready (data-ready="1")`);
   await sleep(500);
+  const overflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - window.innerWidth));
+  if (overflow > 2) pushErr('overflow-x', `页面横向溢出 ${overflow}px（手机适配）`);
   await page.screenshot({ path: path.join(shotsDir, `${id}.png`) });
   let acted = false;
   if (act) {
