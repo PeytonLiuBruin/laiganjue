@@ -109,7 +109,7 @@ export async function buildAll({ out = outDir, min = minify, only = null } = {})
   const manifest = {
     name: '来感觉 · 玄学占卜',
     short_name: '来感觉',
-    description: '筊杯、灵签、六爻、黄历、八字、风水、转盘、塔罗、卢恩、星座、水晶球、御神签、硬币骰子。摇一摇、甩一甩。',
+    description: '筊杯、灵签、六爻、黄历、八字、风水、转盘、塔罗、卢恩、星座、水晶球、御神签、硬币骰子、落球盘。摇一摇、甩一甩。',
     start_url: './',
     scope: './',
     display: 'standalone',

@@ -13,6 +13,7 @@ import zodiac from './zodiac/index.js';
 import crystal from './crystal/index.js';
 import omikuji from './omikuji/index.js';
 import coin from './coin/index.js';
+import plinko from './plinko/index.js';
 
 export const MODULES = {
   jiaobei,
@@ -28,4 +29,5 @@ export const MODULES = {
   crystal,
   omikuji,
   coin,
+  plinko,
 };
