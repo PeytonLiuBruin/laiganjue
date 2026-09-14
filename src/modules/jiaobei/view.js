@@ -32,12 +32,12 @@ export function mount(container, ctx) {
   renderStreak(); renderHistory();
   st.setBadge(mode === 'three' ? '连掷三圣杯 · 第 1 掷' : '单掷问事');
 
-  ctx.motion.onToss((e) => { if (!resultSheet) doThrow(e.intensity); });
+  ctx.motion.onToss((e) => { if (!resultSheet && !lastResult) doThrow(e.intensity); });
   ctx.motion.onTilt(({ gamma }) => { if (!ctx.platform.prefersReducedMotion) model.tilt((gamma || 0) / 160); });
-  ctx.motion.onMotion(({ mag, ax }) => {
+  ctx.motion.onMotion(({ mag, ax, ay, phase, progress }) => {
     if (busy || held || lastResult || resultSheet || ctx.platform.prefersReducedMotion) return;
-    model.preview(clamp(ax || 0, -8, 8) * 2, -clamp(mag || 0, 0, 16));
-    ritual.power(clamp((mag || 0) / 30, 0, 1), '向上轻甩，掷出筊杯');
+    model.preview(-clamp(ax || 0, -8, 8) * 2, -clamp(ay || 0, -4, 20));
+    ritual.power(progress || 0, phase === 'ready' ? '收住动作，筊杯即将出手' : '向上轻甩，收住后掷出');
   });
   ctx.gesture.drag(canvas, {
     onStart() { if (busy || session.done || resultSheet) return; held = true; haptic.tap(); ritual.clear(); faceLabels.hidden = true; ritual.step(0); },
@@ -65,16 +65,16 @@ export function mount(container, ctx) {
     if (!await ritual.focus()) return;
     ritual.step(1); st.setHint(''); ritual.power(intensity / 40, '腾空 · 弹跳 · 滚动 · 落定');
     st.setBadge(mode === 'three' ? `连掷三圣杯 · 第 ${session.throws.length + 1} 掷` : '筊杯已掷出');
-    sound.play('whoosh'); haptic.light();
+    sound.play('whoosh'); haptic.release();
     const result = throwJiaobei(ctx.rng.random);
-    if (!await model.toss(result, intensity) || !ritual.alive) return;
+    if (!await model.toss(result, intensity, (phase) => { if (phase === 'settling') { ritual.power(0, '最后一轮晃动'); st.setHint('杯沿轻晃，等它落向最后一面'); } }) || !ritual.alive) return;
     ritual.step(2); ritual.power(0, '筊杯已落定');
     const o = OUTCOMES[result.outcome];
     canvas.setAttribute('aria-label', `筊杯落地：${o.kicker}，${o.name}`);
     [result.a, result.b].forEach((face, i) => { faceLabels.children[i].textContent = face === 'flat' ? '平面 · 阳' : face === 'round' ? '弧面 · 阴' : '直立'; });
     faceLabels.hidden = false;
     sound.play(result.outcome === OUTCOME.LI ? 'gong' : result.outcome === OUTCOME.SHENG ? 'chime' : 'pop');
-    haptic.success();
+    haptic.settle();
     if (mode === 'three') session = reduceSession(session, result);
     renderStreak();
     lastResult = { result, o, question, verse: o.verses[Math.floor(ctx.rng.random() * o.verses.length)] };

@@ -283,7 +283,7 @@ export function mount(container, ctx) {
 
   /* ---------- 三入口：体感 / 手势 / 按钮 ---------- */
   ctx.motion.onShake((e) => spin(omegaFromIntensity(e.intensity), 'motion'));
-  ctx.motion.onToss((e) => spin(omegaFromIntensity(e.intensity), 'motion'));
+  // Physical shaking starts a wheel; upward tossing is reserved for thrown objects.
 
   let downAt = 0;
   let dragged = 0;
@@ -454,7 +454,7 @@ export function mount(container, ctx) {
 
   /* ---------- 旋转：起 → 飞 → 落 → 揭 ---------- */
   async function spin(omega0, source) {
-    if (!ritual.alive || activeSheet?.opened) return;
+    if (!ritual.alive || activeSheet?.opened || (source === 'motion' && !ritual.receipt.hidden)) return;
     if (busy) {
       if (source === 'button') toast(pick(BUSY_LINES));
       return;
@@ -497,7 +497,9 @@ export function mount(container, ctx) {
     let lastTick = 0;
     let lastHap = 0;
     let laps = 0;
-    const total = PRE + plan.duration;
+    const tailStart = plan.duration * .82, tailDuration = 1100;
+    const total = PRE + tailStart + tailDuration;
+    let coasting = false;
     const frame = (now) => {
       if (!ritual.alive) return;
       if (previous !== null && !document.hidden) elapsed += Math.min(50, now - previous);
@@ -508,7 +510,13 @@ export function mount(container, ctx) {
         const p = t / PRE;
         a = start - PULL * (1 - (1 - p) * (1 - p));
       } else {
-        a = start - PULL + plan.angleAt(t - PRE);
+        const elapsedSpin = t - PRE;
+        const tail = Math.max(0, Math.min(1, (elapsedSpin - tailStart) / tailDuration));
+        const physicalTime = elapsedSpin < tailStart ? elapsedSpin : tailStart + (plan.duration - tailStart) * (1 - (1 - tail) ** 2);
+        a = start - PULL + plan.angleAt(physicalTime);
+        if (elapsedSpin >= tailStart && !coasting) {
+          coasting = true; ritual.step(2); st.setHint('还在缓缓走，等最后一格');
+        }
       }
       if (t >= total) a = finalAngle;
       setAngle(a);
@@ -551,12 +559,12 @@ export function mount(container, ctx) {
     angle = normalizeDeg(angle);
     setAngle(angle);
     sound.play('clack');
-    haptic.heavy();
+    haptic.settle();
     const n = items.length;
     const idx = segmentAt(angle, n);
     const item = items[idx];
     ritual.step(2); st.setHint('指针停住了，看看它选中了什么');
-    if (!await wait(reduce ? 80 : 800)) return;
+    if (!await wait(reduce ? 80 : 350)) return;
     await reveal(idx, item);
   }
 

@@ -6,6 +6,7 @@ export function mount(container, ctx) {
   const { kit, sound, haptic, storage } = ctx;
   const { h, button, input, stage, sheet, resultCard } = kit;
   const reduce = ctx.platform.prefersReducedMotion;
+  let suppressClickUntil = 0;
   let phase = 'idle', busy = false, held = false, lot = null, reading = null, question = '';
   let history = storage.get('history', []).filter((x) => getLot(x.no)).slice(-8);
   const st = stage({ cls: 'qn-stage', badge: '灵签 · 六十四签', hint: '左右轻摇签筒，让一支签慢慢浮出', minHeight: 420 });
@@ -13,7 +14,7 @@ export function mount(container, ctx) {
   const q = input({ placeholder: '心中所问之事（选填）', maxlength: 60, onInput: (v) => { question = v.trim(); } });
   q.setAttribute('aria-label', '灵签所问之事');
   const bamboos = Array.from({ length: 9 }, (_, i) => h('i', { class: 'qn-bamboo', style: { left: `${12 + i * 9}%`, transform: `rotate(${(i - 4) * 3}deg) translateY(${i % 3 * 8}px)` } }));
-  const vessel = h('button', { type: 'button', class: 'qn-vessel', attrs: { 'aria-label': '摇动灵签筒' }, onClick: () => { if (phase === 'idle') shake(); } },
+  const vessel = h('button', { type: 'button', class: 'qn-vessel', attrs: { 'aria-label': '摇动灵签筒' }, onClick: () => { if (phase === 'idle' && performance.now() > suppressClickUntil) shake(); } },
     h('span', { class: 'qn-sticks' }, bamboos), h('span', { class: 'qn-rim' }),
     h('span', { class: 'qn-cylinder' }, h('i', { class: 'qn-band' }), h('b', { class: 'qn-sign' }, '灵签'), h('i', { class: 'qn-band lower' })));
   const stickLabel = h('span');
@@ -24,24 +25,32 @@ export function mount(container, ctx) {
   const primary = button('摇一签', { variant: 'primary', size: 'large', primary: true, onClick: () => phase === 'idle' ? shake() : phase === 'drawn' ? unfold() : reset() });
   const hist = h('div', { class: 'qn-history' });
   container.append(ritual.progress, q, st.el, kit.hint('shake', '摇一摇手机，或按住签筒左右摇动'), kit.actionBar(primary), ritual.receipt, hist);
-  renderHistory();
+  renderHistory(); ritual.power(0, '左右轻摇，收住后出签');
 
   const meter = createShakeMeter({ need: 3, minSwing: 20 });
   ctx.gesture.drag(vessel, {
     onStart() { if (busy || reading || phase !== 'idle') return; held = true; meter.reset(); haptic.tap(); },
     onMove(g) {
       if (!held) return;
+      if (Math.abs(g.dx) > 8) suppressClickUntil = performance.now() + 500;
       const state = meter.push(g.dx);
       vessel.style.transform = `translateX(${Math.max(-24, Math.min(24, g.dx * 0.35))}px) rotate(${Math.max(-9, Math.min(9, g.dx / 7))}deg)`;
       ritual.power(state.progress, state.done ? '松手出签' : '左右轻摇');
     },
     onEnd(g) {
       if (!held) return; held = false; vessel.style.transform = '';
+      if (g.cancelled || Math.abs(g.dx || 0) > 8) suppressClickUntil = performance.now() + 500;
       if (!g.cancelled && meter.state.done) shake(24);
       else ritual.power(0, '左右轻摇签筒');
     },
   });
   ctx.motion.onShake((e) => { if (phase === 'idle') shake(e.intensity); });
+  ctx.motion.onMotion((m) => {
+    if (busy || held || reading || phase !== 'idle' || reduce) return;
+    const tilt = Math.max(-8, Math.min(8, -(m.ax || 0) * .7));
+    vessel.style.transform = m.phase === 'idle' ? '' : `rotate(${tilt}deg)`;
+    ritual.power(m.progress || 0, m.phase === 'ready' ? '收住动作，准备出签' : '左右轻摇，收住后出签');
+  });
   function lock(value) { busy = value; primary.disabled = value; q.disabled = value; vessel.disabled = value || phase !== 'idle'; picked.disabled = value; }
 
   async function shake(intensity = 20) {
@@ -60,22 +69,29 @@ export function mount(container, ctx) {
     const stems = bamboos.map((stem, i) => ritual.animate(stem, [
       { transform: stem.style.transform }, { transform: stem.style.transform + ` translateY(${-8 - i % 3 * 3}px)` }, { transform: stem.style.transform },
     ], { duration: reduce ? 1 : 450 + i * 12, iterations: reduce ? 1 : 5, easing: 'ease-in-out' }));
-    for (let i = 0; i < 4; i++) { if (!await ritual.pause(reduce ? 1 : 510)) return; sound.play('rattle'); }
+    for (let i = 0; i < 4; i++) { if (!await ritual.pause(reduce ? 1 : 510)) return; sound.play('rattle'); haptic.impact(.25); }
     await shuffle; await Promise.all(stems);
     if (!ritual.alive) return;
     vessel.getAnimations().forEach((a) => a.cancel()); bamboos.forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
     lot = drawLot(ctx.rng.random); picked.hidden = false; stickLabel.textContent = '';
     const final = 'translate(65px,70px) rotate(12deg)';
-    await ritual.animate(picked, [
+    const falling = ritual.animate(picked, [
       { transform: 'translate(0,0) rotate(0)', opacity: 1 },
       { transform: 'translate(6px,-58px) rotate(4deg)', offset: 0.46 },
-      { transform: 'translate(46px,-28px) rotate(20deg)', offset: 0.7 },
-      { transform: 'translate(66px,75px) rotate(14deg)', offset: 0.91 },
+      { transform: 'translate(46px,-28px) rotate(20deg)', offset: 0.56 },
+      { transform: 'translate(66px,75px) rotate(26deg)', offset: 0.68 },
+      { transform: 'translate(62px,67px) rotate(22deg)', offset: 0.82 },
+      { transform: 'translate(65px,72px) rotate(8deg)', offset: 0.92 },
       { transform: final },
-    ], { duration: 1600, easing: 'cubic-bezier(.35,.1,.32,1)' });
+    ].map((frame) => ({ ...frame, easing: 'cubic-bezier(.35,.1,.32,1)' })), { duration: 2100, easing: 'linear' });
+    if (!await ritual.pause(reduce ? 1 : 2100 * .68)) return;
+    sound.play('clack'); haptic.impact(.8); ritual.power(0, '竹签轻弹，等它停下');
+    if (!await ritual.pause(reduce ? 1 : 2100 * .24)) return;
+    sound.play('tick'); haptic.impact(.2);
+    await falling;
     if (!ritual.alive) return;
     picked.style.transform = final; picked.getAnimations().forEach((a) => a.cancel());
-    sound.play('clack'); haptic.medium();
+    haptic.settle();
     if (!await ritual.pause(reduce ? 60 : 500)) return;
     stickLabel.textContent = lotLabel(lot); phase = 'drawn'; ritual.step(2);
     ritual.power(0, '一支签已落定'); st.setHint('点竹签，亲手展开这一签'); st.setBadge(lotLabel(lot));

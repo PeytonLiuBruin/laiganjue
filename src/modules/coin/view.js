@@ -1,5 +1,6 @@
 import { createRitual } from '../../ui/ritual.js';
-import { coinPose, COIN_IMPACTS } from './motion.js';
+import { coinPose, COIN_IMPACTS, COIN_SETTLING, dicePose, DICE_IMPACTS, DICE_SETTLING } from './motion.js';
+import { createShakeMeter } from '../qian/core.js';
 // 硬币骰子 · 界面（Web DOM）。所有逻辑在 core.js，所有文案在 data.js。
 // 三个标签页共用一座舞台：硬币 / 骰子托盘 两组实物按模式切换显示。
 import {
@@ -239,39 +240,49 @@ export function mount(container, ctx) {
   setMode(mode, true);
   renderStats();
 
-  /* ---------- 体感 / 手势：三条入口做同一件事 ---------- */
-  ctx.motion.onToss((e) => act(e.intensity));
-  ctx.motion.onShake((e) => act(e.intensity));
-  // 硬币：在舞台上向上快滑；骰子：任意方向
-  ctx.gesture.flick(
-    st.el,
-    (g) => {
-      if (mode === 'dice' || g.direction === 'up') act(g.intensity);
+  // Shaking belongs to the dice tray; an upward release belongs to a coin.
+  ctx.motion.onToss((e) => { if (mode !== 'dice' && !last) act(e.intensity); });
+  ctx.motion.onShake((e) => { if (mode === 'dice' && !last) act(e.intensity); });
+  let held = false, charged = false;
+  const shakeMeter = createShakeMeter({ need: 2, minSwing: 22 });
+  ctx.gesture.drag(st.scene, {
+    onStart() {
+      if (busy || openSheetRef?.opened) return;
+      held = true; charged = false; shakeMeter.reset(); haptic.tap();
     },
-    { minSpeed: 0.5, direction: 'any' },
-  );
-  ctx.gesture.flick(
-    st.el,
-    (g) => {
-      if (mode === 'dice') act(g.intensity);
+    onMove(g) {
+      if (!held || reduce) return;
+      const dx = Math.max(-26, Math.min(26, g.dx * .25));
+      const dy = Math.max(-32, Math.min(8, g.dy * .25));
+      jitter.style.transform = `translate(${dx}px,${dy}px) rotate(${dx * .2}deg)`;
+      const ready = mode === 'dice' ? shakeMeter.push(g.dx).done || Math.hypot(g.dx, g.dy) > 70 : g.dy < -32;
+      if (ready && !charged) { charged = true; haptic.light(); }
+      st.setHint(ready ? (mode === 'dice' ? '松手，让骰子滚落' : '松手，抛出硬币') : mode === 'dice' ? '左右摇动，松手投出' : '向上滑动，松手抛出');
     },
-    { minSpeed: 0.5, axis: 'x', direction: 'any' },
-  );
-  // 倾斜视差：环境光跟着手机动
+    onEnd(g) {
+      if (!held) return;
+      held = false; jitter.style.transform = '';
+      const ready = mode === 'dice' ? shakeMeter.state.done || Math.hypot(g.dx, g.dy) > 40 : g.dy < -32;
+      if (!g.cancelled && ready) act(Math.max(14, Math.min(36, 14 + Math.hypot(g.dx, g.dy) / 9)));
+      else st.setHint(STAGE_HINT[mode]);
+    },
+  });
   ctx.motion.onTilt(kit.parallax(ambient, { max: 14 }));
-  // 实时抖动：手机一动，实物微微颤
-  let lastJit = 0;
   ctx.motion.onMotion((m) => {
-    const t = performance.now();
-    if (busy || t - lastJit < 90) return;
-    lastJit = t;
-    const k = Math.max(0, Math.min(1, ((m.smooth || 0) - 2) / 10));
-    jitter.style.transform = k > 0 ? `translate(${(rng.random() - 0.5) * 10 * k}px, ${(rng.random() - 0.5) * 6 * k}px)` : '';
+    if (busy || held || last || openSheetRef?.opened || reduce) return;
+    // Inertia follows the measured direction; random jitter felt disconnected.
+    const dx = Math.max(-14, Math.min(14, -(m.ax || 0) * 1.2));
+    const dy = Math.max(-18, Math.min(5, -(m.ay || 0)));
+    jitter.style.transform = m.phase === 'idle' ? '' : `translate(${dx}px,${dy}px) rotate(${dx * .35}deg)`;
+    if (m.phase === 'ready') st.setHint('收住动作，准备出手');
+    else if (m.phase === 'charging') st.setHint(mode === 'dice' ? '左右轻摇，收住后投出' : '向上轻甩，收住后抛出');
+    else st.setHint(STAGE_HINT[mode]);
   });
 
   /* ---------- 模式 ---------- */
   function setMode(v, silent = false) {
     mode = v;
+    jitter.style.transform = '';
     storage.set('mode', v);
     coinPanel.hidden = v !== 'coin';
     dicePanel.hidden = v !== 'dice';
@@ -324,6 +335,7 @@ export function mount(container, ctx) {
 
   function act(intensity = 20) {
     if (busy || !alive || openSheetRef?.opened) return;
+    jitter.style.transform = '';
     if (mode === 'coin') return burst > 1 ? doBurst(burst, intensity) : doFlip(intensity);
     if (mode === 'dice') return doRoll(intensity);
     return doChoice(intensity);
@@ -454,6 +466,7 @@ export function mount(container, ctx) {
     haptic.rattle();
     await tray.roll(values, intensity);
     if (!alive) return;
+    if (!await wait(reduce ? 30 : 260)) return;
     const a = analyzeDice(values, diceSides);
     const keys = diceSpecialKeys(values, diceSides);
     const size = DICE_SIZE[a.size];
@@ -755,25 +768,31 @@ export function mount(container, ctx) {
         bodyFrames.push({ transform: `rotateX(${p.rx}deg) rotateY(${p.ry}deg) rotateZ(${p.rz}deg)`, offset: i / 100 });
         shadowFrames.push({ transform: `translateX(${p.x}px) scale(${p.shadowScale})`, opacity: p.shadowOpacity, offset: i / 100 });
       }
-      sound.play('coin'); sound.play('whoosh', { delay: 0.02 }); haptic.light();
+      sound.play('coin'); sound.play('whoosh', { delay: 0.02 }); haptic.release();
       anims = [
         ritual.track(wrap.animate(wrapFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
         ritual.track(body.animate(bodyFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
         ritual.track(shadow.animate(shadowFrames, { duration: dur, fill: 'forwards', easing: 'linear' })),
       ];
+      el.dataset.phase = 'flight'; delete el.dataset.face;
       let previous = 0;
-      for (const impact of COIN_IMPACTS) {
-        if (!await wait(dur * (impact - previous))) return;
-        sound.play(previous ? 'tick' : 'coin');
-        if (!previous) { haptic.medium(); st.setHint('轻弹，翻滚，慢慢停下来'); }
-        previous = impact;
+      const cues = [...COIN_IMPACTS.map((t, i) => ({ t, i })), { t: COIN_SETTLING, settle: true }].sort((a, b) => a.t - b.t);
+      for (const cue of cues) {
+        if (!await wait(dur * (cue.t - previous))) return;
+        if (cue.settle) {
+          el.dataset.phase = 'settling'; ritual.step(2); st.setHint('币沿还在晃，等它倒向最后一面');
+        } else {
+          sound.play(cue.i ? 'tick' : 'coin'); haptic.impact([1, .55, .25, .12][cue.i]);
+          if (!cue.i) { el.dataset.phase = 'rolling'; st.setHint('轻弹，翻滚，慢慢停下来'); }
+        }
+        previous = cue.t;
       }
       if (!await wait(dur * (1 - previous) + 30)) return;
       await Promise.all(anims.map((a) => a.finished.catch(() => {})));
       if (!alive) return;
       angle = restAngle(face); wob = nextWob;
       cancelAll(); setBase();
-      el.dataset.face = face;
+      el.dataset.face = face; el.dataset.phase = 'settled'; haptic.settle();
       if (face === EDGE) el.classList.add('standing');
     }
 
@@ -876,82 +895,59 @@ export function mount(container, ctx) {
       build();
     }
 
-    async function rollOne(d, value, power, dur, LAND, delay) {
-      if (delay) await wait(delay);
+    async function rollOne(d, value, power, dur, delay) {
+      if (delay && !await wait(delay)) return;
+      if (!alive) return;
       for (const a of d.anims) a.cancel();
       d.anims = [];
       const target = sides === 20 ? { rx: 0, ry: 0 } : diceRotation(value);
-      const sgn = () => (rng.random() < 0.5 ? 1 : -1);
-      const kx = 2 + Math.round(power * 2);
-      const ky = 1 + Math.round(power * 2 + rng.random());
-      const endRx = target.rx + 360 * kx * sgn();
-      const endRy = target.ry + 360 * ky * sgn();
-      const sx = (rng.random() - 0.5) * 120;
-      const sy = -40 - rng.random() * 40;
-      const zr1 = sides === 20 ? 0 : d.zr + (rng.random() - 0.5) * 160;
-      const startZ = 110 + power * 40;
-      const SETTLE = LAND + 0.26;
-      d.anims.push(
-        d.lift.animate(
-          [
-            { transform: `translate3d(${sx}px, ${sy}px, ${startZ}px)`, easing: 'cubic-bezier(.4,0,.9,.5)', offset: 0 },
-            { transform: `translate3d(${sx * 0.25}px, ${sy * 0.25}px, ${half}px)`, easing: 'cubic-bezier(.2,.8,.4,1)', offset: LAND },
-            { transform: `translate3d(${sx * 0.08}px, ${sy * 0.08}px, ${half + 26 * power}px)`, easing: 'cubic-bezier(.5,0,.9,.6)', offset: LAND + 0.14 },
-            { transform: `translate3d(0, 0, ${half}px)`, easing: 'cubic-bezier(.2,.8,.4,1)', offset: SETTLE },
-            { transform: `translate3d(0, 0, ${half + 7}px)`, easing: 'ease-in', offset: LAND + 0.32 },
-            { transform: `translate3d(0, 0, ${half}px)`, offset: 1 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-        d.cube.animate(
-          [
-            { transform: `rotateX(${d.rot.rx}deg) rotateY(${d.rot.ry}deg)`, easing: 'cubic-bezier(.3,.6,.4,1)', offset: 0 },
-            { transform: `rotateX(${endRx}deg) rotateY(${endRy}deg)`, offset: SETTLE },
-            { transform: `rotateX(${endRx}deg) rotateY(${endRy}deg)`, offset: 1 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-        d.el.animate(
-          [
-            { transform: `rotateZ(${d.zr}deg)`, easing: 'cubic-bezier(.3,.6,.4,1)', offset: 0 },
-            { transform: `rotateZ(${zr1}deg)`, offset: SETTLE },
-            { transform: `rotateZ(${zr1}deg)`, offset: 1 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-        d.shadow.animate(
-          [
-            { transform: 'scale(0.5)', opacity: 0.1, offset: 0 },
-            { transform: 'scale(1.06)', opacity: 0.58, offset: LAND },
-            { transform: 'scale(0.9)', opacity: 0.35, offset: LAND + 0.14 },
-            { transform: 'scale(1)', opacity: 0.55, offset: SETTLE },
-            { transform: 'scale(1)', opacity: 0.55, offset: 1 },
-          ],
-          { duration: dur, fill: 'forwards' },
-        ),
-      );
-      await wait(dur * LAND);
-      if (sides === 20) {
-        const front = d.cube.querySelector('.cn-f20a .cn-num');
-        if (front) front.textContent = String(value);
+      const sign = () => rng.random() < .5 ? 1 : -1;
+      const opts = {
+        start: d.rot, target: { rx: target.rx + 360 * (2 + Math.round(power)) * sign(), ry: target.ry + 360 * (2 + Math.round(power)) * sign() },
+        power, half, driftX: (rng.random() - .5) * 54, driftY: -16 - rng.random() * 16,
+        startZ: d.zr, endZ: sides === 20 ? 0 : (rng.random() - .5) * 55,
+      };
+      const liftFrames = [], cubeFrames = [], turnFrames = [], shadowFrames = [];
+      for (let i = 0; i <= 150; i++) {
+        const offset = i / 150, p = dicePose(reduce ? 1 : offset, opts);
+        liftFrames.push({ offset, transform: `translate3d(${p.x}px,${p.y}px,${p.z}px)` });
+        cubeFrames.push({ offset, transform: `rotateX(${p.rx}deg) rotateY(${p.ry}deg)` });
+        turnFrames.push({ offset, transform: `rotateZ(${p.rz}deg)` });
+        shadowFrames.push({ offset, transform: `translate(${p.x}px,${p.y}px) scale(${p.shadowScale})`, opacity: p.shadowOpacity });
       }
-      sound.play('thud');
-      haptic.heavy();
-      await wait(dur * (1 - LAND) + 20);
-      d.rot = { rx: target.rx, ry: target.ry };
-      d.zr = zr1;
-      d.value = value;
+      d.el.dataset.phase = 'flight'; delete d.el.dataset.value;
+      const numbers = d.cube.querySelectorAll('.cn-num');
+      // The simplified D20 has two drawn faces. Change those numbers while it is
+      // tumbling, then fix both faces before the final edge hesitation.
+      numbers.forEach((node, i) => { node.textContent = String(i ? 21 - value : value); });
+      d.anims = [[d.lift, liftFrames], [d.cube, cubeFrames], [d.el, turnFrames], [d.shadow, shadowFrames]].map(([el, frames]) => ritual.track(el.animate(frames, { duration: dur, fill: 'forwards', easing: 'linear' })));
+      const cues = [...DICE_IMPACTS.map((t, i) => ({ t, i })), { t: DICE_SETTLING, settle: true }].sort((a, b) => a.t - b.t);
+      let previous = 0;
+      for (const cue of cues) {
+        if (!await wait(dur * (cue.t - previous))) return;
+        if (cue.settle) {
+          d.el.dataset.phase = 'settling'; ritual.step(2); st.setHint('还倚在棱边，等最后一下');
+        } else {
+          sound.play(cue.i ? 'tick' : 'thud'); haptic.impact([1, .6, .3, .25, .1][cue.i]);
+          if (!cue.i) d.el.dataset.phase = 'rolling';
+        }
+        previous = cue.t;
+      }
+      if (!await wait(dur * (1 - previous))) return;
+      await Promise.all(d.anims.map((a) => a.finished.catch(() => {})));
+      if (!alive) return;
+      d.rot = target; d.zr = opts.endZ; d.value = value;
       for (const a of d.anims) a.cancel();
-      d.anims = [];
-      setDieBase(d);
+      d.anims = []; setDieBase(d);
+      d.el.dataset.phase = 'settled'; d.el.dataset.value = String(value);
     }
 
-    /** 全部骰子先后落盘：起—飞—落—停 */
     async function roll(values, intensity = 20) {
       const power = powerOf(intensity);
-      const dur = reduce ? 10 : Math.round(1900 + power * 320);
-      const stagger = reduce ? 0 : 85;
-      await Promise.all(dice.map((d, i) => rollOne(d, values[i] ?? values[0], power, dur, 0.62, i * stagger)));
+      const dur = reduce ? 10 : Math.round(3200 + power * 420);
+      haptic.release();
+      await Promise.all(dice.map((d, i) => rollOne(d, values[i] ?? values[0], power, dur, reduce ? 0 : i * 110)));
+      if (alive) haptic.settle();
     }
 
     function rest() {

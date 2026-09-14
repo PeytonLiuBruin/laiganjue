@@ -158,10 +158,23 @@ export function startApp(root) {
 
   /* ---------------- 模块上下文 ---------------- */
   function createContext(meta, el) {
+    platform.motion.resetInput();
     const cleanups = [];
     const addCleanup = (fn) => fn && cleanups.push(fn);
     const wrapSub = (sub) => (cb) => {
-      const off = sub(cb);
+      const off = sub((event) => {
+        // Motion is an input only while the object is visible and the user is
+        // not typing or reading a sheet. Turning the phone must not reset a result.
+        if (document.hidden || document.querySelector('.sheet.open') || document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) {
+          platform.motion.resetInput(); return;
+        }
+        const stage = el.querySelector('.stage');
+        if (stage) {
+          const r = stage.getBoundingClientRect(), height = window.visualViewport?.height || window.innerHeight;
+          if (Math.min(r.bottom, height) - Math.max(r.top, 64) < r.height * 0.5) { platform.motion.resetInput(); return; }
+        }
+        cb(event);
+      });
       addCleanup(off);
       return off;
     };
@@ -231,6 +244,7 @@ export function startApp(root) {
       },
       addCleanup,
       cleanup() {
+        platform.motion.resetInput(); platform.haptic.cancel();
         for (const t of timers) clearTimeout(t);
         timers.clear();
         while (cleanups.length) {
@@ -258,7 +272,7 @@ export function startApp(root) {
       onClick: async () => {
         const r = await pm.requestPermission();
         if (r === 'granted') {
-          toast('体感已开启，摇一摇 / 甩一甩试试');
+          toast('体感已开启，轻摇后收住，或向上轻甩');
           platform.haptic.success();
           wrap.remove();
         } else {
@@ -379,13 +393,24 @@ export function startApp(root) {
             },
           })
         : h('span', { class: 't-faint', style: { fontSize: '12px' } }, pm.state === 'granted' ? '✓' : '—');
+    const hp = platform.haptic;
+    const hapticDesc = h('div', { class: 'setting-desc' }, hp.supported ? '出手、碰撞、落定时震动' : '当前浏览器不支持网页震动；iPhone Safari 暂未开放');
+    const hapticControls = h('div', { class: 'setting-haptic-controls' });
+    if (hp.supported) {
+      const test = button('试一下', { variant: 'ghost', size: 'small', onClick: () => {
+        const sent = hp.pattern([45, 80, 55]);
+        hapticDesc.textContent = sent ? '已发出震动；无感觉时可检查手机的震动设置' : '震动未触发，请检查手机设置';
+      } });
+      test.disabled = !hp.enabled;
+      hapticControls.append(toggle(hp.enabled, (v) => { hp.setEnabled(v); test.disabled = !v; if (v) hp.settle(); }), test);
+    } else hapticControls.append(h('span', { class: 't-faint' }, '不支持'));
     const content = h(
       'div',
       null,
       row('音效', '合成音效：木块、铜钱、洗牌…', toggle(platform.sound.enabled, (v) => platform.sound.setEnabled(v))),
-      row('震动反馈', platform.haptic.supported ? '落地、揭晓时轻微震动' : '此设备不支持震动', toggle(platform.haptic.enabled, (v) => platform.haptic.setEnabled(v))),
+      h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '震动反馈'), hapticDesc), hapticControls),
       h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '体感（摇一摇 / 甩一甩）'), motionDesc), motionControl),
-      h('div', { class: 'mt-4' }, gestureHint('shake', '摇动手机 = 洗牌 / 摇签'), gestureHint('toss', '向上甩手机 = 掷筊 / 掷钱'), gestureHint('flick', '屏幕上快速上滑 = 同样效果'), gestureHint('tilt', '倾斜或转动 = 罗盘 / 灵摆')),
+      h('div', { class: 'mt-4' }, gestureHint('shake', '轻摇后收住 = 洗牌 / 摇签 / 掷骰'), gestureHint('toss', '向上轻甩后收住 = 掷筊 / 掷钱'), gestureHint('flick', '屏幕上快速上滑 = 同样效果'), gestureHint('tilt', '倾斜或转动 = 罗盘 / 灵摆')),
       h(
         'div',
         { class: 'setting-row' },

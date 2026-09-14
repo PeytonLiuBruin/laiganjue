@@ -102,11 +102,6 @@ export function mount(container, ctx) {
 
   /* ---------- 三条入口：体感 / 手势 / 按钮 ---------- */
   ctx.motion.onShake((e) => onShakeEvent(e));
-  ctx.motion.onToss((e) => {
-    if (tying || openSheet || phase === PHASE.PAPER) return;
-    if (phase === PHASE.STICK) drawPaper();
-    else onShakeEvent(e);
-  });
   // 倾斜：挂架微视差
   ctx.motion.onTilt(kit.parallax(rackEl, { max: 4 }));
   // 原始加速度：静止时签筒随手轻晃（节流）
@@ -153,14 +148,14 @@ export function mount(container, ctx) {
       dragLastX = g.dx;
       tubeWrap.style.transform = `translateY(-10px) rotate(${clamp(g.dx / 5, -18, 18)}deg)`;
       if (dragReversals >= 3 && dragTravel > 120) {
-        endDrag();
-        ctx.motion.simulate('shake', { intensity: clamp(14 + dragTravel / 18, 16, 34), source: 'gesture' });
+        st.setHint('已经摇好了，松手出签');
       }
     },
     onEnd(g) {
       if (!dragging) return;
       endDrag();
-      if (dragReversals >= 1 && Math.abs(g.vx) > 1.1) ctx.motion.simulate('shake', { intensity: 22, source: 'gesture' });
+      if (!g.cancelled && dragReversals >= 3 && dragTravel > 120) onShakeEvent({ intensity: clamp(14 + dragTravel / 18, 16, 34) });
+      else st.setHint('左右摇动签筒，松手出签');
     },
   });
   ctx.gesture.tap(tubeWrap, () => nudgeTube());
@@ -256,19 +251,19 @@ export function mount(container, ctx) {
     sound.play('shake');
     haptic.rattle();
     const total = dur(2300 + lvl * 160);
-    for (let t = 260; t < total - 80; t += 280) {
-      ctx.setTimeout(() => {
-        sound.play('rattle');
-        if (t > 650) haptic.rattle();
-      }, t);
+    let elapsed = 0;
+    while (elapsed < total) {
+      const step = Math.min(360, total - elapsed);
+      if (!await wait(step)) return;
+      elapsed += step;
+      if (elapsed < total) { sound.play('rattle'); haptic.impact(.25); }
     }
-    await wait(total);
     if (!ritual.alive) return;
     tubeAnim.classList.remove('ok-shaking', 'ok-s1', 'ok-s2', 'ok-s3');
 
     if (!ritual.alive) return;
     lot = pickLot(ctx.rng.random);
-    stickLabel.textContent = lot.no;
+    stickLabel.textContent = '';
 
     // 提起签筒，签棒从底部小口滑出
     tubeAnim.classList.add('ok-lift');
@@ -281,6 +276,7 @@ export function mount(container, ctx) {
     if (!ritual.alive) return;
     haptic.light();
     if (!ritual.alive) return;
+    stickLabel.textContent = lot.no; haptic.settle();
     ritual.step(1);
     go('out');
     setBusy(false);
@@ -288,22 +284,26 @@ export function mount(container, ctx) {
 
   async function slideOutStick() {
     cancelAnims(stick);
-    const d = dur(1450);
-    ritual.animate(stick,
+    const d = dur(2000);
+    const falling = ritual.animate(stick,
       [
         { transform: STICK_IN, offset: 0 },
         { transform: 'translate(3px, 54px) rotate(86deg)', offset: 0.48, easing: 'cubic-bezier(.3,.8,.5,1)' },
-        { transform: 'translate(-2px, 92px) rotate(34deg)', offset: 0.8, easing: 'cubic-bezier(.5,0,.8,.5)' },
-        { transform: 'translate(-8px, 100px) rotate(-8deg)', offset: 0.92 },
+        { transform: 'translate(-2px, 92px) rotate(34deg)', offset: 0.68, easing: 'cubic-bezier(.5,0,.8,.5)' },
+        { transform: 'translate(-8px, 96px) rotate(-22deg)', offset: 0.8 },
+        { transform: 'translate(-7px, 98px) rotate(-18deg)', offset: 0.88 },
+        { transform: 'translate(1px, 100px) rotate(5deg)', offset: 0.96 },
         { transform: STICK_OUT, offset: 1 },
       ],
-      { duration: d, fill: 'forwards', easing: 'ease-out' },
+      { duration: d, fill: 'forwards', easing: 'linear' },
     );
-    await wait(d * 0.8);
+    if (!await wait(d * 0.68)) return;
     if (!ritual.alive) return;
     sound.play('clack');
-    haptic.medium();
-    await wait(d * 0.2 + 20);
+    haptic.impact(.8);
+    if (!await wait(d * 0.28)) return;
+    sound.play('tick'); haptic.impact(.2);
+    await falling;
     if (!ritual.alive) return;
     stick.classList.add('ok-stick-glow');
   }
