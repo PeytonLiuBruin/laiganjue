@@ -224,7 +224,6 @@ export function mount(container, ctx) {
   renderGua();
   renderStars();
   showTab();
-  if (tab === 'compass') ctx.ensureMotion?.().catch(() => {});
 
   /* ---------- 主按钮：记录 / 详解 ---------- */
   function primaryAction() {
