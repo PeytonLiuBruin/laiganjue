@@ -7,6 +7,8 @@ import { MODULE_LIST, REGIONS, GESTURE_LABEL, getModuleMeta } from '../modules/l
 import { MODULES } from '../modules/registry.js';
 import { createZen } from './zen.js';
 import { registerModel, hasModel } from './model-slot.js';
+import { ritualArt } from './ritual-art.js';
+import { createMotionPrompt } from './motion-prompt.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -23,6 +25,7 @@ const MOTION_GESTURES = new Set(['shake', 'toss', 'tilt']);
 export function startApp(root) {
   const platform = createPlatform();
   const { storage } = platform;
+  let motionPrompt = null, motionRequest = null;
 
   /* ---------------- 皮肤 ---------------- */
   const themeListeners = new Set();
@@ -132,7 +135,13 @@ export function startApp(root) {
     setHeader(meta);
     window.scrollTo(0, 0);
     const ctx = createContext(meta, el);
-    if (meta.gestures.some((g) => MOTION_GESTURES.has(g))) el.append(motionBanner(ctx));
+    let prompt = null;
+    if (meta.gestures.some((g) => MOTION_GESTURES.has(g))) {
+      prompt = createMotionPrompt({ motion: platform.motion, meta, requestPermission: ensureMotion, haptic: platform.haptic });
+      motionPrompt = prompt;
+      el.append(prompt.el);
+      ctx.addCleanup(() => { prompt.dispose(); if (motionPrompt === prompt) motionPrompt = null; });
+    }
     try {
       const un = await impl.mount(el, ctx);
       ctx.addCleanup(typeof un === 'function' ? un : null);
@@ -142,6 +151,7 @@ export function startApp(root) {
       el.append(kit.placeholder(meta.glyph, '开坛失败', '这个功能暂时打不开，请稍后再试'));
     }
     current = { id: target, el, unmount: () => ctx.cleanup() };
+    if (prompt && (storage.get('onboarded', false) || navigator.webdriver)) prompt.enter();
   }
 
   function setHeader(meta) {
@@ -186,7 +196,7 @@ export function startApp(root) {
       onTilt: wrapSub(platform.motion.onTilt),
       onHeading: wrapSub(platform.motion.onHeading),
       simulate: platform.motion.simulate,
-      requestPermission: platform.motion.requestPermission,
+      requestPermission: ensureMotion,
       get state() {
         return platform.motion.state;
       },
@@ -257,33 +267,13 @@ export function startApp(root) {
   }
 
   /* ---------------- 体感权限 ---------------- */
-  function motionBanner(ctx) {
-    const pm = platform.motion;
-    if (!pm.supported || pm.state === 'granted') return document.createComment('motion ok');
-    if (pm.state === 'denied' || pm.state === 'unsupported') return document.createComment('motion unavailable');
-    const wrap = h('div', { class: 'motion-banner' });
-    const btn = button('开启体感', {
-      variant: 'primary',
-      size: 'small',
-      onClick: async () => {
-        const r = await pm.requestPermission();
-        if (r === 'granted') {
-          toast('体感已开启，轻摇后收住，或向上轻甩');
-          platform.haptic.success();
-          wrap.remove();
-        } else {
-          toast('未获得体感权限，仍可用屏幕手势和按钮');
-          wrap.remove();
-        }
-      },
-    });
-    wrap.append(h('span', { class: 'grow' }, '摇动手机，也能与器物互动'), btn);
-    return wrap;
-  }
   async function ensureMotion() {
     const pm = platform.motion;
     if (pm.state === 'granted' || !pm.supported) return pm.state;
-    return pm.requestPermission();
+    if (motionRequest) return motionRequest;
+    motionRequest = pm.requestPermission();
+    try { return await motionRequest; }
+    finally { motionRequest = null; motionPrompt?.sync(); }
   }
 
   /* ---------------- 首页 ---------------- */
@@ -310,7 +300,7 @@ export function startApp(root) {
                 navigate('#/m/' + m.id);
               },
             },
-            h('span', { class: 'tile-head' }, h('span', { class: 'medal' }, m.glyph), h('span', { class: 'tile-gest' }, m.gestures.slice(0, 1).map((g) => GESTURE_LABEL[g]).join(' · '))),
+            h('span', { class: 'tile-head' }, ritualArt(m.id), h('span', { class: 'tile-gest' }, m.gestures.slice(0, 1).map((g) => GESTURE_LABEL[g]).join(' · '))),
             h('span', { class: 'col grow', style: { gap: '4px' } }, h('span', { class: 'tile-title' }, m.title), h('span', { class: 'tile-sub' }, m.subtitle)),
           ),
         );
@@ -384,7 +374,7 @@ export function startApp(root) {
             variant: 'primary',
             size: 'small',
             onClick: async () => {
-              await pm.requestPermission();
+              await ensureMotion();
               motionDesc.textContent = motionState();
             },
           })
@@ -478,7 +468,7 @@ export function startApp(root) {
             storage.set('onboarded', true);
             el.classList.remove('show');
             platform.haptic.tap();
-            setTimeout(() => el.remove(), 400);
+            setTimeout(() => { el.remove(); motionPrompt?.enter(); }, 400);
           },
         }),
         h('p', { class: 'onboard-foot' }, '传统文化演绎 · 仅供娱乐与自我觉察'),

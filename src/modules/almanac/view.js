@@ -96,14 +96,16 @@ export function mount(container, ctx) {
 
   /* ---------- 三条入口 ---------- */
   // 纸页上左右快滑：向左撕掉这页看后一天，向右翻回前一天。竖向滚动交给浏览器（touch-action: pan-y）。
+  // The binding strip is the page-turn handle; the paper below remains a
+  // reading surface. A diagonal scroll through 宜忌 must never change dates.
   ctx.gesture.flick(
-    wall,
+    stub,
     (g) => {
       if (busy || !alive || detailSheet) return;
       swipedAt = performance.now();
       flip(g.direction === 'left' ? 1 : -1, null, g.intensity);
     },
-    { axis: 'x', direction: 'any', minDist: 56, minSpeed: 0.5 },
+    { axis: 'x', direction: 'any', minDist: 80, minSpeed: 0.65 },
   );
   // 摇一摇：翻回今天；已是今天则纸页在环上晃两下。
   ctx.motion.onShake(() => {
@@ -129,7 +131,15 @@ export function mount(container, ctx) {
   });
 
   // 每分钟刷新一次"当前时辰"高亮
+  let clockDay = toKey(new Date());
   const tickNow = () => {
+    const todayKey = toKey(new Date());
+    if (todayKey !== clockDay && !busy && !detailSheet) {
+      const followToday = toKey(current) === clockDay;
+      clockDay = todayKey;
+      if (followToday) goTo(new Date());
+      else syncControls();
+    }
     markNow();
     ctx.setTimeout(tickNow, 60000);
   };
@@ -295,8 +305,9 @@ export function mount(container, ctx) {
     detailBtn.setLabel(rel.length <= 2 ? `${TEXT.readPrefix}${rel}` : TEXT.readFar);
     detailBtn.disabled = busy;
     tearBtn.disabled = busy;
-    prevBtn.disabled = busy;
-    nextBtn.disabled = busy;
+    prevBtn.disabled = busy || !inRange(shiftDay(current, -1));
+    nextBtn.disabled = busy || !inRange(shiftDay(current, 1));
+    tearBtn.disabled = nextBtn.disabled;
     todayBtn.disabled = busy || isToday;
     dateInput.disabled = busy;
     dateInput.value = toKey(current);

@@ -1,0 +1,161 @@
+/* Final presentation layer: material, typography and responsive reading. */
+html { scrollbar-gutter: stable; }
+button, [role='button'] { touch-action: manipulation; }
+textarea, select { font-size: 16px; }
+.btn > span { min-width: 0; overflow-wrap: anywhere; text-wrap: balance; }
+.btn:focus-visible, .chip:focus-visible, .tab:focus-visible { outline-width: 2px; outline-offset: 3px; }
+.input:disabled, .select:disabled { opacity: .72; -webkit-text-fill-color: var(--text-2); }
+.chip:disabled, .tab:disabled { opacity: .6; cursor: default; }
+.chip.active:disabled, .tab.active:disabled { opacity: .85; }
+.tabs { padding: 4px; gap: 4px; border-radius: 13px; }
+.tab { min-height: 44px; padding: 8px 12px; white-space: normal; line-height: 1.5; }
+.chips.scroll { scroll-padding-inline: 10px; overscroll-behavior-x: contain; }
+.stage-badge, .stage-hint { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.5; }
+.stage-badge { letter-spacing: .04em; }
+.stage-hint { width: max-content; }
+.hint { text-wrap: balance; }
+
+/* Permission is a visible invitation on each visit, then a compact status. */
+.motion-entry {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px;
+  padding: 18px; margin-bottom: 20px; border: 1px solid var(--accent);
+  border-radius: 18px; background: var(--surface); box-shadow: 0 6px 22px var(--glow);
+}
+.motion-entry-mark { display: grid; place-items: center; align-self: center; width: 46px; height: 46px; color: var(--accent); background: var(--glow); border-radius: 14px; }
+.motion-entry-copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.motion-entry-title { color: var(--text); font-size: 16px; line-height: 1.5; font-weight: 600; letter-spacing: .03em; }
+.motion-entry-desc { color: var(--text-2); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.motion-entry > .btn { grid-column: 1 / -1; min-height: 50px; width: 100%; font-size: 16px; }
+.motion-entry.ready { grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 11px 14px; margin-bottom: 16px; border-color: var(--line); box-shadow: none; }
+.motion-entry.ready .motion-entry-mark { width: 28px; height: 34px; background: transparent; }
+.motion-entry.ready .motion-entry-mark svg { width: 22px; height: 26px; }
+.motion-entry.ready .motion-entry-copy { gap: 1px; }
+.motion-entry.ready .motion-entry-title { color: var(--accent); font-size: 13px; }
+.motion-entry.ready .motion-entry-desc { font-size: 12px; }
+.motion-invite { padding: 8px 0 14px; text-align: center; }
+.motion-invite-phone { display: grid; place-items: center; width: 112px; height: 112px; margin: 0 auto 22px; border: 1px solid var(--line); border-radius: 32px; color: var(--accent); background: var(--surface-2); }
+.motion-invite-phone svg { animation: motion-invite-shake 2.6s ease-in-out 2; }
+.motion-invite-action { margin: 0 auto 12px; max-width: 24em; font-size: 21px; line-height: 1.65; text-wrap: balance; color: var(--text); }
+.motion-invite-detail { margin: 0 auto; max-width: 25em; font-size: 14px; line-height: 1.85; color: var(--text-2); text-wrap: balance; }
+.motion-invite-sheet .sheet-actions { display: flex; flex-direction: column; gap: 4px; }
+.motion-invite-sheet .sheet-actions .btn { width: 100%; flex: none; min-height: 50px; }
+@keyframes motion-invite-shake { 0%, 50%, 100% { transform: rotate(0); } 9%, 27% { transform: rotate(-13deg); } 18%, 36% { transform: rotate(13deg); } }
+@media (prefers-reduced-motion: reduce) { .motion-invite-phone svg { animation: none; } }
+@media (max-height: 620px) {
+  .motion-invite { padding-block: 0 4px; }
+  .motion-invite-phone { width: 76px; height: 76px; margin-bottom: 12px; border-radius: 22px; }
+  .motion-invite-phone svg { width: 44px; height: 44px; }
+  .motion-invite-action { font-size: 18px; }
+}
+
+/* Individually drawn objects replace identical letter medallions. */
+.tile { min-height: 176px; gap: 14px; }
+.tile-head { align-items: center; gap: 10px; }
+.ritual-art { width: 60px; height: 60px; flex: none; color: var(--accent); filter: drop-shadow(0 3px 3px var(--glow)); }
+.tile-gest { letter-spacing: 0; font-size: 11px; }
+.tile-sub { font-size: 13px; line-height: 1.75; }
+.tile[data-ritual] { border-top-width: 1px; border-top-color: var(--line); }
+.tile:focus-visible { border-color: var(--accent); }
+@media (hover: hover) {
+  .tile:hover .ritual-art { transform: translateY(-2px) rotate(-3deg); }
+  .ritual-art { transition: transform .25s ease; }
+}
+
+/* Readable sheets, a real scroll surface and an intentional drag handle. */
+.sheet { transition-duration: .38s; max-height: calc(100dvh - max(28px, var(--safe-top))); }
+.sheet:not(.open) { pointer-events: none; }
+.sheet-grip, .sheet-head { touch-action: none; }
+.sheet-grip { padding: 12px 0 4px; }
+.sheet-head { gap: 14px; padding-top: 8px; padding-bottom: 16px; }
+.sheet-title { min-width: 0; overflow-wrap: anywhere; font-size: 17px; letter-spacing: .06em; }
+.sheet-head .icon-btn { flex: none; background: var(--bg-2); }
+.sheet-body { min-height: 0; overscroll-behavior-y: contain; touch-action: pan-y; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.sheet-actions { flex-wrap: wrap; background: var(--sheet-bg); }
+.sheet-actions .btn { min-width: 110px; }
+.result-kicker { line-height: 1.7; letter-spacing: .1em; }
+.result .result-title { line-height: 1.4; letter-spacing: .09em; overflow-wrap: anywhere; text-wrap: balance; }
+.result-sub { font-size: 14px; letter-spacing: .025em; text-wrap: balance; }
+.result-section-text { min-width: 0; overflow-wrap: anywhere; font-size: 15px; line-height: 1.95; }
+.result-section-label { line-height: 1.7; letter-spacing: .06em; }
+.result-verse { border-left-width: 1px; border-radius: 0 10px 10px 0; padding: 18px 20px; line-height: 1.9; letter-spacing: .055em; }
+.result-footer { font-size: 11px; line-height: 1.8; letter-spacing: .025em; }
+.ritual-receipt h2 { overflow-wrap: anywhere; text-wrap: balance; }
+.ritual-receipt-copy > p { max-width: 36em; }
+
+/* The cloth receives the stone's weight; thickness is visible during a turn. */
+.m-runes .rn-stone-edge { position: absolute; inset: 0; border-radius: var(--rn-radius); background: var(--rn-stone-3); backface-visibility: visible; }
+.m-runes .rn-shape-1 { --rn-radius: 52% 48% 55% 45% / 45% 55% 45% 55%; }
+.m-runes .rn-shape-2 { --rn-radius: 45% 55% 50% 50% / 58% 58% 42% 42%; }
+.m-runes .rn-shape-3 { --rn-radius: 55% 45% 48% 52% / 50% 46% 54% 50%; }
+.m-runes .rn-shape-4 { --rn-radius: 50% 50% 44% 56% / 44% 56% 54% 46%; }
+.m-runes .rn-face.rn-back { transform: translateZ(3.5px); }
+.m-runes .rn-face.rn-front { transform: rotateY(180deg) translateZ(3.5px); }
+.m-runes .rn-face { box-shadow: inset -3px -4px 7px #0004, inset 2px 2px 5px #ffffff24; }
+.m-runes .rn-front .rn-glyph { filter: drop-shadow(0 1px 0 #ffffff25); }
+.m-runes .rn-stone-label { letter-spacing: .04em; font-size: 12px; }
+.m-runes .rn-bag-wrap:focus-visible { border-radius: 36px; }
+.m-runes .rn-stone:focus-visible { border-radius: var(--rn-radius); }
+
+/* Printed surfaces remain legible independently of the chosen theme. */
+.m-qian .qn-paper { background: linear-gradient(90deg, #a08b6506, #ffffff16 49%, #8f704f0c 50%, transparent 53%), #f8f1df; color: #443629; }
+.m-qian .qn-paper h2 { line-height: 1.6; text-wrap: balance; }
+.m-qian .qn-poem { letter-spacing: .07em; }
+.m-jiaobei .jb-stage .stage-badge { max-width: calc(100% - 128px); }
+.m-jiaobei .jb-face-labels span { letter-spacing: .04em; }
+.m-almanac .al-stub { touch-action: pan-y; cursor: grab; }
+.m-almanac .al-stub:active { cursor: grabbing; }
+.m-almanac .al-page, .m-almanac .al-stub { box-shadow: 0 3px 7px #49372212, inset 0 1px #fff7; }
+.m-almanac .al-chip:focus-visible, .m-almanac .al-hour:focus-visible { outline-color: var(--al-red); }
+.m-liuyao .ly-mini-line { box-shadow: 0 1px 1px var(--glow); }
+.m-liuyao .ly-aspect span { line-height: 1.85; }
+.m-bazi .bz-form { margin-bottom: 16px; }
+.m-bazi .bz-bar-count { font-variant-numeric: tabular-nums; }
+.m-fengshui .fs-deg { font-variant-numeric: tabular-nums; letter-spacing: -.03em; }
+.m-fengshui .fs-gua-lucky { line-height: 1.8; text-wrap: balance; }
+.m-zodiac .zd-lucky { line-height: 1.8; }
+.m-zodiac .zd-swatch { border: 1px solid #0002; box-shadow: inset 0 0 0 2px #ffffff45; }
+.m-crystal .cr-hint { min-height: 28px; line-height: 1.65; }
+.m-omikuji .ok-slip { box-shadow: 0 4px 8px #38281513, 0 16px 28px #38281518; }
+.m-omikuji .ok-rack.ok-over { filter: drop-shadow(0 0 8px var(--glow)); }
+.m-tarot .tr-read-text { line-height: 1.9; }
+.m-tarot .tr-front-art { border: 1px solid #b7a7796b; }
+.m-tarot .tr-card:focus-visible { outline-offset: 6px; border-radius: 6px; }
+.m-coin .cn-stage .stage-badge { max-width: calc(100% - 40px); }
+.m-wheel .wh-editor-tip { line-height: 1.75; }
+.m-wheel .wh-textarea:focus-visible, .m-plinko .pl-editor-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.m-plinko { --pl-width: min(100%, 410px, max(300px, calc((100svh - 300px) * .735))); }
+.m-plinko .pl-slot.selected { box-shadow: inset 0 1px 0 #ffffff30, 0 3px 10px var(--glow); }
+.m-plinko .pl-editor-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.m-plinko .pl-editor-preview span { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; overflow-wrap: anywhere; }
+
+@media (max-width: 650px) {
+  .tile { min-height: 178px; gap: 10px; }
+  .ritual-art { width: 50px; height: 50px; }
+  .tile-title { font-size: 19px; }
+  .tile-head { gap: 5px; }
+  .sheet-body { padding-inline: 20px; }
+  .result .result-title { font-size: 32px; }
+  .result-section { gap: 10px; }
+  .result-section-label { font-size: 12px; }
+  .result-verse { padding-inline: 16px; font-size: 17px; }
+}
+@media (max-width: 360px) {
+  .tile { padding: 14px; }
+  .tile-sub { font-size: 12px; }
+  .tile-gest { font-size: 10px; }
+  .tabs .tab { padding-inline: 8px; font-size: 13px; }
+  .sheet-head { padding-inline: 18px; }
+  .sheet-body, .sheet-actions { padding-inline: 16px; }
+  .result-section { flex-direction: column; gap: 6px; }
+  .result-section-label { width: auto; }
+  .m-tarot .tr-table[data-n='3'] { --cw: 23vw; --ch: 39.1vw; }
+  .m-qian .qn-paper { padding-inline: 16px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  .stage { max-height: none; }
+  .sheet { max-height: calc(100dvh - 16px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .ritual-receipt, .tile, .ritual-art { animation: none; transition-duration: .01s; }
+  .ok-petal, .stick-pick-target::after { animation: none !important; }
+}

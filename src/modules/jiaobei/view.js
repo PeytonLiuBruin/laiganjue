@@ -58,7 +58,8 @@ export function mount(container, ctx) {
   function sensorThrow(e) { if (busy || resultSheet) return; if (session.done) reset(); doThrow(e.intensity); }
   ctx.motion.onTilt(({ gamma }) => { if (!ctx.platform.simpleMotion) model.tilt((gamma || 0) / 160); });
   ctx.motion.onMotion(({ ax, ay, phase, progress }) => {
-    if (busy || held || resultSheet || ctx.platform.simpleMotion) return;
+    // Keep the landed faces still while reading; onToss/onShake start the next throw.
+    if (busy || held || lastResult || resultSheet || ctx.platform.simpleMotion) return;
     model.preview(-clamp(ax || 0, -8, 8) * 2, -clamp(ay || 0, -4, 20));
     ritual.power(progress || 0);
     setHint(phase === 'ready' ? HINTS.ready : phase === 'charging' ? HINTS.charging : idleHint());
@@ -84,12 +85,14 @@ export function mount(container, ctx) {
   });
 
   function setBusy(value) {
-    busy = value; tossBtn.disabled = value; resetBtn.disabled = value; qInput.disabled = value;
+    busy = value; tossBtn.disabled = value; resetBtn.disabled = value;
+    qInput.disabled = value || mode === 'three' && session.throws.length > 0;
     modeChips.el.querySelectorAll('button').forEach((b) => { b.disabled = value; });
   }
   /** 主按钮文案跟着状态走：掷筊 → 再掷一次 / 继续掷筊 → 重新问事（定局后） */
   function syncButtons() {
     const started = lastResult || session.throws.length > 0;
+    qInput.disabled = busy || mode === 'three' && session.throws.length > 0;
     tossBtn.setLabel(session.done ? '重新问事' : !started ? '掷筊' : mode === 'three' ? '继续掷筊' : '再掷一次');
     resetBtn.hidden = session.done;
     tossBtn.disabled = busy;
@@ -103,7 +106,7 @@ export function mount(container, ctx) {
     sound.play('whoosh'); haptic.release();
     const result = throwJiaobei(ctx.rng.random);
     const ok = await model.toss(result, intensity, (phase) => { if (phase === 'settling') setHint(HINTS.settling); });
-    if (!ok || !ritual.alive) return;
+    if (!ok || !ritual.alive) { if (ritual.alive) { setBusy(false); syncButtons(); setHint(idleHint()); } return; }
     ritual.step(2); ritual.power(0);
     const o = OUTCOMES[result.outcome];
     canvas.setAttribute('aria-label', `筊杯落地：${o.kicker}，${o.name}`);

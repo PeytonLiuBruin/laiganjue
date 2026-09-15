@@ -146,9 +146,10 @@ export function drawPillars(p,s,time){
     if(pose.visible){
       const u=rotate([1,0,0],q),v=[0,1,0];
       p.text(entry?.label||['年柱','月柱','日柱','时柱'][i],at([0,60,14.5]),{size:12,u,v,color:text});
-      p.text(entry?.gan||'·',at([0,28,14.5]),{size:29,u,v,color:wx[entry?.ganElement]||metal,weight:600});
-      p.text(entry?.zhi||'·',at([0,-12,14.5]),{size:29,u,v,color:wx[entry?.zhiElement]||metal,weight:600});
-      p.text(entry?.shiShen||(!s.pillars?'':'待定'),at([0,-56,14.5]),{size:10,u,v,color:text});
+      const unknownHour=i===3&&s.pillars?.length===3;
+      p.text(entry?.gan||(unknownHour?'未':'·'),at([0,28,14.5]),{size:unknownHour?20:29,u,v,color:wx[entry?.ganElement]||metal,weight:600});
+      p.text(entry?.zhi||(unknownHour?'知':'·'),at([0,-12,14.5]),{size:unknownHour?20:29,u,v,color:wx[entry?.zhiElement]||metal,weight:600});
+      p.text(entry?.shiShen||(unknownHour?'未计入':''),at([0,-56,14.5]),{size:10,u,v,color:text});
     }
   }
 }

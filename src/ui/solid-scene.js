@@ -73,12 +73,12 @@ export function createSolidScene(canvas,ctx,{plate=false,ground=.76,worldWidth=3
   function render(){if(!alive||!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);c.setTransform(dpr,0,0,dpr,0,0);paintSolids(c,width,height,objects,{plate,ground,shock,worldWidth});}
   function resize(){const r=canvas.getBoundingClientRect();if(r.width>0&&r.height>0){width=r.width;height=r.height;}const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);render();}
   const observer=new ResizeObserver(resize);observer.observe(canvas);
-  function set(specs){cancel();objects=specs.map(s=>({...s,homeX:s.x,homeY:s.y,q:s.q||IDENTITY,lift:0}));resize();}
+  function set(specs){cancel();canvas.removeAttribute('data-values');canvas.removeAttribute('aria-label');canvas.dataset.phase='idle';shock=0;objects=specs.map(s=>({...s,homeX:s.x,homeY:s.y,q:s.q||IDENTITY,lift:0}));resize();}
   function preview(dx=0,dy=0){if(active)return;objects.forEach(o=>{delete o.z;o.previewQ??=o.q;o.q=multiply(axisAngle([0,1,0],Math.max(-.3,Math.min(.3,dx/150))),o.previewQ);o.lift=Math.max(0,Math.min(36,-dy*.45));});render();}
-  function rest(){objects.forEach(o=>{if(o.previewQ){o.q=o.previewQ;delete o.previewQ;}o.lift=0;delete o.z;});render();}
+  function rest(){if(active)return;objects.forEach(o=>{if(o.previewQ){o.q=o.previewQ;delete o.previewQ;}o.lift=0;delete o.z;});render();}
   function cancel(){cancelAnimationFrame(frame);active=false;diceShake=null;diceOrigin=null;pending?.(false);pending=null;}
   function startDiceShake(chooseValues,{onPhase=()=>{}}={}) {
-    cancel(); objects.forEach(o=>{delete o.z;});active=true;shock=0;
+    cancel(); objects.forEach(o=>{delete o.z;delete o.previewQ;});active=true;shock=0;
     diceOrigin={poses:objects.map(o=>({q:[...o.q],x:o.x,y:o.y})),values:canvas.getAttribute('data-values'),label:canvas.getAttribute('aria-label')};
     diceShake=createDiceShake(objects,{now:performance.now(),chooseValues,duration:ctx.platform.simpleMotion?750:900});
     canvas.dataset.phase='shaking';canvas.removeAttribute('data-values');
@@ -115,6 +115,8 @@ export function createSolidScene(canvas,ctx,{plate=false,ground=.76,worldWidth=3
   document.addEventListener('visibilitychange',visibility);
   function throwTo(values,intensity=20,{duration=3400,onPhase=()=>{}}={}){
     cancel();active=true;
+    // Launch from the held pose, but make the next preview start from the landing.
+    objects.forEach(o=>{delete o.previewQ;});
     const power=Math.max(.65,Math.min(1.5,intensity/20));
     const targets=objects.map((o,i)=>o.kind==='coin'?axisAngle([1,0,0],values[i]==='tails'?Math.PI:values[i]==='edge'?Math.PI/2:0):o.kind==='jiaobei'?axisAngle([1,0,0],values[i]==='round'?Math.PI:values[i]==='stand'?Math.PI/2:0):faceUp(o.mesh,values[i]));
     const physics=createThrowPhysics(objects,targets,{power,height:flightHeight(height,power),worldWidth,seed:performance.now()%997});

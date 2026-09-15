@@ -169,28 +169,33 @@ export function tabs(items, { value, onChange } = {}) {
   const norm = items.map((it) => (typeof it === 'string' ? { value: it, label: it } : it));
   let current = value ?? norm[0]?.value;
   const el = h('div', { class: 'tabs', attrs: { role: 'tablist' } });
-  const render = () => {
-    clear(el);
-    for (const it of norm) {
-      el.append(
-        h(
-          'button',
-          {
-            type: 'button',
-            class: ['tab', it.value === current && 'active'],
-            attrs: { role: 'tab', 'aria-selected': it.value === current ? 'true' : 'false' },
-            onClick: () => {
-              if (it.value === current) return;
-              current = it.value;
-              render();
-              onChange && onChange(current, it);
-            },
-          },
-          it.label,
-        ),
-      );
-    }
+  const choose = (i) => {
+    if (buttons[i].disabled || norm[i].value === current) return;
+    current = norm[i].value;
+    render();
+    onChange?.(current, norm[i]);
   };
+  const buttons = norm.map((it, i) => h('button', {
+    type: 'button', class: 'tab', attrs: { role: 'tab' },
+    onClick: () => choose(i),
+    onKeydown: (e) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const enabled = buttons.map((b, j) => b.disabled ? -1 : j).filter((j) => j >= 0);
+      const index = enabled.indexOf(i);
+      const next = e.key === 'Home' ? enabled[0] : e.key === 'End' ? enabled.at(-1) : enabled[(index + (e.key === 'ArrowRight' ? 1 : -1) + enabled.length) % enabled.length];
+      if (next == null) return;
+      choose(next);
+      buttons[next].focus();
+    },
+  }, it.label));
+  const render = () => buttons.forEach((b, i) => {
+    const selected = norm[i].value === current;
+    b.classList.toggle('active', selected);
+    b.setAttribute('aria-selected', String(selected));
+    b.tabIndex = selected ? 0 : -1;
+  });
+  el.append(...buttons);
   render();
   return {
     el,
@@ -341,6 +346,29 @@ export function stars(n, max = 5) {
 }
 
 /* ------------------------------ Toast / 抽屉 ------------------------------ */
+const openSheets = [];
+let sheetPageLock = null;
+function syncSheets() {
+  const top = openSheets.at(-1);
+  openSheets.forEach(({ el, backdrop }, i) => {
+    el.inert = el !== top.el;
+    el.style.zIndex = String(200 + i * 2);
+    backdrop.style.zIndex = String(199 + i * 2);
+  });
+  if (top && !sheetPageLock) {
+    const page = [...document.body.children].filter((node) => !node.matches('.sheet, .sheet-backdrop, .toast'));
+    sheetPageLock = { page: page.map((node) => [node, node.inert]), y: window.scrollY, styles: {} };
+    for (const key of ['position', 'top', 'width', 'overflow']) sheetPageLock.styles[key] = document.body.style[key];
+    page.forEach((node) => { node.inert = true; });
+    Object.assign(document.body.style, { position: 'fixed', top: `${-sheetPageLock.y}px`, width: '100%', overflow: 'hidden' });
+  } else if (!top && sheetPageLock) {
+    const lock = sheetPageLock;
+    sheetPageLock = null;
+    Object.assign(document.body.style, lock.styles);
+    lock.page.forEach(([node, inert]) => { node.inert = inert; });
+    window.scrollTo({ top: lock.y, behavior: 'instant' });
+  }
+}
 let toastEl = null;
 let toastTimer = null;
 export function toast(msg, { duration = 1800 } = {}) {
@@ -364,7 +392,7 @@ export function sheet({ title = '', content = null, actions = null, onClose, dis
   const closeBtn = h('button', { type: 'button', class: 'icon-btn', attrs: { 'aria-label': '关闭' }, onClick: () => api.close() }, icon('close'));
   const el = h(
     'div',
-    { class: 'sheet', attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-label': title } },
+    { class: 'sheet', attrs: { role: 'dialog', 'aria-modal': 'true', 'aria-label': title, tabindex: '-1' } },
     h('div', { class: 'sheet-grip' }),
     h('div', { class: 'sheet-head' }, h('div', { class: 'sheet-title' }, title), closeBtn),
     body,
@@ -373,39 +401,47 @@ export function sheet({ title = '', content = null, actions = null, onClose, dis
   const backdrop = h('div', { class: 'sheet-backdrop', onClick: () => dismissible && api.close() });
   let opened = false;
   let previousFocus = null;
+  let closeTimer = null;
+  const entry = { el, backdrop };
+  closeBtn.hidden = !dismissible;
   el.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && dismissible) { e.preventDefault(); api.close(); }
     if (e.key !== 'Tab') return;
-    const controls = [...el.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]')].filter((node) => !node.hidden);
+    const controls = [...el.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]')].filter((node) => !node.closest('[hidden], [inert]') && getComputedStyle(node).display !== 'none' && getComputedStyle(node).visibility !== 'hidden');
     const first = controls[0], last = controls[controls.length - 1];
+    if (!first) { e.preventDefault(); el.focus(); return; }
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
   });
-  // 下拉关闭
-  let startY = null;
+  // Only the handle/header can dismiss. Reading, selecting text and editing
+  // inside the body must keep native scrolling, including at scrollTop = 0.
+  let drag = null;
   el.addEventListener(
     'pointerdown',
     (e) => {
-      if (e.target.closest('.sheet-body') && body.scrollTop > 0) return;
-      startY = e.clientY;
+      if (!dismissible || e.button !== 0 || !e.target.closest('.sheet-grip, .sheet-head') || e.target.closest('button, a, input, select, textarea')) return;
+      drag = { y: e.clientY, id: e.pointerId };
+      el.setPointerCapture?.(e.pointerId);
     },
     { passive: true },
   );
   el.addEventListener(
     'pointermove',
     (e) => {
-      if (startY == null) return;
-      const dy = e.clientY - startY;
-      if (dy > 0) el.style.transform = `translate(-50%, ${dy}px)`;
+      if (!drag || drag.id !== e.pointerId) return;
+      const dy = Math.max(0, e.clientY - drag.y);
+      el.style.transition = 'none';
+      el.style.transform = `translate(-50%, ${dy * .82}px)`;
     },
     { passive: true },
   );
   const endDrag = (e) => {
-    if (startY == null) return;
-    const dy = e.clientY - startY;
-    startY = null;
+    if (!drag || drag.id !== e.pointerId) return;
+    const dy = e.clientY - drag.y;
+    drag = null;
+    el.style.transition = '';
     el.style.transform = '';
-    if (dy > 90 && dismissible) api.close();
+    if (e.type !== 'pointercancel' && dy > 100) api.close();
   };
   el.addEventListener('pointerup', endDrag);
   el.addEventListener('pointercancel', endDrag);
@@ -418,32 +454,41 @@ export function sheet({ title = '', content = null, actions = null, onClose, dis
     },
     open() {
       if (opened) return api;
+      clearTimeout(closeTimer);
       opened = true;
       previousFocus = document.activeElement;
       document.body.append(backdrop, el);
+      openSheets.push(entry);
+      syncSheets();
       requestAnimationFrame(() => {
         if (!opened) return;
         backdrop.classList.add('open');
         el.classList.add('open');
-        closeBtn.focus({ preventScroll: true });
+        (dismissible ? closeBtn : el).focus({ preventScroll: true });
       });
       return api;
     },
     close() {
       if (!opened) return api;
       opened = false;
+      const wasTop = openSheets.at(-1) === entry;
+      const index = openSheets.indexOf(entry);
+      if (index >= 0) openSheets.splice(index, 1);
       backdrop.classList.remove('open');
       el.classList.remove('open');
-      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
-      setTimeout(() => {
+      el.inert = true;
+      syncSheets();
+      if (wasTop && previousFocus?.isConnected && !previousFocus.closest('[inert], [hidden]')) previousFocus.focus({ preventScroll: true });
+      onClose?.();
+      closeTimer = setTimeout(() => {
         backdrop.remove();
         el.remove();
-        onClose && onClose();
       }, 420);
       return api;
     },
     setTitle(t) {
       el.querySelector('.sheet-title').textContent = t;
+      el.setAttribute('aria-label', t);
     },
     setContent(node) {
       clear(body);

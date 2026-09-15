@@ -24,7 +24,7 @@ export const MODULE_LIST = [
   { id: 'crystal', title: '水晶球', glyph: '晶', region: 'west', gestures: ['rub', 'shake', 'tilt'], subtitle: '摩擦水晶球，雾散见神谕；灵摆问是非' },
   { id: 'omikuji', title: '御神签', glyph: '神', region: 'japan', gestures: ['shake'], subtitle: '摇出签棒抽签纸，大吉还是凶' },
   { id: 'coin', title: '硬币骰子', glyph: '币', region: 'play', gestures: ['flick', 'shake'], subtitle: '甩出硬币，摇出骰子，二选一交给天意' },
-  { id: 'plinko', title: '落球盘', glyph: '落', region: 'play', gestures: ['tap'], subtitle: '写下选项，看小球弹跳着替你做决定' },
+  { id: 'plinko', title: '落球盘', glyph: '落', region: 'play', gestures: ['shake', 'tap'], subtitle: '写下选项，看小球弹跳着替你做决定' },
 ];
 
 export const GESTURE_LABEL = {
