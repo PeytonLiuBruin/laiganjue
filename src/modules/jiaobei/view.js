@@ -58,7 +58,8 @@ export function mount(container, ctx) {
   function sensorThrow(e) { if (busy || resultSheet) return; if (session.done) reset(); doThrow(e.intensity); }
   ctx.motion.onTilt(({ gamma }) => { if (!ctx.platform.simpleMotion) model.tilt((gamma || 0) / 160); });
   ctx.motion.onMotion(({ ax, ay, phase, progress }) => {
-    if (busy || held || resultSheet || ctx.platform.simpleMotion) return;
+    // Keep the landed faces still while reading; onToss/onShake start the next throw.
+    if (busy || held || lastResult || resultSheet || ctx.platform.simpleMotion) return;
     model.preview(-clamp(ax || 0, -8, 8) * 2, -clamp(ay || 0, -4, 20));
     ritual.power(progress || 0);
     setHint(phase === 'ready' ? HINTS.ready : phase === 'charging' ? HINTS.charging : idleHint());
