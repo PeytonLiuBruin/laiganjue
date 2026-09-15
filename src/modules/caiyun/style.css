@@ -1,0 +1,64 @@
+/* 财运 模块样式：所有选择器以 .m-caiyun 开头 */
+
+/* —— 今日页：一行生辰提示 —— */
+.m-caiyun .cy-profile { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); font-size: 13px; line-height: 1.6; color: var(--text-2); }
+.m-caiyun .cy-profile > span { min-width: 0; flex: 1; }
+.m-caiyun .cy-profile .btn { flex: none; min-height: 36px; padding-inline: 12px; }
+.m-caiyun .cy-form { margin-top: 12px; }
+
+/* —— 舞台：摇钱树 / 财库 占位 —— */
+.m-caiyun .stage.cy-stage { min-height: clamp(240px, 36svh, 320px); margin-top: 14px; }
+.m-caiyun .cy-stage .stage-floor { display: none; }
+.m-caiyun .cy-slot { cursor: pointer; }
+.m-caiyun .cy-slot[hidden] { display: none; }
+.m-caiyun .cy-slot:not(.has-model) { gap: 12px; font-size: 13px; letter-spacing: 0.12em; }
+.m-caiyun .cy-slot:not(.has-model) .model-slot-glyph { width: 108px; height: 108px; display: grid; place-items: center; border: 1px dashed var(--line-strong); border-radius: 50%; font-size: 46px; transition: border-color 0.3s; }
+.m-caiyun .cy-stage[data-step='1'] .cy-slot:not(.has-model) .model-slot-glyph { border-style: solid; border-color: var(--accent); }
+
+/* —— 舞台下唯一一句提示 —— */
+.m-caiyun .cy-hint { min-height: 22px; }
+.m-caiyun .cy-hint.cy-quiet .hint-glyph { display: none; }
+
+/* —— 结果条速览 —— */
+.m-caiyun .cy-quick { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.m-caiyun .cy-qrow { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 14px; color: var(--text-2); }
+.m-caiyun .cy-qlabel { flex: none; letter-spacing: 0.06em; color: var(--text-3); min-width: 5.5em; }
+.m-caiyun .cy-qrow b { font-weight: 500; color: var(--text); }
+.m-caiyun .cy-qstars { display: inline-flex; align-items: center; gap: 8px; }
+.m-caiyun .cy-qrow .stars { font-size: 16px; letter-spacing: 0.04em; }
+.m-caiyun .cy-nowrap { white-space: nowrap; }
+
+/* —— 解读抽屉 —— */
+.m-caiyun .result-kicker { padding-inline: 64px; }
+.m-caiyun .cy-sec { display: flex; flex-direction: column; gap: 6px; }
+.m-caiyun .cy-sec p, .m-caiyun .cy-advice { margin: 0; }
+.m-caiyun .cy-sec b { font-weight: 600; color: var(--text); }
+.m-caiyun .cy-sheet-stars { display: inline-flex; align-items: center; gap: 8px; }
+.m-caiyun .cy-sheet-stars .stars { font-size: 15px; }
+.m-caiyun .cy-sheet-stars em { font-style: normal; font-size: 12px; color: var(--text-3); letter-spacing: 0.06em; }
+.m-caiyun .cy-faint { font-size: 13px; color: var(--text-3); line-height: 1.7; }
+.m-caiyun .cy-advice { font-family: var(--font-serif); color: var(--text); }
+.m-caiyun .cy-hours { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.m-caiyun .cy-hours li { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 10px; font-size: 12px; line-height: 1.5; color: var(--text-3); min-width: 0; }
+.m-caiyun .cy-hours li b { font-weight: 500; color: var(--text-2); }
+.m-caiyun .cy-hours li i { font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-caiyun .cy-hours li.on { border-color: var(--accent); color: var(--text-2); }
+.m-caiyun .cy-hours li.on b, .m-caiyun .cy-hours li.on i { color: var(--accent); }
+.m-caiyun .cy-hours li.now { background: var(--surface-2); }
+.m-caiyun .cy-years { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.m-caiyun .cy-years li { display: grid; grid-template-columns: 3.2em 6.5em 1fr; gap: 8px; align-items: baseline; font-size: 13px; line-height: 1.7; color: var(--text-3); padding: 2px 0; border-bottom: 1px dashed var(--line); }
+.m-caiyun .cy-years li:last-child { border-bottom: 0; }
+.m-caiyun .cy-years li b { font-weight: 500; color: var(--text-2); }
+.m-caiyun .cy-years li i { font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-caiyun .cy-years li.on { color: var(--text-2); }
+.m-caiyun .cy-years li.on b, .m-caiyun .cy-years li.on i { color: var(--text); }
+.m-caiyun .cy-years li.hot i { color: var(--accent); font-weight: 500; }
+
+@media (max-height: 720px) {
+  .m-caiyun .stage.cy-stage { min-height: 210px; }
+}
+@media (max-width: 375px) {
+  .m-caiyun .cy-hours { gap: 5px; }
+  .m-caiyun .cy-hours li { padding: 5px 6px; font-size: 11px; }
+  .m-caiyun .cy-years li { grid-template-columns: 3em 6em 1fr; gap: 6px; font-size: 12px; }
+}

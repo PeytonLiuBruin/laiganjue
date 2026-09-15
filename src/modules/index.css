@@ -1,4 +1,7 @@
 /* 各模块样式（每个模块只允许在自己的 .m-<id> 作用域内写样式） */
+@import './yinyuan/style.css';
+@import './caiyun/style.css';
+@import './shiye/style.css';
 @import './jiaobei/style.css';
 @import './qian/style.css';
 @import './liuyao/style.css';

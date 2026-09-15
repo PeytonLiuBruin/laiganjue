@@ -1,0 +1,68 @@
+/* 姻缘 模块样式：所有选择器以 .m-yinyuan 开头 */
+
+/* —— 表单：正缘一张，合婚两张（中间一个 ×） —— */
+.m-yinyuan .yy-forms { margin-top: 12px; display: grid; gap: 12px; }
+.m-yinyuan .yy-pair { gap: 6px; }
+.m-yinyuan .yy-x { text-align: center; font-family: var(--font-display); font-size: 18px; line-height: 1; color: var(--accent); opacity: 0.8; }
+
+/* —— 舞台：表单之下留紧凑的一块，实物占位（同心结 / 红线）居中 —— */
+.m-yinyuan .stage.yy-stage { min-height: clamp(220px, 32svh, 300px); margin-top: 14px; }
+.m-yinyuan .yy-stage .stage-floor { display: none; }
+.m-yinyuan .yy-slot { cursor: pointer; }
+.m-yinyuan .yy-slot:not(.has-model) { gap: 12px; font-size: 13px; letter-spacing: 0.12em; }
+.m-yinyuan .yy-slot:not(.has-model) .model-slot-glyph { width: 108px; height: 108px; display: grid; place-items: center; border: 1px dashed var(--line-strong); border-radius: 50%; font-size: 46px; transition: transform 0.6s var(--ease-out, ease), border-color 0.3s; }
+.m-yinyuan .yy-stage[data-step='1'] .yy-slot:not(.has-model) .model-slot-glyph { border-style: solid; border-color: var(--accent); }
+.m-yinyuan .yy-slot[hidden] { display: none; }
+
+/* —— 合婚过程：四枚小印依次亮起 —— */
+.m-yinyuan .yy-pips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 8px; margin-top: 10px; min-height: 26px; }
+.m-yinyuan .yy-pip { font-size: 12px; line-height: 1.4; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-3); opacity: 0.45; transform: translateY(2px); transition: opacity 0.3s, transform 0.3s, color 0.3s, border-color 0.3s; }
+.m-yinyuan .yy-pip.on { opacity: 1; transform: none; color: var(--text); border-color: var(--line-strong); }
+.m-yinyuan .yy-pip.on.great { color: var(--accent); border-color: var(--accent); }
+.m-yinyuan .yy-pip.on.rough { color: var(--danger, var(--text-2)); }
+
+/* —— 舞台下唯一一句提示 —— */
+.m-yinyuan .yy-hint { min-height: 22px; }
+.m-yinyuan .yy-hint.yy-quiet .hint-glyph { display: none; }
+
+/* —— 结果条：分数 / 四行速览 —— */
+.m-yinyuan .yy-score { display: inline-flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.m-yinyuan .yy-score-num { font-family: var(--font-display); font-size: 1.5em; line-height: 1; color: var(--accent); font-weight: 500; letter-spacing: 0; }
+.m-yinyuan .yy-score small { font-size: 0.55em; color: var(--text-3); }
+.m-yinyuan .yy-level { margin-left: 4px; }
+.m-yinyuan .yy-quick { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.m-yinyuan .yy-qrow { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 14px; color: var(--text-2); }
+.m-yinyuan .yy-qlabel { flex: none; letter-spacing: 0.06em; color: var(--text-3); min-width: 6.5em; }
+.m-yinyuan .yy-qrow b { font-weight: 500; color: var(--text); }
+.m-yinyuan .yy-qrow .stars { font-size: 16px; letter-spacing: 0.04em; }
+
+/* —— 解读抽屉 —— */
+.m-yinyuan .result-kicker { padding-inline: 64px; }
+.m-yinyuan .yy-sec { display: flex; flex-direction: column; gap: 6px; }
+.m-yinyuan .yy-sec p { margin: 0; }
+.m-yinyuan .yy-sec b { font-weight: 600; color: var(--text); }
+.m-yinyuan .yy-sheet-stars { display: inline-flex; align-items: center; gap: 8px; }
+.m-yinyuan .yy-sheet-stars .stars { font-size: 15px; }
+.m-yinyuan .yy-sheet-stars em { font-style: normal; font-size: 12px; color: var(--text-3); letter-spacing: 0.06em; }
+.m-yinyuan .yy-tip, .m-yinyuan .yy-notes { font-size: 13px; color: var(--text-3); line-height: 1.7; }
+.m-yinyuan .yy-tone { align-self: flex-start; font-size: 12px; letter-spacing: 0.08em; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); }
+.m-yinyuan .yy-tone.great { color: var(--accent); border-color: var(--accent); }
+.m-yinyuan .yy-tone.rough { color: var(--danger, var(--text-2)); }
+.m-yinyuan .yy-advice { font-family: var(--font-serif); color: var(--text); }
+.m-yinyuan .yy-years { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.m-yinyuan .yy-years li { display: grid; grid-template-columns: 3.2em 6.5em 1fr; gap: 8px; align-items: baseline; font-size: 13px; line-height: 1.7; color: var(--text-3); padding: 2px 0; border-bottom: 1px dashed var(--line); }
+.m-yinyuan .yy-years li:last-child { border-bottom: 0; }
+.m-yinyuan .yy-years li b { font-weight: 500; color: var(--text-2); }
+.m-yinyuan .yy-years li i { font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-yinyuan .yy-years li.on { color: var(--text-2); }
+.m-yinyuan .yy-years li.on b, .m-yinyuan .yy-years li.on i { color: var(--text); }
+.m-yinyuan .yy-years li.hot i { color: var(--accent); font-weight: 500; }
+
+@media (max-height: 720px) {
+  .m-yinyuan .stage.yy-stage { min-height: 200px; }
+  .m-yinyuan .yy-forms { margin-top: 8px; }
+}
+@media (max-width: 375px) {
+  .m-yinyuan .yy-years li { grid-template-columns: 3em 6em 1fr; gap: 6px; font-size: 12px; }
+  .m-yinyuan .yy-qlabel { min-width: 6em; }
+}

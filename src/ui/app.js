@@ -25,6 +25,24 @@ const MOTION_GESTURES = new Set(['shake', 'toss', 'tilt']);
 export function startApp(root) {
   const platform = createPlatform();
   const { storage } = platform;
+  // 共享生辰档案：姻缘 / 财运 / 事业共用；未填过时沿用八字模块保存的生辰。
+  const profileStore = storage.namespace('profile');
+  const normalizeProfile = (b) => (b && Number(b.y) ? { y: Number(b.y), m: Number(b.m) || 1, d: Number(b.d) || 1, hour: b.hour == null || Number(b.hour) < 0 ? -1 : Number(b.hour), gender: b.gender === 'female' ? 'female' : 'male' } : null);
+  const profile = {
+    get(key = 'self') {
+      const own = normalizeProfile(profileStore.get(key, null));
+      if (own || key !== 'self') return own;
+      return normalizeProfile(storage.namespace('bazi').get('birth', null));
+    },
+    set(key, value) {
+      if (value && typeof value === 'object' && key === undefined) return;
+      if (typeof key === 'object') { value = key; key = 'self'; }
+      profileStore.set(key, normalizeProfile(value));
+    },
+    has(key = 'self') {
+      return !!normalizeProfile(profileStore.get(key, null)) || (key === 'self' && !!normalizeProfile(storage.namespace('bazi').get('birth', null)));
+    },
+  };
   let motionPrompt = null, motionRequest = null;
 
   /* ---------------- 皮肤 ---------------- */
@@ -225,6 +243,7 @@ export function startApp(root) {
       haptic: platform.haptic,
       sound: platform.sound,
       storage: storage.namespace(meta.id),
+      profile,
       share: platform.share,
       navigate,
       toast,

@@ -99,3 +99,10 @@
 .sheet-actions {
   padding-bottom: calc(14px + var(--safe-bottom));
 }
+
+/* 人生三问（姻缘 / 事业 / 财富）：首页首屏的三块，顶部一道色线，与筊杯等主打玩法同级 */
+.tile[data-ritual='yinyuan'],
+.tile[data-ritual='caiyun'],
+.tile[data-ritual='shiye'] {
+  border-top: 2px solid var(--accent);
+}

@@ -2,6 +2,8 @@
 
 `src/ui/models/` 内置罗盘、水晶球、灵摆、星仪和四柱命牌。模型使用有厚度的旋转体、环体和棱柱，经过三维投影、光照与表面绘制输出到 Canvas；水晶球另有球面高光和按深度排序的内部雾层。全部由代码生成，构建后无需外部模型或纹理请求。
 
+以上「占位」条目目前只显示一枚字与名称（最省资源的占位），由建模方通过 `window.__lgj.registerModel(id, factory)` 接入真实模型即可，模块代码不需改动。
+
 `createModelSlot` 管理状态传递、无障碍名称与卸载。注册同名工厂可覆盖内置模型，工厂仍返回 `{ set(state), dispose() }`，通过 `window.__lgj.registerModel(id, factory)` 注册。模块仅通过状态驱动模型，不读取模型内部 DOM。
 
 内置渲染器在挂载后的首帧重新测量尺寸，并读取最新的可见性记录。模块直接挂载即可，不应通过暂时隐藏、移出屏幕或覆盖全局注册来唤醒模型。低动态模式关闭常驻环境动画，状态驱动的翻面与显字仍会完成。
@@ -13,6 +15,12 @@
 | `crystal.ball` | `progress`、`active`、`revealed`、`text` | 摩擦聚雾，充满后停顿，再消散球心雾层并显字 |
 | `crystal.pendulum` | `x`、`y`、`progress`、`active`、`result`、`glow`、`text` | 恒定链长的晶体随摆动坐标移动，盘面高亮最终方向 |
 | `bazi.pillars` | `pillars`、`active`、`duration`（秒）、`text` | 四块命牌依次翻面，正面文字来自实际排盘结果 |
+| `yinyuan.knot` | `active`、`revealed`、`text` | **占位**（同心结）：结缘中收紧，揭示后定格；等待外部模型 |
+| `yinyuan.thread` | `active`、`revealed`、`text` | **占位**（红线）：牵线中摆动，揭示时两端相接；等待外部模型 |
+| `caiyun.tree` | `active`、`revealed`、`level`（上/中/下）、`text` | **占位**（摇钱树）：摇动落叶落钱，揭示时按签级亮起；等待外部模型 |
+| `caiyun.vault` | `active`、`revealed`、`text` | **占位**（财库）：清点中箱盖开合；等待外部模型 |
+| `shiye.seal` | `active`、`revealed`、`level`、`text` | **占位**（官印）：落印动作，揭示时印文亮起；等待外部模型 |
+| `shiye.ladder` | `active`、`revealed`、`text` | **占位**（青云梯）：排盘时逐级亮起；等待外部模型 |
 
 `geometry.js` 提供网格和投影，`painter.js` 负责统一光照，`objects.js` 组合物体，`index.js` 负责画布尺寸、皮肤、动画和传感器视差。隐藏、离屏及卸载后停止绘制；像素比例上限为 2。舞台随手机宽度缩放。简化动效设置缩短揭晓时间，保留必要的过程。
 

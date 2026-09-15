@@ -1,5 +1,8 @@
 // 模块注册表：id → 实现（{ mount(container, ctx) → cleanup? }）。
 // 元数据在 list.js；这里只负责把实现挂上。
+import yinyuan from './yinyuan/index.js';
+import caiyun from './caiyun/index.js';
+import shiye from './shiye/index.js';
 import jiaobei from './jiaobei/index.js';
 import qian from './qian/index.js';
 import liuyao from './liuyao/index.js';
@@ -16,6 +19,9 @@ import coin from './coin/index.js';
 import plinko from './plinko/index.js';
 
 export const MODULES = {
+  yinyuan,
+  caiyun,
+  shiye,
   jiaobei,
   qian,
   liuyao,

@@ -4,6 +4,7 @@
 // region:  east(东方玄学) | west(西方神秘) | japan(东瀛神社) | play(趣玩)
 // gesture: shake(摇) | toss(甩/抛) | flick(屏幕甩牌) | flip(翻面) | spin(拨转) | tilt(倾斜/指向) | rub(摩擦) | tap(点)
 export const REGIONS = [
+  { id: 'life', title: '姻缘 · 事业 · 财富', kicker: '人生三问，最想知道的先看' },
   { id: 'east', title: '东方玄学', kicker: '问天问地问自己' },
   { id: 'west', title: '西方神秘', kicker: 'Mystic · Arcana' },
   { id: 'japan', title: '东瀛神社', kicker: '御神签 · おみくじ' },
@@ -11,6 +12,9 @@ export const REGIONS = [
 ];
 
 export const MODULE_LIST = [
+  { id: 'yinyuan', title: '姻缘', glyph: '缘', region: 'life', gestures: ['shake', 'tap'], subtitle: '正缘何时来、另一半什么样；两人生辰一牵，合婚见分晓' },
+  { id: 'shiye', title: '事业', glyph: '仕', region: 'life', gestures: ['shake', 'tap'], subtitle: '今日贵人在哪、几点面谈最顺；生辰一排，看你的事业格局与贵人属相' },
+  { id: 'caiyun', title: '财运', glyph: '财', region: 'life', gestures: ['shake', 'tap'], subtitle: '摇一摇摇钱树，今日财神在哪、吉时几点；生辰一算，看你的财库' },
   { id: 'jiaobei', title: '筊杯', glyph: '筊', region: 'east', gestures: ['toss', 'flick'], subtitle: '向上一甩，圣杯笑杯阴杯见分晓' },
   { id: 'qian', title: '灵签', glyph: '签', region: 'east', gestures: ['shake'], subtitle: '摇动签筒，一支灵签跃然而出' },
   { id: 'liuyao', title: '六爻', glyph: '卦', region: 'east', gestures: ['toss', 'shake'], subtitle: '三枚铜钱掷六次，成卦解卦' },
