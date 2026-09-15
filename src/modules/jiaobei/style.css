@@ -1,6 +1,14 @@
-.m-jiaobei .jb-top { display: grid; gap: 14px; margin-bottom: 18px; }
+/* 控件区精简：问题输入 + 模式芯片，两行即止 */
+.m-jiaobei .jb-top { display: grid; gap: 12px; margin-bottom: 16px; }
 .m-jiaobei .jb-top .chip { min-height: 44px; }
-.m-jiaobei .jb-stage { height: clamp(300px, 45svh, 400px); min-height: 280px; }
+/* 模式芯片：放得下时居中（首尾 auto 外边距），放不下时横向滚动而不换行 */
+.m-jiaobei .jb-top .chips { flex-wrap: nowrap; overflow-x: auto; justify-content: flex-start; scrollbar-width: none; padding-bottom: 2px; }
+.m-jiaobei .jb-top .chips::-webkit-scrollbar { display: none; }
+.m-jiaobei .jb-top .chip:first-child { margin-left: auto; }
+.m-jiaobei .jb-top .chip:last-child { margin-right: auto; }
+/* 舞台高度随视口：360×640 / 375×667 上不滚动就能看到舞台主体 + 主按钮；大屏最多 400px。
+   （比 refinement.css 里 .m-jiaobei .jb-stage 的通用值多一级选择器，以模块自己的尺寸为准） */
+.m-jiaobei .stage.jb-stage { height: clamp(260px, 44svh, 400px); min-height: 260px; }
 .m-jiaobei .jb-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 .m-jiaobei .jb-canvas:active { cursor: grabbing; }
 .m-jiaobei .jb-stage .stage-floor { display: none; }
@@ -11,23 +19,24 @@
 .m-jiaobei .jb-canvas { position: relative; z-index: 1; }
 .m-jiaobei .jb-mat { z-index: 0; }
 .m-jiaobei .jb-face-labels { z-index: 2; }
-/* 案上一方浅浅的筊盘：让杯子有处可落，飞行的空间也有了「桌面」可参照 */
-.m-jiaobei .jb-mat { position: absolute; left: 50%; top: calc(79% + 6px); width: min(84%, 300px); aspect-ratio: 3 / 1; transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--line); background: radial-gradient(ellipse at 50% 42%, var(--surface-2), transparent 78%); pointer-events: none; }
-/* 面向标签：由 JS 放到各杯正下方 */
-.m-jiaobei .jb-face-labels { position: absolute; left: 0; right: 0; bottom: 12%; height: 18px; pointer-events: none; }
-.m-jiaobei .jb-face-labels span { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; color: var(--text-2); letter-spacing: .08em; animation: ritual-appear .45s ease both; }
-.m-jiaobei .jb-face-labels span:first-child { left: calc(50% - 65px); }
-.m-jiaobei .jb-face-labels span:last-child { left: calc(50% + 65px); }
+/* 案上一方浅浅的筊盘：中心贴着地面线（画布高 72%，见 layout.js GROUND），宽随舞台、高有上限，
+   下沿停在面向标签那一行之上，杯子落得再靠前也不会压到标签 */
+.m-jiaobei .jb-mat { position: absolute; left: 50%; top: calc(72% + 8px); width: min(86%, 340px); height: min(24%, 84px); transform: translate(-50%, -50%); border-radius: 50%; border: 1px solid var(--line); background: radial-gradient(ellipse at 50% 42%, var(--surface-2), transparent 78%); pointer-events: none; }
+/* 面向标签：由 JS 放到各杯正下方；固定占舞台底部 14px + 18px 一行 */
+.m-jiaobei .jb-stage .jb-face-labels { position: absolute; left: 0; right: 0; bottom: 14px; height: 18px; pointer-events: none; }
+.m-jiaobei .jb-face-labels span { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 12px; line-height: 18px; color: var(--text-2); letter-spacing: .08em; animation: ritual-appear .45s ease both; }
+.m-jiaobei .jb-face-labels span:first-child { left: calc(50% - 80px); }
+.m-jiaobei .jb-face-labels span:last-child { left: calc(50% + 80px); }
 /* 连掷进度：舞台右上角三枚小印 */
 .m-jiaobei .jb-streak { position: absolute; right: 18px; top: 14px; display: flex; gap: 6px; z-index: 10; pointer-events: none; }
-.m-jiaobei .jb-streak > span { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 11px; line-height: 1; color: var(--accent); }
+.m-jiaobei .jb-streak > span { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 12px; line-height: 1; color: var(--accent); }
 .m-jiaobei .jb-streak .earned { border-color: var(--accent); background: var(--surface-2); }
 .m-jiaobei .jb-streak .fresh { animation: jb-pip .5s var(--ease-bounce) both; }
 @keyframes jb-pip { from { transform: scale(1.7); opacity: 0; } to { transform: none; opacity: 1; } }
-/* 只此一行操作提示，随状态更替；固定高度避免跳动 */
-.m-jiaobei .jb-hint { min-height: 22px; }
+/* 只此一行操作提示，随状态更替；固定高度避免跳动，与舞台、主按钮各留 ≥ 12px */
+.m-jiaobei .jb-hint { min-height: 22px; margin-top: 12px; padding-block: 4px; }
 .m-jiaobei .jb-hint.jb-quiet .hint-glyph { display: none; }
 .m-jiaobei .jb-spacer { height: 0; }
 .m-jiaobei .jb-history { margin-top: 22px; text-align: center; opacity: .85; }
-.m-jiaobei .jb-history .t-kicker { display: block; font-size: 11px; letter-spacing: .12em; color: var(--text-3); }
+.m-jiaobei .jb-history .t-kicker { display: block; font-size: 12px; letter-spacing: .12em; color: var(--text-3); }
 .m-jiaobei .jb-history .history { margin-top: 8px; }

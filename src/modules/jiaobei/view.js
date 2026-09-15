@@ -131,16 +131,20 @@ export function mount(container, ctx) {
     [result.a, result.b].forEach((face, i) => {
       const el = faceLabels.children[i];
       el.textContent = face === 'flat' ? '平面 · 阳' : face === 'round' ? '弧面 · 阴' : '直立';
-      if (w && xs[i] != null) el.style.left = `${clamp(xs[i], 44, w - 44)}px`;
+      if (w && xs[i] != null) el.style.left = `${clamp(xs[i], 48, w - 48)}px`;
     });
     faceLabels.hidden = false;
   }
-  /** 结果条若被首屏截断，轻轻滚到能看见「展开解读」为止。 */
+  /** 结果条若被首屏截断，轻轻滚到能看见「展开解读」为止；但舞台上沿始终留在吸顶头部之下，杯子不被头部遮住。 */
   function revealScroll() {
     const r = ritual.receipt.getBoundingClientRect();
     const vh = window.visualViewport?.height || window.innerHeight;
     const over = r.bottom - (vh - 12);
-    if (over > 0) window.scrollBy({ top: Math.min(over, Math.max(0, r.top - 84)), behavior: ctx.platform.prefersReducedMotion ? 'instant' : 'smooth' });
+    if (over <= 0) return;
+    const header = document.querySelector('.app-header')?.getBoundingClientRect().bottom || 64;
+    const room = st.el.getBoundingClientRect().top - header - 12;
+    const top = Math.min(over, Math.max(0, r.top - 84), Math.max(0, room));
+    if (top > 0) window.scrollBy({ top, behavior: ctx.platform.prefersReducedMotion ? 'instant' : 'smooth' });
   }
   function restoreResult() {
     if (!lastResult) return;

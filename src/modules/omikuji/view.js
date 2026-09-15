@@ -30,7 +30,8 @@ export function mount(container, ctx) {
   const today = () => ctx.rng.dateKey();
 
   /* ---------- 舞台 ---------- */
-  const st = stage({ cls: 'ok-stage', hint: TEXT.hintIdle, badge: badgeText(), minHeight: 420 });
+  // 舞台高度由 style.css 按视口取值（clamp），实物尺寸随舞台高度缩放，这里不写死
+  const st = stage({ cls: 'ok-stage', hint: TEXT.hintIdle, badge: badgeText() });
   const ritual = createRitual(ctx, st, ['摇签', '取签', '展签', '结缘']);
   const wait = ritual.pause;
 
@@ -57,10 +58,34 @@ export function mount(container, ctx) {
   const tubeWrap = h('button', { type: 'button', class: 'ok-tube-wrap stick-scene', attrs: { 'aria-label': '摇动御神签筒' } }, canvas);
   const stick = h('button', { type: 'button', class: 'stick-pick-target', hidden: true, attrs: { 'aria-label': '拾起签棒，取签纸' } });
   const bundle = createStickScene(ctx, canvas, { kind: 'omikuji', pickTarget: stick });
+  // 画布与拾签目标共用一个内缩 16px 的定位盒：画布按盒子尺寸重算实物大小，
+  // 实物（含摇筒最高点、签棒落点与番号）与舞台边框保持距离，拾签目标的坐标系也与画布一致
+  const sceneBox = h('div', { class: 'ok-scene-box' }, tubeWrap, stick);
   const slip = h('div', { class: 'ok-slip paper-slip', hidden: true, attrs: { role: 'button', tabindex: '0', 'aria-label': '签纸，点击查看解读' } });
   let slipLevelEl = null;
   const set = h('div', { class: 'ok-set' }, slip);
-  st.scene.append(ambient, rackEl, tubeWrap, stick, set);
+  st.scene.append(ambient, rackEl, sceneBox, set);
+
+  /* ---------- 随舞台高度取位（不写死 px） ---------- */
+  /** 结签时签纸的停靠位：缩小后放在挂架下方与舞台底边之间的空当正中 */
+  function tieRest() {
+    const H = st.el.clientHeight || 420;
+    const rackBottom = rackEl.offsetTop + rackEl.offsetHeight;
+    const h = slip.offsetHeight || 300;
+    const top = set.offsetTop + slip.offsetTop;
+    const bandTop = rackBottom + 14, bandBottom = H - 18;
+    const s = clamp((bandBottom - bandTop) / h, 0.5, 0.68);
+    const dy = (bandTop + bandBottom) / 2 - (top + h / 2);
+    return { s, dy };
+  }
+  const tieTransform = ({ s, dy } = tieRest()) => `translateY(${dy.toFixed(1)}px) scale(${s.toFixed(3)})`;
+  /** 带回家：签纸缩至三成，中心落在离舞台底边约一指宽处，不飞出舞台 */
+  function homeDrop() {
+    const H = st.el.clientHeight || 420;
+    const h = slip.offsetHeight || 300;
+    const top = set.offsetTop + slip.offsetTop;
+    return H - 26 - h * 0.15 - (top + h / 2);
+  }
 
   /* ---------- 操作区 ---------- */
   const primaryBtn = button(TEXT.btnShake, { variant: 'primary', size: 'large', primary: true, onClick: onPrimary });
@@ -151,16 +176,17 @@ export function mount(container, ctx) {
   for (const [el, act] of [[tubeWrap, nudgeTube], [stick, drawPaper]]) el.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); }
   });
+  let slipRest = { s: 0.68, dy: 45 };
   ctx.gesture.drag(slip, {
     onStart() {
       if (busy || !tying || phase !== PHASE.PAPER) return;
-      slipDrag = true; cancelAnims(slip);
+      slipDrag = true; cancelAnims(slip); slipRest = tieRest();
       slip.classList.add('ok-slip-dragging'); haptic.tap();
       dropHint.textContent = TEXT.dropHint; dropHint.classList.add('show');
     },
     onMove(g) {
       if (!slipDrag) return;
-      slip.style.transform = `translate(${g.dx}px, ${45 + g.dy}px) scale(.68) rotate(${clamp(g.dx / 16, -9, 9)}deg)`;
+      slip.style.transform = `translate(${g.dx}px, ${slipRest.dy + g.dy}px) scale(${slipRest.s.toFixed(3)}) rotate(${clamp(g.dx / 16, -9, 9)}deg)`;
       const hit = overRope(g, rackEl.getBoundingClientRect());
       if (hit && !rackEl.classList.contains('ok-over')) haptic.tap();
       rackEl.classList.toggle('ok-over', hit);
@@ -175,7 +201,7 @@ export function mount(container, ctx) {
       if (!g.cancelled && overRope(g, rackEl.getBoundingClientRect())) tieToRack();
       else {
         const from = slip.style.transform;
-        slip.style.transform = 'translateY(45px) scale(.68)';
+        slip.style.transform = tieTransform(slipRest);
         slip.animate([{ transform: from }, { transform: slip.style.transform }], { duration: dur(340), easing: 'cubic-bezier(.2,.8,.3,1)' });
         rackEl.classList.remove('ok-over'); dropHint.classList.remove('show');
         say(g.cancelled ? TEXT.hintSlipBack : TEXT.hintSlipMore);
@@ -325,7 +351,7 @@ export function mount(container, ctx) {
     if (busy || resolved || phase !== PHASE.PAPER || !lot || !ritual.alive) return;
     if (!await ritual.focus()) return;
     tying = true; ritual.step(3); st.el.dataset.tie = 'ready';
-    cancelAnims(slip); slip.style.transform = 'translateY(45px) scale(.68)';
+    cancelAnims(slip); slip.style.transform = tieTransform();
     slip.setAttribute('aria-label', '拖动签纸到上方签绳；也可按回车自动结签');
     dropHint.textContent = TEXT.dropHint; dropHint.classList.remove('show');
     syncUI();
@@ -345,7 +371,7 @@ export function mount(container, ctx) {
     folded.style.left = sr.left + sr.width / 2 - sceneRect.left + 'px';
     folded.style.top = sr.top + sr.height / 2 - sceneRect.top + 'px';
     st.scene.append(folded);
-    const from = slip.style.transform || 'translateY(45px) scale(.68)';
+    const from = slip.style.transform || tieTransform();
     sound.play('paper');
     await ritual.animate(slip, [{ transform: from, opacity: 1 }, { transform: from + ' scaleX(.16) scaleY(.62)', opacity: .15 }], { duration: dur(380) });
     if (!ritual.alive) return;
@@ -375,11 +401,12 @@ export function mount(container, ctx) {
     confetti(st.el, { count: 48, origin: { x: 0.5, y: 0.5 } });
     const d = dur(660);
     cancelAnims(slip);
+    const drop = homeDrop();
     ritual.animate(slip,
       [
         { transform: 'translate(0,0) rotate(0) scale(1)', opacity: 1 },
         { transform: 'translate(0,-24px) rotate(-3deg) scale(0.96)', offset: 0.3, easing: 'cubic-bezier(.2,.8,.3,1)' },
-        { transform: 'translate(0, 330px) rotate(10deg) scale(0.3)', opacity: 0 },
+        { transform: `translate(0, ${drop.toFixed(1)}px) rotate(10deg) scale(0.3)`, opacity: 0 },
       ],
       { duration: d, fill: 'forwards', easing: 'cubic-bezier(.5,0,.8,.4)' },
     );

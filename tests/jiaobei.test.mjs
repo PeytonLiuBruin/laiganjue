@@ -97,3 +97,23 @@ test('文案预算：抽屉每段 ≤ 120 字，引号用中文弯引号', () =>
   assert.equal(MODES.length, 2);
   assert.ok(SHARE_SIGN.includes('来感觉'));
 });
+
+// —— 舞台几何：两杯落定不叠、飞行最高点不出框、不压徽记、不压面向标签（四种手机舞台尺寸） ——
+import { LAYOUT, restGap, restSideMargin, peakSideMargin, peakTopClearance, restLabelClearance } from '../src/modules/jiaobei/layout.js';
+
+// 舞台内宽 × 高：360×640 / 375×667 / 390×844 / 430×932 下 clamp(260px, 44svh, 400px) 的结果
+const STAGES = [[332, 282], [347, 293], [358, 371], [394, 400]];
+
+test('舞台几何：两杯向内漂到极限仍有间隔，不叠成一团', () => {
+  assert.ok(restGap() >= 8, `落定间隔 ${restGap()} 世界单位`);
+  assert.ok(LAYOUT.GROUND > 0.6 && LAYOUT.GROUND < 0.8);
+});
+
+test('舞台几何：落定与最高点都离左右边框 ≥ 16px，上不压徽记，下不压标签', () => {
+  for (const [w, h] of STAGES) {
+    assert.ok(restSideMargin(w, h) >= 16, `${w}×${h} 落定侧边距 ${restSideMargin(w, h).toFixed(1)}`);
+    assert.ok(peakSideMargin(w, h) >= 16, `${w}×${h} 最高点侧边距 ${peakSideMargin(w, h).toFixed(1)}`);
+    assert.ok(peakTopClearance(w, h) >= 8, `${w}×${h} 最高点距徽记 ${peakTopClearance(w, h).toFixed(1)}`);
+    assert.ok(restLabelClearance(w, h) >= 10, `${w}×${h} 杯子距标签 ${restLabelClearance(w, h).toFixed(1)}`);
+  }
+});

@@ -262,9 +262,26 @@ export function mount(container, ctx) {
         h('div', { class: 'rn-face rn-front' }, glyph(d.rune, { size: 40, reversed: d.reversed })),
       );
       const label = h('div', { class: 'rn-stone-label' }, d.rune.zh, d.reversed ? h('i', null, UI_TEXT.reversed) : null);
-      const el = h('div', { class: ['rn-stone', 'rn-shape-' + (i % 5)], style: { left: p.x + '%', top: p.y + '%' }, attrs: { role: 'button', 'aria-label': `符石 ${i + 1}` } }, shadow, body, label);
+      // 用 click 而不是 gesture.tap：tap 在 pointerup 就开抽屉，触屏随后合成的 click 会落在刚出现的遮罩上把抽屉关掉
+      const el = h(
+        'div',
+        {
+          class: ['rn-stone', 'rn-shape-' + (i % 5)],
+          style: { left: p.x + '%', top: p.y + '%' },
+          attrs: { role: 'button', tabindex: '0', 'aria-label': `符石 ${i + 1}` },
+          onClick: () => onStoneTap(i),
+          onKeydown: (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onStoneTap(i);
+            }
+          },
+        },
+        shadow,
+        body,
+        label,
+      );
       const stone = { el, body, shadow, rune: d.rune, reversed: d.reversed, tilt: (Math.random() - 0.5) * 22, flipped: false, flipAnim: null, off: null };
-      stone.off = ctx.gesture.tap(el, () => onStoneTap(i));
       stoneLayer.append(el);
       stones.push(stone);
     });

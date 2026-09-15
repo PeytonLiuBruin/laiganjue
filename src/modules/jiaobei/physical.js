@@ -1,13 +1,15 @@
 import {createBlockMesh} from './model.js';
 import {face,axisAngle,multiply,projectSolidPoint} from '../../core/solids.js';
 import {createSolidScene} from '../../ui/solid-scene.js';
+import {LAYOUT} from './layout.js';
 
-const GROUND=.79, WORLD=350;
+// 尺寸、落点、地面线都在 layout.js 里按「世界单位」定义；画布按实际宽高等比缩放（见 solid-scene）。
+const {GROUND,WORLD,SIZE,HOME_X,HOME_Y}=LAYOUT;
 
 export function createJiaobeiPhysical(canvas,ctx) {
   const mesh=createBlockMesh(28,10).map(f=>face(f.points,null,f.flat?'cut':'wood'));
   const scene=createSolidScene(canvas,ctx,{ground:GROUND,worldWidth:WORLD});
-  function reset(){scene.set([-1,1].map(side=>({kind:'jiaobei',mesh,size:43,x:side*65,y:side*8,q:multiply(axisAngle([0,0,1],side*.32),axisAngle([1,0,0],.14))})));}
+  function reset(){scene.set([-1,1].map(side=>({kind:'jiaobei',mesh,size:SIZE,x:side*HOME_X,y:side*HOME_Y,q:multiply(axisAngle([0,0,1],side*.32),axisAngle([1,0,0],.14))})));}
   reset();
   return {reset,rest:scene.rest,preview:scene.preview,tilt:()=>{},dispose:scene.dispose,
     async toss(result,intensity,onPhase){

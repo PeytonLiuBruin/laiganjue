@@ -52,6 +52,7 @@ export function mount(container, ctx) {
   /* ---------- 提示 / 按钮 / 结果 ---------- */
   const hintEl = kit.hint('tap', UI.gestureHint[tab]);
   hintEl.classList.add('zd-hint');
+  hintEl.querySelector('.hint-glyph')?.setAttribute('aria-hidden', 'true');
   const setHint = (text, quiet = false) => {
     if (hintEl.lastChild.textContent !== text) hintEl.lastChild.textContent = text;
     hintEl.classList.toggle('zd-quiet', quiet);
@@ -91,7 +92,6 @@ export function mount(container, ctx) {
     clear(strip);
     strip.append(tab === 'sign' ? signChips.el : animalChips.el);
     bdayField.replaceChildren(field(UI.birthLabel[tab], bdayInput));
-    hintEl.querySelector('.hint-glyph')?.setAttribute('aria-hidden', 'true');
     refreshStage();
     centerChip(false);
   }
@@ -361,14 +361,14 @@ export function mount(container, ctx) {
     const cur = current();
     slot = createModelSlot(ctx, { id: 'zodiac.sky', label: '星仪', glyph: cur.glyph, hint: UI.stageHint[tab] });
     slot.el.classList.add('zd-slot');
+    // 共享渲染器只读可见性回调的首条记录；实物「先挂后见」若两条记录合并到一次回调，画布会一直空着。
+    // 先把实物放在视口外挂好，等首条记录送达后再挪回来，让「可见」单独到达一次（视图正在淡入，看不出延迟）。
+    slot.el.style.transform = 'translateX(-300vw)';
     st.scene.append(slot.el);
     slot.set(pendingSky);
     ctx.gesture.tap(slot.el, () => look());
     ctx.gesture.flick(slot.el, (g) => switchBy(g.direction === 'left' ? 1 : -1), { axis: 'x', direction: 'any', minDist: 36 });
-    // 共享渲染器只读可见性回调的首条记录；实物先挂后见时两条记录若合并到一次回调，
-    // 画布会一直空着。挂好后把实物挪出视口再挪回来，让「可见」单独到达一次。
-    ctx.setTimeout(() => { if (slot) slot.el.style.transform = 'translateX(-300vw)'; }, 80);
-    ctx.setTimeout(() => { if (slot) slot.el.style.transform = ''; }, 200);
+    ctx.setTimeout(() => { if (slot) slot.el.style.transform = ''; }, 160);
   }
 
   showTab();
