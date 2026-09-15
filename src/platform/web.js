@@ -185,16 +185,50 @@ function createMotion() {
 }
 
 /* ---------------------------------- 手势 ---------------------------------- */
-function createGesture() {
-  const now = () => performance.now();
+export function createGesture(now = () => performance.now()) {
+  const touchOwners = new WeakMap();
+
+  // Declare gesture ownership before pointerdown: preventDefault on a later
+  // pointermove cannot reclaim a touch that the browser already uses to scroll.
+  // A deck can bind flick/rub/drag/tap together; removing one must keep the
+  // remaining gesture's policy, even when button/theme CSS has higher specificity.
+  function ownTouch(el, action) {
+    if (!action) return () => {};
+    let state = touchOwners.get(el);
+    if (!state) {
+      state = { owners: new Map(), value: el.style.getPropertyValue('touch-action'), priority: el.style.getPropertyPriority('touch-action'), hadClass: el.classList.contains('no-touch') };
+      touchOwners.set(el, state);
+    }
+    const owner = {};
+    state.owners.set(owner, action);
+    const apply = () => {
+      const actions = new Set(state.owners.values());
+      const value = actions.has('none') || actions.size > 1 ? 'none' : actions.values().next().value;
+      el.style.setProperty('touch-action', value);
+      el.classList.add('no-touch');
+    };
+    apply();
+    return () => {
+      state.owners.delete(owner);
+      if (state.owners.size) apply();
+      else {
+        if (state.value) el.style.setProperty('touch-action', state.value, state.priority);
+        else el.style.removeProperty('touch-action');
+        if (!state.hadClass) el.classList.remove('no-touch');
+        touchOwners.delete(el);
+      }
+    };
+  }
 
   /** 追踪指针，返回速度（px/ms）等；仅主指针 */
-  function track(el, { onStart, onMove, onEnd, prevent = true }) {
+  function track(el, { onStart, onMove, onEnd, prevent = true, touchAction = prevent ? 'none' : null }) {
+    const releaseTouch = ownTouch(el, touchAction);
     let id = null;
     let samples = [];
     let start = null;
+    let disposed = false;
     const down = (e) => {
-      if (id !== null) return;
+      if (id !== null || e.isPrimary === false) return;
       if (e.button != null && e.button !== 0) return;
       id = e.pointerId;
       samples = [{ t: now(), x: e.clientX, y: e.clientY }];
@@ -216,10 +250,11 @@ function createGesture() {
     };
     const up = (e) => {
       if (e.pointerId !== id) return;
-      const cancelled = e.type === 'pointercancel';
+      const cancelled = e.type !== 'pointerup';
       id = null;
       const t = now();
-      samples.push({ t, x: e.clientX, y: e.clientY });
+      const end = cancelled ? samples[samples.length - 1] : { x: e.clientX, y: e.clientY };
+      samples.push({ t, x: end.x, y: end.y });
       const recent = samples.filter((s) => t - s.t <= 110);
       const a = recent[0] || samples[0];
       const b = samples[samples.length - 1];
@@ -243,21 +278,29 @@ function createGesture() {
       samples = [];
     };
     el.addEventListener('pointerdown', down);
-    el.addEventListener('pointermove', move);
+    el.addEventListener('pointermove', move, { passive: !prevent });
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
-    el.classList.add('no-touch');
+    el.addEventListener('lostpointercapture', up);
     return () => {
+      if (disposed) return;
+      disposed = true;
+      const active = id;
+      if (active !== null) up({ type: 'pointercancel', pointerId: active });
       el.removeEventListener('pointerdown', down);
       el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up);
       el.removeEventListener('pointercancel', up);
+      el.removeEventListener('lostpointercapture', up);
+      if (active !== null) { try { el.releasePointerCapture(active); } catch { /* already released */ } }
+      releaseTouch();
     };
   }
 
   /** 快速甩动：默认向上（dy<0）。cb({direction, speed, dx, dy}) */
   function flick(el, cb, { minSpeed = 0.55, minDist = 40, axis = 'y', direction = 'up' } = {}) {
     return track(el, {
+      touchAction: axis === 'x' ? 'pan-y' : 'none',
       onEnd: (g) => {
         const dist = axis === 'y' ? -g.dy : g.dx;
         const v = axis === 'y' ? -g.vy : g.vx;
@@ -375,37 +418,103 @@ function createGesture() {
 }
 
 /* ---------------------------------- 音效（合成） ---------------------------------- */
-function createSound(storage) {
+export function createSound(storage, { win = globalThis.window, doc = globalThis.document, now = () => performance.now() } = {}) {
   let enabled = storage.get('sound', true);
   let ctx = null;
   let master = null;
   let noiseBuf = null;
+  let pageHidden = false, pending = null, resuming = null;
+  const voices = new Set(), cleanups = [];
+  const audible = () => enabled && !pageHidden && !doc?.hidden;
 
-  function ensure() {
-    if (!isBrowser) return null;
-    if (!ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
+  function stopVoices() {
+    pending = null;
+    for (const voice of [...voices]) voice.stop();
+  }
+
+  function silence() {
+    stopVoices(); resuming = null;
+    if (master) master.gain.value = 0;
+  }
+
+  function flush() {
+    if (!audible() || ctx?.state !== 'running') return;
+    const next = pending; pending = null;
+    // Impacts belong to the visible animation. Never replay a backlog on return.
+    if (next && now() - next.at <= 250) play(next.name, next.options);
+  }
+
+  function resume(c, interactive = false) {
+    if (c.state === 'running') { flush(); return; }
+    if (c.state === 'closed' || !audible()) return;
+    // A resume requested outside user activation can remain pending on Safari.
+    // A real touch/key must still retry synchronously inside its event handler.
+    if (!interactive && resuming?.context === c) return;
+    const request = { context: c }; resuming = request;
+    try {
+      Promise.resolve(c.resume()).then(() => {
+        if (resuming === request) resuming = null;
+        if (ctx === c) flush();
+      }, () => { if (resuming === request) resuming = null; });
+    } catch { if (resuming === request) resuming = null; }
+  }
+
+  function ensure(interactive = false) {
+    if (!win || !audible()) return null;
+    if (!ctx || ctx.state === 'closed') {
+      const AC = win.AudioContext || win.webkitAudioContext;
       if (!AC) return null;
-      ctx = new AC();
-      master = ctx.createGain();
-      master.gain.value = 0.7;
-      master.connect(ctx.destination);
-      const len = ctx.sampleRate * 1.2;
-      noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const d = noiseBuf.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      stopVoices();
+      if (ctx) ctx.onstatechange = null;
+      master?.disconnect();
+      ctx = null; master = null; noiseBuf = null; resuming = null;
+      try {
+        ctx = new AC();
+        master = ctx.createGain();
+        master.connect(ctx.destination);
+        const len = ctx.sampleRate * 1.2;
+        noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+        const d = noiseBuf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        ctx.onstatechange = () => {
+          if (!audible()) silence();
+          else if (ctx.state === 'running') flush();
+        };
+      } catch {
+        const failed = ctx; ctx = null; master = null; noiseBuf = null;
+        if (failed) { try { Promise.resolve(failed.close()).catch(() => {}); } catch { /* unavailable */ } }
+        return null;
+      }
     }
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    master.gain.value = 0.7;
+    resume(ctx, interactive);
     return ctx;
   }
 
-  // 首次任何交互时解锁音频上下文
-  if (isBrowser) {
-    const unlock = () => {
-      if (enabled) ensure();
+  function listen(target, type, fn) {
+    target?.addEventListener(type, fn, { capture: true, passive: true });
+    cleanups.push(() => target?.removeEventListener(type, fn, { capture: true }));
+  }
+  const wake = () => { if (ctx) ensure(); };
+  if (win) {
+    // Capture also reaches sheets/editors that stop propagation. Touch/pointer
+    // release covers the activation timing used by iOS, including the first tap
+    // after the browser was backgrounded or restored from the page cache.
+    for (const type of ['pointerdown', 'pointerup', 'touchend', 'keydown']) listen(win, type, () => ensure(true));
+    listen(doc, 'visibilitychange', () => { if (doc.hidden) silence(); else wake(); });
+    listen(win, 'pagehide', () => { pageHidden = true; silence(); });
+    listen(win, 'pageshow', () => { pageHidden = false; wake(); });
+    listen(win, 'focus', wake);
+  }
+
+  function trackVoice(source, nodes) {
+    const dispose = () => {
+      voices.delete(voice);
+      source.onended = null;
+      for (const node of [source, ...nodes]) node.disconnect();
     };
-    window.addEventListener('pointerdown', unlock, { passive: true });
-    window.addEventListener('keydown', unlock, { passive: true });
+    const voice = { stop() { try { source.stop(); } catch { /* already ended */ } dispose(); } };
+    voices.add(voice); source.onended = dispose;
   }
 
   const env = (g, t0, a, peak, d, sustain = 0.0001) => {
@@ -427,6 +536,7 @@ function createSound(storage) {
     const g = c.createGain();
     env(g, t0, attack, peak, dur);
     src.connect(f).connect(g).connect(master);
+    trackVoice(src, [f, g]);
     src.start(t0);
     src.stop(t0 + dur + attack + 0.05);
   }
@@ -441,6 +551,7 @@ function createSound(storage) {
     const g = c.createGain();
     env(g, t0, attack, peak, dur);
     o.connect(g).connect(master);
+    trackVoice(o, [g]);
     o.start(t0);
     o.stop(t0 + dur + attack + 0.05);
   }
@@ -527,9 +638,13 @@ function createSound(storage) {
   };
 
   function play(name, { delay = 0 } = {}) {
-    if (!enabled) return false;
+    if (!audible() || !recipes[name]) return false;
     const c = ensure();
-    if (!c || !recipes[name]) return false;
+    if (!c) return false;
+    if (c.state !== 'running') {
+      pending = { name, options: { delay }, at: now() };
+      return false;
+    }
     try {
       recipes[name](c.currentTime + delay);
       return true;
@@ -548,7 +663,17 @@ function createSound(storage) {
     setEnabled(v) {
       enabled = !!v;
       storage.set('sound', enabled);
-      if (enabled) ensure();
+      if (enabled) ensure(true);
+      else silence();
+    },
+    dispose() {
+      enabled = false; silence();
+      cleanups.splice(0).forEach((off) => off());
+      if (ctx) {
+        ctx.onstatechange = null;
+        try { Promise.resolve(ctx.close()).catch(() => {}); } catch { /* unavailable */ }
+      }
+      master?.disconnect(); ctx = null; master = null; noiseBuf = null;
     },
   };
 }
