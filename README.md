@@ -1,7 +1,7 @@
 # 来感觉 · 玄学占卜合集
 
 > 筊杯 · 灵签 · 六爻 · 黄历 · 八字 · 风水 · 转盘 · 塔罗 · 卢恩 · 星座/生肖 · 水晶球/灵摆 · 御神签 · 硬币骰子 · 落球盘
-> 摇一摇、甩一甩、拨一拨、翻一翻 —— 怎么好玩怎么来。手机网页即可玩，架构上为日后移植微信小程序做好了准备。
+> 摇一摇、甩一甩、拨一拨、翻一翻 —— 怎么好玩怎么来。手机网页即可玩，也已做成可装到 iPhone / 安卓的 App 工程，架构上为日后移植微信小程序做好了准备。
 
 **在线地址**：https://peytonliubruin.github.io/laiganjue/ （推送后由 GitHub Actions 自动发布，约 1 分钟生效）
 
@@ -51,6 +51,14 @@
 2. iPhone：点底部「分享」→「添加到主屏幕」；安卓 Chrome：右上菜单 →「添加到主屏幕」。
 3. 从主屏幕图标打开：全屏、无地址栏，体感与屏保体验最佳。首次进入需要体感的玩法时，点「开启」允许访问运动与方向。
 
+## 做成 iPhone / 安卓 App
+
+同一份代码已经打包成原生 App 工程（`android/`、`ios/`，使用 Capacitor）。App 版比网页版多了 iPhone 震动、原生分享、常亮屏保、安卓返回键、正式图标与启动画面。
+
+- **安卓马上试**：GitHub → Actions →「Build mobile apps」→ 最新一次 → 底部 Artifacts 下载 `laiganjue-android-debug`，解压出 APK 装到手机。
+- **iPhone**：需要一台装了 Xcode 的 Mac，运行 `npm run app:ios`。
+- 详细步骤、上架应用商店清单与审核注意事项：**`docs/NATIVE_APP.md`**。
+
 ## 发布到 GitHub Pages（一次性设置）
 
 仓库已带自动发布流程（`.github/workflows/pages.yml`）：每次推送都会自动测试、构建并发布。只需在 GitHub 上开一次开关：
@@ -79,13 +87,15 @@ window.__lgj.registerModel('crystal.ball', (slotEl, ctx) => ({ set(state) { /* �
 src/
   core/        纯逻辑，无 DOM：rng.js 随机 / lunar.js 农历八字黄历（vendor lunar-javascript，MIT）
   platform/    web.js：体感（摇/甩/倾斜/罗盘）、手势（甩/拖/拨/摩擦）、震动、WebAudio 合成音效、存储、分享
+               native.js：只在 iOS / 安卓 App 内生效的原生能力（震动、分享、常亮、状态栏、返回键）
   ui/          app.js 应用壳（路由/首页/皮肤/设置/模块上下文）  kit.js 组件库
   styles/      tokens.css 尺寸字体动效  themes.css 五套皮肤  base.css  components.css
   modules/     每个玩法一个目录：index.js / core.js（可测纯逻辑）/ data.js（内容）/ view.js（界面）/ style.css
   vendor/      lunar.cjs（农历库）
-scripts/       build.mjs 单文件构建  serve.mjs 本地预览  smoke.mjs 无头手机浏览器冒烟测试 + 截图
+scripts/       build.mjs 单文件构建  serve.mjs 本地预览  smoke.mjs 无头手机浏览器冒烟测试 + 截图  app-assets.mjs App 图标与启动图
+android/ ios/  原生 App 工程（Capacitor），配置在 capacitor.config.json
 tests/         node:test 单元测试
-docs/          MODULE_GUIDE.md 模块开发约定  specs/ 各模块规格  PORTING_WEAPP.md 微信小程序移植指南
+docs/          MODULE_GUIDE.md 模块开发约定  specs/ 各模块规格  PORTING_WEAPP.md 微信小程序移植指南  NATIVE_APP.md iPhone / 安卓 App
 ```
 
 设计原则：**逻辑与数据（core.js / data.js）不碰 DOM**，界面（view.js）只通过 `ctx.kit` 与 `ctx.platform` 触达平台；颜色全部来自 CSS 变量。因此移植小程序时，core/data/lunar 原样复制，只需重写 view 层与一个 `platform/weapp.js`。详见 `docs/PORTING_WEAPP.md`。
@@ -99,6 +109,8 @@ npm run build          # 产出 dist/index.html（完整单文件）与 dist/art
 npm test               # 全部单元测试
 npm run smoke          # 无头 Chromium 手机视口逐个打开所有模块，检查报错并截图到 dist/shots/
 node scripts/smoke.mjs --module tarot --act --theme paper   # 单模块 + 模拟摇/甩 + 指定皮肤
+npm run app:sync       # 构建 App 用的网页（www/）并同步到 android/ 与 ios/
+npm run app:android    # 同步并用 Android Studio 打开（app:ios 用 Xcode 打开，需要 Mac）
 ```
 
 ## 新增一个玩法
