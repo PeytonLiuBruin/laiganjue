@@ -89,7 +89,8 @@ jobs:
         run: |
           printf 'DEVELOPMENT_TEAM = TESTTEAM00\n' > ios/local.xcconfig
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -showBuildSettings | grep -E '^ *DEVELOPMENT_TEAM = TESTTEAM00$'
-          test -z "$(git status --porcelain)"
+          git status --porcelain --untracked-files=all
+          test -z "$(git status --porcelain --untracked-files=all)"
       - name: 诊断信息（devicectl）
         continue-on-error: true
         run: |
