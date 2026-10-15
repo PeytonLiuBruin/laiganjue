@@ -91,6 +91,7 @@ jobs:
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -showBuildSettings | grep -E '^ *DEVELOPMENT_TEAM = TESTTEAM00$'
           test -z "$(git status --porcelain)"
       - name: 诊断信息（devicectl）
+        continue-on-error: true
         run: |
           xcrun devicectl list devices --json-output "$RUNNER_TEMP/devices.json" && cat "$RUNNER_TEMP/devices.json"
           xcrun devicectl device process launch --help | head -n 60
