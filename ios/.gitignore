@@ -14,3 +14,6 @@ App/App/config.xml
 
 # 本机签名设置（scripts/ios-try.sh 生成）
 local.xcconfig
+
+# Xcode 解析 Swift 包时生成；依赖版本已在 CapApp-SPM/Package.swift 里精确锁定（由 cap sync 生成）
+App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
