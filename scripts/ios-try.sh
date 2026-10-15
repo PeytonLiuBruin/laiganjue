@@ -18,7 +18,7 @@
 # 兼容 macOS 自带的 bash 3.2；整个流程包在 main 里，网络中断导致脚本只下载一半时不会执行半截命令。
 
 # 脚本版本：更新代码后若仓库里的脚本比正在运行的新，就自动换成新脚本重跑（旧脚本不认识的新功能也能用上）
-SCRIPT_REV=3
+SCRIPT_REV=4
 REPO_URL="https://github.com/PeytonLiuBruin/laiganjue.git"
 DEFAULT_BRANCH="claude/ecstatic-allen-lh1flx"
 BUNDLE_ID="io.github.peytonliubruin.laiganjue"
@@ -155,6 +155,7 @@ EOF
     ok "使用当前代码目录：$root"
   else
     root="${LGJ_DIR:-$HOME/laiganjue}"
+    case "$root" in /*) ;; *) root="$PWD/$root" ;; esac
     export GIT_TERMINAL_PROMPT=0
     git --version >/dev/null 2>&1 || fail "git 不可用。" "请先打开一次 Xcode 完成组件安装，然后重试。"
     if [ -d "$root/.git" ]; then
@@ -166,7 +167,7 @@ EOF
         git -C "$root" checkout --quiet -B "$BRANCH" "origin/$BRANCH"
       fi
     elif [ -e "$root" ]; then
-      fail "$root 已存在但不是本项目的代码目录。" "请换个位置：LGJ_DIR=~/其它目录 再运行，或者把这个文件夹改名。"
+      fail "$root 已存在但不是本项目的代码目录。" "请把这个文件夹改名后重新运行；或者换个位置，把命令最后的「| bash」改成「| LGJ_DIR=\$HOME/其它目录 bash」。"
     else
       note "正在下载代码到 $root …"
       git clone --quiet --branch "$BRANCH" "$REPO_URL" "$root" || fail "下载代码失败，请检查网络后重试。"
@@ -184,9 +185,10 @@ EOF
   # ---------------------------------------------------------------- 构建网页 + 同步到 iOS 工程
   step "4/6 构建 App 内容"
   note "安装依赖（第一次需要一两分钟）…"
-  npm ci --no-audit --no-fund --loglevel=error >/dev/null
-  npm run --silent build:app
-  npx cap sync ios >/dev/null
+  npm ci --no-audit --no-fund --loglevel=error >/dev/null \
+    || fail "安装依赖失败。" "请检查网络（需要能访问 registry.npmjs.org）后重新运行。"
+  npm run --silent build:app || fail "构建 App 内容失败。" "请把终端里上面的报错发给开发同事或 Claude 看。"
+  npx cap sync ios >/dev/null || fail "同步到 iOS 工程失败。" "请把终端里上面的报错发给开发同事或 Claude 看。"
   ok "已同步到 ios/ 工程"
 
   local log="$root/ios/App/build/ios-try.log"
@@ -289,22 +291,28 @@ EOF
   local udid="${rest%%$'\t'*}"; local name="${rest#*$'\t'}"
   ok "找到：$name"
 
-  note "正在签名并编译（第一次大约 2–5 分钟）…"
+  note "正在签名并编译（第一次大约 2–5 分钟），请保持 iPhone 解锁、连着数据线…"
   note "如果 Mac 弹窗要求输入电脑登录密码（钥匙串），请输入并点「始终允许」（Always Allow）。"
-  if ! $xb -destination "id=$udid" -allowProvisioningUpdates -allowProvisioningDeviceRegistration DEVELOPMENT_TEAM="$team" build >"$log" 2>&1; then
+  if ! $xb -destination "id=$udid" -destination-timeout 180 -allowProvisioningUpdates -allowProvisioningDeviceRegistration DEVELOPMENT_TEAM="$team" build >"$log" 2>&1; then
     explain_build_failure "$log"
   fi
   ok "编译完成"
 
   local app_path="$root/ios/App/build/Build/Products/Debug-iphoneos/App.app"
   [ -d "$app_path" ] || fail "没找到编译出的 App（${app_path}）。" "完整记录在 $log"
-  note "正在安装到 $name …"
-  if ! xcrun devicectl device install app --device "$udid" "$app_path" >>"$log" 2>&1; then
-    if grep -Eq '[Dd]eveloper [Mm]ode is disabled|developer disk image' "$log"; then
+  note "请解锁 iPhone 并保持屏幕亮着，正在安装到 $name …"
+  local itries=0 iout="$root/ios/App/build/ios-try-install.log"
+  until xcrun devicectl device install app --device "$udid" "$app_path" >"$iout" 2>&1; do
+    cat "$iout" >>"$log"
+    itries=$((itries + 1))
+    if grep -Eiq 'Developer Mode is disabled' "$iout"; then
       fail "安装失败：iPhone 的「开发者模式」还没打开。" "iPhone「设置」→「隐私与安全性」→「开发者模式」→ 打开并重启，然后重新运行。"
     fi
-    fail "安装失败。" "请确认 iPhone 已解锁、仍然连着数据线，然后重新运行。" "完整记录在 $log"
-  fi
+    [ "$itries" -lt 4 ] || fail "安装失败。" "请确认 iPhone 已解锁、仍然连着数据线，然后重新运行。" "完整记录在 $log"
+    warn "还没装上（iPhone 可能锁屏了），请解锁 iPhone，5 秒后重试…"
+    sleep 5
+  done
+  cat "$iout" >>"$log"
   ok "已安装"
   # 选项都要放在 bundle id 前面；锁屏时打不开，提示解锁后再试几次
   local tries=0 launched=""
@@ -399,7 +407,7 @@ explain_upload_failure() {
 }
 
 # 从已连接设备里挑一台真机（排除 Xcode 26 起也会列出的模拟器），优先用数据线连着的。
-# 输出：配对状态<TAB>开发者模式<TAB>UDID<TAB>名称；没有则输出 none
+# 输出：状态（paired / unpaired / offline）<TAB>开发者模式<TAB>UDID<TAB>名称；没有则输出 none
 pick_device() {
   devices_json | node -e '
     let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
@@ -416,15 +424,18 @@ pick_device() {
         if (platform !== "iOS" && !["iPhone", "iPad", "iPod"].includes(type)) continue;
         const udid = hp.udid || ph.udid || "";
         if (!udid) continue;
+        // 以前配对过、现在没连上的设备也会列出来：隧道状态 unavailable，旧格式里没有 transportType
+        const tunnel = cp.tunnelState || pc.tunnelState || pc.state || "";
+        const offline = tunnel === "unavailable" || (Object.keys(cp).length > 0 && !cp.transportType);
         let dev = dp.developerModeStatus || ps.developerModeStatus || "";
         if (dev && typeof dev === "object") dev = Object.keys(dev)[0] || "";
-        rows.push({ udid, transport, pairing: cp.pairingState || pc.pairingState || "", dev: String(dev), name: String(dp.name || ps.name || ph.marketingName || "iPhone"), type });
+        rows.push({ udid, transport, offline, pairing: cp.pairingState || pc.pairingState || "", dev: String(dev), name: String(dp.name || ps.name || ph.marketingName || "iPhone"), type });
       }
-      const rank = (r) => (r.transport === "wired" ? 0 : 2) + (r.type === "iPhone" ? 0 : 1);
+      const rank = (r) => (r.offline ? 4 : 0) + (r.transport === "wired" ? 0 : 2) + (r.type === "iPhone" ? 0 : 1);
       rows.sort((a, b) => rank(a) - rank(b));
       const r = rows[0];
       if (!r) return console.log("none");
-      console.log([r.pairing === "paired" ? "paired" : "unpaired", r.dev || "unknown", r.udid, r.name.replace(/\s+/g, " ")].join("\t"));
+      console.log([r.offline ? "offline" : r.pairing === "paired" ? "paired" : "unpaired", r.dev || "unknown", r.udid, r.name.replace(/\s+/g, " ")].join("\t"));
     });'
 }
 
@@ -476,9 +487,9 @@ explain_build_failure() {
   grep -Ei 'error:|requires a development team|no accounts?|no profiles' "$log" | tail -n 8 >&2 || tail -n 30 "$log" >&2
   if grep -Eiq 'No Accounts|No Account for Team' "$log"; then
     open -a "$xcode_app" 2>/dev/null || true
-    fail "Xcode 里没有登录能用这个团队的 Apple 帐号。" "已为你打开 Xcode：${accounts} → 左下角「+」→「Apple ID」，登录你的付费开发者帐号。" "如果团队 ID 填错了：删除 ~/laiganjue/ios/local.xcconfig 后重新运行，会重新询问。"
+    fail "Xcode 里没有登录能用这个团队的 Apple 帐号。" "已为你打开 Xcode：${accounts} → 左下角「+」→「Apple ID」，登录你的付费开发者帐号。" "如果团队 ID 填错了：删除 $PWD/ios/local.xcconfig 后重新运行，会重新询问。"
   elif grep -Eiq 'requires a development team' "$log"; then
-    fail "没有拿到团队 ID。" "删除 ~/laiganjue/ios/local.xcconfig 后重新运行，按提示粘贴团队 ID。"
+    fail "没有拿到团队 ID。" "删除 $PWD/ios/local.xcconfig 后重新运行，按提示粘贴团队 ID。"
   elif grep -Eiq 'Unable to log in|session has expired|login details' "$log"; then
     open -a "$xcode_app" 2>/dev/null || true
     fail "Xcode 里的 Apple 帐号登录已过期。" "已为你打开 Xcode：${accounts} → 选中你的帐号重新输入密码，然后重新运行。"
@@ -489,13 +500,15 @@ explain_build_failure() {
     fail "App 的包名（${BUNDLE_ID}）被其他团队占用了。" "请把这个信息告诉开发同事或 Claude，需要换一个包名。"
   elif grep -Eiq 'no devices from which|not registered' "$log"; then
     fail "这台 iPhone 还没加到你的开发者帐号里。" "请保持 iPhone 解锁并连着数据线，然后重新运行（脚本会自动登记设备）。"
-  elif grep -Eiq 'is not installed|Download .*iOS|platform .* not installed|Unable to find a destination' "$log"; then
+  elif grep -Eiq 'is not installed|first download and install' "$log"; then
     open -a "$xcode_app" 2>/dev/null || true
     fail "Xcode 缺少 iOS 组件，或不认识这台 iPhone 的系统版本。" "已为你打开 Xcode：「Settings…」→「Components」里下载 iOS；如果 iPhone 系统比 Xcode 新，请在 App Store 更新 Xcode。"
   elif grep -Eiq 'developer mode' "$log"; then
     fail "iPhone 的「开发者模式」还没打开。" "iPhone「设置」→「隐私与安全性」→「开发者模式」→ 打开并重启，然后重新运行。"
-  elif grep -Eiq 'locked|passcode' "$log"; then
-    fail "iPhone 处于锁屏状态。" "请解锁 iPhone，然后重新运行。"
+  elif grep -Eiq 'is busy|Preparing .* for development|Waiting to reconnect|Timed out waiting for all destinations|device is locked|passcode protected' "$log"; then
+    fail "iPhone 还没准备好（刚连接、刚配对、刚重启或锁屏时常见）。" "请保持 iPhone 解锁、连着数据线，等一两分钟后重新运行。"
+  elif grep -Eiq 'Unable to find a destination' "$log"; then
+    fail "Xcode 找不到这台 iPhone。" "请用数据线连好、解锁 iPhone，等它出现后重新运行。"
   elif grep -Eiq 'resolve package|Could not resolve|unable to access|timed out' "$log"; then
     fail "下载编译所需的组件失败。" "请检查网络（需要能访问 github.com）后重试。"
   fi
