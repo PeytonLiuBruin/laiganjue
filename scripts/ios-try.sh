@@ -63,18 +63,34 @@ EOF
   fi
   # 不改系统设置（不需要 sudo），只对本次运行生效
   export DEVELOPER_DIR="$dev"
-  local xv
+  local xapp="${dev%/Contents/Developer}"
+  # 许可协议 / 首次安装组件：都要在 Xcode 窗口里点（需要电脑密码），这里打开 Xcode 后原地等待，完成后自动继续
+  local xwait=0 xtold=""
+  while :; do
+    local clang_out
+    clang_out="$(xcrun clang --version 2>&1 || true)"
+    if case "$clang_out" in *[Ll]icense*) true ;; *) false ;; esac; then :
+    elif ! xcodebuild -checkFirstLaunchStatus >/dev/null 2>&1; then :
+    else break; fi
+    if [ -z "$xtold" ]; then
+      xtold=1
+      open -a "$xapp" 2>/dev/null || true
+      note "Xcode 还需要你点一下：已为你打开 Xcode，请在弹出的窗口里点「Agree」并输入电脑密码；"
+      note "如果提示安装组件（Install / Components），点「Install」并勾选 iOS。完成后这里会自动继续。"
+    fi
+    sleep 5
+    xwait=$((xwait + 5))
+    [ "$xwait" -lt 3600 ] || fail "等了一小时 Xcode 仍未完成首次设置。" "请打开 Xcode 按提示完成后，重新运行。"
+  done
+  local xv xmajor
   xv="$(xcodebuild -version 2>/dev/null | head -n 1 || true)"
-  [ -n "$xv" ] || fail "Xcode 无法运行。" "请先手动打开一次 Xcode（在「应用程序」里），按提示点「同意」，等它装完组件后再试。"
-  if ! xcodebuild -license check >/dev/null 2>&1; then
-    open -a "${dev%/Contents/Developer}" 2>/dev/null || true
-    fail "还没有同意 Xcode 的许可协议。" "已为你打开 Xcode：请在弹出的窗口里点「同意」（Agree），输入电脑密码，等它装完组件。"
+  [ -n "$xv" ] || fail "Xcode 无法运行。" "请先手动打开一次 Xcode（在「应用程序」里），按提示完成设置后再试。"
+  xmajor="$(printf '%s' "$xv" | sed -n 's/^Xcode \([0-9][0-9]*\).*/\1/p')"
+  if [ -n "$xmajor" ] && [ "$xmajor" -lt 26 ]; then
+    open "macappstore://apps.apple.com/app/id497799835" 2>/dev/null || true
+    fail "Xcode 版本太旧（${xv}），需要 Xcode 26 或更新。" "已为你打开 App Store 的 Xcode 页面，请更新后重新运行。"
   fi
-  if ! xcodebuild -checkFirstLaunchStatus >/dev/null 2>&1; then
-    open -a "${dev%/Contents/Developer}" 2>/dev/null || true
-    fail "Xcode 还需要完成首次安装。" "已为你打开 Xcode：请按提示点「安装」（Install），完成后再试。"
-  fi
-  ok "${xv}（${dev%/Contents/Developer}）"
+  ok "${xv}（${xapp}）"
 
   # ---------------------------------------------------------------- Node.js
   step "2/6 准备 Node.js"
@@ -150,6 +166,16 @@ EOF
   mkdir -p "$(dirname "$log")"
   local xb="xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -derivedDataPath ios/App/build"
 
+  # Xcode 26 起，即使给真机编译也需要「iOS 平台组件」（约 8–10 GB）；缺了就自动下载（不需要管理员密码）
+  local dests
+  dests="$(xcodebuild -project ios/App/App.xcodeproj -scheme App -showdestinations 2>&1 || true)"
+  if case "$dests" in *"is not installed"*) true ;; *) false ;; esac; then
+    note "Xcode 还缺 iOS 组件，正在自动下载（约 8–10 GB，视网速需要十几分钟到一小时，请保持联网）…"
+    xcodebuild -downloadPlatform iOS \
+      || fail "下载 iOS 组件失败。" "打开 Xcode →「Settings…」→「Components」，点 iOS 旁边的下载按钮，完成后重新运行。"
+    ok "iOS 组件已安装"
+  fi
+
   if [ -n "$NO_DEVICE" ]; then
     step "5/6 编译检查（LGJ_NO_DEVICE：不签名、不连手机）"
     if ! $xb -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build >"$log" 2>&1; then
@@ -184,10 +210,16 @@ EOF
 
   # ---------------------------------------------------------------- 找 iPhone
   step "6/6 连接 iPhone、安装并打开"
-  local info="" waited=0 told=""
+  local info="" waited=0 told="" paired_try=""
   while :; do
     info="$(pick_device)" || info="none"
     local state="${info%%$'\t'*}"
+    if [ "$state" = "unpaired" ] && [ -z "$paired_try" ]; then
+      paired_try=1
+      local rest0="${info#*$'\t'}"; rest0="${rest0#*$'\t'}"
+      # 在后台发起配对：iPhone 上会弹出「要信任此电脑吗？」
+      ( xcrun devicectl manage pair --device "${rest0%%$'\t'*}" >/dev/null 2>&1 & ) || true
+    fi
     if [ "$state" = "paired" ]; then
       local rest="${info#*$'\t'}"
       local devmode="${rest%%$'\t'*}"
@@ -238,7 +270,7 @@ EOF
   while [ "$tries" -lt 4 ]; do
     if xcrun devicectl device process launch --device "$udid" --terminate-existing "$BUNDLE_ID" >>"$log" 2>&1; then launched=1; break; fi
     tries=$((tries + 1))
-    if tail -n 40 "$log" | grep -q 'explicitly trusted'; then
+    if grep -q 'explicitly trusted' "$log"; then
       warn "iPhone 需要信任这个开发者：「设置」→「通用」→「VPN与设备管理」→ 点你的开发者帐号 →「信任」。"
     else
       warn "iPhone 可能锁屏了，请解锁 iPhone…"
