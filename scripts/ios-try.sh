@@ -19,6 +19,10 @@ REPO_URL="https://github.com/PeytonLiuBruin/laiganjue.git"
 DEFAULT_BRANCH="claude/ecstatic-allen-lh1flx"
 BUNDLE_ID="io.github.peytonliubruin.laiganjue"
 NODE_MAJOR=22
+# 没有合适的 Node.js 时下载这个固定版本（官方 SHASUMS256.txt 里的校验值，下载后逐字节核对）
+NODE_VERSION="v22.23.3"
+NODE_SHA256_ARM64="23b25245dcfb9af7262f8ff142e9e2e0af025368117329e7a7458a51e5922f53"
+NODE_SHA256_X64="8a677b0219178efd6eb0e475457c4afb452b521a92f6e67845a73bd85727f2a8"
 
 main() {
   set -euo pipefail
@@ -102,26 +106,27 @@ EOF
   fi
   if [ -z "$node_ok" ]; then
     local cache="$HOME/Library/Caches/laiganjue"
-    local narch
-    case "$(uname -m)" in arm64) narch=arm64 ;; x86_64) narch=x64 ;; *) fail "不认识这台 Mac 的处理器：$(uname -m)" ;; esac
-    local found=""
-    found="$(ls -d "$cache"/node-v"$NODE_MAJOR".*-darwin-"$narch" 2>/dev/null | tail -n 1 || true)"
-    if [ -z "$found" ] || [ ! -x "$found/bin/node" ]; then
+    # 用 sysctl 判断芯片：终端在 Rosetta 下运行时 uname -m 会把 Apple 芯片报成 x86_64
+    local narch=x64 nsha="$NODE_SHA256_X64"
+    if [ "$(sysctl -n hw.optional.arm64 2>/dev/null || true)" = 1 ]; then narch=arm64; nsha="$NODE_SHA256_ARM64"; fi
+    local nname="node-${NODE_VERSION}-darwin-${narch}"
+    local found="$cache/$nname"
+    if [ ! -x "$found/bin/node" ]; then
       note "电脑上没有合适的 Node.js，正在下载到 ${cache}（只给本工具用，不影响系统）…"
       mkdir -p "$cache"
-      local base="https://nodejs.org/dist/latest-v$NODE_MAJOR.x"
-      local sums file expected
-      sums="$(curl -fsSL "$base/SHASUMS256.txt")" || fail "下载 Node.js 失败，请检查网络后重试。"
-      file="$(printf '%s\n' "$sums" | awk -v s="-darwin-$narch.tar.gz" '{ if (substr($2, length($2) - length(s) + 1) == s) { print $2; exit } }')"
-      expected="$(printf '%s\n' "$sums" | awk -v f="$file" '$2 == f { print $1; exit }')"
-      [ -n "$file" ] && [ -n "$expected" ] || fail "找不到适合这台 Mac 的 Node.js 安装包。"
-      curl -fL --progress-bar -o "$cache/$file" "$base/$file" || fail "下载 Node.js 失败，请检查网络后重试。"
-      [ "$(shasum -a 256 "$cache/$file" | awk '{print $1}')" = "$expected" ] || { rm -f "$cache/$file"; fail "Node.js 安装包校验失败（可能下载不完整），请重试。"; }
-      tar -xzf "$cache/$file" -C "$cache"
-      rm -f "$cache/$file"
-      found="$cache/${file%.tar.gz}"
+      local tmpd
+      tmpd="$(mktemp -d "$cache/.download.XXXXXX")"
+      curl -fL --retry 3 --connect-timeout 20 --progress-bar -o "$tmpd/$nname.tar.gz" "https://nodejs.org/dist/$NODE_VERSION/$nname.tar.gz" \
+        || { rm -rf "$tmpd"; fail "下载 Node.js 失败，请检查网络后重试。"; }
+      [ "$(shasum -a 256 "$tmpd/$nname.tar.gz" | awk '{print $1}')" = "$nsha" ] \
+        || { rm -rf "$tmpd"; fail "Node.js 安装包校验失败（可能下载不完整），请重试。"; }
+      tar -xzf "$tmpd/$nname.tar.gz" -C "$tmpd" || { rm -rf "$tmpd"; fail "解压 Node.js 失败，请重试。"; }
+      rm -rf "$found"
+      mv "$tmpd/$nname" "$found"
+      rm -rf "$tmpd"
     fi
     export PATH="$found/bin:$PATH"
+    hash -r
   fi
   ok "Node.js $(node -v)"
 
@@ -135,6 +140,7 @@ EOF
     ok "使用当前代码目录：$root"
   else
     root="${LGJ_DIR:-$HOME/laiganjue}"
+    export GIT_TERMINAL_PROMPT=0
     git --version >/dev/null 2>&1 || fail "git 不可用。" "请先打开一次 Xcode 完成组件安装，然后重试。"
     if [ -d "$root/.git" ]; then
       if [ -n "$(git -C "$root" status --porcelain --untracked-files=no)" ]; then
