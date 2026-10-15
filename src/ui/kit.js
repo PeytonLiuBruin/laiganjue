@@ -295,8 +295,13 @@ export function hint(gesture, text) {
  * resultCard({
  *   kicker:'一平一凸', title:'圣杯', titleGold:true, badge:'吉', sub:'神明允诺', seal:'允',
  *   verse:'诗句\n诗句', sections:[{label:'解曰', text:'...'}, {label:'宜', node: el, stack:true}], footer:'仅供娱乐'
+ *   stack 不填时：标签超过 4 个字宽自动上下排；填 false 则强制左右排（模块需自行放宽标签列）
  * })
  */
+// 标签列宽 4.5em，约容纳 4 个汉字；更长的标签（如「夫妻宫 · 另一半的模样」）放到正文上方，避免压到正文
+const LABEL_COLUMN_CHARS = 4;
+export const labelWidth = (label) => [...String(label)].reduce((w, ch) => w + (/[\u2E80-\uFFEF]/.test(ch) && ch !== '·' ? 1 : 0.5), 0);
+
 export function resultCard({ kicker, title, titleGold = true, badge, sub, seal: sealText, verse, sections = [], footer, cls = '' } = {}) {
   const el = h(
     'div',
@@ -314,7 +319,7 @@ export function resultCard({ kicker, title, titleGold = true, badge, sub, seal: 
           sections.filter(Boolean).map((s) =>
             h(
               'div',
-              { class: ['result-section', s.stack && 'stack'] },
+              { class: ['result-section', (s.stack ?? (typeof s.label === 'string' && labelWidth(s.label) > LABEL_COLUMN_CHARS)) && 'stack'] },
               h('div', { class: 'result-section-label' }, s.label),
               h('div', { class: 'result-section-text' }, s.node || s.text),
             ),

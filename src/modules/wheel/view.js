@@ -644,7 +644,7 @@ export function mount(container, ctx) {
     const sections = [];
     if (isTruth) sections.push({ label: '规则', text: item.note });
     else if (item.note) sections.push({ label: '解语', text: item.note });
-    sections.push({ label: n === 1 ? '只剩它了' : '再转的理由', text: reason });
+    sections.push({ label: n === 1 ? '只剩它了' : '再转的理由', text: reason, stack: false });
     if (n > 1) {
       const removeBtn = button(Array.from(item.label).length > 6 ? '去掉这一项再转' : `去掉「${item.label}」再转`, {
         variant: 'soft',

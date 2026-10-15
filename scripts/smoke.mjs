@@ -8,7 +8,8 @@
 //   node scripts/smoke.mjs --module tarot --full 指定模块但仍全量打包（默认只打包指定模块，其余占位）
 //   node scripts/smoke.mjs --module liuyao --act --until-sheet 8   多步模块：持续点主按钮直到结果抽屉出现，截 <id>-3.png
 //   node scripts/smoke.mjs --viewport se                小屏手机 375x667（也可 360x640 / 430x932 / large / small）
-// 退出码：有 console.error / pageerror / 模块未就绪 → 1，否则 0。
+// 每个画面（玩法页、结果抽屉）都会检查文字互相压住（[overlap]）与横向溢出。
+// 退出码：有 console.error / pageerror / 模块未就绪 / 文字重叠 → 1，否则 0。
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
@@ -118,6 +119,44 @@ page.on('requestfailed', (req) => {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// 文字重叠检测：逐行取每段文字的实际矩形，同一层（玩法页 / 抽屉正文 / 抽屉按钮栏）里不同元素的文字矩形明显相交即报告。
+// 印章、装饰性（aria-hidden）与不可见文字不参与；只看真正会被读到的字。
+async function checkOverlaps(where) {
+  const found = await page.evaluate(() => {
+    const layers = [...document.querySelectorAll('.sheet.open .sheet-body, .sheet.open .sheet-actions, .sheet.open .sheet-head, .view-module')]
+      .filter((el) => !(el.matches('.view-module') && document.querySelector('.sheet.open')));
+    const out = [];
+    for (const layer of layers) {
+      const boxes = [];
+      const walker = document.createTreeWalker(layer, NodeFilter.SHOW_TEXT);
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        if (!n.textContent.trim()) continue;
+        const el = n.parentElement;
+        if (!el || el.closest('[aria-hidden="true"], .seal, svg, canvas, [hidden], .sr-only')) continue;
+        const cs = getComputedStyle(el);
+        if (cs.visibility === 'hidden' || Number(cs.opacity) < 0.15) continue;
+        const range = document.createRange();
+        range.selectNodeContents(n);
+        for (const r of range.getClientRects()) if (r.width > 2 && r.height > 2) boxes.push({ r, el, text: n.textContent.trim() });
+      }
+      for (let i = 0; i < boxes.length; i++) {
+        for (let j = i + 1; j < boxes.length; j++) {
+          const a = boxes[i], b = boxes[j];
+          if (a.el === b.el || a.el.contains(b.el) || b.el.contains(a.el)) continue;
+          const w = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left);
+          const h = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
+          if (w <= 3 || h <= 3) continue;
+          const small = Math.min(a.r.width * a.r.height, b.r.width * b.r.height);
+          if (w * h < 0.2 * small) continue;
+          out.push(`「${a.text.slice(0, 14)}」压到「${b.text.slice(0, 14)}」(${Math.round(w)}×${Math.round(h)}px)`);
+        }
+      }
+    }
+    return [...new Set(out)].slice(0, 6);
+  });
+  for (const f of found) pushErr('overlap', `${where}：${f}`);
+}
+
 // 首页
 await page.goto(base + '#/', { waitUntil: 'load' });
 await page.waitForSelector('[data-view="home"]', { timeout: 8000 }).catch(() => pushErr('timeout', 'home view not rendered'));
@@ -136,6 +175,7 @@ for (const id of ids) {
   await sleep(500);
   const overflow = await page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - window.innerWidth));
   if (overflow > 2) pushErr('overflow-x', `页面横向溢出 ${overflow}px（手机适配）`);
+  await checkOverlaps('玩法页');
   await page.screenshot({ path: path.join(shotsDir, `${id}.png`) });
   let acted = false;
   if (act) {
@@ -155,6 +195,7 @@ for (const id of ids) {
       }
     });
     await sleep(1400);
+    if (await page.$('.sheet.open')) await checkOverlaps('摇一摇后的抽屉');
     await page.screenshot({ path: path.join(shotsDir, `${id}-shake.png`) });
     await closeSheet();
     await page.evaluate(() => {
@@ -173,6 +214,7 @@ for (const id of ids) {
         await sleep(2800);
       }
     }
+    await checkOverlaps(await page.$('.sheet.open') ? '结果抽屉' : '动作后');
     await page.screenshot({ path: path.join(shotsDir, `${id}-2.png`) });
     // --until-sheet N：多步模块（如六爻六掷）——继续点主按钮 / 「展开解读」直到结果抽屉出现，再截一张
     if (untilSheet > 0) {
@@ -183,6 +225,7 @@ for (const id of ids) {
         await primary.click({ timeout: 4000, force: true }).catch(() => {});
         await sleep(2600);
       }
+      if (await page.$('.sheet.open')) await checkOverlaps('结果抽屉');
       await page.screenshot({ path: path.join(shotsDir, `${id}-3.png`) });
     }
   }

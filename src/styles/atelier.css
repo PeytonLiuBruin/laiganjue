@@ -76,7 +76,8 @@ textarea, select { font-size: 16px; }
 .result .result-title { line-height: 1.4; letter-spacing: .09em; overflow-wrap: anywhere; text-wrap: balance; }
 .result-sub { font-size: 14px; letter-spacing: .025em; text-wrap: balance; }
 .result-section-text { min-width: 0; overflow-wrap: anywhere; font-size: 15px; line-height: 1.95; }
-.result-section-label { line-height: 1.7; letter-spacing: .06em; }
+.result-section-label { min-width: 0; line-height: 1.7; letter-spacing: .06em; }
+.result-section:not(.stack) .result-section-label { white-space: normal; overflow-wrap: anywhere; }
 .result-verse { border-left-width: 1px; border-radius: 0 10px 10px 0; padding: 18px 20px; line-height: 1.9; letter-spacing: .055em; }
 .result-footer { font-size: 11px; line-height: 1.8; letter-spacing: .025em; }
 .ritual-receipt h2 { overflow-wrap: anywhere; text-wrap: balance; }
@@ -146,8 +147,7 @@ textarea, select { font-size: 16px; }
   .tabs .tab { padding-inline: 8px; font-size: 13px; }
   .sheet-head { padding-inline: 18px; }
   .sheet-body, .sheet-actions { padding-inline: 16px; }
-  .result-section { flex-direction: column; gap: 6px; }
-  .result-section-label { width: auto; }
+  .result-section { grid-template-columns: 1fr; gap: 6px; }
   .m-tarot .tr-table[data-n='3'] { --cw: 23vw; --ch: 39.1vw; }
   .m-qian .qn-paper { padding-inline: 16px; }
 }
