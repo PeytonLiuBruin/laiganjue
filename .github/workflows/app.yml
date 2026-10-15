@@ -10,6 +10,7 @@ on:
       - 'android/**'
       - 'ios/**'
       - 'scripts/build.mjs'
+      - 'scripts/ios-try.sh'
       - 'capacitor.config.json'
       - 'package.json'
       - 'package-lock.json'
@@ -64,3 +65,35 @@ jobs:
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug
           -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
           CODE_SIGNING_ALLOWED=NO build
+
+  ios-try:
+    name: iPhone 一键安装脚本自测（模拟新 Mac，不连手机）
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      # 像用户那样从标准输入运行脚本（等同 curl | bash），并隐藏预装的 Node，让脚本自己下载 Node 与代码
+      - name: 运行 scripts/ios-try.sh
+        env:
+          LGJ_NO_DEVICE: '1'
+          LGJ_DIR: ${{ runner.temp }}/laiganjue
+          LGJ_BRANCH: ${{ github.ref_name }}
+        run: env PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/bash < scripts/ios-try.sh
+      - name: 再运行一次（已有代码与 Node 时应直接复用）
+        env:
+          LGJ_NO_DEVICE: '1'
+          LGJ_DIR: ${{ runner.temp }}/laiganjue
+          LGJ_BRANCH: ${{ github.ref_name }}
+        run: env PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/bash < scripts/ios-try.sh
+      - name: 团队 ID 通过 ios/local.xcconfig 传给签名设置
+        working-directory: ${{ runner.temp }}/laiganjue
+        run: |
+          printf 'DEVELOPMENT_TEAM = TESTTEAM00\n' > ios/local.xcconfig
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -showBuildSettings | grep -E '^ *DEVELOPMENT_TEAM = TESTTEAM00$'
+          test -z "$(git status --porcelain)"
+      - name: 诊断信息（devicectl）
+        run: |
+          xcrun devicectl list devices --json-output "$RUNNER_TEMP/devices.json" && cat "$RUNNER_TEMP/devices.json"
+          xcrun devicectl device process launch --help | head -n 60
+          xcrun devicectl device install app --help | head -n 30
+          xcodebuild -help 2>&1 | grep -i -A2 provisioning
+          xcodebuild -showsdks

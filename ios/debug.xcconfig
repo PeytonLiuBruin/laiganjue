@@ -1,1 +1,4 @@
 CAPACITOR_DEBUG = true
+
+// 本机签名设置（团队 ID），由 scripts/ios-try.sh 生成，不提交到仓库
+#include? "local.xcconfig"
