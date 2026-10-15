@@ -1,0 +1,19 @@
+{
+  "appId": "io.github.peytonliubruin.laiganjue",
+  "appName": "来感觉",
+  "webDir": "www",
+  "backgroundColor": "#f4ecdc",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 250,
+      "backgroundColor": "#f4ecdc",
+      "showSpinner": false
+    },
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DEFAULT"
+    }
+  }
+}

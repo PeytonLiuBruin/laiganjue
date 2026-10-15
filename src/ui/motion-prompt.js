@@ -15,7 +15,7 @@ const ACTIONS = {
 };
 
 /** One invitation per module visit, backed by the actual permission state. */
-export function createMotionPrompt({ motion, meta, requestPermission, haptic }) {
+export function createMotionPrompt({ motion, meta, requestPermission, haptic, inApp = false }) {
   const [gesture, action] = ACTIONS[meta.id] || ['shake', '摇动手机，与器物互动'];
   const supported = motion.supported;
   let alive = true, offered = false, busy = false, dialog = null, detail = null, dialogButton = null;
@@ -27,6 +27,8 @@ export function createMotionPrompt({ motion, meta, requestPermission, haptic }) 
   const el = h('aside', { class: 'motion-entry', hidden: !supported, attrs: { 'aria-label': '手机体感' } }, mark, h('div', { class: 'motion-entry-copy', attrs: { 'aria-live': 'polite' } }, title, desc), enable);
 
   function instructions() {
+    // App 里系统直接放行，没有浏览器弹窗
+    if (inApp) return busy ? '正在开启…' : motion.state === 'denied' || error ? '未能开启体感，请点击重试。' : '点击开启即可。';
     if (busy) return '请在浏览器提示中选择「允许」。';
     if (motion.state === 'denied') return '请在浏览器的网站设置中允许「运动与方向」，然后返回重试。';
     if (error) return '点击重新申请，并在浏览器提示中选择「允许」。';

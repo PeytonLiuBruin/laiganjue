@@ -54,7 +54,9 @@ export function startApp(root) {
     document.documentElement.dataset.theme = id;
     storage.set('theme', id);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0b0b10';
+    const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0b0b10';
+    if (meta) meta.content = bg;
+    platform.native.setBarStyle(bg);
     for (const cb of themeListeners) cb(id);
   };
   applyTheme(theme);
@@ -155,7 +157,7 @@ export function startApp(root) {
     const ctx = createContext(meta, el);
     let prompt = null;
     if (meta.gestures.some((g) => MOTION_GESTURES.has(g))) {
-      prompt = createMotionPrompt({ motion: platform.motion, meta, requestPermission: ensureMotion, haptic: platform.haptic });
+      prompt = createMotionPrompt({ motion: platform.motion, meta, requestPermission: ensureMotion, haptic: platform.haptic, inApp: platform.inApp });
       motionPrompt = prompt;
       el.append(prompt.el);
       ctx.addCleanup(() => { prompt.dispose(); if (motionPrompt === prompt) motionPrompt = null; });
@@ -294,6 +296,26 @@ export function startApp(root) {
     try { return await motionRequest; }
     finally { motionRequest = null; motionPrompt?.sync(); }
   }
+  // iPhone App 里系统直接放行运动权限、不弹窗：第一次触屏时顺手开启，体感提示就不必出现。
+  if (platform.inApp && platform.motion.needsPermission) {
+    const kinds = ['touchend', 'click'];
+    const once = () => {
+      kinds.forEach((k) => window.removeEventListener(k, once, true));
+      if (platform.motion.state === 'idle') ensureMotion();
+    };
+    kinds.forEach((k) => window.addEventListener(k, once, true));
+  }
+
+  /* ---------------- 安卓返回键（App） ---------------- */
+  // 先关最上层的抽屉，再退屏保，再回首页；已在首页则退到后台。
+  platform.native.onBack(() => {
+    const top = [...document.querySelectorAll('.sheet.open')].pop();
+    if (top) top.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    else if (zen.active) zen.exit();
+    else if (document.querySelector('.onboard')) return;
+    else if ((location.hash || '#/') !== '#/') navigate('#/');
+    else platform.native.minimize();
+  });
 
   /* ---------------- 首页 ---------------- */
   function renderHome() {
@@ -385,7 +407,7 @@ export function startApp(root) {
   function openSettings() {
     const pm = platform.motion;
     const row = (label, desc, control) => h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, label), h('div', { class: 'setting-desc' }, desc)), control);
-    const motionState = () => ({ idle: '未开启', granted: pm.live ? '已开启 · 传感器正常' : '已开启', denied: '已拒绝（请在浏览器设置中允许"运动与方向"）', unsupported: '此设备/浏览器不支持' })[pm.state];
+    const motionState = () => ({ idle: '未开启', granted: pm.live ? '已开启 · 传感器正常' : '已开启', denied: platform.inApp ? '未能开启，请返回玩法页重试' : '已拒绝（请在浏览器设置中允许"运动与方向"）', unsupported: platform.inApp ? '此设备不支持' : '此设备/浏览器不支持' })[pm.state];
     const motionDesc = h('div', { class: 'setting-desc' }, motionState());
     const motionControl =
       pm.state === 'idle' && pm.supported
@@ -450,7 +472,7 @@ export function startApp(root) {
           },
         }),
       ),
-      h('p', { class: 't-faint mt-3', style: { fontSize: '12px', lineHeight: '1.8' } }, 'iPhone：在 Safari 里点「分享 → 添加到主屏幕」，从主屏幕打开即为全屏、无地址栏，屏保效果最佳。安卓 Chrome：菜单 → 添加到主屏幕。'),
+      platform.inApp ? null : h('p', { class: 't-faint mt-3', style: { fontSize: '12px', lineHeight: '1.8' } }, 'iPhone：在 Safari 里点「分享 → 添加到主屏幕」，从主屏幕打开即为全屏、无地址栏，屏保效果最佳。安卓 Chrome：菜单 → 添加到主屏幕。'),
       h('div', { class: 'mt-3' }, button('重看新手引导', { variant: 'ghost', block: true, onClick: () => { sh.close(); setTimeout(() => openOnboarding(true), 300); } })),
       h('div', { class: 'ornament' }, icon('sparkle', { size: 18 })),
       h('p', { class: 't-faint', style: { fontSize: '12px', lineHeight: '1.8' } }, `${APP_NAME} · 玄学占卜合集。所有结果均由随机算法与传统文化文本生成，仅供娱乐与自我觉察，请勿据此做出医疗、财务、法律等重要决定。`),
@@ -467,7 +489,7 @@ export function startApp(root) {
     const rows = [
       ['摇', '摇一摇 · 甩一甩', '手机就是你的筊杯、签筒与铜钱。也可以在屏幕上滑动，或直接点按钮。'],
       ['问', '一问一答', '每个玩法只有一个主按钮，跟着它走：先出手，看见结果，再展开解读。'],
-      ['静', '静观屏保', '左上角的月亮进入屏保；把网页加到主屏幕，闲置时它就是一面素雅的时钟。'],
+      ['静', '静观屏保', platform.inApp ? '左上角的月亮进入屏保；闲置时它就是一面素雅的时钟。' : '左上角的月亮进入屏保；把网页加到主屏幕，闲置时它就是一面素雅的时钟。'],
     ];
     const el = h(
       'div',

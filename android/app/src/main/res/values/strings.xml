@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">来感觉</string>
+    <string name="title_activity_main">来感觉</string>
+    <string name="package_name">io.github.peytonliubruin.laiganjue</string>
+    <string name="custom_url_scheme">io.github.peytonliubruin.laiganjue</string>
+</resources>

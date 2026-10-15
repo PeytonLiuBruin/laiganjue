@@ -255,7 +255,13 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
   }
 
   /* ---------- 常亮 / 全屏 ---------- */
+  const native = platform.native;
   async function requestWake() {
+    // App 里用原生常亮（部分系统 WebView 没有 Wake Lock）
+    if (native?.isNative) {
+      native.keepAwake(true);
+      return;
+    }
     try {
       if ('wakeLock' in navigator && document.visibilityState === 'visible') {
         wakeLock = await navigator.wakeLock.request('screen');
@@ -292,7 +298,8 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
     requestWake();
     document.addEventListener('visibilitychange', onVisibility);
     document.addEventListener('keydown', onKey);
-    if (fullscreen && document.documentElement.requestFullscreen && !window.matchMedia('(display-mode: standalone)').matches) {
+    if (native?.isNative) native.immersive(true);
+    else if (fullscreen && document.documentElement.requestFullscreen && !window.matchMedia('(display-mode: standalone)').matches) {
       document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
     }
     setTimeout(() => el && el.__refs.hintEl.classList.add('fade'), 3500);
@@ -311,6 +318,10 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
     if (wakeLock) {
       wakeLock.release().catch(() => {});
       wakeLock = null;
+    }
+    if (native?.isNative) {
+      native.keepAwake(false);
+      native.immersive(false);
     }
     if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
     document.documentElement.classList.remove('zen-active');

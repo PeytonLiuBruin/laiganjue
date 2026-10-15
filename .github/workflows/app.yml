@@ -1,0 +1,66 @@
+# 自动打包 App：每次推送都会生成一个能直接装到安卓手机上的测试版 APK，并检查 iOS 工程能否编译通过。
+# 下载 APK：GitHub 仓库 → Actions → 「Build mobile apps」→ 点开最新一次运行 → 页面底部 Artifacts 里的 laiganjue-android-debug
+# 说明见 docs/NATIVE_APP.md
+name: Build mobile apps
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'assets/**'
+      - 'android/**'
+      - 'ios/**'
+      - 'scripts/build.mjs'
+      - 'capacitor.config.json'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/app.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  android:
+    name: Android 测试版 APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:app
+      - run: npx cap sync android
+      - run: ./gradlew assembleDebug --no-daemon
+        working-directory: android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: laiganjue-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  ios:
+    name: iOS 编译检查（模拟器，无需签名）
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:app
+      - run: npx cap sync ios
+      - run: xcodebuild -version
+      - run: >
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO build

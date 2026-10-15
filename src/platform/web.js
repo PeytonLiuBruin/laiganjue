@@ -1,5 +1,6 @@
 import { createMotionRecognizer } from './motion.js';
 import { createHaptic } from './haptic.js';
+import { createNative } from './native.js';
 
 // 平台层（Web 实现）。模块只通过这里拿"体感 / 手势 / 震动 / 音效 / 存储 / 分享"，
 // 迁移微信小程序时只需实现同名接口的 weapp.js（映射表见 docs/PORTING_WEAPP.md）。
@@ -12,6 +13,7 @@ import { createHaptic } from './haptic.js';
 // sound:   play(name) | setEnabled(bool) | enabled  （全部 WebAudio 合成，无音频文件）
 // storage: get(key, def) | set(key, val) | remove(key)
 // share(text) → Promise<'shared'|'copied'|'failed'>
+// native:  iOS / 安卓 App 外壳（见 native.js）；inApp 为 true 时震动、分享走系统原生能力
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 const isIOS = isBrowser && /iP(hone|ad|od)/.test(navigator.userAgent) && !window.MSStream;
@@ -728,8 +730,10 @@ export function createStorage(prefix = 'lgj:') {
 }
 
 /* ---------------------------------- 分享 ---------------------------------- */
-async function share(text, { title = '来感觉 · 玄学占卜' } = {}) {
+async function share(text, { title = '来感觉 · 玄学占卜', native = null } = {}) {
   if (!isBrowser) return 'failed';
+  const nativeResult = native?.isNative ? await native.share({ title, text }) : null;
+  if (nativeResult) return nativeResult;
   if (navigator.share) {
     try {
       await navigator.share({ title, text });
@@ -761,12 +765,17 @@ async function share(text, { title = '来感觉 · 玄学占卜' } = {}) {
 /* ---------------------------------- 组装 ---------------------------------- */
 export function createPlatform() {
   const storage = createStorage();
+  const native = createNative();
   const motion = createMotion();
   const gesture = createGesture();
-  const haptic = createHaptic(storage);
+  // App 里用原生震动（iPhone 网页不支持 navigator.vibrate，App 里则有 Taptic 手感）
+  const vibrator = native.vibrate && isBrowser ? { vibrate: native.vibrate, get userActivation() { return navigator.userActivation; } } : undefined;
+  const haptic = createHaptic(storage, vibrator);
   const sound = createSound(storage);
   return {
-    name: 'web',
+    name: native.isNative ? native.os : 'web',
+    native,
+    inApp: native.isNative,
     isIOS,
     isTouch: isBrowser && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window),
     get simpleMotion() { return storage.get('motion.style', 'full') === 'gentle'; },
@@ -777,6 +786,6 @@ export function createPlatform() {
     haptic,
     sound,
     storage,
-    share,
+    share: (text, opts = {}) => share(text, { ...opts, native }),
   };
 }

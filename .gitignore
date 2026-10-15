@@ -7,3 +7,6 @@ dist/
 /paper/
 /shots*/
 /*-shots/
+
+# 原生 App（Capacitor）专用的网页构建产物，由 npm run build:app 生成
+/www/

@@ -2,7 +2,8 @@
 // 产物：
 //   dist/index.html    —— 可直接双击打开 / 部署到任意静态服务器的完整页面
 //   dist/artifact.html —— 无 <html><head><body> 外壳的片段（供 Artifact 平台发布）
-// 用法：node scripts/build.mjs [--out <dir>] [--no-minify] [--only tarot,runes]
+// 用法：node scripts/build.mjs [--out <dir>] [--no-minify] [--only tarot,runes] [--app]
+//   --app ：给 iOS / 安卓 App 外壳用（npm run build:app → www/），不产出 artifact.html
 import { build } from 'esbuild';
 import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +18,7 @@ const opt = (name, def) => {
 };
 const outDir = path.resolve(root, opt('--out', 'dist'));
 const minify = !flag('--no-minify');
+const appShell = flag('--app');
 
 // --only a,b ：只真正打包这些模块，其余模块替换为占位（多人并行开发时互不影响）
 const onlyModulesPlugin = (allowed) => ({
@@ -46,7 +48,7 @@ const onlyModulesPlugin = (allowed) => ({
   },
 });
 
-export async function buildAll({ out = outDir, min = minify, only = null } = {}) {
+export async function buildAll({ out = outDir, min = minify, only = null, app = appShell } = {}) {
   await mkdir(out, { recursive: true });
   await mkdir(path.join(out, 'tarot'), { recursive: true });
   const plugins = only && only.length ? [onlyModulesPlugin(new Set(only))] : [];
@@ -126,7 +128,7 @@ export async function buildAll({ out = outDir, min = minify, only = null } = {})
     writeFile(path.join(out, 'index.html'), full),
     copyFile(path.join(root, 'assets/tarot/rws-atlas.webp'), path.join(out, 'tarot/rws-atlas.webp')),
     copyFile(path.join(root, 'assets/tarot/ATTRIBUTION.md'), path.join(out, 'tarot/ATTRIBUTION.md')),
-    writeFile(path.join(out, 'artifact.html'), artifact),
+    app ? null : writeFile(path.join(out, 'artifact.html'), artifact),
     writeFile(path.join(out, 'manifest.webmanifest'), JSON.stringify(manifest, null, 2)),
     ...[180, 192, 512].map((s) => copyFile(path.join(root, `assets/icon-${s}.png`), path.join(out, `icon-${s}.png`)).catch(() => {})),
   ]);
