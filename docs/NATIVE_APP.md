@@ -47,10 +47,10 @@ App 里还会自动去掉「在 Safari 里添加到主屏幕」这类只对网�
 ### 第一次准备（一次性，约 30–60 分钟，大部分时间在等 Xcode 下载）
 
 1. **安装 Xcode**：在 Mac 的 App Store 搜索「Xcode」，点「获取」（免费，体积很大）。
-2. **打开一次 Xcode**：在「应用程序」里打开 Xcode，弹出许可协议点「同意」（Agree），输入电脑密码；
-   如果询问要安装哪些组件，勾选 **iOS** 后继续，等它装完。
-3. **在 Xcode 里登录开发者帐号**：菜单「Xcode」→「设置…」（Settings）→「帐户」（Accounts）→ 左下角「+」→「Apple ID」，
-   登录你加入 Apple Developer Program 的那个 Apple ID。登录后右侧能看到你的团队（Team），就可以关掉 Xcode 了。
+2. **打开一次 Xcode**：在「应用程序」里打开 Xcode，弹出许可协议点「Agree」，输入电脑密码；
+   如果询问要安装哪些组件（Platforms / Components），勾选 **iOS** 后继续，等它装完。
+3. **在 Xcode 里登录开发者帐号**（Xcode 只有英文界面）：菜单栏「Xcode」→「Settings…」→「Accounts」（新版叫「Apple Accounts」）
+   → 左下角「+」→「Apple ID」，登录你加入 Apple Developer Program 的那个 Apple ID。登录后右侧能看到你的团队（Team），就可以关掉 Xcode 了。
 4. **连接 iPhone**：用数据线把 iPhone 连到 Mac，解锁 iPhone；弹出「要信任此电脑吗？」时点「信任」并输入锁屏密码。
 
 ### 一条命令装到 iPhone

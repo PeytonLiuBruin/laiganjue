@@ -217,7 +217,8 @@ EOF
   ok "找到：$name"
 
   note "正在签名并编译（第一次大约 2–5 分钟）…"
-  if ! $xb -destination "id=$udid" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build >"$log" 2>&1; then
+  note "如果 Mac 弹窗要求输入电脑登录密码（钥匙串），请输入并点「始终允许」（Always Allow）。"
+  if ! $xb -destination "id=$udid" -allowProvisioningUpdates -allowProvisioningDeviceRegistration DEVELOPMENT_TEAM="$team" build >"$log" 2>&1; then
     explain_build_failure "$log"
   fi
   ok "编译完成"
@@ -285,7 +286,7 @@ pick_device() {
 # 已连接设备列表（devicectl 的 JSON），失败时输出空对象
 devices_json() {
   local tmp
-  tmp="$(mktemp -t lgj-devices)"
+  tmp="$(mktemp "${TMPDIR:-/tmp}/lgj-devices.XXXXXX")"
   if xcrun devicectl list devices --json-output "$tmp" >/dev/null 2>&1; then cat "$tmp"; else echo '{}'; fi
   rm -f "$tmp"
 }
@@ -293,12 +294,13 @@ devices_json() {
 # 从 Xcode 已登录的帐户里找付费开发者团队（排除免费的 Personal Team）；找到唯一一个时输出它
 detect_team() {
   local tmp key json=""
-  tmp="$(mktemp -t lgj-xcode)"
+  tmp="$(mktemp "${TMPDIR:-/tmp}/lgj-xcode.XXXXXX")"
   if defaults export com.apple.dt.Xcode "$tmp" 2>/dev/null; then
     # 只取团队这一段转成 JSON（整份偏好里有日期等类型，整体转 JSON 会失败）
+    local part
     for key in IDEProvisioningTeamByIdentifier IDEProvisioningTeams; do
-      json="$(plutil -extract "$key" json -o - "$tmp" 2>/dev/null || true)"
-      [ -n "$json" ] && break
+      part="$(plutil -extract "$key" json -o - "$tmp" 2>/dev/null || true)"
+      [ -n "$part" ] && json="${json}${part}"$'\n'
     done
   fi
   rm -f "$tmp"
@@ -306,13 +308,16 @@ detect_team() {
   printf '%s' "$json" | node -e '
     let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
       const ids = new Set();
-      try {
-        for (const teams of Object.values(JSON.parse(s) || {})) {
-          for (const t of [].concat(teams || [])) {
-            if (t && /^[A-Z0-9]{10}$/.test(t.teamID || "") && !t.isFreeProvisioningTeam && !/personal/i.test(t.teamType || "")) ids.add(t.teamID);
+      for (const line of s.split("\n")) {
+        try {
+          for (const teams of Object.values(JSON.parse(line) || {})) {
+            for (const t of [].concat(teams || [])) {
+              const free = t && (t.isFreeProvisioningTeam === true || t.isFreeProvisioningTeam === 1 || /personal team/i.test((t.teamName || "") + " " + (t.teamType || "")));
+              if (t && /^[A-Z0-9]{10}$/.test(t.teamID || "") && !free) ids.add(t.teamID);
+            }
           }
-        }
-      } catch { }
+        } catch { }
+      }
       if (ids.size === 1) console.log([...ids][0]); else process.exit(1);
     });'
 }
@@ -320,18 +325,33 @@ detect_team() {
 # 编译失败时，按常见原因给出中文提示
 explain_build_failure() {
   local log="$1"
+  local xcode_app="${DEVELOPER_DIR%/Contents/Developer}"
+  local accounts="Xcode 菜单栏「Xcode」→「Settings…」→「Accounts」（新版叫「Apple Accounts」）"
   printf '\n' >&2
-  grep -E 'error:|requires a development team|No Accounts|No profiles' "$log" | tail -n 8 >&2 || tail -n 30 "$log" >&2
-  if grep -Eq 'No Accounts|No account for team|requires a development team|not logged in|Your session has expired' "$log"; then
-    open -a "$DEVELOPER_DIR/../.." 2>/dev/null || true
-    fail "Xcode 还没有登录你的 Apple 开发者帐号。" "已为你打开 Xcode：菜单「Xcode」→「设置…」（Settings）→「帐户」（Accounts）→ 左下角「+」→ Apple ID，登录你的开发者帐号。" "如果团队 ID 填错了，删除 ios/local.xcconfig 后重新运行。"
-  elif grep -Eq 'is not installed|Download .*iOS|platform .* not installed|Unable to find a destination' "$log"; then
-    fail "Xcode 缺少 iOS 组件。" "打开 Xcode →「设置…」→「组件」（Components），下载 iOS，然后重试。"
-  elif grep -Eq '[Dd]eveloper [Mm]ode' "$log"; then
-    fail "iPhone 的「开发者模式」还没打开。" "iPhone「设置」→「隐私与安全性」→「开发者模式」→ 打开并重启。"
-  elif grep -Eq 'locked|passcode' "$log"; then
+  grep -Ei 'error:|requires a development team|no accounts?|no profiles' "$log" | tail -n 8 >&2 || tail -n 30 "$log" >&2
+  if grep -Eiq 'No Accounts|No Account for Team' "$log"; then
+    open -a "$xcode_app" 2>/dev/null || true
+    fail "Xcode 里没有登录能用这个团队的 Apple 帐号。" "已为你打开 Xcode：${accounts} → 左下角「+」→「Apple ID」，登录你的付费开发者帐号。" "如果团队 ID 填错了：删除 ~/laiganjue/ios/local.xcconfig 后重新运行，会重新询问。"
+  elif grep -Eiq 'requires a development team' "$log"; then
+    fail "没有拿到团队 ID。" "删除 ~/laiganjue/ios/local.xcconfig 后重新运行，按提示粘贴团队 ID。"
+  elif grep -Eiq 'Unable to log in|session has expired|login details' "$log"; then
+    open -a "$xcode_app" 2>/dev/null || true
+    fail "Xcode 里的 Apple 帐号登录已过期。" "已为你打开 Xcode：${accounts} → 选中你的帐号重新输入密码，然后重新运行。"
+  elif grep -Eiq 'PLA Update|License Agreement' "$log"; then
+    open "https://developer.apple.com/account" 2>/dev/null || true
+    fail "Apple 开发者网站上有新的协议需要同意。" "已为你打开 developer.apple.com/account：登录后按页面顶部的提示同意协议，然后重新运行。"
+  elif grep -Eiq 'cannot be registered to your development team' "$log"; then
+    fail "App 的包名（${BUNDLE_ID}）被其他团队占用了。" "请把这个信息告诉开发同事或 Claude，需要换一个包名。"
+  elif grep -Eiq 'no devices from which|not registered' "$log"; then
+    fail "这台 iPhone 还没加到你的开发者帐号里。" "请保持 iPhone 解锁并连着数据线，然后重新运行（脚本会自动登记设备）。"
+  elif grep -Eiq 'is not installed|Download .*iOS|platform .* not installed|Unable to find a destination' "$log"; then
+    open -a "$xcode_app" 2>/dev/null || true
+    fail "Xcode 缺少 iOS 组件，或不认识这台 iPhone 的系统版本。" "已为你打开 Xcode：「Settings…」→「Components」里下载 iOS；如果 iPhone 系统比 Xcode 新，请在 App Store 更新 Xcode。"
+  elif grep -Eiq 'developer mode' "$log"; then
+    fail "iPhone 的「开发者模式」还没打开。" "iPhone「设置」→「隐私与安全性」→「开发者模式」→ 打开并重启，然后重新运行。"
+  elif grep -Eiq 'locked|passcode' "$log"; then
     fail "iPhone 处于锁屏状态。" "请解锁 iPhone，然后重新运行。"
-  elif grep -Eq 'resolve package|Could not resolve|unable to access|timed out' "$log"; then
+  elif grep -Eiq 'resolve package|Could not resolve|unable to access|timed out' "$log"; then
     fail "下载编译所需的组件失败。" "请检查网络（需要能访问 github.com）后重试。"
   fi
   fail "编译失败。" "完整记录在 $log" "可以把这个文件发给开发同事或 Claude 看。"
