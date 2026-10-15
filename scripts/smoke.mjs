@@ -120,7 +120,8 @@ page.on('requestfailed', (req) => {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 文字重叠检测：逐行取每段文字的实际矩形，同一层（玩法页 / 抽屉正文 / 抽屉按钮栏）里不同元素的文字矩形明显相交即报告。
-// 印章、装饰性（aria-hidden）与不可见文字不参与；只看真正会被读到的字。
+// 印章、装饰性（aria-hidden）与不可见文字不参与；被滚动容器裁掉的部分不算；贴底 / 悬浮栏（sticky / fixed）
+// 盖在滚动内容上是设计如此（栏本身要有实底，见 almanac .al-actions），不与栏外文字比较。
 async function checkOverlaps(where) {
   const found = await page.evaluate(() => {
     const layers = [...document.querySelectorAll('.sheet.open .sheet-body, .sheet.open .sheet-actions, .sheet.open .sheet-head, .view-module')]
@@ -135,14 +136,27 @@ async function checkOverlaps(where) {
         if (!el || el.closest('[aria-hidden="true"], .seal, svg, canvas, [hidden], .sr-only')) continue;
         const cs = getComputedStyle(el);
         if (cs.visibility === 'hidden' || Number(cs.opacity) < 0.15) continue;
+        // 被 overflow 不为 visible 的祖先裁掉的部分看不见；顺便记下所在的悬浮栏
+        const clips = [];
+        let float = null;
+        for (let a = el; a && a !== layer.parentElement; a = a.parentElement) {
+          const as = getComputedStyle(a);
+          if (!float && (as.position === 'sticky' || as.position === 'fixed')) float = a;
+          if (a !== el && (as.overflowX !== 'visible' || as.overflowY !== 'visible')) clips.push(a.getBoundingClientRect());
+        }
         const range = document.createRange();
         range.selectNodeContents(n);
-        for (const r of range.getClientRects()) if (r.width > 2 && r.height > 2) boxes.push({ r, el, text: n.textContent.trim() });
+        for (const raw of range.getClientRects()) {
+          let left = raw.left, top = raw.top, right = raw.right, bottom = raw.bottom;
+          for (const c of clips) { left = Math.max(left, c.left); top = Math.max(top, c.top); right = Math.min(right, c.right); bottom = Math.min(bottom, c.bottom); }
+          const r = { left, top, right, bottom, width: right - left, height: bottom - top };
+          if (r.width > 2 && r.height > 2) boxes.push({ r, el, float, text: n.textContent.trim() });
+        }
       }
       for (let i = 0; i < boxes.length; i++) {
         for (let j = i + 1; j < boxes.length; j++) {
           const a = boxes[i], b = boxes[j];
-          if (a.el === b.el || a.el.contains(b.el) || b.el.contains(a.el)) continue;
+          if (a.el === b.el || a.el.contains(b.el) || b.el.contains(a.el) || a.float !== b.float) continue;
           const w = Math.min(a.r.right, b.r.right) - Math.max(a.r.left, b.r.left);
           const h = Math.min(a.r.bottom, b.r.bottom) - Math.max(a.r.top, b.r.top);
           if (w <= 3 || h <= 3) continue;

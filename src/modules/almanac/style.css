@@ -99,14 +99,15 @@
 .m-almanac .al-body {
   margin-top: 12px;
 }
-/* 纸页比一屏还长，主按钮贴在视口底部跟着走，翻到纸尾时才归位；顶部渐隐让纸从按钮底下透出来 */
+/* 纸页比一屏还长，主按钮贴在视口底部跟着走，翻到纸尾时才归位；按钮上方 22px 渐隐让纸从底下透出来，
+   按钮本身背后是实底——「撕一页」是透明的线框按钮，底下的字不能透上来和按钮文字叠在一起 */
 .m-almanac .al-actions {
   position: sticky;
   bottom: 0;
   z-index: 12;
   margin: 0;
-  padding: 18px 0 calc(12px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to bottom, transparent, var(--bg) 46%);
+  padding: 22px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to bottom, transparent, var(--bg) 22px);
 }
 .m-almanac .hint-glyph.flick {
   transform: rotate(90deg);
