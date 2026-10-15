@@ -213,12 +213,11 @@ EOF
     [ "$waited" -lt 900 ] || fail "15 分钟内没有等到可用的 iPhone。"
   done
   local rest="${info#*$'\t'}"; rest="${rest#*$'\t'}"
-  local core_id="${rest%%$'\t'*}"; rest="${rest#*$'\t'}"
   local udid="${rest%%$'\t'*}"; local name="${rest#*$'\t'}"
   ok "找到：$name"
 
   note "正在签名并编译（第一次大约 2–5 分钟）…"
-  if ! $xb -destination "id=${udid:-$core_id}" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build >"$log" 2>&1; then
+  if ! $xb -destination "id=$udid" -allowProvisioningUpdates -allowProvisioningDeviceRegistration build >"$log" 2>&1; then
     explain_build_failure "$log"
   fi
   ok "编译完成"
@@ -226,30 +225,60 @@ EOF
   local app_path="$root/ios/App/build/Build/Products/Debug-iphoneos/App.app"
   [ -d "$app_path" ] || fail "没找到编译出的 App（${app_path}）。" "完整记录在 $log"
   note "正在安装到 $name …"
-  xcrun devicectl device install app --device "$core_id" "$app_path" >>"$log" 2>&1 \
-    || fail "安装失败。" "请确认 iPhone 已解锁、仍然连着数据线，然后重试。" "完整记录在 $log"
+  if ! xcrun devicectl device install app --device "$udid" "$app_path" >>"$log" 2>&1; then
+    if grep -Eq '[Dd]eveloper [Mm]ode is disabled|developer disk image' "$log"; then
+      fail "安装失败：iPhone 的「开发者模式」还没打开。" "iPhone「设置」→「隐私与安全性」→「开发者模式」→ 打开并重启，然后重新运行。"
+    fi
+    fail "安装失败。" "请确认 iPhone 已解锁、仍然连着数据线，然后重新运行。" "完整记录在 $log"
+  fi
   ok "已安装"
-  if xcrun devicectl device process launch --terminate-existing --device "$core_id" "$BUNDLE_ID" >>"$log" 2>&1; then
+  # 选项都要放在 bundle id 前面；锁屏时打不开，提示解锁后再试几次
+  local tries=0 launched=""
+  while [ "$tries" -lt 4 ]; do
+    if xcrun devicectl device process launch --device "$udid" --terminate-existing "$BUNDLE_ID" >>"$log" 2>&1; then launched=1; break; fi
+    tries=$((tries + 1))
+    if tail -n 40 "$log" | grep -q 'explicitly trusted'; then
+      warn "iPhone 需要信任这个开发者：「设置」→「通用」→「VPN与设备管理」→ 点你的开发者帐号 →「信任」。"
+    else
+      warn "iPhone 可能锁屏了，请解锁 iPhone…"
+    fi
+    [ "$tries" -lt 4 ] && sleep 5
+  done
+  if [ -n "$launched" ]; then
     ok "已在 iPhone 上打开「来感觉」"
   else
-    warn "已装好，但没能自动打开（iPhone 可能锁屏了）：请在 iPhone 主屏幕上点「来感觉」图标。"
+    warn "已装好，但没能自动打开：请在 iPhone 主屏幕上点「来感觉」图标。"
   fi
   printf '\n%s完成！%s以后想装最新版本，再运行同一条命令即可。\n\n' "$G" "$N"
 }
 
-# 从已连接设备里挑一台 iPhone，输出：配对状态<TAB>开发者模式<TAB>CoreDevice 标识<TAB>UDID<TAB>名称；没有则输出 none
+# 从已连接设备里挑一台真机（排除 Xcode 26 起也会列出的模拟器），优先用数据线连着的。
+# 输出：配对状态<TAB>开发者模式<TAB>UDID<TAB>名称；没有则输出 none
 pick_device() {
   devices_json | node -e '
     let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
       let list = [];
       try { list = JSON.parse(s).result.devices || []; } catch { }
-      const phones = list.filter((d) => (d.hardwareProperties || {}).platform === "iOS");
-      const pick = phones.find((d) => (d.connectionProperties || {}).pairingState === "paired" && (d.connectionProperties || {}).transportType === "wired")
-        || phones.find((d) => (d.connectionProperties || {}).pairingState === "paired" && (d.connectionProperties || {}).tunnelState === "connected")
-        || phones.find((d) => (d.connectionProperties || {}).transportType === "wired");
-      if (!pick) return console.log("none");
-      const c = pick.connectionProperties || {}, h = pick.hardwareProperties || {}, p = pick.deviceProperties || {};
-      console.log([c.pairingState === "paired" ? "paired" : "unpaired", p.developerModeStatus || "unknown", pick.identifier, h.udid || "", (p.name || "iPhone").replace(/\t/g, " ")].join("\t"));
+      const rows = [];
+      for (const x of list) {
+        const P = x.properties || {}, ph = P.hardware || {}, pc = P.connection || {}, ps = P.state || {};
+        const hp = x.hardwareProperties || {}, cp = x.connectionProperties || {}, dp = x.deviceProperties || {};
+        const reality = hp.reality || ph.reality || "";
+        const transport = cp.transportType || pc.transportType || "";
+        if (reality === "simulated" || x.visibilityClass === "simulators" || transport === "sameMachine") continue;
+        const platform = hp.platform || ph.platform || "", type = hp.deviceType || ph.deviceType || "";
+        if (platform !== "iOS" && !["iPhone", "iPad", "iPod"].includes(type)) continue;
+        const udid = hp.udid || ph.udid || "";
+        if (!udid) continue;
+        let dev = dp.developerModeStatus || ps.developerModeStatus || "";
+        if (dev && typeof dev === "object") dev = Object.keys(dev)[0] || "";
+        rows.push({ udid, transport, pairing: cp.pairingState || pc.pairingState || "", dev: String(dev), name: String(dp.name || ps.name || ph.marketingName || "iPhone"), type });
+      }
+      const rank = (r) => (r.transport === "wired" ? 0 : 2) + (r.type === "iPhone" ? 0 : 1);
+      rows.sort((a, b) => rank(a) - rank(b));
+      const r = rows[0];
+      if (!r) return console.log("none");
+      console.log([r.pairing === "paired" ? "paired" : "unpaired", r.dev || "unknown", r.udid, r.name.replace(/\s+/g, " ")].join("\t"));
     });'
 }
 
