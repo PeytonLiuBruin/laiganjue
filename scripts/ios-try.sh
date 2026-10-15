@@ -74,7 +74,7 @@ EOF
     open -a "${dev%/Contents/Developer}" 2>/dev/null || true
     fail "Xcode 还需要完成首次安装。" "已为你打开 Xcode：请按提示点「安装」（Install），完成后再试。"
   fi
-  ok "$xv（${dev%/Contents/Developer}）"
+  ok "${xv}（${dev%/Contents/Developer}）"
 
   # ---------------------------------------------------------------- Node.js
   step "2/6 准备 Node.js"
@@ -91,7 +91,7 @@ EOF
     local found=""
     found="$(ls -d "$cache"/node-v"$NODE_MAJOR".*-darwin-"$narch" 2>/dev/null | tail -n 1 || true)"
     if [ -z "$found" ] || [ ! -x "$found/bin/node" ]; then
-      note "电脑上没有合适的 Node.js，正在下载到 $cache（只给本工具用，不影响系统）…"
+      note "电脑上没有合适的 Node.js，正在下载到 ${cache}（只给本工具用，不影响系统）…"
       mkdir -p "$cache"
       local base="https://nodejs.org/dist/latest-v$NODE_MAJOR.x"
       local sums file expected
@@ -134,7 +134,7 @@ EOF
       note "正在下载代码到 $root …"
       git clone --quiet --branch "$BRANCH" "$REPO_URL" "$root" || fail "下载代码失败，请检查网络后重试。"
     fi
-    ok "代码在 $root（$(git -C "$root" log -1 --format='%h %cd' --date=short)）"
+    ok "代码在 ${root}（$(git -C "$root" log -1 --format='%h %cd' --date=short)）"
   fi
   cd "$root"
 
@@ -174,13 +174,13 @@ EOF
     [ -n "$team" ] && note "自动识别到你的开发者团队：$team"
   fi
   while ! printf '%s' "$team" | grep -Eq '^[A-Z0-9]{10}$'; do
-    [ -n "$team" ] && warn "「$team」不是有效的团队 ID（应为 10 位大写字母和数字）。"
+    [ -n "$team" ] && warn "「${team}」不是有效的团队 ID（应为 10 位大写字母和数字）。"
     note "需要你的 Apple 开发者团队 ID：打开 https://developer.apple.com/account ，在「会员资格详细信息」（Membership details）里找到「团队 ID」（Team ID）。"
     ask "请粘贴团队 ID 后回车：" || fail "无法读取输入。" "请这样运行：LGJ_TEAM=你的团队ID bash scripts/ios-try.sh"
     team="$(printf '%s' "$REPLY" | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')"
   done
   printf '// 本机签名设置（由 scripts/ios-try.sh 生成，不提交到仓库）\nDEVELOPMENT_TEAM = %s\n' "$team" >"$local_cfg"
-  ok "团队 ID：$team（已保存，下次不用再填）"
+  ok "团队 ID：${team}（已保存，下次不用再填）"
 
   # ---------------------------------------------------------------- 找 iPhone
   step "6/6 连接 iPhone、安装并打开"
@@ -235,7 +235,7 @@ EOF
   ok "编译完成"
 
   local app_path="$root/ios/App/build/Build/Products/Debug-iphoneos/App.app"
-  [ -d "$app_path" ] || fail "没找到编译出的 App（$app_path）。" "完整记录在 $log"
+  [ -d "$app_path" ] || fail "没找到编译出的 App（${app_path}）。" "完整记录在 $log"
   note "正在安装到 $name …"
   xcrun devicectl device install app --device "$core_id" "$app_path" >>"$log" 2>&1 \
     || fail "安装失败。" "请确认 iPhone 已解锁、仍然连着数据线，然后重试。" "完整记录在 $log"
