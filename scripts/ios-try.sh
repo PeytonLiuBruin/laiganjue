@@ -17,6 +17,8 @@
 #
 # 兼容 macOS 自带的 bash 3.2；整个流程包在 main 里，网络中断导致脚本只下载一半时不会执行半截命令。
 
+# 脚本版本：更新代码后若仓库里的脚本比正在运行的新，就自动换成新脚本重跑（旧脚本不认识的新功能也能用上）
+SCRIPT_REV=3
 REPO_URL="https://github.com/PeytonLiuBruin/laiganjue.git"
 DEFAULT_BRANCH="claude/ecstatic-allen-lh1flx"
 BUNDLE_ID="io.github.peytonliubruin.laiganjue"
@@ -172,6 +174,12 @@ EOF
     ok "代码在 ${root}（$(git -C "$root" log -1 --format='%h %cd' --date=short)）"
   fi
   cd "$root"
+  local new_rev
+  new_rev="$(sed -n 's/^SCRIPT_REV=\([0-9][0-9]*\)$/\1/p' "$root/scripts/ios-try.sh" 2>/dev/null | head -n 1)"
+  if [ -z "${LGJ_REEXEC:-}" ] && [ -n "$new_rev" ] && [ "$new_rev" -gt "$SCRIPT_REV" ]; then
+    note "代码里有更新版的安装脚本，换用新脚本继续…"
+    LGJ_REEXEC=1 LGJ_DIR="$root" exec /bin/bash "$root/scripts/ios-try.sh" ${1+"$@"} </dev/null
+  fi
 
   # ---------------------------------------------------------------- 构建网页 + 同步到 iOS 工程
   step "4/6 构建 App 内容"
@@ -495,4 +503,5 @@ explain_build_failure() {
 }
 
 # LGJ_SOURCE_ONLY=1 时只加载函数（测试用）
-[ "${LGJ_SOURCE_ONLY:-}" = 1 ] || main "$@" </dev/null
+# 整行读完才执行，并在 main 结束后立即退出：运行中代码被更新也不会接着读到新文件里的内容
+[ "${LGJ_SOURCE_ONLY:-}" = 1 ] || { main ${1+"$@"} </dev/null; exit $?; }
