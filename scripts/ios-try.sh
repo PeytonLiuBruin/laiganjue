@@ -157,7 +157,7 @@ EOF
       fail "编译失败，完整记录在 $log"
     fi
     ok "编译通过"
-    devices_json >/dev/null && ok "能读取已连接设备列表"
+    ok "已连接设备检测正常（当前：$(pick_device | cut -f 5)）"
     printf '\n%s完成（未安装到手机）。%s\n' "$G" "$N"
     return 0
   fi
@@ -186,18 +186,7 @@ EOF
   step "6/6 连接 iPhone、安装并打开"
   local info="" waited=0 told=""
   while :; do
-    info="$(devices_json | node -e '
-      let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
-        let list = [];
-        try { list = JSON.parse(s).result.devices || []; } catch { }
-        const phones = list.filter((d) => (d.hardwareProperties || {}).platform === "iOS");
-        const pick = phones.find((d) => (d.connectionProperties || {}).pairingState === "paired" && (d.connectionProperties || {}).transportType === "wired")
-          || phones.find((d) => (d.connectionProperties || {}).pairingState === "paired" && (d.connectionProperties || {}).tunnelState === "connected")
-          || phones.find((d) => (d.connectionProperties || {}).transportType === "wired");
-        if (!pick) return console.log("none");
-        const c = pick.connectionProperties || {}, h = pick.hardwareProperties || {}, p = pick.deviceProperties || {};
-        console.log([c.pairingState === "paired" ? "paired" : "unpaired", p.developerModeStatus || "unknown", pick.identifier, h.udid || "", (p.name || "iPhone").replace(/\t/g, " ")].join("\t"));
-      });')" || info="none"
+    info="$(pick_device)" || info="none"
     local state="${info%%$'\t'*}"
     if [ "$state" = "paired" ]; then
       local rest="${info#*$'\t'}"
@@ -248,6 +237,22 @@ EOF
   printf '\n%s完成！%s以后想装最新版本，再运行同一条命令即可。\n\n' "$G" "$N"
 }
 
+# 从已连接设备里挑一台 iPhone，输出：配对状态<TAB>开发者模式<TAB>CoreDevice 标识<TAB>UDID<TAB>名称；没有则输出 none
+pick_device() {
+  devices_json | node -e '
+    let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
+      let list = [];
+      try { list = JSON.parse(s).result.devices || []; } catch { }
+      const phones = list.filter((d) => (d.hardwareProperties || {}).platform === "iOS");
+      const pick = phones.find((d) => (d.connectionProperties || {}).pairingState === "paired" && (d.connectionProperties || {}).transportType === "wired")
+        || phones.find((d) => (d.connectionProperties || {}).pairingState === "paired" && (d.connectionProperties || {}).tunnelState === "connected")
+        || phones.find((d) => (d.connectionProperties || {}).transportType === "wired");
+      if (!pick) return console.log("none");
+      const c = pick.connectionProperties || {}, h = pick.hardwareProperties || {}, p = pick.deviceProperties || {};
+      console.log([c.pairingState === "paired" ? "paired" : "unpaired", p.developerModeStatus || "unknown", pick.identifier, h.udid || "", (p.name || "iPhone").replace(/\t/g, " ")].join("\t"));
+    });'
+}
+
 # 已连接设备列表（devicectl 的 JSON），失败时输出空对象
 devices_json() {
   local tmp
@@ -258,15 +263,23 @@ devices_json() {
 
 # 从 Xcode 已登录的帐户里找付费开发者团队（排除免费的 Personal Team）；找到唯一一个时输出它
 detect_team() {
-  local raw
-  raw="$(defaults export com.apple.dt.Xcode - 2>/dev/null)" || return 1
-  printf '%s' "$raw" | plutil -convert json -o - - 2>/dev/null | node -e '
+  local tmp key json=""
+  tmp="$(mktemp -t lgj-xcode)"
+  if defaults export com.apple.dt.Xcode "$tmp" 2>/dev/null; then
+    # 只取团队这一段转成 JSON（整份偏好里有日期等类型，整体转 JSON 会失败）
+    for key in IDEProvisioningTeamByIdentifier IDEProvisioningTeams; do
+      json="$(plutil -extract "$key" json -o - "$tmp" 2>/dev/null || true)"
+      [ -n "$json" ] && break
+    done
+  fi
+  rm -f "$tmp"
+  [ -n "$json" ] || return 1
+  printf '%s' "$json" | node -e '
     let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
-      let ids = new Set();
+      const ids = new Set();
       try {
-        const byAccount = JSON.parse(s).IDEProvisioningTeamByIdentifier || {};
-        for (const teams of Object.values(byAccount)) {
-          for (const t of teams || []) {
+        for (const teams of Object.values(JSON.parse(s) || {})) {
+          for (const t of [].concat(teams || [])) {
             if (t && /^[A-Z0-9]{10}$/.test(t.teamID || "") && !t.isFreeProvisioningTeam && !/personal/i.test(t.teamType || "")) ids.add(t.teamID);
           }
         }
@@ -295,4 +308,5 @@ explain_build_failure() {
   fail "编译失败。" "完整记录在 $log" "可以把这个文件发给开发同事或 Claude 看。"
 }
 
-main "$@" </dev/null
+# LGJ_SOURCE_ONLY=1 时只加载函数（测试用）
+[ "${LGJ_SOURCE_ONLY:-}" = 1 ] || main "$@" </dev/null

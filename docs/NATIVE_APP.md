@@ -40,33 +40,47 @@ App 里还会自动去掉「在 Safari 里添加到主屏幕」这类只对网�
 
 ---
 
-## 三、在 iPhone 上运行（需要一台 Mac）
+## 三、装到自己的 iPhone 上试用（需要一台 Mac）
 
-苹果规定 iPhone App 只能用 Mac 上的 Xcode 打包，这一步无法绕开。
+苹果规定 iPhone App 只能用 Mac 上的 Xcode 打包，这一步无法绕开。已经是付费的 Apple 开发者时，装上的 App 一年内都能用（免费 Apple ID 只能用 7 天）。
 
-**第一次准备（一次性）**
+### 第一次准备（一次性，约 30–60 分钟，大部分时间在等 Xcode 下载）
 
-1. 在 Mac 的 App Store 安装 **Xcode**（免费，体积较大，安装需要一段时间）。
-2. 安装 **Node.js**：到 <https://nodejs.org> 下载 LTS 版（22 或更新）安装。
-3. 下载代码：打开「终端」，依次输入
-   ```bash
-   git clone https://github.com/PeytonLiuBruin/laiganjue.git
-   cd laiganjue
-   npm install
-   ```
+1. **安装 Xcode**：在 Mac 的 App Store 搜索「Xcode」，点「获取」（免费，体积很大）。
+2. **打开一次 Xcode**：在「应用程序」里打开 Xcode，弹出许可协议点「同意」（Agree），输入电脑密码；
+   如果询问要安装哪些组件，勾选 **iOS** 后继续，等它装完。
+3. **在 Xcode 里登录开发者帐号**：菜单「Xcode」→「设置…」（Settings）→「帐户」（Accounts）→ 左下角「+」→「Apple ID」，
+   登录你加入 Apple Developer Program 的那个 Apple ID。登录后右侧能看到你的团队（Team），就可以关掉 Xcode 了。
+4. **连接 iPhone**：用数据线把 iPhone 连到 Mac，解锁 iPhone；弹出「要信任此电脑吗？」时点「信任」并输入锁屏密码。
 
-**每次运行**
+### 一条命令装到 iPhone
+
+打开「终端」（在「启动台」或聚焦搜索里输入「终端」），粘贴下面这一行，按回车：
 
 ```bash
-npm run app:ios
+curl -fsSL https://raw.githubusercontent.com/PeytonLiuBruin/laiganjue/claude/ecstatic-allen-lh1flx/scripts/ios-try.sh | bash
 ```
 
-这条命令会把最新的网页内容放进 iPhone 工程，并自动打开 Xcode。在 Xcode 里：
+脚本会自动完成：检查 Xcode → 准备 Node.js（缺了就自动下载，不需要管理员密码）→ 把代码下载到「个人文件夹/laiganjue」→ 构建 →
+签名 → 安装到 iPhone 并打开。过程中它可能会请你做两件事：
 
-1. 顶部选择要运行的设备：可以选一个模拟器（如 iPhone 16），也可以用数据线连上自己的 iPhone。
-2. 用真机时：左侧点 **App** → **Signing & Capabilities** → **Team** 里登录你的 Apple ID。
-   免费 Apple ID 也能装到自己的手机上，但 7 天后需要重新安装一次。
-3. 点左上角 ▶ 运行。
+- **填团队 ID**（只问一次）：打开 <https://developer.apple.com/account> →「会员资格详细信息」（Membership details）里的「团队 ID」（Team ID），复制粘贴到终端回车。
+- **打开 iPhone 的「开发者模式」**（只需一次）：iPhone「设置」→「隐私与安全性」→ 拉到最下面「开发者模式」→ 打开 → 按提示重启；
+  重启后解锁，在弹窗里点「打开」并输入锁屏密码。脚本会一直等，等你打开后自动继续。
+
+第一次编译大约 2–5 分钟。看到「完成！」时，iPhone 上的「来感觉」已经打开了。
+**以后想装最新版本，再运行同一行命令即可**（已经做过的准备会自动跳过）。
+
+如果中途出错，终端会用中文说明原因和解决办法；完整记录在 `~/laiganjue/ios/App/build/ios-try.log`，可以把这个文件发给开发同事或 Claude 看。
+
+### 想用 Xcode 自己点「运行」也可以
+
+```bash
+cd ~/laiganjue && npm run app:ios
+```
+
+会打开 Xcode：顶部选择你的 iPhone，点左上角 ▶。团队已经由上面的脚本设置好；如果没跑过脚本，
+需要在左侧点 **App** →「Signing & Capabilities」→「Team」里选择你的团队。
 
 安卓也可以用同样的方式在电脑上调试：装好 [Android Studio](https://developer.android.com/studio) 后运行 `npm run app:android`。
 
@@ -121,6 +135,8 @@ capacitor.config.json      App 名、包名、启动画面、状态栏设置
 android/  ios/             原生工程（已提交，直接用 Android Studio / Xcode 打开）
 src/platform/native.js     App 专用能力：只在 App 内生效，网页里全部静默无操作
 scripts/app-assets.mjs     按 assets/icon.svg 的图案重新生成 App 图标与启动画面（改图标时才需要跑）
+scripts/ios-try.sh         Mac 上一条命令装到 iPhone（准备 Node / 代码 → 签名 → 安装 → 打开）
+ios/local.xcconfig         本机的签名团队 ID（脚本生成，不提交；ios/debug.xcconfig 用 #include? 引入）
 .github/workflows/app.yml  每次推送：打出安卓测试版 APK + 检查 iOS 能否编译
 www/                       App 用的网页构建产物（自动生成，不提交）
 ```
@@ -132,6 +148,7 @@ www/                       App 用的网页构建产物（自动生成，不提�
 | `npm run app:android` | 同步并用 Android Studio 打开 |
 | `npm run app:ios` | 同步并用 Xcode 打开（需要 Mac） |
 | `node scripts/app-assets.mjs` | 重新生成图标与启动画面 |
+| `bash scripts/ios-try.sh` | 编译并安装到用数据线连着的 iPhone（`LGJ_TEAM=团队ID` 可跳过询问，`LGJ_NO_DEVICE=1` 只编译） |
 
 约定：
 
