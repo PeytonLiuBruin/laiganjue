@@ -84,6 +84,12 @@ jobs:
           LGJ_DIR: ${{ runner.temp }}/laiganjue
           LGJ_BRANCH: ${{ github.ref_name }}
         run: env PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/bash < scripts/ios-try.sh
+      - name: TestFlight 模式：试打正式版（Release）包（不签名、不上传）
+        env:
+          LGJ_NO_DEVICE: '1'
+          LGJ_DIR: ${{ runner.temp }}/laiganjue
+          LGJ_BRANCH: ${{ github.ref_name }}
+        run: env PATH=/usr/bin:/bin:/usr/sbin:/sbin /bin/bash -s -- --testflight < scripts/ios-try.sh
       - name: 团队 ID 通过 ios/local.xcconfig 传给签名设置
         working-directory: ${{ runner.temp }}/laiganjue
         run: |

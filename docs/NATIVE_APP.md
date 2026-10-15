@@ -86,11 +86,78 @@ cd ~/laiganjue && npm run app:ios
 
 ---
 
-## 四、上架应用商店（以后要做时的清单）
+## 四、让别人也能装：TestFlight（iPhone）
+
+TestFlight 是苹果官方的测试版发放渠道：别人在 iPhone 上装好苹果的「TestFlight」App，点你发的链接就能安装「来感觉」，
+不需要数据线、不需要 Mac。一个 App 最多可以有 10,000 名测试者，每个上传的版本可以用 90 天。
+
+> App Store Connect 网页有中文界面；下面写的是中文按钮名，括号里是英文界面的叫法。
+
+### 第 1 步：在 App Store Connect 建一个 App 记录（只做一次）
+
+1. 打开 <https://appstoreconnect.apple.com>，用开发者帐号登录。
+   如果页面顶部提示有协议要同意，先到「商务」（Business）里把协议都同意掉，否则后面会被拦住。
+2. 点「App」（Apps）→ 左上角「+」→「新建 App」（New App），填写：
+   - **平台**：勾选 iOS
+   - **名称**：来感觉（2–30 个字，在整个 App Store 里不能和别人重名；被占用时可以加后缀，例如「来感觉 · 玄学占卜」。
+     手机桌面上图标下面的名字仍然是「来感觉」）
+   - **主要语言**：简体中文
+   - **套装 ID**（Bundle ID）：选结尾是 `io.github.peytonliubruin.laiganjue` 的那一项（之前装到自己手机时 Xcode 已自动登记）
+   - **SKU**：`laiganjue-ios`（只给你自己看的编号，创建后不能改）
+   - **用户访问权限**：完全访问权限（Full Access）
+3. 点「创建」（Create）。
+4. 顺手在左侧「App 信息」（App Information）里填好「年龄分级」（Age Rating）问卷：按实际情况都选「无」即可。
+
+### 第 2 步：一条命令打包上传
+
+Mac 上打开「终端」，运行：
+
+```bash
+bash ~/laiganjue/scripts/ios-try.sh --testflight
+```
+
+它会更新代码、打包正式版、用 Xcode 里已登录的帐号自动签名并上传（大约 5–15 分钟，不需要连手机）。
+看到「上传完成！」后，等 10–30 分钟苹果处理完，会收到一封标题含「has completed processing」的邮件。
+
+### 第 3 步：先发给自己（内部测试，不用审核）
+
+1. App Store Connect → 「来感觉」→ 顶部「TestFlight」→ 左侧「内部测试」（Internal Testing）旁的「+」→ 新建一个群组，名字随意（如「自己」）。
+2. 「邀请测试员」（Invite Testers）勾选你自己 →「添加」；再「添加构建版本」（Add Builds）选刚上传的版本。
+3. 在自己的 iPhone 上装好 App Store 里的「TestFlight」，用开发者帐号对应的 Apple ID 登录，就能看到并安装。
+
+### 第 4 步：发给别人（外部测试，需要苹果简单审核一次）
+
+1. 先填一次测试信息：TestFlight → 左侧「其他」（Additional）→「测试信息」（Test Information）
+   - **Beta 版 App 描述**（必填），例如：「来感觉是一款传统文化占卜合集，包含筊杯、灵签、六爻、黄历、八字、塔罗等 17 个玩法，摇一摇手机即可互动。所有内容在手机上生成，仅供娱乐。」
+   - **反馈电子邮件**：你的邮箱（测试者在 TestFlight 里反馈会发到这里）
+   - **隐私政策网址**（建议填）：`https://peytonliubruin.github.io/laiganjue/privacy.html`
+   - **Beta 版 App 审核信息**：联系人姓名、电话（带国家区号，例如 +1 714…）、邮箱；「需要登录」不勾选；
+     备注可写：「无需帐号，所有内容在本机生成，仅供娱乐与自我觉察。」
+2. 左侧「外部测试」（External Testing）旁的「+」→ 新建群组（如「朋友」）→「添加构建版本」→ 填写「测试内容」（What to Test）
+   → 勾选「自动通知测试员」→「提交审核」（Submit Review）。第一次审核一般 1–2 天，偶尔会更久。
+3. 审核通过后，在这个群组的「测试员」页点「创建公共链接」（Create Public Link）→「向所有人开放」（Open to Anyone）→「确认」，
+   复制得到的 `https://testflight.apple.com/join/…` 链接，发给想试用的人。
+
+### 测试者怎么装（发给他们这段话即可）
+
+> 1. 在 iPhone 的 App Store 搜索并安装「TestFlight」（苹果官方，免费）。
+> 2. 在 iPhone 上打开我发的链接，点「接受」，再点「安装」。
+> 3. 以后有新版本，TestFlight 会提醒你更新。
+
+### 以后更新
+
+- 改了内容想让大家用上：再运行一次 `bash ~/laiganjue/scripts/ios-try.sh --testflight`，然后在 TestFlight 里把新构建版本加到群组。
+  同一个版本号（1.0）下的后续构建通常不用再审核。
+- 每个构建 90 天后过期，至少每两三个月上传一次新的。
+- 1.0 正式上架后，再上传需要先把版本号改成 1.1（告诉开发同事或 Claude 即可）。
+
+---
+
+## 五、上架应用商店（以后要做时的清单）
 
 ### 共同准备
 
-- [ ] **隐私政策网址**：两个商店都要求提供。本 App 不注册、不收集个人信息，生辰等数据只存在用户自己的手机上。可以写一页简单的隐私说明，放到 GitHub Pages 上。
+- [ ] **隐私政策网址**：两个商店都要求提供。已经写好：`https://peytonliubruin.github.io/laiganjue/privacy.html`（源文件 `src/privacy.html`，随网页一起发布；合并到主分支后生效）。
 - [ ] **截图**：每个平台至少几张手机截图（`npm run smoke` 会在 `dist/shots/` 生成各玩法截图，可以作为素材）。
 - [ ] **简介与关键词**：可以沿用 README 里的玩法介绍。
 - [ ] **年龄分级问卷**：按实际情况填写（无暴力、无用户互动、无内购）。
@@ -128,7 +195,7 @@ cd ~/laiganjue && npm run app:ios
 
 ---
 
-## 五、给工程师：结构与约定
+## 六、给工程师：结构与约定
 
 ```
 capacitor.config.json      App 名、包名、启动画面、状态栏设置
@@ -149,6 +216,7 @@ www/                       App 用的网页构建产物（自动生成，不提�
 | `npm run app:ios` | 同步并用 Xcode 打开（需要 Mac） |
 | `node scripts/app-assets.mjs` | 重新生成图标与启动画面 |
 | `bash scripts/ios-try.sh` | 编译并安装到用数据线连着的 iPhone（`LGJ_TEAM=团队ID` 可跳过询问，`LGJ_NO_DEVICE=1` 只编译） |
+| `bash scripts/ios-try.sh --testflight` | 打包正式版并上传到 App Store Connect（构建号自动用「年月日时分」，签名用 Xcode 里登录的帐号） |
 
 约定：
 

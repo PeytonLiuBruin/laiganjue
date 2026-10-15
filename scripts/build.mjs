@@ -130,6 +130,8 @@ export async function buildAll({ out = outDir, min = minify, only = null, app = 
     copyFile(path.join(root, 'assets/tarot/ATTRIBUTION.md'), path.join(out, 'tarot/ATTRIBUTION.md')),
     app ? null : writeFile(path.join(out, 'artifact.html'), artifact),
     writeFile(path.join(out, 'manifest.webmanifest'), JSON.stringify(manifest, null, 2)),
+    // 隐私政策（App Store / TestFlight 填写用）：https://peytonliubruin.github.io/laiganjue/privacy.html
+    copyFile(path.join(root, 'src/privacy.html'), path.join(out, 'privacy.html')),
     ...[180, 192, 512].map((s) => copyFile(path.join(root, `assets/icon-${s}.png`), path.join(out, `icon-${s}.png`)).catch(() => {})),
   ]);
   return {

@@ -4,14 +4,16 @@
 # 用法：打开「终端」，粘贴下面一行回车（地址见 docs/NATIVE_APP.md）：
 #   curl -fsSL https://raw.githubusercontent.com/PeytonLiuBruin/laiganjue/claude/ecstatic-allen-lh1flx/scripts/ios-try.sh | bash
 # 已经下载了代码的话，在代码目录里运行：bash scripts/ios-try.sh
+# 上传到 TestFlight 给别人装：bash ~/laiganjue/scripts/ios-try.sh --testflight（步骤见 docs/NATIVE_APP.md 第四节）
 #
 # 它会：检查 Xcode → 准备 Node.js（缺了就下载到用户目录，不需要管理员密码）→ 下载或更新代码
 #      → 构建 → 找到用数据线连着的 iPhone → 签名、编译、安装并打开 App。
+#      --testflight：最后一步改为打包正式版并上传到 App Store Connect（不需要连手机）。
 # 可选环境变量：
 #   LGJ_DIR       代码放在哪里（默认 ~/laiganjue）
 #   LGJ_BRANCH    使用哪个分支（默认见下方 DEFAULT_BRANCH）
 #   LGJ_TEAM      Apple 开发者团队 ID（10 位，例如 ABCDE12345；不填会自动识别或询问）
-#   LGJ_NO_DEVICE=1  只检查环境并编译，不连手机（自动化测试用）
+#   LGJ_NO_DEVICE=1  只检查环境并编译，不连手机、不签名不上传（自动化测试用；配合 --testflight 时再试打一次正式版包）
 #
 # 兼容 macOS 自带的 bash 3.2；整个流程包在 main 里，网络中断导致脚本只下载一半时不会执行半截命令。
 
@@ -40,8 +42,19 @@ main() {
 
   local NO_DEVICE="${LGJ_NO_DEVICE:-}"
   local BRANCH="${LGJ_BRANCH:-$DEFAULT_BRANCH}"
+  local MODE=device arg
+  for arg in ${1+"$@"}; do
+    case "$arg" in
+      --testflight) MODE=testflight ;;
+      *) fail "不认识的参数：$arg" "可用：--testflight（上传到 TestFlight）" ;;
+    esac
+  done
 
-  printf '%s来感觉 · 装到 iPhone 上试用%s\n' "$B" "$N"
+  if [ "$MODE" = testflight ]; then
+    printf '%s来感觉 · 上传到 TestFlight（给别人装）%s\n' "$B" "$N"
+  else
+    printf '%s来感觉 · 装到 iPhone 上试用%s\n' "$B" "$N"
+  fi
   [ "$(uname -s)" = "Darwin" ] || fail "这个脚本只能在 Mac 上运行。"
 
   # ---------------------------------------------------------------- Xcode
@@ -190,7 +203,16 @@ EOF
     fi
     ok "编译通过"
     ok "已连接设备检测正常（当前：$(pick_device | cut -f 5)）"
-    printf '\n%s完成（未安装到手机）。%s\n' "$G" "$N"
+    if [ "$MODE" = testflight ]; then
+      if ! xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' \
+        -archivePath "$root/ios/App/build/testflight/App-check.xcarchive" -derivedDataPath ios/App/build \
+        CODE_SIGNING_ALLOWED=NO CURRENT_PROJECT_VERSION="$(date +%Y%m%d%H%M)" archive >"$log" 2>&1; then
+        tail -n 40 "$log" >&2
+        fail "正式版打包失败，完整记录在 $log"
+      fi
+      ok "正式版（Release）打包通过"
+    fi
+    printf '\n%s完成（未签名、未安装、未上传）。%s\n' "$G" "$N"
     return 0
   fi
 
@@ -213,6 +235,11 @@ EOF
   done
   printf '// 本机签名设置（由 scripts/ios-try.sh 生成，不提交到仓库）\nDEVELOPMENT_TEAM = %s\n' "$team" >"$local_cfg"
   ok "团队 ID：${team}（已保存，下次不用再填）"
+
+  if [ "$MODE" = testflight ]; then
+    upload_testflight "$root" "$team" "$log"
+    return 0
+  fi
 
   # ---------------------------------------------------------------- 找 iPhone
   step "6/6 连接 iPhone、安装并打开"
@@ -289,6 +316,78 @@ EOF
     warn "已装好，但没能自动打开：请在 iPhone 主屏幕上点「来感觉」图标。"
   fi
   printf '\n%s完成！%s以后想装最新版本，再运行同一条命令即可。\n\n' "$G" "$N"
+}
+
+# 打包正式版（Release）并上传到 App Store Connect，用的是 Xcode 里已登录的 Apple 帐号（不需要密钥 / 证书文件）
+upload_testflight() {
+  local root="$1" team="$2" log="$3"
+  local dir="$root/ios/App/build/testflight"
+  local build_no
+  build_no="$(date +%Y%m%d%H%M)"   # 构建号必须越来越大：用「年月日时分」
+  local archive="$dir/App-$build_no.xcarchive" opts="$dir/ExportOptions.plist"
+  mkdir -p "$dir"
+  cat >"$opts" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key><string>app-store-connect</string>
+  <key>destination</key><string>upload</string>
+  <key>teamID</key><string>$team</string>
+  <key>signingStyle</key><string>automatic</string>
+  <key>uploadSymbols</key><true/>
+  <key>manageAppVersionAndBuildNumber</key><false/>
+</dict>
+</plist>
+PLIST
+
+  step "6/6 打包正式版并上传到 App Store Connect"
+  note "正在打包正式版（构建号 ${build_no}，大约 3–8 分钟）…"
+  note "如果 Mac 弹窗要求输入电脑登录密码（钥匙串），请输入并点「始终允许」（Always Allow）。"
+  if ! xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' \
+    -archivePath "$archive" -derivedDataPath ios/App/build -allowProvisioningUpdates \
+    DEVELOPMENT_TEAM="$team" CURRENT_PROJECT_VERSION="$build_no" archive >"$log" 2>&1; then
+    explain_build_failure "$log"
+  fi
+  ok "打包完成"
+
+  note "正在上传（视网速 1–5 分钟）…"
+  if ! xcodebuild -exportArchive -archivePath "$archive" -exportOptionsPlist "$opts" -exportPath "$dir/export-$build_no" \
+    -allowProvisioningUpdates >>"$log" 2>&1; then
+    explain_upload_failure "$log" "$archive"
+  fi
+  ok "已上传到 App Store Connect（构建号 ${build_no}）"
+  printf '\n%s上传完成！%s接下来：\n' "$G" "$N"
+  note "1. 等 10–30 分钟，Apple 处理完会给你发邮件（标题含 has completed processing）。"
+  note "2. 打开 https://appstoreconnect.apple.com → App →「来感觉」→ TestFlight，就能看到这个构建版本。"
+  note "3. 按 docs/NATIVE_APP.md 第四节添加测试员或生成公开链接，发给别人即可。"
+  note "以后改了内容想更新给大家，再运行一次同样的命令。"
+  printf '\n'
+}
+
+# 上传失败时，按常见原因给出中文提示；都不对时提示用 Xcode 自带的上传窗口
+explain_upload_failure() {
+  local log="$1" archive="$2"
+  printf '\n' >&2
+  grep -Ei 'error|ITMS-' "$log" | tail -n 8 >&2 || tail -n 30 "$log" >&2
+  if grep -Eiq 'No suitable application records' "$log"; then
+    open "https://appstoreconnect.apple.com/apps" 2>/dev/null || true
+    fail "App Store Connect 里还没有这个 App 的记录。" "已为你打开 App Store Connect：点「App」→ 左上角「+」→「新建 App」，套装 ID 选结尾是 ${BUNDLE_ID} 的那个，创建后重新运行。"
+  elif grep -Eiq 'Failed to Use Accounts|No Accounts|session has expired|Unable to log in' "$log"; then
+    open -a "${DEVELOPER_DIR%/Contents/Developer}" 2>/dev/null || true
+    fail "Xcode 里的 Apple 帐号需要重新登录。" "已为你打开 Xcode：菜单栏「Xcode」→「Settings…」→「Accounts」，选中帐号重新输入密码（没有就点「+」登录），然后重新运行。"
+  elif grep -Eiq 'PLA Update|License Agreement' "$log"; then
+    open "https://appstoreconnect.apple.com/business" 2>/dev/null || true
+    fail "有新的开发者协议需要同意。" "已为你打开 App Store Connect 的「商务」（Business）页：按提示同意所有协议，然后重新运行。"
+  elif grep -Eiq 'ITMS-90189|Redundant Binary' "$log"; then
+    fail "这个构建号已经上传过了。" "等一分钟后重新运行即可（每次会自动用新的构建号）。"
+  elif grep -Eiq 'ITMS-90186|ITMS-90062|closed for new build' "$log"; then
+    fail "1.0 版本已经提交 / 上架，需要先把版本号调高（例如 1.1）才能继续上传。" "请把这个信息告诉开发同事或 Claude。"
+  fi
+  open "$archive" 2>/dev/null || true
+  fail "上传没有成功，完整记录在 $log" \
+    "也可以用 Xcode 自带的上传窗口：已为你在 Xcode 的 Organizer 里打开刚打好的包，点「Distribute App」→「TestFlight & App Store」→「Distribute」。" \
+    "仍不行的话，把记录文件发给开发同事或 Claude 看。"
 }
 
 # 从已连接设备里挑一台真机（排除 Xcode 26 起也会列出的模拟器），优先用数据线连着的。
