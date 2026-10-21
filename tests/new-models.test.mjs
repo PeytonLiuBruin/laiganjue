@@ -4,7 +4,7 @@ import { lathe, torus, box, transformed, pendulumPosition, pillarPose, projectMo
 import { MODEL_IDS } from '../src/ui/models/index.js';
 
 test('all five playable objects have built-in models',()=>{
-  assert.deepEqual(MODEL_IDS,['fengshui.compass','crystal.ball','crystal.pendulum','zodiac.sky','bazi.pillars']);
+  assert.deepEqual(MODEL_IDS,['fengshui.compass','crystal.ball','crystal.pendulum','zodiac.sky','bazi.pillars','yinyuan.knot','yinyuan.thread','shiye.seal','shiye.ladder','caiyun.tree','caiyun.vault']);
 });
 test('model surfaces have finite unit normals, including lathe poles',()=>{
   for(const mesh of [lathe([[0,-30],[17,5],[17,13],[8,23],[0,23]],'#aaa',6),torus(106,2,'#aaa'),box(49,164,28,'#aaa')])for(const face of mesh){
@@ -29,4 +29,15 @@ test('all four pillars stay visible while turning, then present the front face',
     }
     if(frame===60)assert(pose.visible);
   }
+});
+
+test('fortune objects paint every phase without errors',async()=>{
+  const { paintModel } = await import('../src/ui/models/index.js');
+  const calls={n:0};
+  const grad={addColorStop(){}};
+  const ctx=new Proxy({},{get:(t,k)=>k in t?t[k]:(k==='createRadialGradient'||k==='createLinearGradient'?()=>grad:()=>{calls.n++;}),set:(t,k,v)=>{t[k]=v;return true;}});
+  for(const id of['yinyuan.knot','yinyuan.thread','shiye.seal','shiye.ladder','caiyun.tree','caiyun.vault'])
+    for(const state of[{},{active:true},{revealed:true,revealMix:1,level:'上'}])
+      for(const t of[0,.5,1.2,3])paintModel(ctx,350,340,id,state,t);
+  assert(calls.n>100);
 });

@@ -1,12 +1,19 @@
 import { createPainter, DEFAULT_PALETTE } from './painter.js';
 import { drawCompass, drawBall, drawPendulum, drawSky, drawPillars } from './objects.js';
 import { clamp } from './geometry.js';
+import { drawKnot, drawThread, drawSeal, drawLadder, drawTree, drawVault } from './fortune.js';
 const MODELS = {
   'fengshui.compass': { draw: drawCompass, pitch: .92 },
   'crystal.ball': { draw: drawBall, pitch: .09, ambient: true },
   'crystal.pendulum': { draw: drawPendulum, pitch: .38 },
   'zodiac.sky': { draw: drawSky, pitch: .10, ambient: true },
-  'bazi.pillars': { draw: drawPillars, pitch: .10 },
+  'bazi.pillars': { draw: drawPillars, pitch: .10, clock: 'active' },
+  'yinyuan.knot': { draw: drawKnot, pitch: .14, clock: 'active' },
+  'yinyuan.thread': { draw: drawThread, pitch: .12, clock: 'active' },
+  'shiye.seal': { draw: drawSeal, pitch: .42, clock: 'active' },
+  'shiye.ladder': { draw: drawLadder, pitch: .10, clock: 'active' },
+  'caiyun.tree': { draw: drawTree, pitch: .16, clock: 'active' },
+  'caiyun.vault': { draw: drawVault, pitch: .40, clock: 'active' },
 };
 export const MODEL_IDS = Object.freeze(Object.keys(MODELS));
 export function builtInModel(id) {
@@ -33,7 +40,7 @@ function createModelRenderer(el,ctx,id) {
     tilt.x+=(targetTilt.x-tilt.x)*response;tilt.y+=(targetTilt.y-tilt.y)*response;
     if(now-lastPaint>=(state.active?15:30)){
       const dpr=Math.min(window.devicePixelRatio||1,2);c.setTransform(dpr,0,0,dpr,0,0);
-      paintModel(c,width,height,id,state,id==='bazi.pillars'?activeTime:time,palette,tilt);lastPaint=now;
+      paintModel(c,width,height,id,state,MODELS[id].clock==='active'?activeTime:time,palette,tilt);lastPaint=now;
     }
     if(MODELS[id].ambient&&!gentle||state.active||Math.abs((state.revealed?1:0)-(state.revealMix||0))>.005||Math.abs(targetTilt.x-tilt.x)+Math.abs(targetTilt.y-tilt.y)>.005)schedule();
   }

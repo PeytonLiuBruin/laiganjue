@@ -159,3 +159,11 @@ textarea, select { font-size: 16px; }
   .sheet, .ritual-receipt, .tile, .ritual-art { animation: none; transition-duration: .01s; }
   .ok-petal, .stick-pick-target::after { animation: none !important; }
 }
+
+/* 体感已开启后只留一行轻提示，把首屏让给器物 */
+.motion-entry.ready { display: flex; align-items: center; gap: 8px; padding: 2px 4px; margin: -4px 0 10px; background: transparent; border: 0; box-shadow: none; min-height: 0; }
+.motion-entry.ready .motion-entry-mark { width: 20px; height: 22px; flex: none; }
+.motion-entry.ready .motion-entry-mark svg { width: 16px; height: 18px; }
+.motion-entry.ready .motion-entry-copy { flex-direction: row; align-items: baseline; gap: 8px; min-width: 0; }
+.motion-entry.ready .motion-entry-title { flex: none; font-size: 12px; line-height: 1.4; }
+.motion-entry.ready .motion-entry-desc { font-size: 12px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
