@@ -18,7 +18,7 @@
 # 兼容 macOS 自带的 bash 3.2；整个流程包在 main 里，网络中断导致脚本只下载一半时不会执行半截命令。
 
 # 脚本版本：更新代码后若仓库里的脚本比正在运行的新，就自动换成新脚本重跑（旧脚本不认识的新功能也能用上）
-SCRIPT_REV=4
+SCRIPT_REV=5
 REPO_URL="https://github.com/PeytonLiuBruin/laiganjue.git"
 DEFAULT_BRANCH="claude/ecstatic-allen-lh1flx"
 BUNDLE_ID="io.github.peytonliubruin.laiganjue"
@@ -185,7 +185,8 @@ EOF
   # ---------------------------------------------------------------- 构建网页 + 同步到 iOS 工程
   step "4/6 构建 App 内容"
   note "安装依赖（第一次需要一两分钟）…"
-  npm ci --no-audit --no-fund --loglevel=error >/dev/null \
+  # 本机若设置了 NODE_ENV=production，npm 会跳过构建工具（esbuild 等），这里显式装上
+  npm ci --include=dev --no-audit --no-fund --loglevel=error >/dev/null \
     || fail "安装依赖失败。" "请检查网络（需要能访问 registry.npmjs.org）后重新运行。"
   npm run --silent build:app || fail "构建 App 内容失败。" "请把终端里上面的报错发给开发同事或 Claude 看。"
   npx cap sync ios >/dev/null || fail "同步到 iOS 工程失败。" "请把终端里上面的报错发给开发同事或 Claude 看。"
