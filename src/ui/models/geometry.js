@@ -53,3 +53,6 @@ export function projectModel(point, width, height, pitch = .12, yaw = 0) {
   const scale = Math.min(width / 350, height / 340, 1.22) * 820 / (820 - p[2]);
   return [width / 2 + p[0] * scale, height / 2 - p[1] * scale, p[2], scale];
 }
+export function sphere(radius, color, segments = 24, rings = 10) {
+  return lathe(Array.from({ length: rings + 1 }, (_, i) => { const a = -Math.PI / 2 + i / rings * Math.PI; return [Math.cos(a) * radius, Math.sin(a) * radius]; }), color, segments);
+}

@@ -53,7 +53,7 @@ function createModelRenderer(el,ctx,id) {
     const css=getComputedStyle(document.documentElement),get=(key,fallback)=>css.getPropertyValue(key).trim()||fallback;
     const dark=['ink','cinnabar','nebula'].includes(document.documentElement.dataset.theme);
     palette={...DEFAULT_PALETTE,accent:get('--accent',DEFAULT_PALETTE.accent),text:get('--text',DEFAULT_PALETTE.text),dark,
-      metal:dark?'#c8ab72':'#ae9462',stone:dark?'#b9b7ac':'#e4dfd3',glass:dark?'#a0b4cf':'#889eae'};lastPaint=-Infinity;schedule();
+      metal:'#f2b33d',stone:dark?'#efe2c4':'#fbefd2',glass:'#7cc6ee'};lastPaint=-Infinity;schedule();
   }
   const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(el);
   const intersection=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{visible=entries[entries.length-1]?.isIntersecting!==false;if(visible){last=null;schedule();}else{cancelAnimationFrame(frame);frame=0;last=null;}},{rootMargin:'80px'}):null;
