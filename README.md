@@ -79,7 +79,7 @@ window.__lgj.registerModel('crystal.ball', (slotEl, ctx) => ({ set(state) { /* �
 
 槽位清单与状态字段见 `docs/MODEL_SLOTS.md`。
 
-所有器物统一为卡通手游画风（粗描边、分块明暗、饱和配色，见 `src/ui/models/painter.js`，调色板 `toon:false` 可退回柔和写实光照）。「姻缘 · 事业 · 财富」三个玩法的六件器物已内置绘制（`src/ui/models/fortune.js`）：`yinyuan.knot` 同心结（摇动轻晃、结成泛光）、`yinyuan.thread` 红线（两枚玉璧之间由松到紧、线心打结）、`shiye.seal` 官印（抬起落印、留下朱红印文）、`shiye.ladder` 青云梯（横档自下而上逐级亮起）、`caiyun.tree` 摇钱树（枝叶晃动、铜钱落进盆中）、`caiyun.vault` 财库（掀盖露出元宝）。外部建模完成后仍可用上面的方式注册替换，模块代码不需改动。
+所有器物统一为风格化手游画风（本色轮廓、柔和两段明暗、冷色暗部与暖色亮部、金属自动高光，见 `src/ui/models/painter.js`，调色板 `toon:false` 可退回柔和写实光照）。「姻缘 · 事业 · 财富」三个玩法的六件器物已内置绘制（`src/ui/models/fortune.js`）：`yinyuan.knot` 同心结（摇动轻晃、结成泛光）、`yinyuan.thread` 红线（两枚玉璧之间由松到紧、线心打结）、`shiye.seal` 官印（抬起落印、留下朱红印文）、`shiye.ladder` 青云梯（横档自下而上逐级亮起）、`caiyun.tree` 摇钱树（枝叶晃动、铜钱落进盆中）、`caiyun.vault` 财库（掀盖露出元宝）。外部建模完成后仍可用上面的方式注册替换，模块代码不需改动。
 
 ## 目录结构（给工程师）
 

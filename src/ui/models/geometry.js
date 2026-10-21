@@ -56,3 +56,20 @@ export function projectModel(point, width, height, pitch = .12, yaw = 0) {
 export function sphere(radius, color, segments = 24, rings = 10) {
   return lathe(Array.from({ length: rings + 1 }, (_, i) => { const a = -Math.PI / 2 + i / rings * Math.PI; return [Math.cos(a) * radius, Math.sin(a) * radius]; }), color, segments);
 }
+/** 逐点变形后重新求法线（缩放、压扁、弯曲都用它）。 */
+export function deform(mesh, fn) {
+  return mesh.map(f => { const points = f.points.map(fn); const g = polygon(points, f.color); return { ...g, normal: Number.isFinite(g.normal[0]) ? g.normal : f.normal }; });
+}
+/** 半圆柱：沿 X 轴，弧面朝 +Y，用作宝箱拱形盖、卷轴。 */
+export function halfCylinder(width, radius, color, segments = 16, capColor = color) {
+  const faces = [], x = width / 2;
+  const at = (sx, a) => [sx, Math.sin(a) * radius, Math.cos(a) * radius];
+  for (let i = 0; i < segments; i++) {
+    const a = i / segments * Math.PI, b = (i + 1) / segments * Math.PI;
+    faces.push(polygon([at(-x, a), at(x, a), at(x, b), at(-x, b)], color));
+  }
+  const arc = Array.from({ length: segments + 1 }, (_, i) => i / segments * Math.PI);
+  faces.push(polygon(arc.slice().reverse().map(a => at(x, a)), capColor));
+  faces.push(polygon(arc.map(a => at(-x, a)), capColor));
+  return faces;
+}
