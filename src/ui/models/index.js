@@ -2,6 +2,7 @@ import { createPainter, DEFAULT_PALETTE } from './painter.js';
 import { drawCompass, drawBall, drawPendulum, drawSky, drawPillars } from './objects.js';
 import { clamp } from './geometry.js';
 import { drawKnot, drawThread, drawSeal, drawLadder, drawTree, drawVault } from './fortune.js';
+import { createStage, hasStageScene, webglAvailable, stageDisabled } from '../stage/engine.js';
 const MODELS = {
   'fengshui.compass': { draw: drawCompass, pitch: .92 },
   'crystal.ball': { draw: drawBall, pitch: .09, ambient: true },
@@ -17,7 +18,15 @@ const MODELS = {
 };
 export const MODEL_IDS = Object.freeze(Object.keys(MODELS));
 export function builtInModel(id) {
-  return MODELS[id] ? (el, ctx) => createModelRenderer(el, ctx, id) : null;
+  return MODELS[id] ? (el, ctx) => createBestRenderer(el, ctx, id) : null;
+}
+/** 支持 WebGL 时用 3D 舞台；不支持、被关闭或创建失败时退回画布渲染，界面与状态接口不变。 */
+function createBestRenderer(el, ctx, id) {
+  if (hasStageScene(id) && !stageDisabled() && webglAvailable()) {
+    try { const stage = createStage(el, ctx, id, () => createModelRenderer(el, ctx, id)); if (stage) return stage; }
+    catch (e) { console.warn('[stage] WebGL 舞台创建失败，改用画布渲染', id, e); el.replaceChildren(); el.classList.remove('has-stage'); }
+  }
+  return createModelRenderer(el, ctx, id);
 }
 export function paintModel(c,width,height,id,state={},time=0,palette=DEFAULT_PALETTE,tilt={x:0,y:0}) {
   const model=MODELS[id];if(!model)return;

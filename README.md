@@ -68,18 +68,25 @@
 3. 到 Actions 页签点开「Deploy to GitHub Pages」→「Run workflow」，或随便再推送一次。
 4. 网址：`https://peytonliubruin.github.io/laiganjue/`
 
-## 交互 3D 模型
+## 3D 器物舞台
 
-风水罗盘、星仪、水晶球、灵摆和四柱命牌已内置三维绘制，随玩法状态、拖动和体感变化。模型由代码生成，统一管理尺寸、皮肤与动画清理。
-建模完成后，只需注册一个渲染器就能替换，模块逻辑一行不改：
+罗盘、水晶球、灵摆、星仪、四柱命牌，以及姻缘 · 事业 · 财富的同心结、红线、官印、青云梯、摇钱树、财库，共 11 件器物都在 WebGL 3D 舞台里渲染（three.js，`src/ui/stage/`）：
+
+- 自然造型：噪声起伏的水中青石、渐细带树皮的枝干、几百片叶子组成的树冠、编织丝绳、体积云、方孔铜钱、元宝，都由代码生成，固定种子，每次看到同一块石头。
+- 柔和电影感光照：暖色主光 + 冷色轮廓光 + 天光地光，柔边阴影，室内环境反射（金属、釉面、玉的高光），Neutral 色调映射。
+- 远景雾与纵深：天空渐变、远山、雾从 9 米开始把远处融进天色；深色皮肤换成夜空与星点。
+- 倒影水面：实时反射整个场景，随风起细浪，落印、开箱时荡开同心涟漪。
+- 随风的细节：风向与阵风驱动花瓣 / 落叶 / 金尘 / 微尘、岸边芦苇、荷叶荷花、香炉烟、流苏与树冠摆动。
+- 只在指定材质上发光：「缘」字金章、红心、点亮的横档与金星、元宝与开箱金光、水晶球星雾、灵摆结果、针尖、香头。其余材质一律不自发光（端到端测试会检查）。
+- 舞台右上角显示帧率（设置 →「帧率显示」可关闭）。连续偏慢时自动降一档画质（像素比、倒影分辨率、阴影、粒子），流畅后再升回去。
+- 槽位第一次可见时才在下一帧初始化，隐藏的那一个不建；着色器后台并行编译；离开玩法页释放 WebGL 上下文。
+- 不支持 WebGL、创建失败或加 `?render=canvas` 时，自动退回原来的 2D 画布渲染（`src/ui/models/`），玩法与状态接口不变。
+
+每件器物一个场景文件：`src/ui/stage/scenes/<名字>.js`，导出 `{ camera, fog, waterY, build(api) }`，`build` 返回 `{ update(dt, time, state), onState(prev, next) }`。状态字段与原来的槽位一致，见 `docs/MODEL_SLOTS.md`。外部模型仍可用下面的方式注册替换，模块代码不需改动：
 
 ```js
 window.__lgj.registerModel('crystal.ball', (slotEl, ctx) => ({ set(state) { /* 收到 progress/glow/... */ }, dispose() {} }));
 ```
-
-槽位清单与状态字段见 `docs/MODEL_SLOTS.md`。
-
-所有器物统一为风格化手游画风（本色轮廓、柔和两段明暗、冷色暗部与暖色亮部、金属自动高光，见 `src/ui/models/painter.js`，调色板 `toon:false` 可退回柔和写实光照）。「姻缘 · 事业 · 财富」三个玩法的六件器物已内置绘制（`src/ui/models/fortune.js`）：`yinyuan.knot` 同心结（摇动轻晃、结成泛光）、`yinyuan.thread` 红线（两枚玉璧之间由松到紧、线心打结）、`shiye.seal` 官印（抬起落印、留下朱红印文）、`shiye.ladder` 青云梯（横档自下而上逐级亮起）、`caiyun.tree` 摇钱树（枝叶晃动、铜钱落进盆中）、`caiyun.vault` 财库（掀盖露出元宝）。外部建模完成后仍可用上面的方式注册替换，模块代码不需改动。
 
 ## 目录结构（给工程师）
 
@@ -107,7 +114,9 @@ npm install            # 只需一次（esbuild + playwright）
 npm run dev            # 构建并启动 http://localhost:4173 ，改 src/ 自动重建
 npm run build          # 产出 dist/index.html（完整单文件）与 dist/artifact.html（无外壳片段）
 npm test               # 全部单元测试
-npm run smoke          # 无头 Chromium 手机视口逐个打开所有模块，检查报错并截图到 dist/shots/
+npm run smoke          # 无头 Chromium 手机视口逐个打开所有模块（2D 画布回退），检查报错并截图到 dist/shots/
+npm run e2e            # 端到端测试：自建自起服务器，软件 WebGL 下逐个检查 3D 舞台、动作揭晓、帧率、回退与释放，截图到 dist/e2e-shots/
+npm run gallery:3d     # 11 件器物 × 静止 / 动作中 / 揭晓，浅色与深色皮肤各一张，输出 dist/stage-shots/
 node scripts/smoke.mjs --module tarot --act --theme paper   # 单模块 + 模拟摇/甩 + 指定皮肤
 npm run app:sync       # 构建 App 用的网页（www/）并同步到 android/ 与 ios/
 npm run app:android    # 同步并用 Android Studio 打开（app:ios 用 Xcode 打开，需要 Mac）

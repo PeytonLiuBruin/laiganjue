@@ -10,6 +10,7 @@
 //   node scripts/smoke.mjs --viewport se                小屏手机 375x667（也可 360x640 / 430x932 / large / small）
 // 每个画面（玩法页、结果抽屉）都会检查文字互相压住（[overlap]）与横向溢出。
 // 退出码：有 console.error / pageerror / 模块未就绪 / 文字重叠 → 1，否则 0。
+import { launchBrowser } from './browser.mjs';
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
@@ -50,27 +51,6 @@ for (const id of ids) {
   }
 }
 
-async function launchBrowser() {
-  const { chromium } = await import('playwright');
-  try {
-    return await chromium.launch();
-  } catch (e) {
-    // 回退：使用预装的 Chromium 可执行文件
-    const base = process.env.PLAYWRIGHT_BROWSERS_PATH || '/opt/pw-browsers';
-    const candidates = [];
-    if (fs.existsSync(base)) {
-      for (const d of fs.readdirSync(base)) {
-        for (const sub of ['chrome-linux/chrome', 'chrome-linux64/chrome', 'chrome']) {
-          const p = path.join(base, d, sub);
-          if (fs.existsSync(p)) candidates.push(p);
-        }
-      }
-    }
-    if (!candidates.length) throw e;
-    return chromium.launch({ executablePath: candidates[0] });
-  }
-}
-
 await rm(tmpOut, { recursive: true, force: true });
 // 指定 --module 时默认只打包这些模块（其余为占位），避免别人正在改的模块拖垮构建；--full 强制全量
 await buildAll({ out: tmpOut, min: false, only: only.length && !flag('--full') ? only : null });
@@ -81,7 +61,8 @@ await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const port = server.address().port;
 const base = `http://127.0.0.1:${port}/`;
 
-const browser = await launchBrowser();
+// 冒烟测试默认关闭 WebGL，检查画布回退与各模块流程；3D 舞台由 npm run e2e 覆盖（--webgl 可在这里开启）
+const browser = await launchBrowser({ webgl: flag('--webgl') });
 const context = await browser.newContext({
   viewport,
   deviceScaleFactor: 2,

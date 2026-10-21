@@ -1,0 +1,39 @@
+# 端到端测试：构建网页 → 本地起服务器 → 无头 Chromium（软件 WebGL）逐个打开 3D 器物，检查渲染、动作、帧率显示、回退与资源释放。
+# 截图作为 Artifacts 上传（e2e-shots），失败时也能看到画面。
+name: End-to-end tests
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/e2e.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - run: npm run smoke
+      - run: npm run e2e
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-shots
+          path: dist/e2e-shots
+          if-no-files-found: ignore

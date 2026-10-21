@@ -12,7 +12,9 @@
     "build:app": "node scripts/build.mjs --out www --app",
     "app:sync": "npm run build:app && cap sync",
     "app:android": "npm run app:sync && cap open android",
-    "app:ios": "npm run app:sync && cap open ios"
+    "app:ios": "npm run app:sync && cap open ios",
+    "e2e": "node --test --test-concurrency=1 --test-reporter=spec tests/e2e/*.e2e.mjs",
+    "gallery:3d": "node scripts/stage-gallery.mjs --themes paper,ink"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.2",
@@ -27,6 +29,7 @@
     "@capacitor/haptics": "8.0.2",
     "@capacitor/ios": "8.5.2",
     "@capacitor/share": "8.0.2",
-    "@capacitor/splash-screen": "8.0.2"
+    "@capacitor/splash-screen": "8.0.2",
+    "three": "0.180.0"
   }
 }

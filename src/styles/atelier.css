@@ -167,3 +167,13 @@ textarea, select { font-size: 16px; }
 .motion-entry.ready .motion-entry-copy { flex-direction: row; align-items: baseline; gap: 8px; min-width: 0; }
 .motion-entry.ready .motion-entry-title { flex: none; font-size: 12px; line-height: 1.4; }
 .motion-entry.ready .motion-entry-desc { font-size: 12px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 3D 器物舞台：画布铺满整个舞台，圆角跟随舞台裁切；右上角是帧率 */
+.stage-scene:has(.model-slot.has-stage) { transform-style: flat; }
+.model-slot.has-model.has-stage { inset: 0; border-radius: inherit; overflow: hidden; }
+.model-slot.has-stage .stage-canvas { border-radius: inherit; }
+.stage-fps { position: absolute; top: 12px; right: 12px; z-index: 3; padding: 2px 7px; border-radius: 999px; font: 600 10px/1.5 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .04em; color: rgba(255,255,255,.92); background: rgba(20,16,24,.32); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none; font-variant-numeric: tabular-nums; }
+[data-fps='off'] .stage-fps { display: none; }
+.stage:has(.model-slot.has-stage) .stage-floor { display: none; }
+.stage:has(.model-slot.has-stage) .stage-badge { z-index: 3; }
+.stage:has(.model-slot.has-stage) .stage-hint { z-index: 3; }
