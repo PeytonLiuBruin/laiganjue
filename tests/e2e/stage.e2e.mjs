@@ -115,6 +115,9 @@ test('每个 3D 器物都用 WebGL 渲染：有雾、倒影水面、随风粒子
     assert.deepEqual(info.undesignated, [], `${o.id} 只有登记过的材质可以发光`);
     assert.ok(info.shadows, `${o.id} 应开启柔和阴影`);
     await shot(page, o.slot, `${o.id}-idle`);
+    await page.waitForFunction((sel) => /^\d+ FPS$/.test(document.querySelector(sel + ' .stage-fps')?.textContent || ''), o.slot, { timeout: 8000 }).catch(() => {});
+    const fps = await page.locator(`${o.slot} .stage-fps`).textContent().catch(() => '');
+    console.log(`  ${o.id.padEnd(18)} ${fps}  quality ${info.quality}  draw calls ${info.calls}  triangles ${info.triangles}`);
   }
   assert.deepEqual(errors, []);
   await context.close();
@@ -214,9 +217,12 @@ test('深色皮肤下场景随之变暗（天空、雾、水色跟着皮肤走�
 });
 
 test('不支持 WebGL 时退回 2D 画布，玩法照常可用', { timeout: 300_000 }, async () => {
-  const noGL = await launchBrowser({ webgl: false });
+  // Chromium 直接关掉 WebGL；其他内核用 lgj.render=canvas 强制走同一条回退路径
+  const webkit = (process.env.E2E_BROWSER || 'chromium') !== 'chromium';
+  const noGL = webkit ? browser : await launchBrowser({ webgl: false });
   try {
     const { page, context, errors } = await openPage({ webglBrowser: noGL });
+    if (webkit) await context.addInitScript(() => localStorage.setItem('lgj.render', 'canvas'));
     await openModule(page, 'caiyun');
     const slot = page.locator('[data-model-slot="caiyun.tree"]');
     await slot.locator('canvas.model-canvas').waitFor({ state: 'attached' });
@@ -225,5 +231,5 @@ test('不支持 WebGL 时退回 2D 画布，玩法照常可用', { timeout: 300_
     await page.waitForSelector('[data-model-slot="caiyun.tree"] canvas[data-phase="revealed"]', { timeout: 30_000 });
     assert.deepEqual(errors, []);
     await context.close();
-  } finally { await noGL.close(); }
+  } finally { if (!webkit) await noGL.close(); }
 });

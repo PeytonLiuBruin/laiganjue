@@ -4,8 +4,11 @@ import path from 'node:path';
 
 export const WEBGL_ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'];
 
-export async function launchBrowser({ webgl = true } = {}) {
-  const { chromium } = await import('playwright');
+/** engine：chromium（默认）或 webkit（与 iPhone 同内核，需先 npx playwright install webkit）。也可用环境变量 E2E_BROWSER 指定。 */
+export async function launchBrowser({ webgl = true, engine = process.env.E2E_BROWSER || 'chromium' } = {}) {
+  const pw = await import('playwright');
+  if (engine === 'webkit') return pw.webkit.launch();
+  const { chromium } = pw;
   const args = webgl ? WEBGL_ARGS : ['--disable-webgl', '--disable-3d-apis'];
   try {
     return await chromium.launch({ args });
