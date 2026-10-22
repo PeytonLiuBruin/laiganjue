@@ -20,7 +20,7 @@ export const MAT = {
   lacquer: (color = '#c2342b') => new THREE.MeshPhysicalMaterial({ color, roughness: .3, metalness: 0, clearcoat: .9, clearcoatRoughness: .18 }),
   ceramic: (color = '#c73a30') => new THREE.MeshPhysicalMaterial({ color, roughness: .18, metalness: 0, clearcoat: 1, clearcoatRoughness: .06 }),
   wood: (map = null, color = '#ffffff') => new THREE.MeshStandardMaterial({ color, map, roughness: .72, metalness: 0 }),
-  stone: () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .93, metalness: 0 }),
+  stone: () => new THREE.MeshStandardMaterial({ vertexColors: true, color: '#ffe6c4', roughness: .93, metalness: 0 }),
   matte: (color) => new THREE.MeshStandardMaterial({ color, roughness: .85, metalness: 0 }),
 };
 

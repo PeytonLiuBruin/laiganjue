@@ -5,11 +5,13 @@ import { rng, noise, petalGeometry, leafGeometry, softDot, rock } from './organi
 
 /** 每套皮肤的天空、雾、水色与光照强度。 */
 export const ATMOSPHERES = {
-  paper:    { zenith: '#e6d3b3', horizon: '#f6e3c8', water: '#86a7a2', deep: '#55777a', sun: '#ffe2b0', skyGlow: '#ffe2b0', key: 2.4, hemi: .75, env: .55, exposure: 1.0, stars: 0, dark: false },
-  celadon:  { zenith: '#bcd8c9', horizon: '#eaf2ea', water: '#7aa79c', deep: '#4b766f', sun: '#fff1d0', skyGlow: '#fff4dc', key: 2.3, hemi: .8, env: .55, exposure: 1.0, stars: 0, dark: false },
-  ink:      { zenith: '#05060b', horizon: '#1f1d27', water: '#2a2f3e', deep: '#0b0d14', sun: '#f3d49a', skyGlow: '#6c74a8', key: 1.7, hemi: .35, env: .35, exposure: 1.05, stars: 1, dark: true },
-  cinnabar: { zenith: '#140606', horizon: '#3d1915', water: '#3a2222', deep: '#140909', sun: '#ffb37a', skyGlow: '#b85a3a', key: 1.8, hemi: .38, env: .38, exposure: 1.05, stars: .6, dark: true },
-  nebula:   { zenith: '#050616', horizon: '#26214f', water: '#2c2d58', deep: '#0b0b22', sun: '#d9ccff', skyGlow: '#7d6cf0', key: 1.6, hemi: .4, env: .38, exposure: 1.05, stars: 1, dark: true },
+  // 浅色皮肤：晴天手游风（天蓝、碧水、暖白主光），参数见 docs/claude-plan/visual-direction.md
+  paper:    { zenith: '#5ab8ff', horizon: '#b4e3ff', water: '#4cc3d9', deep: '#2789b8', sun: '#fff1d6', skyGlow: '#fff6c8', key: 1.5, hemi: 1.05, hemiSky: '#e8f6ff', hemiGround: '#ffd9a0', rimLight: .6, rim: '#fff4d6', env: .15, exposure: 1.05, stars: 0, dark: false, fogScale: 1.6 },
+  celadon:  { zenith: '#4cc7ad', horizon: '#bff0dd', water: '#45c9b0', deep: '#1f8f86', sun: '#fff4d8', skyGlow: '#fffbe0', key: 1.5, hemi: 1.05, hemiSky: '#ecfff6', hemiGround: '#ffe0a8', rimLight: .6, rim: '#fff8e0', env: .15, exposure: 1.05, stars: 0, dark: false, fogScale: 1.6 },
+  // 深色皮肤：饱和的夜空紫蓝，星点保留
+  ink:      { zenith: '#120d33', horizon: '#3f3380', water: '#3b3f8f', deep: '#151338', sun: '#ffe2a8', skyGlow: '#8a7cff', key: 1.9, hemi: .85, hemiSky: '#8fa0ff', hemiGround: '#3a2a5e', rimLight: 1.0, rim: '#b9a8ff', env: .15, exposure: 1.1, stars: 1, dark: true, fogScale: 1.4 },
+  cinnabar: { zenith: '#2a0b1e', horizon: '#7a2f3a', water: '#6a2f45', deep: '#24101c', sun: '#ffc48a', skyGlow: '#ff7a5a', key: 1.9, hemi: .85, hemiSky: '#ffa08a', hemiGround: '#4a1f30', rimLight: 1.0, rim: '#ffb4a0', env: .15, exposure: 1.1, stars: .6, dark: true, fogScale: 1.4 },
+  nebula:   { zenith: '#0d0b33', horizon: '#4b3a9c', water: '#4a46a8', deep: '#14123d', sun: '#e6dcff', skyGlow: '#9b7cff', key: 1.8, hemi: .85, hemiSky: '#a49cff', hemiGround: '#2e2560', rimLight: 1.0, rim: '#c4b4ff', env: .15, exposure: 1.1, stars: 1, dark: true, fogScale: 1.4 },
 };
 export function atmosphereFor(theme) { return ATMOSPHERES[theme] || ATMOSPHERES.paper; }
 
@@ -231,7 +233,7 @@ export function createLilyPads({ pads = [[1.6, .6, .32]], seed = 41, color = '#5
 export function createMountains(atm, seed = 51) {
   const group = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
-  const tone = new THREE.Color(atm.dark ? '#2b2c38' : '#8f9a96');
+  const tone = new THREE.Color(atm.dark ? '#3a3570' : '#7fb8c9');
   [[-9, -20, 6, 2.4], [-2, -24, 8, 3.2], [7, -21, 6.5, 2.6], [14, -26, 9, 3.6]].forEach(([x, z, w, h], i) => {
     const g = rock({ seed: seed + i, radius: 1, height: 1, flatTop: 2, roughness: .45, detail: 3, stone: '#' + tone.getHexString(), dark: '#' + tone.clone().multiplyScalar(.7).getHexString(), mossAmount: 0 });
     const m = new THREE.Mesh(g, mat); m.scale.set(w, h, w * .4); m.position.set(x, -1.5, z); group.add(m);

@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { atmosphereFor, createSky, createWind, createParticles, createReeds, createLilyPads, createMountains, createGlowRegistry } from './atmosphere.js';
 import { createWater } from './water.js';
+import { toonifyScene, setRimColor } from './toon.js';
 import { SCENES } from './scenes/index.js';
 
 let webgl = null;
@@ -130,7 +131,8 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
   const quality = () => QUALITY[level];
 
   const scene = new THREE.Scene();
-  const [fogNear, fogFar] = def.fog || [8, 24];
+  const fogBase = def.fog || [8, 24];
+  const [fogNear, fogFar] = fogBase.map((v) => v * (atm.fogScale || 1));
   scene.fog = new THREE.Fog(atm.horizon, fogNear, fogFar);
   const cam = def.camera || {};
   const camera = new THREE.PerspectiveCamera(cam.fov || 30, 1, .05, 90);
@@ -148,13 +150,13 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
   const sky = createSky(atm); scene.add(sky.mesh);
   const water = createWater(atm, { y: def.waterY ?? -1.25, renderer }); water.setFog(fogNear, fogFar); scene.add(water.object);
   // 主光暖、轮廓光冷、天光地光补暗部，阴影柔边
-  const hemi = new THREE.HemisphereLight('#fff6e8', atm.water, atm.hemi); scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(atm.hemiSky || '#fff6e8', atm.hemiGround || atm.water, atm.hemi); scene.add(hemi);
   const key = new THREE.DirectionalLight(atm.sun, atm.key);
   key.position.set(-3.2, 5.6, 4.4); key.castShadow = true;
   Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: .5, far: 16 });
   key.shadow.mapSize.set(quality().shadow, quality().shadow); key.shadow.bias = -.0004; key.shadow.normalBias = .025; key.shadow.radius = 5;
   scene.add(key, key.target);
-  const rim = new THREE.DirectionalLight('#cfe0ff', atm.dark ? 1.1 : .8); rim.position.set(2.6, 2.4, -5); scene.add(rim);
+  const rim = new THREE.DirectionalLight('#cfe0ff', atm.rimLight ?? (atm.dark ? 1.1 : .8)); rim.position.set(2.6, 2.4, -5); scene.add(rim);
 
   const wind = createWind();
   const world = new THREE.Group(); scene.add(world);
@@ -177,6 +179,8 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
     shake(amount = .04) { shakeAmt = Math.max(shakeAmt, amount); },
   };
   const built = def.build(api);
+  // 手游卡通风格：三段明暗、硬高光、边缘光、描边（天空与水面不处理）
+  const toon = toonifyScene(scene, { rimColor: atm.rim, outlineRoot: world, skip: (o) => o === sky.mesh || o === water.object });
   built.onQuality?.(level);
 
   let alive = true, frame = 0, last = null, time = 0, visible = true, pageVisible = !document.hidden, width = 320, height = 320;
@@ -186,9 +190,11 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
   function applyAtmosphere() {
     atm = atmosphereFor(root.dataset.theme);
     scene.fog.color.set(atm.horizon);
+    scene.fog.near = fogBase[0] * (atm.fogScale || 1); scene.fog.far = fogBase[1] * (atm.fogScale || 1); water.setFog(scene.fog.near, scene.fog.far);
     const su = sky.mesh.material.uniforms; su.zenith.value.set(atm.zenith); su.horizon.value.set(atm.horizon); su.sunColor.value.set(atm.skyGlow || atm.sun); su.stars.value = atm.stars;
     const wu = water.object.material.uniforms; wu.shallow.value.set(atm.water); wu.deep.value.set(atm.deep); wu.fogColor.value.set(atm.horizon); wu.sunColor.value.set(atm.sun); wu.reflectivity.value = atm.dark ? .75 : .85;
-    hemi.groundColor.set(atm.water); hemi.intensity = atm.hemi; key.color.set(atm.sun); key.intensity = atm.key; rim.intensity = atm.dark ? 1.1 : .8;
+    hemi.color.set(atm.hemiSky || '#fff6e8'); hemi.groundColor.set(atm.hemiGround || atm.water); hemi.intensity = atm.hemi; key.color.set(atm.sun); key.intensity = atm.key; rim.intensity = atm.rimLight ?? (atm.dark ? 1.1 : .8);
+    setRimColor(scene, atm.rim || '#fff4d6');
     scene.environmentIntensity = atm.env; renderer.toneMappingExposure = atm.exposure;
     built.onTheme?.(atm);
     wake();
@@ -292,7 +298,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
         fog: [scene.fog.near, scene.fog.far], water: !!water.object.isReflector, reflection: [rt.width, rt.height],
         particles: ambient.filter((a) => a.kind).map((a) => `${a.kind}:${a.count}`), glow: glow.keys(),
         undesignated: glowing.filter((m) => !m.userData.glow).map((m) => m.type), glowing: glowing.length,
-        meshes, toneMapping: renderer.toneMapping, shadows: renderer.shadowMap.enabled, quality: level,
+        meshes, toon, toneMapping: renderer.toneMapping, shadows: renderer.shadowMap.enabled, quality: level,
         calls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
       };
     },

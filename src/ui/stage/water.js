@@ -42,15 +42,17 @@ const WaterShader = {
       vec3 N = normalize(vec3(-g.x, 1., -g.y));
       vec3 V = normalize(cameraPosition - vWorld);
       float dist = length(cameraPosition - vWorld);
-      vec4 uv = vUv; uv.xy += g * uv.w * .55;
-      vec3 refl = texture2DProj(tDiffuse, uv).rgb;
+      vec4 uv = vUv; uv.xy += g * uv.w * .3;
+      vec3 refl = min(texture2DProj(tDiffuse, uv).rgb, vec3(.86));
       float ndv = max(dot(N, V), 0.);
       float fres = .02 + .98 * pow(1. - ndv, 5.);
       vec3 body = mix(shallow, deep, smoothstep(.15, .7, ndv));
+      // 倒影偏向水色：物体与水面交界处采到的天空不会亮成白边
+      refl = mix(refl, body * 1.15, .3 * smoothstep(.55, .95, max(refl.r, max(refl.g, refl.b))));
       vec3 col = mix(body, refl * color, clamp(.22 + fres * 1.5, 0., .96) * reflectivity);
       // 细浪明暗：法线朝向天光的一侧亮、背向的一侧暗，水面纹理由此显出来
       vec3 L = normalize(vec3(-.35, 1., .55));
-      col *= 1. + (dot(N, L) - L.y) * 4.;
+      col *= 1. + clamp((dot(N, L) - L.y) * 4., -.45, .3);
       vec3 H = normalize(sunDir + V);
       col += sunColor * pow(max(dot(N, H), 0.), 220.) * .9;
       col = mix(col, fogColor, smoothstep(fogNear, fogFar, dist));

@@ -44,7 +44,8 @@ export default {
       const claw = new THREE.Mesh(taperedTube([[c * .28, -.6, s * .28], [c * .48, -.53, s * .48], [c * .62, -.4, s * .62], [c * .68, -.22, s * .68], [c * .64, -.12, s * .64]], (t) => .05 - t * .03, { radial: 10, segments: 24, bark: .05, seed: 90 + i }), bronze);
       world.add(api.shadows(claw));
     }
-    const glass = new THREE.MeshPhysicalMaterial({ color: '#f7f9ff', roughness: .03, metalness: 0, transmission: 1, thickness: .3, ior: 1.08, attenuationColor: new THREE.Color('#f1ecff'), attenuationDistance: 8, clearcoat: 1, clearcoatRoughness: .02, specularIntensity: 1 });
+    // 卡通玻璃：半透明浅蓝 + 硬高光 + 边缘光（由 toon.js 统一着色），不用透射（透射在卡通光照下会发黑）
+    const glass = new THREE.MeshPhysicalMaterial({ color: '#e2d8ff', roughness: .1, metalness: 0, clearcoat: 1, transparent: true, opacity: .5 });
     glass.depthWrite = false;
     const ball = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 40), glass); ball.position.copy(center); ball.castShadow = true; world.add(ball);
     const nebulaMat = new THREE.ShaderMaterial({ ...NebulaShader, uniforms: THREE.UniformsUtils.clone(NebulaShader.uniforms), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -61,7 +62,6 @@ export default {
 
     let energy = .2, clearMix = 0, spin = 0;
     return {
-      onQuality(level) { glass.transmission = level >= 3 ? 0 : 1; glass.opacity = level >= 3 ? .35 : 1; glass.transparent = level >= 3; glass.needsUpdate = true; },
       onState(prev, next) { if (next.revealed && !prev.revealed) motes.burst([0, 0, .3], .9); },
       update(dt, t, s) {
         const p = clamp(s.progress || 0);

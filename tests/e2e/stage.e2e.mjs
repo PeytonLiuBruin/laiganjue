@@ -157,19 +157,25 @@ test('八字排盘：命牌翻转后显示四柱', { timeout: 300_000 }, async (
   await context.close();
 });
 
-test('帧率计数显示在舞台右上角，并能在设置里关闭', { timeout: 300_000 }, async () => {
+test('帧率计数默认隐藏，在设置里打开后显示在舞台右上角，再关闭后隐藏', { timeout: 300_000 }, async () => {
   const { page, context, errors } = await openPage();
   await openModule(page, 'fengshui');
   const slot = '[data-model-slot="fengshui.compass"]';
   await waitStage(page, slot);
   const fps = page.locator(`${slot} .stage-fps`);
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.fps), 'off', '默认关闭');
+  assert.equal(await fps.isVisible(), false, '默认不显示');
+  const row = () => page.locator('.setting-row').filter({ hasText: '帧率显示' });
+  await page.locator('.app-header [aria-label="设置"]').click();
+  await row().locator('input, button, [role="switch"]').first().click();
+  await page.waitForFunction(() => document.documentElement.dataset.fps === 'on');
+  await page.keyboard.press('Escape');
   await assert.doesNotReject(fps.waitFor({ state: 'visible' }));
   await page.waitForFunction((sel) => /^[1-9]\d* FPS$/.test(document.querySelector(sel + ' .stage-fps')?.textContent || ''), slot, { timeout: 60_000 });
   const box = await fps.boundingBox(), slotBox = await page.locator(slot).boundingBox();
   assert.ok(box.x > slotBox.x + slotBox.width / 2 && box.y < slotBox.y + 40, '帧率在右上角');
   await page.locator('.app-header [aria-label="设置"]').click();
-  const row = page.locator('.setting-row').filter({ hasText: '帧率显示' });
-  await row.locator('input, button, [role="switch"]').first().click();
+  await row().locator('input, button, [role="switch"]').first().click();
   await page.waitForFunction(() => document.documentElement.dataset.fps === 'off');
   assert.equal(await fps.isVisible(), false, '关闭后不再显示');
   assert.deepEqual(errors, []);
