@@ -1,8 +1,8 @@
 [
   {
-    "route": "home",
+    "route": "m/qian@read",
     "viewport": "393x852",
-    "file": "home-393x852.png",
+    "file": "m-qian-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/yinyuan",
+    "route": "m/liuyao@read",
     "viewport": "393x852",
-    "file": "m-yinyuan-393x852.png",
+    "file": "m-liuyao-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -22,9 +22,9 @@
     "errors": []
   },
   {
-    "route": "m/caiyun",
+    "route": "m/runes@read",
     "viewport": "393x852",
-    "file": "m-caiyun-393x852.png",
+    "file": "m-runes-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -33,9 +33,9 @@
     "errors": []
   },
   {
-    "route": "m/qian",
+    "route": "m/omikuji@read",
     "viewport": "393x852",
-    "file": "m-qian-393x852.png",
+    "file": "m-omikuji-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -44,9 +44,20 @@
     "errors": []
   },
   {
-    "route": "m/tarot",
+    "route": "m/bazi@read",
     "viewport": "393x852",
-    "file": "m-tarot-393x852.png",
+    "file": "m-bazi-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/tarot@read",
+    "viewport": "393x852",
+    "file": "m-tarot-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -57,9 +68,20 @@
     "errors": []
   },
   {
-    "route": "home",
+    "route": "m/yinyuan@read",
+    "viewport": "393x852",
+    "file": "m-yinyuan-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/qian@read",
     "viewport": "430x932",
-    "file": "home-430x932.png",
+    "file": "m-qian-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -68,9 +90,9 @@
     "errors": []
   },
   {
-    "route": "m/yinyuan",
+    "route": "m/liuyao@read",
     "viewport": "430x932",
-    "file": "m-yinyuan-430x932.png",
+    "file": "m-liuyao-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -79,9 +101,9 @@
     "errors": []
   },
   {
-    "route": "m/caiyun",
+    "route": "m/runes@read",
     "viewport": "430x932",
-    "file": "m-caiyun-430x932.png",
+    "file": "m-runes-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -90,9 +112,9 @@
     "errors": []
   },
   {
-    "route": "m/qian",
+    "route": "m/omikuji@read",
     "viewport": "430x932",
-    "file": "m-qian-430x932.png",
+    "file": "m-omikuji-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -101,15 +123,37 @@
     "errors": []
   },
   {
-    "route": "m/tarot",
+    "route": "m/bazi@read",
     "viewport": "430x932",
-    "file": "m-tarot-430x932.png",
+    "file": "m-bazi-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/tarot@read",
+    "viewport": "430x932",
+    "file": "m-tarot-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
       "bad": [
         "chip"
       ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/yinyuan@read",
+    "viewport": "430x932",
+    "file": "m-yinyuan-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
     },
     "errors": []
   }

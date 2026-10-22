@@ -21,6 +21,7 @@ export function mount(container, ctx) {
   let question = String(storage.get('question', '') || '').slice(0, 40);
   let startedAt = null; // 首掷时间（用于记录干支）
   let lastReading = null;
+  let lastKey = null; // 本卦的结果身份，用于深度解读额度（同一卦解锁后反复打开不再计次）
   let gen = 0; // 会话代数：重起后让仍在飞行中的一掷作废
   let doneNudge = 0; // 卦成后体感再来时的轻提示节流
   let history = storage.get('history', []); // [{ v:[6 值], q, t }]
@@ -48,7 +49,7 @@ export function mount(container, ctx) {
     if (hintEl.lastChild.textContent !== t) hintEl.lastChild.textContent = t;
     hintEl.classList.toggle('ly-quiet', quiet);
   };
-  const tossBtn = button(UI.tossLabel, { variant: 'primary', size: 'large', primary: true, onClick: () => (session.done && lastReading ? showResult(lastReading) : doToss(22)) });
+  const tossBtn = button(UI.tossLabel, { variant: 'primary', size: 'large', primary: true, onClick: () => (session.done && lastReading ? openCurrent() : doToss(22)) });
   const autoBtn = button(UI.autoLabel, { variant: 'ghost', onClick: toggleAuto });
   const resetBtn = button('', { variant: 'ghost', icon: 'refresh', cls: 'ly-reset', onClick: () => reset() });
   resetBtn.setAttribute('aria-label', UI.resetLabel);
@@ -63,7 +64,7 @@ export function mount(container, ctx) {
   ctx.motion.onToss((e) => sensorToss(e.intensity));
   ctx.motion.onShake((e) => sensorToss(e.intensity, true));
   ctx.gesture.flick(pit, (g) => {
-    if (session.done) { if (lastReading) showResult(lastReading); return; }
+    if (session.done) { if (lastReading) openCurrent(); return; }
     doToss(g.intensity);
   }, { minSpeed: 0.5 });
   // 卦成之后，体感不再改动结果：六掷得来的卦，不该被一次误摇抹掉
@@ -123,6 +124,7 @@ export function mount(container, ctx) {
     if (session.done) {
       auto = false;
       lastReading = buildReading(sessionValues(session));
+      lastKey = `${ctx.id}:${Date.now()}`;
       // The sixth coin must settle before any reading action becomes usable.
       setButtons();
       if (!await wait(reduce() ? 10 : 460) || g !== gen) return;
@@ -159,7 +161,7 @@ export function mount(container, ctx) {
     }
     if (egg || luckLabel(focus.luck).luck === 5) confetti(st.el, { count: 54, origin: { x: 0.34, y: 0.5 } });
 
-    history = history.concat([{ v: reading.values, q: question, t: Date.now() }]).slice(-12);
+    history = history.concat([{ v: reading.values, q: question, t: Number(lastKey?.split(':')[1]) || Date.now() }]).slice(-12);
     storage.set('history', history);
     renderHistory();
     revealScroll();
@@ -172,6 +174,13 @@ export function mount(container, ctx) {
     if (over <= 0) return;
     const room = Math.max(0, ritual.receipt.getBoundingClientRect().top - 84);
     window.scrollBy({ top: Math.min(over, room), behavior: ctx.platform.prefersReducedMotion ? 'instant' : 'smooth' });
+  }
+
+  /** 打开本卦的深度解读：走统一额度，解锁后按钮文字回到「展开解读」 */
+  function openCurrent() {
+    if (!lastReading || busy || resultSheet) return;
+    const reading = lastReading;
+    ritual.gated(ctx.id, lastKey, () => showResult(reading)).then(() => { if (ritual.alive) setButtons(); });
   }
 
   /* ---------- 结果抽屉 ---------- */
@@ -279,7 +288,7 @@ export function mount(container, ctx) {
             onClick: () => {
               haptic.tap();
               sound.play('paper');
-              showResult(r, { fromHistory: true, when: it.t ? new Date(it.t) : null, q: it.q || '' });
+              ritual.gated(ctx.id, it.t ? `${ctx.id}:${it.t}` : null, () => showResult(r, { fromHistory: true, when: it.t ? new Date(it.t) : null, q: it.q || '' }));
             },
           },
           formatBrief(r),
@@ -302,7 +311,7 @@ export function mount(container, ctx) {
   function setButtons() {
     const n = session.tosses.length, done = session.done;
     qInput.disabled = busy || n > 0;
-    tossBtn.setLabel(done ? UI.readLabel : n ? `掷第${CN_NUM[n]}爻` : UI.tossLabel);
+    tossBtn.setLabel(done ? ritual.gateLabel(ctx.id, lastKey, { short: true }) : n ? `掷第${CN_NUM[n]}爻` : UI.tossLabel);
     tossBtn.disabled = busy || auto;
     autoBtn.hidden = done;
     autoBtn.setLabel(auto ? UI.autoStop : n ? UI.autoRest : UI.autoLabel);
@@ -321,6 +330,7 @@ export function mount(container, ctx) {
     session = initSession();
     startedAt = null;
     lastReading = null;
+    lastKey = null;
     coins.reset();
     board.reset();
     ritual.clear();

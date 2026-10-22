@@ -5,7 +5,10 @@
 //   left(feature)      今天这个玩法还剩几次免费
 //   peek(feature)      → 'pro' | 'free' | 'credit' | null（不消耗，只看下一次会用哪种）
 //   take(feature)      → 同上，并真正消耗一次；null 表示需要付费
+//   isUnlocked(key)    这个结果（例如某一卦、某一签）是否已经解锁过，解锁过的反复打开不再计次
+//   markUnlocked(key)  记下已解锁的结果，只保留最近 UNLOCK_KEEP 个
 export const FREE_PER_DAY = 1;
+export const UNLOCK_KEEP = 60;
 
 /** 本地日期键：2026-10-22。 */
 export function dayKey(date) {
@@ -35,5 +38,17 @@ export function createQuota({ storage, purchases, now = () => Date.now(), free =
     } else if (kind === 'credit' && !purchases.useCredit()) return null;
     return kind;
   }
-  return { left, peek, take, free };
+  const unlockedList = () => {
+    const v = storage?.get('quota.unlocked', []);
+    return Array.isArray(v) ? v : [];
+  };
+  const isUnlocked = (key) => !!key && unlockedList().includes(String(key));
+  function markUnlocked(key) {
+    if (!key) return;
+    const k = String(key);
+    const list = unlockedList().filter((x) => x !== k);
+    list.push(k);
+    storage?.set('quota.unlocked', list.slice(-UNLOCK_KEEP));
+  }
+  return { left, peek, take, free, isUnlocked, markUnlocked };
 }

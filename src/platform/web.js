@@ -3,6 +3,7 @@ import { createHaptic } from './haptic.js';
 import { createNative } from './native.js';
 import { createPurchases } from './purchases.js';
 import { createQuota } from './quota.js';
+import { createStreak } from './streak.js';
 
 // 平台层（Web 实现）。模块只通过这里拿"体感 / 手势 / 震动 / 音效 / 存储 / 分享"，
 // 迁移微信小程序时只需实现同名接口的 weapp.js（映射表见 docs/PORTING_WEAPP.md）。
@@ -776,6 +777,7 @@ export function createPlatform() {
   const sound = createSound(storage);
   const purchases = createPurchases({ storage });
   const quota = createQuota({ storage, purchases });
+  const streak = createStreak({ storage, purchases });
   purchases.init();
   return {
     name: native.isNative ? native.os : 'web',
@@ -793,6 +795,7 @@ export function createPlatform() {
     storage,
     purchases,
     quota,
+    streak,
     share: (text, opts = {}) => share(text, { ...opts, native }),
   };
 }

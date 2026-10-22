@@ -162,3 +162,19 @@ test('付费卡文案：价格周期、自动续期与取消方式写清楚', ()
   assert.equal(ctaLabel('monthly', { priceString: '¥18.00', period: '每月' }), '开通 Pro');
   assert.equal(ctaLabel('lifetime', { priceString: '¥198.00' }), '¥198.00 永久解锁');
 });
+
+test('免费额度：解锁过的结果记住身份，反复打开不再计次，只保留最近若干个', async () => {
+  const { UNLOCK_KEEP } = await import('../src/platform/quota.js');
+  const storage = memStorage();
+  const q = createQuota({ storage, purchases: { pro: false, credits: 0 } });
+  assert.equal(q.isUnlocked('liuyao:1'), false);
+  assert.equal(q.isUnlocked(null), false, '没有身份的结果不算解锁');
+  q.markUnlocked('liuyao:1');
+  q.markUnlocked('liuyao:1');
+  assert.equal(q.isUnlocked('liuyao:1'), true);
+  assert.deepEqual(storage.get('quota.unlocked'), ['liuyao:1'], '重复记录只留一条');
+  for (let i = 0; i < UNLOCK_KEEP + 5; i++) q.markUnlocked('omikuji:' + i);
+  assert.equal(storage.get('quota.unlocked').length, UNLOCK_KEEP);
+  assert.equal(q.isUnlocked('liuyao:1'), false, '最旧的被挤出');
+  assert.equal(q.isUnlocked('omikuji:' + (UNLOCK_KEEP + 4)), true);
+});

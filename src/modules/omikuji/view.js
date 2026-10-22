@@ -20,6 +20,7 @@ export function mount(container, ctx) {
   let phase = PHASE.IDLE;
   let busy = false;
   let lot = null; // 当前抽到的签
+  let lotKey = null; // 这一签的结果身份：结签、带回家后再展开不重复计入额度
   let rack = storage.get('rack', initRack());
   let daily = storage.get('daily', null);
   let history = storage.get('history', []);
@@ -194,7 +195,7 @@ export function mount(container, ctx) {
     },
     onEnd(g) {
       if (!slipDrag) {
-        if (!g.cancelled && !tying && !busy && phase === PHASE.PAPER && Math.hypot(g.dx,g.dy) < 10) showResult(lot);
+        if (!g.cancelled && !tying && !busy && phase === PHASE.PAPER && Math.hypot(g.dx,g.dy) < 10) openLot();
         return;
       }
       slipDrag = false; slip.classList.remove('ok-slip-dragging');
@@ -210,7 +211,7 @@ export function mount(container, ctx) {
   });
   slip.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') cancelTie();
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (busy || phase !== PHASE.PAPER) return; tying ? tieToRack() : showResult(lot); }
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (busy || phase !== PHASE.PAPER) return; tying ? tieToRack() : openLot(); }
   });
   rackEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!busy) openRackSheet(); } });
   ctx.gesture.tap(rackEl, () => openRackSheet());
@@ -261,7 +262,7 @@ export function mount(container, ctx) {
     ritual.step(0); go('shake');
     if (!await bundle.draw({ power: intensity / 20, continuous, replay })) return;
     if (!await wait(320)) return;
-    lot = pickLot(ctx.rng.random); bundle.setLabel(lot.no); stick.hidden = false;
+    lot = pickLot(ctx.rng.random); lotKey = `${ctx.id}:${Date.now()}`; bundle.setLabel(lot.no); stick.hidden = false;
     ritual.step(1); go('out'); setBusy(false);
   }
 
@@ -336,7 +337,7 @@ export function mount(container, ctx) {
     const level = levelOf(lot.level);
     ritual.reveal({
       kicker: lot.no, title: level.name, text: briefOf(lot),
-      onRead: () => showResult(lot),
+      onRead: () => showResult(lot), gate: true, unlockKey: lotKey,
       actions: [button(isBad(level) ? TEXT.receiptTie : TEXT.receiptKeep, { variant: 'soft', onClick: () => (isBad(level) ? beginTie() : takeHome()) })],
     });
   }
@@ -388,7 +389,7 @@ export function mount(container, ctx) {
     renderRack(true); folded.remove(); cancelAnims(slip); sound.play('chime'); haptic.success();
     dropHint.textContent = TEXT.dropHintDone; dropHint.classList.add('show');
     st.el.dataset.tie = 'done'; tying = false;
-    ritual.reveal({ kicker: TEXT.tiedKicker, title: TEXT.tiedTitle, text: TEXT.tiedText, onRead: () => showResult(lot) });
+    ritual.reveal({ kicker: TEXT.tiedKicker, title: TEXT.tiedTitle, text: TEXT.tiedText, onRead: () => showResult(lot), gate: true, unlockKey: lotKey });
     setBusy(false); syncUI();
   }
 
@@ -421,7 +422,7 @@ export function mount(container, ctx) {
     resolved = true;
     tubeWrap.classList.remove('ok-dim');
     setBusy(false); syncUI();
-    ritual.reveal({ kicker: TEXT.takenKicker, title: TEXT.takenTitle, text: TEXT.takenText, onRead: () => showResult(lot) });
+    ritual.reveal({ kicker: TEXT.takenKicker, title: TEXT.takenTitle, text: TEXT.takenText, onRead: () => showResult(lot), gate: true, unlockKey: lotKey });
   }
 
   /** 回到初始：签纸折起、签棒收回筒中 */
@@ -520,6 +521,13 @@ export function mount(container, ctx) {
       h('div', { class: 'ok-history-kicker' }, TEXT.historyKicker),
       historyBar(history.slice(-8), (x) => `${x.no} · ${(levelOf(x.level) || {}).name || ''}`),
     );
+  }
+
+  /** 点签纸或按回车打开解读：和结果条的「展开解读」走同一道额度 */
+  function openLot() {
+    if (!lot || openSheet || busy || !ritual.alive) return;
+    const l = lot;
+    ritual.gated(ctx.id, lotKey, () => showResult(l));
   }
 
   /* ---------- 抽屉 ---------- */

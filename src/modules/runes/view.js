@@ -452,7 +452,12 @@ export function mount(container, ctx) {
     storage.set('history', history);
     renderHistory();
     // 结果条：趁金光亮起的这一拍先浮出一句话小结，页面顺势滚到能看见「展开解读」；读者自己决定何时展开
-    ritual.reveal({ ...receiptOf(lastModel), onRead: () => showResult(lastModel) });
+    // 结果条在金光这一拍就出现，读者可能在收尾动画结束前就点「展开解读」：等收尾完再打开，免得额度扣了却没打开
+    const model = lastModel;
+    ritual.reveal({ ...receiptOf(model), gate: true, onRead: async () => {
+      for (let i = 0; busy && i < 40; i++) if (!await wait(60)) return;
+      showResult(model);
+    } });
     releaseSpace();
     revealScroll();
     if (!await wait(T(640))) return;

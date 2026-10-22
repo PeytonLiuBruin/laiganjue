@@ -67,36 +67,70 @@ export function createRitual(ctx, stage, labels) {
     }
     return true;
   }
-  // gate：深度解读计入免费额度（每个玩法每天 1 次，Pro 不限）。同一个结果解锁后反复打开不再计次。
-  function reveal({ kicker = '', title, text, onRead, actions = [], gate = false }) {
-    if (!alive) return;
+  // 深度解读的统一闸门：先用当天免费次数或单次包，不够时弹付费卡。
+  // key 是结果的身份（例如 'liuyao:1729600000000'），同一个结果解锁后反复打开、从历史里打开都不再计次。
+  // 返回 true 表示已放行并执行了 fn。
+  let refreshReadLabel = null; // 当前结果条上「展开解读」按钮的文字刷新
+  async function gated(feature, key, fn) {
+    const quota = ctx.platform?.quota;
+    if (!quota || (key && quota.isUnlocked?.(key))) { fn(); return true; }
+    if (!quota.take(feature)) {
+      const ok = await openPaywall(ctx.platform, { reason: '今天的免费深度解读已用完，开通 Pro 不限次数' });
+      if (!ok || !alive || !quota.take(feature)) { refreshReadLabel?.(); return false; }
+    }
+    if (key) quota.markUnlocked?.(key);
+    fn();
+    refreshReadLabel?.();
+    return true;
+  }
+  // short：给半宽按钮用（六爻卦成后主按钮和「再起一卦」并排），避免折成两行
+  function gateLabel(feature, key, { short = false } = {}) {
+    const quota = ctx.platform?.quota;
+    if (!quota || (key && quota.isUnlocked?.(key))) return '展开解读';
+    const kind = quota.peek(feature);
+    if (short) return kind === 'free' ? '免费展开解读' : kind ? '展开解读' : '解锁深度解读';
+    return kind === 'free' ? '展开解读 · 今日免费' : kind ? '展开解读' : '解锁深度解读';
+  }
+  // gate：深度解读计入免费额度（每个玩法每天 1 次，Pro 不限）。gate 为字符串时作为额度的玩法名。
+  // unlockKey：结果身份，传了就跨次记住已解锁（见 gated）。没传时只在这一张结果条内记住。
+  // 返回 { read }，模块里其他打开解读的入口（点签纸、历史、主按钮）也应调用它，免得绕过额度。
+  function reveal({ kicker = '', title, text, onRead, actions = [], gate = false, unlockKey = null }) {
+    if (!alive) return { read: () => {} };
     clear(receipt);
     receipt.append(h('div', { class: 'ritual-receipt-copy' }, kicker && h('span', { class: 'ritual-kicker' }, kicker), h('h2', null, title), text && h('p', null, text)));
-    const quota = gate ? ctx.platform?.quota : null;
     const feature = typeof gate === 'string' ? gate : ctx.id;
-    let unlocked = !quota;
-    const label = () => {
-      if (unlocked) return '展开解读';
-      const kind = quota.peek(feature);
-      return kind === 'free' ? '展开解读 · 今日免费' : kind ? '展开解读' : '解锁深度解读';
-    };
+    const key = gate ? (unlockKey ? String(unlockKey) : null) : null;
+    let unlocked = !gate || !ctx.platform?.quota;
+    // 结果条里还有并排的按钮时，解读按钮只占半宽，用短文字免得折行
+    const label = () => (unlocked ? '展开解读' : gateLabel(feature, key, { short: actions.length > 0 }));
     let readBtn = null;
     const read = async () => {
-      if (!unlocked) {
-        if (!quota.take(feature)) {
-          const ok = await openPaywall(ctx.platform, { reason: '今天的免费深度解读已用完，开通 Pro 不限次数' });
-          if (!ok || !alive || !quota.take(feature)) { readBtn?.setLabel(label()); return; }
-        }
-        unlocked = true;
-        readBtn?.setLabel(label());
-      }
-      onRead();
+      if (!onRead) return;
+      if (unlocked) { onRead(); return; }
+      const ok = await gated(feature, key, () => { unlocked = true; onRead(); });
+      readBtn?.setLabel(label());
+      return ok;
     };
     if (onRead) { readBtn = button(label(), { variant: 'primary', onClick: read }); readBtn.dataset.read = '1'; }
+    refreshReadLabel = readBtn ? () => readBtn.setLabel(label()) : null;
     if (onRead || actions.length) receipt.append(h('div', { class: 'ritual-receipt-actions' }, readBtn, actions));
+    if (onRead) trialNudge();
     receipt.hidden = false;
+    return { read };
   }
-  function clearResult() { receipt.hidden = true; clear(receipt); }
+  // 连续使用第 3 天起，在结果条底部出现一次温和的年度试用提示，7 天内不重复，Pro 不出现。
+  function trialNudge() {
+    const streak = ctx.platform?.streak;
+    if (!streak) return;
+    const n = streak.visit();
+    if (!streak.shouldNudge()) return;
+    streak.markNudged();
+    const go = h('button', { type: 'button', class: 'ritual-nudge-go', onClick: () => openPaywall(ctx.platform, { reason: `已经连续来了 ${n} 天，年度 Pro 可以先免费试用` }) }, '看看');
+    const close = h('button', { type: 'button', class: 'ritual-nudge-x', attrs: { 'aria-label': '不再显示' }, onClick: () => note.remove() }, '×');
+    const note = h('div', { class: 'ritual-nudge', attrs: { role: 'note' } }, h('span', null, `连续 ${n} 天来感觉了 · 年度 Pro 可免费试用`), go, close);
+    receipt.append(note);
+  }
+  function clearResult() { receipt.hidden = true; clear(receipt); refreshReadLabel = null; }
   ctx.addCleanup(() => {
     alive = false;
     pending.forEach((cancel) => cancel());
@@ -105,5 +139,5 @@ export function createRitual(ctx, stage, labels) {
     document.removeEventListener('visibilitychange', visibility);
   });
   step(0);
-  return { progress, receipt, energy, step, power, focus, pause, animate, track, reveal, clear: clearResult, get alive() { return alive; } };
+  return { progress, receipt, energy, step, power, focus, pause, animate, track, reveal, gated, gateLabel, clear: clearResult, get alive() { return alive; } };
 }

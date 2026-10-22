@@ -14,6 +14,8 @@ const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 && args[i + 1] 
 const out = path.resolve(root, opt('--out', 'docs/claude-plan/screenshots'));
 const routes = opt('--routes', 'home,m/yinyuan,m/caiyun,m/shiye,m/crystal,m/fengshui').split(',');
 const theme = opt('--theme', 'paper');
+// --seed '{"streak":{...}}'：截图前写入的本地存储（键名不带 lgj: 前缀），用于连续天数、额度等状态
+const seed = JSON.parse(opt('--seed', '{}'));
 const VIEWPORTS = [{ name: '393x852', width: 393, height: 852 }, { name: '430x932', width: 430, height: 932 }];
 
 await mkdir(out, { recursive: true });
@@ -27,7 +29,12 @@ const browser = await launchBrowser();
 const report = [];
 for (const vp of VIEWPORTS) {
   const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-  await context.addInitScript((t) => { try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:onboarded', 'true'); } catch {} }, theme);
+  await context.addInitScript(({ t, seed }) => {
+    try {
+      localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:onboarded', 'true');
+      if (!sessionStorage.getItem('lgj-seeded')) { for (const [k, v] of Object.entries(seed)) localStorage.setItem('lgj:' + k, JSON.stringify(v)); sessionStorage.setItem('lgj-seeded', '1'); }
+    } catch {}
+  }, { t: theme, seed });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -45,9 +52,11 @@ for (const vp of VIEWPORTS) {
     if (action === 'settings-end') { await page.locator('.setting-legal').scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(500); }
     if (action === 'read') {
       // 多步玩法（灵签要先摇再取签）：一直点主按钮，直到结果条出现「展开解读」
-      for (let i = 0; i < 4 && !(await page.locator('.ritual-receipt [data-read]').count()); i++) {
-        await page.locator('.view-module [data-action="primary"]').first().click().catch(() => {});
-        await page.waitForSelector('.ritual-receipt [data-read]', { timeout: 8_000 }).catch(() => {});
+      // 六爻要掷六次，卦成后主按钮本身变成「展开解读」
+      const primary = page.locator('.view-module [data-action="primary"]').first();
+      for (let i = 0; i < 8 && !(await page.locator('.ritual-receipt [data-read]').count()) && !/解读/.test(await primary.textContent().catch(() => '')); i++) {
+        await primary.click().catch(() => {});
+        await page.waitForSelector('.ritual-receipt [data-read]', { timeout: route === 'm/liuyao' ? 2_500 : 8_000 }).catch(() => {});
       }
       await page.waitForTimeout(1200);
       await page.locator('.ritual-receipt').scrollIntoViewIfNeeded().catch(() => {});

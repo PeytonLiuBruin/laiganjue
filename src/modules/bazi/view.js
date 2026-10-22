@@ -113,6 +113,9 @@ export function mount(container, ctx) {
       title: dm.image,
       text: `${dm.keywords.join(' · ')}。${chart.missing.length ? `五行缺${chart.missing.join('、')}。` : '五行齐全。'}`,
       onRead: openSheet,
+      gate: true,
+      // 同一天、同一组生辰反复展开不再计次
+      unlockKey: `bazi:${new Date().toDateString()}:${input.y}-${input.m}-${input.d}-${input.hour}-${input.gender}`,
     });
     st.setHint('');
     primaryBtn.setLabel(UI.again);

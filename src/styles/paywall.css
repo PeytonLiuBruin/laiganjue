@@ -45,3 +45,21 @@
 .pw-legal { display: flex; justify-content: center; gap: 8px; font-size: 11px; color: var(--text-3); }
 .pw-legal a { color: var(--text-2); }
 .setting-pro { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* 连续使用第 3 天的温和试用提示：结果条底部一行，不遮挡、可关闭 */
+.ritual-nudge {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; padding: 8px 8px 8px 14px;
+  border-radius: 14px; background: color-mix(in srgb, var(--c-gold, #ffc93c) 18%, transparent);
+  font-size: 13px; line-height: 1.4; color: var(--ink, inherit);
+}
+.ritual-nudge > span { flex: 1; min-width: 0; }
+.ritual-nudge-go {
+  flex: none; border: 0; border-radius: 10px; padding: 6px 12px;
+  background: var(--c-gold, #ffc93c); color: #2b2240; font: inherit; font-weight: 700;
+  box-shadow: 0 2px 0 var(--c-gold-deep, #d8901e);
+}
+.ritual-nudge-go:active { transform: translateY(2px); box-shadow: none; }
+.ritual-nudge-x {
+  flex: none; width: 28px; height: 28px; border: 0; background: none; color: inherit; opacity: .55; font-size: 18px;
+}
