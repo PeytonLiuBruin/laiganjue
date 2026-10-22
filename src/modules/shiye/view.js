@@ -62,7 +62,7 @@ export function mount(container, ctx) {
     },
   });
   const quickEl = h('div', { class: 'sy-quick' });
-  container.append(ritual.progress, tabBar.el, profileLine, formWrap, st.el, hintEl, kit.actionBar(primaryBtn), ritual.receipt);
+  container.append(ritual.progress, tabBar.el, st.el, hintEl, profileLine, formWrap, kit.actionBar(primaryBtn), ritual.receipt);
 
   ctx.gesture.tap(seal.el, () => act());
   ctx.gesture.tap(ladder.el, () => act());

@@ -23,7 +23,7 @@ export function createMotionPrompt({ motion, meta, requestPermission, haptic, in
   const mark = h('span', { class: 'motion-entry-mark', attrs: { 'aria-hidden': 'true' } }, icon('g-' + gesture, { size: 30 }));
   const title = h('strong', { class: 'motion-entry-title' });
   const desc = h('span', { class: 'motion-entry-desc' });
-  const enable = button('开启手机体感', { variant: 'primary', icon: 'motion', onClick: activate });
+  const enable = button('开启体感', { variant: 'primary', size: 'small', onClick: activate });
   const el = h('aside', { class: 'motion-entry', hidden: !supported, attrs: { 'aria-label': '手机体感' } }, mark, h('div', { class: 'motion-entry-copy', attrs: { 'aria-live': 'polite' } }, title, desc), enable);
 
   function instructions() {
@@ -41,11 +41,11 @@ export function createMotionPrompt({ motion, meta, requestPermission, haptic, in
     el.hidden = !supported || motion.state === 'unsupported';
     el.classList.toggle('ready', ready);
     el.setAttribute('aria-busy', String(busy));
-    title.textContent = ready ? '体感已开启' : '开启手机体感';
-    desc.textContent = ready ? action : motion.state === 'denied' || error ? instructions() : action + '，先点下方开启。';
+    title.textContent = ready ? '体感已开启' : '手机体感';
+    desc.textContent = ready ? action : motion.state === 'denied' || error ? instructions() : action;
     enable.hidden = ready;
     enable.disabled = busy;
-    enable.setLabel(busy ? '正在申请…' : motion.state === 'denied' || error ? '重新开启体感' : '开启手机体感');
+    enable.setLabel(busy ? '申请中…' : motion.state === 'denied' || error ? '重试' : '开启体感');
     if (detail) detail.textContent = instructions();
     if (dialogButton) { dialogButton.disabled = busy; dialogButton.setLabel(busy ? '正在申请…' : motion.state === 'denied' || error ? '重新开启体感' : '开启手机体感'); }
     if (ready) dialog?.close();

@@ -94,3 +94,27 @@ export function createBirthForm(ctx, { value, onChange, hour = true, gender = tr
     },
   };
 }
+
+/**
+ * 折叠的生辰卡：平时只露一行「我的生辰 · 1995.06.18 · 男 ✎」，点开才显示完整表单，把首屏让给器物舞台。
+ * createBirthFold({ summary: () => string, content: Node | Node[], open }) → { el, update(), setOpen(v), get open }
+ */
+export function createBirthFold({ summary, content, open = false, cls = '' } = {}) {
+  const text = h('span', { class: 'birth-fold-text' });
+  const caret = h('span', { class: 'birth-fold-caret', attrs: { 'aria-hidden': 'true' } });
+  const body = h('div', { class: 'birth-fold-body' }, ...(Array.isArray(content) ? content : [content]));
+  const toggle = h('button', { type: 'button', class: 'birth-fold-toggle', onClick: () => setOpen(!isOpen) }, text, caret);
+  const el = h('div', { class: ['birth-fold', cls] }, toggle, body);
+  let isOpen = false;
+  function update() { text.textContent = summary(); }
+  function setOpen(v) {
+    isOpen = !!v;
+    body.hidden = !isOpen;
+    el.classList.toggle('open', isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    caret.textContent = isOpen ? '收起' : '修改';
+  }
+  update();
+  setOpen(open);
+  return { el, update, setOpen, get open() { return isOpen; } };
+}

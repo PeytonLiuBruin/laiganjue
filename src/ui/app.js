@@ -167,6 +167,12 @@ export function startApp(root) {
     try {
       const un = await impl.mount(el, ctx);
       ctx.addCleanup(typeof un === 'function' ? un : null);
+      // 体感邀请放到器物舞台正下方，作为一行轻提示，首屏先看到器物
+      if (prompt) {
+        let anchor = el.querySelector('.stage');
+        while (anchor && anchor.parentElement !== el) anchor = anchor.parentElement;
+        if (anchor) anchor.after(prompt.el);
+      }
       el.dataset.ready = '1';
     } catch (e) {
       console.error(`[module:${target}] mount failed`, e);

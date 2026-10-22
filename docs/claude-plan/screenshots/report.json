@@ -1,8 +1,8 @@
 [
   {
-    "route": "home@settings",
+    "route": "home",
     "viewport": "393x852",
-    "file": "home-settings-393x852.png",
+    "file": "home-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,20 +11,9 @@
     "errors": []
   },
   {
-    "route": "home@settings-end",
+    "route": "m/yinyuan",
     "viewport": "393x852",
-    "file": "home-settings-end-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "393x852",
-    "file": "home-paywall-393x852.png",
+    "file": "m-yinyuan-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -44,9 +33,33 @@
     "errors": []
   },
   {
-    "route": "home@settings",
+    "route": "m/qian",
+    "viewport": "393x852",
+    "file": "m-qian-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/tarot",
+    "viewport": "393x852",
+    "file": "m-tarot-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "home",
     "viewport": "430x932",
-    "file": "home-settings-430x932.png",
+    "file": "home-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -55,20 +68,9 @@
     "errors": []
   },
   {
-    "route": "home@settings-end",
+    "route": "m/yinyuan",
     "viewport": "430x932",
-    "file": "home-settings-end-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "430x932",
-    "file": "home-paywall-430x932.png",
+    "file": "m-yinyuan-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -84,6 +86,30 @@
       "scrollW": 430,
       "w": 430,
       "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/qian",
+    "viewport": "430x932",
+    "file": "m-qian-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/tarot",
+    "viewport": "430x932",
+    "file": "m-tarot-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   }

@@ -4,7 +4,7 @@ import { loveProfile, matchPair, shareMatch, shareLove, formatDate } from './cor
 import { UI, YEAR_NOTES } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
 import { createModelSlot } from '../../ui/model-slot.js';
-import { createBirthForm, describeBirth } from '../../ui/birth-form.js';
+import { createBirthForm, createBirthFold, describeBirth } from '../../ui/birth-form.js';
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage, profile } = ctx;
@@ -20,11 +20,25 @@ export function mount(container, ctx) {
   /* ---------- 生辰表单 ---------- */
   const self = profile.get() || { y: 1995, m: 6, d: 18, hour: -1, gender: 'male' };
   const partnerDefault = profile.get('partner') || { y: 1996, m: 8, d: 8, hour: -1, gender: self.gender === 'female' ? 'male' : 'female' };
-  const selfForm = createBirthForm(ctx, { value: self, title: UI.formTitle.self, onChange: (v) => { profile.set('self', v); aForm.set(v); invalidate(); } });
-  const aForm = createBirthForm(ctx, { value: self, title: UI.formTitle.a, onChange: (v) => { profile.set('self', v); selfForm.set(v); invalidate(); } });
-  const bForm = createBirthForm(ctx, { value: partnerDefault, title: UI.formTitle.b, onChange: (v) => { profile.set('partner', v); invalidate(); } });
-  const selfWrap = h('div', { class: 'yy-forms' }, selfForm.el);
-  const pairWrap = h('div', { class: 'yy-forms yy-pair', hidden: true }, aForm.el, h('div', { class: 'yy-x', attrs: { 'aria-hidden': 'true' } }, '×'), bForm.el);
+  const selfForm = createBirthForm(ctx, { value: self, title: UI.formTitle.self, onChange: (v) => { profile.set('self', v); aForm.set(v); syncFolds(); invalidate(); } });
+  const aForm = createBirthForm(ctx, { value: self, title: UI.formTitle.a, onChange: (v) => { profile.set('self', v); selfForm.set(v); syncFolds(); invalidate(); } });
+  const bForm = createBirthForm(ctx, { value: partnerDefault, title: UI.formTitle.b, onChange: (v) => { profile.set('partner', v); syncFolds(); invalidate(); } });
+  // 生辰表单折叠成舞台下方一行，点开再改，首屏留给器物
+  const hasSelf = () => !!profile.get();
+  const selfFold = createBirthFold({
+    cls: 'yy-fold',
+    summary: () => (hasSelf() ? `我的生辰 · ${describeBirth(selfForm.value)}` : `填上生辰更准 · 现按 ${describeBirth(selfForm.value)}`),
+    content: h('div', { class: 'yy-forms' }, selfForm.el),
+  });
+  const pairFold = createBirthFold({
+    cls: 'yy-fold',
+    summary: () => `两人生辰 · ${describeBirth(aForm.value).split(' · ')[0]} × ${describeBirth(bForm.value).split(' · ')[0]}`,
+    content: h('div', { class: 'yy-forms yy-pair' }, aForm.el, h('div', { class: 'yy-x', attrs: { 'aria-hidden': 'true' } }, '×'), bForm.el),
+  });
+  const selfWrap = selfFold.el;
+  const pairWrap = pairFold.el;
+  pairWrap.hidden = true;
+  function syncFolds() { selfFold.update(); pairFold.update(); }
 
   /* ---------- 舞台：同心结 / 红线（实物占位，等待外部模型） ---------- */
   const st = stage({ cls: 'yy-stage', badge: UI.badge[tab] });
@@ -56,7 +70,7 @@ export function mount(container, ctx) {
     },
   });
   const quickEl = h('div', { class: 'yy-quick' });
-  container.append(ritual.progress, tabBar.el, selfWrap, pairWrap, st.el, pips, hintEl, kit.actionBar(primaryBtn), ritual.receipt);
+  container.append(ritual.progress, tabBar.el, st.el, pips, hintEl, selfWrap, pairWrap, kit.actionBar(primaryBtn), ritual.receipt);
 
   ctx.gesture.tap(knot.el, () => act());
   ctx.gesture.tap(thread.el, () => act());
@@ -122,6 +136,7 @@ export function mount(container, ctx) {
       return;
     }
     profile.set('self', selfForm.value);
+    syncFolds();
     knot.set({ active: false, revealed: true, text: love.daily.title });
     sound.play('chime');
     haptic.settle();
@@ -215,6 +230,7 @@ export function mount(container, ctx) {
     }
     profile.set('self', aForm.value);
     profile.set('partner', bForm.value);
+    syncFolds();
     clear(pips);
     const pipEls = match.items.map((it) => h('span', { class: ['yy-pip', it.tone] }, `${it.label} · ${it.title}`));
     pips.append(...pipEls);
