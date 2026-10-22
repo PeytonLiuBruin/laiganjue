@@ -11,6 +11,7 @@ import { ritualArt } from './ritual-art.js';
 import { createMotionPrompt } from './motion-prompt.js';
 import { openPaywall, TERMS_URL, PRIVACY_URL } from './paywall.js';
 import { routeFromUrl } from './deeplink.js';
+import { versionText } from './version.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -520,7 +521,7 @@ export function startApp(root) {
         h('a', { attrs: { href: TERMS_URL, target: '_blank', rel: 'noopener' } }, '使用条款'),
         h('span', null, ' · '),
         h('a', { attrs: { href: PRIVACY_URL, target: '_blank', rel: 'noopener' } }, '隐私政策')),
-      h('p', { class: 't-faint mt-2', style: { fontSize: '11px' } }, `构建时间 ${typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__.slice(0, 16).replace('T', ' ') : '开发模式'}`),
+      h('p', { class: 'setting-version t-faint mt-2', dataset: { version: '1' } }, versionText(typeof __BUILD_INFO__ !== 'undefined' ? __BUILD_INFO__ : null)),
     );
     const sh = sheet({ title: '设置', content });
     sh.open();

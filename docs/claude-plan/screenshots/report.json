@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/fengshui",
+    "route": "home@settings-end",
     "viewport": "393x852",
-    "file": "m-fengshui-393x852.png",
+    "file": "home-settings-end-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,97 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/caiyun",
-    "viewport": "393x852",
-    "file": "m-caiyun-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/crystal",
-    "viewport": "393x852",
-    "file": "m-crystal-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/yinyuan",
-    "viewport": "393x852",
-    "file": "m-yinyuan-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "393x852",
-    "file": "home-paywall-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui",
+    "route": "home@settings-end",
     "viewport": "430x932",
-    "file": "m-fengshui-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun",
-    "viewport": "430x932",
-    "file": "m-caiyun-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/crystal",
-    "viewport": "430x932",
-    "file": "m-crystal-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/yinyuan",
-    "viewport": "430x932",
-    "file": "m-yinyuan-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "430x932",
-    "file": "home-paywall-430x932.png",
+    "file": "home-settings-end-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,

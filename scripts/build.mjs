@@ -8,6 +8,7 @@ import { build } from 'esbuild';
 import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -48,10 +49,19 @@ const onlyModulesPlugin = (allowed) => ({
   },
 });
 
+/** 版本信息：package.json 的版本号 + 构建号（git 提交数，只增不减）+ 提交短哈希 + 构建时间。设置页底部显示。 */
+export async function buildInfo() {
+  const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+  const git = (...args) => { try { return execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } };
+  const dirty = git('status', '--porcelain', '--untracked-files=no') ? '+' : '';
+  return { version: pkg.version, build: Number(git('rev-list', '--count', 'HEAD')) || 0, commit: (git('rev-parse', '--short', 'HEAD') || 'dev') + dirty, time: new Date().toISOString() };
+}
+
 export async function buildAll({ out = outDir, min = minify, only = null, app = appShell } = {}) {
   await mkdir(out, { recursive: true });
   await mkdir(path.join(out, 'tarot'), { recursive: true });
   const plugins = only && only.length ? [onlyModulesPlugin(new Set(only))] : [];
+  const info = await buildInfo();
   const [js, css] = await Promise.all([
     build({
       entryPoints: [path.join(root, 'src/main.js')],
@@ -63,7 +73,7 @@ export async function buildAll({ out = outDir, min = minify, only = null, app = 
       legalComments: 'none',
       charset: 'utf8',
       logLevel: 'error',
-      define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString()) },
+      define: { __BUILD_TIME__: JSON.stringify(info.time), __BUILD_INFO__: JSON.stringify(info) },
       plugins,
     }),
     build({

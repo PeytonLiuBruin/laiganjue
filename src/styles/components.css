@@ -1170,4 +1170,5 @@
 .birth-form .select { min-height: 46px; }
 
 .setting-legal { font-size: 12px; text-align: center; }
+.setting-version { font-size: 11px; text-align: center; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
 .setting-legal a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
