@@ -18,11 +18,13 @@ const theme = opt('--theme', 'paper');
 export const SCENES = [
   { route: 'home', title: '摇一摇，来点感觉', sub: '灵签 · 塔罗 · 六爻 · 姻缘，十几种玩法一手掌握', bg: ['#5ab8ff', '#b4e3ff'] },
   { route: 'm/qian', action: 'read', title: '摇签筒，求一支灵签', sub: '签诗逐句解，像在庙里抽签', bg: ['#ff8a5c', '#ffd27a'] },
-  { route: 'm/tarot', action: 'read', title: '塔罗牌阵，一张张翻开', sub: '经典 RWS 牌面，牌阵完整解读', bg: ['#9b6bff', '#d7c4ff'] },
+  { route: 'm/tarot', action: 'read', upright: true, title: '塔罗牌阵，一张张翻开', sub: '经典 RWS 牌面，牌阵完整解读', bg: ['#9b6bff', '#d7c4ff'] },
   { route: 'm/caiyun', title: '摇钱树，摇出今日财运', sub: '3D 卡通器物，手感十足', bg: ['#ffc93c', '#fff1b8'] },
   { route: 'm/yinyuan', title: '姻缘线，看看缘分', sub: '正缘画像与合婚六项分析', bg: ['#ff6a8a', '#ffd0dc'] },
   { route: 'm/crystal', title: '水晶球，问一个问题', sub: '不用注册，打开就能玩', bg: ['#3fcf8e', '#c6f5df'] },
 ];
+// 商店图里可以出现的塔罗牌（正位、寓意积极、画面明亮）
+const GOOD_CARDS = ['太阳', '星星', '世界', '恋人', '命运之轮', '力量', '魔术师', '皇后', '圣杯三', '圣杯十', '星币十', '权杖六', '圣杯王牌', '星币王牌'];
 // 外框尺寸（逻辑像素 × 3 = 输出像素）与 App 画面尺寸
 const SIZES = [
   { name: '6.9in-1290x2796', frame: { width: 430, height: 932 }, app: { width: 393, height: 852 }, titleH: 196, shotW: 326 },
@@ -70,6 +72,22 @@ async function main() {
         await page.waitForSelector('.ritual-receipt [data-read]', { timeout: 8_000 }).catch(() => {});
       }
       await page.waitForTimeout(1500);
+      // 塔罗要一张寓意积极的正位牌：逆位时画面倒置像出错，「圣杯五 · 失落」这类牌放在商店图里太丧。不满足就再来一次（最多 25 次）
+      const unlucky = async () => {
+        if (await page.locator('.view-module .reversed').count()) return true;
+        const name = ((await page.locator('.ritual-receipt h2').first().textContent({ timeout: 1500 }).catch(() => '')) || '').trim();
+        return !GOOD_CARDS.includes(name);
+      };
+      for (let i = 0; s.upright && i < 25 && (await unlucky()); i++) {
+        await page.locator('.view-module [data-action="primary"]').first().click().catch(() => {});
+        await page.waitForTimeout(3500);
+        if (!(await page.locator('.ritual-receipt [data-read]').count())) {
+          await page.locator('.view-module [data-action="primary"]').first().click().catch(() => {});
+          await page.waitForSelector('.ritual-receipt [data-read]', { timeout: 8_000 }).catch(() => {});
+          await page.waitForTimeout(1500);
+        }
+      }
+      if (s.upright && (await unlucky())) console.warn('警告：塔罗 25 次都没抽到合适的正位牌，商店图需要人工重拍');
     }
     shots.push('data:image/png;base64,' + (await page.screenshot()).toString('base64'));
   }

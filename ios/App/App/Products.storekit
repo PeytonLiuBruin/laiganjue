@@ -1,0 +1,125 @@
+{
+  "identifier": "6A1C0FFE",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "59.99",
+      "familyShareable": false,
+      "internalID": "6A1C0F01",
+      "localizations": [
+        {
+          "description": "一次买断，永久解锁全部 Pro 权益",
+          "displayName": "来感觉 Pro 永久",
+          "locale": "zh_CN"
+        },
+        {
+          "description": "一次买断，永久解锁全部 Pro 权益",
+          "displayName": "来感觉 Pro 永久",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "laiganjue.pro.lifetime",
+      "referenceName": "Pro Lifetime",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "2.99",
+      "familyShareable": false,
+      "internalID": "6A1C0F02",
+      "localizations": [
+        {
+          "description": "单独购买 5 次深度解读",
+          "displayName": "5 次深度解读",
+          "locale": "zh_CN"
+        },
+        {
+          "description": "单独购买 5 次深度解读",
+          "displayName": "5 次深度解读",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "laiganjue.reading.pack5",
+      "referenceName": "Reading Pack 5",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_locale": "zh_CN",
+    "_storefront": "CHN",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [
+    {
+      "id": "6A1C0F10",
+      "localizations": [],
+      "name": "来感觉 Pro",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "29.99",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "6A1C0F11",
+          "introductoryOffer": {
+            "internalID": "6A1C0F12",
+            "paymentMode": "free",
+            "subscriptionPeriod": "P3D"
+          },
+          "localizations": [
+            {
+              "description": "无限次深度解读、个性化运势与全部皮肤",
+              "displayName": "来感觉 Pro 年度",
+              "locale": "zh_CN"
+            },
+            {
+              "description": "无限次深度解读、个性化运势与全部皮肤",
+              "displayName": "来感觉 Pro 年度",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "laiganjue.pro.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Pro Yearly",
+          "subscriptionGroupID": "6A1C0F10",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "4.99",
+          "familyShareable": false,
+          "groupNumber": 2,
+          "internalID": "6A1C0F13",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "无限次深度解读、个性化运势与全部皮肤",
+              "displayName": "来感觉 Pro 月度",
+              "locale": "zh_CN"
+            },
+            {
+              "description": "无限次深度解读、个性化运势与全部皮肤",
+              "displayName": "来感觉 Pro 月度",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "laiganjue.pro.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Pro Monthly",
+          "subscriptionGroupID": "6A1C0F10",
+          "type": "RecurringSubscription",
+          "winbackOffers": []
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

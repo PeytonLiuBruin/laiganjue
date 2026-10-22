@@ -8,6 +8,7 @@
 // setBarStyle(背景色)  按皮肤深浅切换状态栏文字颜色
 // onBack(cb) → 取消函数   安卓返回键（注册后不再走 WebView 默认的历史后退）
 // minimize()  退到后台
+// onUrlOpen(cb) → 取消函数   App 被 laiganjue:// 链接打开（含冷启动时的链接）
 //
 // 各插件只用 registerPlugin 按名字取原生实现，不把插件的网页实现打进包里。
 import { Capacitor, registerPlugin, SystemBars } from '@capacitor/core';
@@ -45,7 +46,7 @@ export function createNative(cap = Capacitor, register = registerPlugin, bars = 
   const isNative = cap.isNativePlatform();
   const os = cap.getPlatform();
   if (!isNative) {
-    return { isNative: false, os, vibrate: null, share: async () => null, keepAwake: noop, immersive: noop, setBarStyle: noop, onBack: () => noop, minimize: noop };
+    return { isNative: false, os, vibrate: null, share: async () => null, keepAwake: noop, immersive: noop, setBarStyle: noop, onBack: () => noop, minimize: noop, onUrlOpen: () => noop };
   }
 
   const Haptics = register('Haptics');
@@ -100,5 +101,10 @@ export function createNative(cap = Capacitor, register = registerPlugin, bars = 
       return () => quiet(handle?.then?.((h) => h.remove()));
     },
     minimize: () => quiet(App.minimizeApp()),
+    onUrlOpen(cb) {
+      quiet(App.getLaunchUrl()?.then?.((r) => { if (r?.url) cb(r.url); }));
+      const handle = quiet(App.addListener('appUrlOpen', (e) => cb(e.url)));
+      return () => quiet(handle?.then?.((h) => h.remove()));
+    },
   };
 }

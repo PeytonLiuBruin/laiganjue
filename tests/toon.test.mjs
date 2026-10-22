@@ -31,7 +31,7 @@ test('物理材质关闭清漆光泽，透射玻璃保持原样', () => {
   assert.equal(toonable(glass), false);
 });
 
-test('描边只加在主要实体上：平面、半透明、实例化、过小的物体不加', () => {
+test('描边只加在主要实体上：平面、半透明、过小的物体不加，实例化物体走实例化描边', () => {
   const mat = () => new THREE.MeshStandardMaterial({ color: '#c2342b' });
   const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat());
   const hull = addOutline(box);
@@ -44,7 +44,7 @@ test('描边只加在主要实体上：平面、半透明、实例化、过小�
   assert.equal(addOutline(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat())), null);
   const clear = mat(); clear.transparent = true;
   assert.equal(addOutline(new THREE.Mesh(new THREE.SphereGeometry(.5), clear)), null);
-  assert.equal(addOutline(new THREE.InstancedMesh(new THREE.BoxGeometry(), mat(), 3)), null);
+  assert.ok(addOutline(new THREE.InstancedMesh(new THREE.BoxGeometry(), mat(), 3))?.isInstancedMesh, '实例化物体用实例化外壳');
   assert.equal(addOutline(new THREE.Mesh(new THREE.SphereGeometry(.01), mat())), null);
   const big = new THREE.Mesh(new THREE.SphereGeometry(5), mat());
   addOutline(big);
@@ -63,4 +63,49 @@ test('整场景处理：跳过天空水面，统计材质与描边，换肤更�
   assert.equal(sky.material.userData.toon, undefined);
   setRimColor(scene, '#b9a8ff');
   assert.equal(world.children[0].material.userData.toon.toonRimColor.value.getHexString(), 'b9a8ff');
+});
+
+test('透射玻璃改为卡通半透明后照常卡通化', async () => {
+  const THREE = await import('three');
+  const { glassify } = await import('../src/ui/stage/toon.js');
+  const gem = new THREE.MeshPhysicalMaterial({ color: '#b98cf2', transmission: .55, thickness: .35 });
+  assert.equal(toonable(gem), false, '透射材质不直接卡通化');
+  glassify(gem);
+  assert.equal(gem.transmission, 0);
+  assert.equal(gem.transparent, true);
+  assert.ok(gem.opacity < 1 && gem.opacity > .6);
+  assert.equal(toonable(gem), true);
+  const scene = new THREE.Scene();
+  scene.add(new THREE.Mesh(new THREE.SphereGeometry(.3), new THREE.MeshPhysicalMaterial({ transmission: .8 })));
+  const r = toonifyScene(scene);
+  assert.equal(r.materials, 1, 'toonifyScene 会先 glassify 再卡通化');
+});
+
+test('实例化物体有描边：外壳共用实例矩阵，细丝描边不超过半径的一半', async () => {
+  const THREE = await import('three');
+  const strand = new THREE.CylinderGeometry(.005, .006, .42, 4, 1);
+  const inst = new THREE.InstancedMesh(strand, new THREE.MeshStandardMaterial({ color: '#d63a30' }), 30);
+  const hull = addOutline(inst);
+  assert.ok(hull?.isInstancedMesh, '实例化描边');
+  assert.equal(hull.instanceMatrix, inst.instanceMatrix, '共用实例矩阵');
+  inst.count = 12; hull.onBeforeRender();
+  assert.equal(hull.count, 12, '数量跟随本体');
+  const sh = { uniforms: {}, vertexShader: '#include <begin_vertex>' };
+  hull.material.onBeforeCompile(sh);
+  assert.ok(sh.uniforms.outlineWidth.value <= .006 * .45 + 1e-9, '细丝描边很细');
+  const many = new THREE.InstancedMesh(new THREE.SphereGeometry(.2), new THREE.MeshStandardMaterial(), TOON.outline.maxInstances + 1);
+  assert.equal(addOutline(many), null, '数量太多（树叶）不描边，保性能');
+});
+
+test('卡通着色的 GGX 高光按真实 dotNL 计算（背光轮廓处不会冲成纯白）', async () => {
+  const THREE = await import('three');
+  const m = new THREE.MeshStandardMaterial({ color: '#9a948a', vertexColors: true });
+  toonifyMaterial(m);
+  const sh = { uniforms: {}, fragmentShader: THREE.ShaderLib.physical.fragmentShader };
+  m.onBeforeCompile(sh, {});
+  const frag = sh.fragmentShader;
+  assert.ok(frag.includes('#include <lights_physical_pars_fragment>') === false);
+  assert.match(frag, /directSpecular \+= dotNL \* directLight\.color \* BRDF_GGX\(/);
+  assert.doesNotMatch(frag, /directSpecular \+= irradiance \* BRDF_GGX\(/);
+  assert.equal(m.userData.toon.toonSpec.value, 0, '岩石哑光');
 });

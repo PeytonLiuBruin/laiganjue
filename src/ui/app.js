@@ -10,6 +10,7 @@ import { registerModel, hasModel } from './model-slot.js';
 import { ritualArt } from './ritual-art.js';
 import { createMotionPrompt } from './motion-prompt.js';
 import { openPaywall, TERMS_URL, PRIVACY_URL } from './paywall.js';
+import { routeFromUrl } from './deeplink.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -323,6 +324,15 @@ export function startApp(root) {
     else if (document.querySelector('.onboard')) return;
     else if ((location.hash || '#/') !== '#/') navigate('#/');
     else platform.native.minimize();
+  });
+
+  /* ---------------- 深链（App） ---------------- */
+  // laiganjue://pro 打开付费卡，laiganjue://m/<玩法> 打开玩法页。
+  platform.native.onUrlOpen?.((url) => {
+    const r = routeFromUrl(url, MODULES);
+    if (!r) return;
+    if (r.paywall) openPaywall(platform);
+    else if (r.hash) navigate(r.hash);
   });
 
   /* ---------------- 首页 ---------------- */

@@ -11,7 +11,7 @@ export const TOON = {
   soft: .02, // 分界过渡半宽
   spec: { metal: .55, gloss: .4, base: .12 },
   rim: .6, // 乘本体色，所以比文档里的 0.35 略大
-  outline: { ratio: .022, min: .006, max: .03, minRadius: .045 },
+  outline: { ratio: .022, min: .006, max: .03, minRadius: .045, maxInstances: 160 },
 };
 
 const RAMP_GLSL = `
@@ -24,13 +24,33 @@ float toonRamp(float x) {
 `;
 const DIRECT_FROM = 'vec3 irradiance = dotNL * directLight.color;';
 const DIRECT_TO = `vec3 irradiance = toonRamp(dotNL) * directLight.color;
-	reflectedLight.directSpecular += directLight.color * toonSpec * smoothstep(.955, .975, dot(reflect(-directLight.direction, geometryNormal), geometryViewDir));`;
+	reflectedLight.directSpecular += directLight.color * toonSpec * smoothstep(.2, .4, dotNL) * smoothstep(.955, .975, dot(reflect(-directLight.direction, geometryNormal), geometryViewDir));`;
+// 原版 GGX 高光乘的是 irradiance：卡通三段明暗让背光面（dotNL≈0）也有 0.42 的 irradiance，
+// 轮廓处 dotNV 也≈0 时 GGX 分母趋零、高光冲到无穷大，石台边缘出现纯白碎边。高光改回按真实 dotNL 计算。
+const GGX_FROM = 'reflectedLight.directSpecular += irradiance * BRDF_GGX(';
+const GGX_TO = 'reflectedLight.directSpecular += dotNL * directLight.color * BRDF_GGX(';
 const RIM = `outgoingLight += diffuseColor.rgb * toonRimColor * toonRim * pow(1.0 - saturate(dot(normal, normalize(vViewPosition))), 3.0);
 	#include <opaque_fragment>`;
 
-/** 是否可以卡通化：标准 / 物理材质、非透射玻璃、未手动排除。 */
+/** 是否可以卡通化：标准 / 物理材质、未手动排除（透射玻璃先由 glassify 改成卡通半透明）。 */
 export function toonable(m) {
   return !!m && m.isMeshStandardMaterial && !m.userData.toon && !m.userData.noToon && !(m.transmission > 0);
+}
+
+/**
+ * 透射材质（写实玻璃、水晶）在三段明暗下会发黑或像塑料：改为卡通半透明——
+ * 关掉透射、按透射程度设不透明度、颜色提亮一点，之后照常走卡通着色（硬高光 + 边缘光）。
+ */
+export function glassify(m) {
+  if (!m?.isMeshPhysicalMaterial || !(m.transmission > 0) || m.userData.noToon) return m;
+  const t = m.transmission;
+  m.transmission = 0; m.thickness = 0;
+  m.transparent = true; m.opacity = Math.min(m.opacity, 1 - t * .45);
+  m.depthWrite = false;
+  const hsl = {}; m.color.getHSL(hsl); m.color.setHSL(hsl.h, hsl.s, Math.min(.8, hsl.l + .08));
+  m.userData.glass = true;
+  m.needsUpdate = true;
+  return m;
 }
 
 /** 把一个材质原地改为卡通着色，返回它自己。 */
@@ -46,19 +66,27 @@ export function toonifyMaterial(m, { rimColor = '#fff4d6' } = {}) {
   m.metalness = 0; m.roughness = 1; m.envMapIntensity = .15;
   if (m.isMeshPhysicalMaterial) { m.clearcoat = 0; m.sheen = 0; m.iridescence = 0; m.specularIntensity = .5; }
   // 岩石、远山这类顶点色材质不加边缘光（轮廓处会出现白边）
-  const uniforms = { toonSpec: { value: spec }, toonRim: { value: m.vertexColors ? 0 : TOON.rim }, toonRimColor: { value: new THREE.Color(rimColor) } };
+  // 硬高光只在朝光的面出现，顶点色的岩石、远山不要高光（卡通石头是哑光的）
+  const uniforms = { toonSpec: { value: m.vertexColors ? 0 : spec }, toonRim: { value: m.vertexColors ? 0 : TOON.rim }, toonRimColor: { value: new THREE.Color(rimColor) } };
   m.userData.toon = uniforms;
   const prev = m.onBeforeCompile, prevKey = m.customProgramCacheKey;
   m.onBeforeCompile = function (sh, r) {
     prev?.call(this, sh, r);
     Object.assign(sh.uniforms, uniforms);
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <lights_physical_pars_fragment>', RAMP_GLSL + THREE.ShaderChunk.lights_physical_pars_fragment.replace(DIRECT_FROM, DIRECT_TO))
+      .replace('#include <lights_physical_pars_fragment>', RAMP_GLSL + THREE.ShaderChunk.lights_physical_pars_fragment.replace(DIRECT_FROM, DIRECT_TO).replace(GGX_FROM, GGX_TO))
       .replace('#include <opaque_fragment>', RIM);
   };
   m.customProgramCacheKey = function () { return (prevKey ? prevKey.call(this) : '') + '|toon'; };
   m.needsUpdate = true;
   return m;
+}
+
+/** 几何最细方向的半厚度（包围盒最小边的一半）。 */
+function thinness(geo) {
+  if (!geo.boundingBox) geo.computeBoundingBox();
+  const d = new THREE.Vector3(); geo.boundingBox.getSize(d);
+  return Math.max(1e-4, Math.min(d.x, d.y, d.z) / 2);
 }
 
 const FLAT = new Set(['PlaneGeometry', 'CircleGeometry', 'ShapeGeometry', 'RingGeometry']);
@@ -99,7 +127,8 @@ function hullGeometry(geo) {
 
 /** 给一个网格加描边，返回描边网格（不符合条件时返回 null）。 */
 export function addOutline(mesh) {
-  if (!mesh.isMesh || mesh.isInstancedMesh || mesh.userData.outline || mesh.userData.noOutline || mesh.userData.rebuild) return null;
+  if (!mesh.isMesh || mesh.userData.outline || mesh.userData.noOutline || mesh.userData.rebuild) return null;
+  if (mesh.isInstancedMesh && mesh.count > TOON.outline.maxInstances) return null;
   const mat = Array.isArray(mesh.material) ? mesh.material[mesh.material.length - 1] : mesh.material;
   if (!mat || !mat.isMeshStandardMaterial || mat.transparent || mat.userData.noOutline || !(mat.side === THREE.FrontSide)) return null;
   const geo = mesh.geometry;
@@ -109,8 +138,19 @@ export function addOutline(mesh) {
   const scale = Math.max(Math.abs(s.x), Math.abs(s.y), Math.abs(s.z)) || 1;
   const worldR = geo.boundingSphere.radius * scale;
   if (worldR < TOON.outline.minRadius) return null;
-  const width = Math.min(TOON.outline.max, Math.max(TOON.outline.min, worldR * TOON.outline.ratio)) / scale;
-  const hull = new THREE.Mesh(hullGeometry(geo), outlineMaterial(outlineColor(mat), width));
+  let width = Math.min(TOON.outline.max, Math.max(TOON.outline.min, worldR * TOON.outline.ratio)) / scale;
+  // 细长物体（丝线、流苏、链环）：描边不超过最细方向半径的 45%，否则整根会被描成黑线
+  width = Math.min(width, thinness(geo) * .45);
+  const hullGeo = hullGeometry(geo), hullMat = outlineMaterial(outlineColor(mat), width);
+  let hull;
+  if (mesh.isInstancedMesh) {
+    // 实例化物体（叶片、流苏丝、链环、铆钉）：外壳与本体共用同一份实例矩阵，数量每帧跟随
+    hull = new THREE.InstancedMesh(hullGeo, hullMat, mesh.instanceMatrix.count);
+    hull.instanceMatrix = mesh.instanceMatrix;
+    hull.count = mesh.count;
+    hull.frustumCulled = false;
+    hull.onBeforeRender = () => { hull.count = mesh.count; };
+  } else hull = new THREE.Mesh(hullGeo, hullMat);
   hull.userData.outline = true; hull.castShadow = false; hull.receiveShadow = false;
   hull.raycast = () => {};
   mesh.add(hull);
@@ -125,7 +165,7 @@ export function toonifyScene(root, { rimColor, outlineRoot = root, skip = () => 
   let materials = 0, outlines = 0;
   const visit = (o, fn) => { if (skip(o)) return; fn(o); for (const c of [...o.children]) visit(c, fn); };
   visit(root, (o) => {
-    for (const m of [].concat(o.material || [])) if (toonable(m)) { toonifyMaterial(m, { rimColor }); materials++; }
+    for (const m of [].concat(o.material || [])) { glassify(m); if (toonable(m)) { toonifyMaterial(m, { rimColor }); materials++; } }
   });
   const meshes = [];
   visit(outlineRoot, (o) => { if (o.isMesh) meshes.push(o); });

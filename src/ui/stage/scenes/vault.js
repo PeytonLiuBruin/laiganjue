@@ -51,13 +51,14 @@ export default {
     api.shadows(chest, true, true);
 
     // 元宝与金光（指定发光）
-    const ingotMat = new THREE.MeshStandardMaterial({ color: '#f1bc4f', metalness: 1, roughness: .2, emissive: '#ffbf4a', emissiveIntensity: 0 });
+    const ingotMat = new THREE.MeshStandardMaterial({ color: '#d98c12', metalness: 1, roughness: .2, emissive: '#ff9a1f', emissiveIntensity: 0 });
     const ingotGeo = yuanbaoGeometry(1);
     const ingots = [[-.42, -.12, .3, 0], [.4, -.14, -.4, .2], [0, .02, .1, .1], [-.18, .22, -.2, .15], [.22, .22, .25, .05]].map(([x, z, a, d]) => {
       const mesh = new THREE.Mesh(ingotGeo, ingotMat); mesh.rotation.y = a; mesh.castShadow = true; chest.add(mesh);
       return { mesh, home: new THREE.Vector3(x, .74, z), delay: d };
     });
-    glow.add('ingots', { materials: [ingotMat], color: '#ffc04f', base: 0, peak: .6 });
+    // 卡通着色后元宝本体已经很亮，金光用更深的橙金、峰值压低，免得发白
+    glow.add('ingots', { materials: [ingotMat], color: '#ff8a10', base: 0, peak: .22 });
     const rayTex = canvasTexture(64, 256, (c, w, h) => { const g = c.createLinearGradient(0, h, 0, 0); g.addColorStop(0, 'rgba(255,214,120,.9)'); g.addColorStop(1, 'rgba(255,214,120,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); const x = c.createLinearGradient(0, 0, w, 0); x.addColorStop(0, 'rgba(0,0,0,1)'); x.addColorStop(.5, 'rgba(0,0,0,0)'); x.addColorStop(1, 'rgba(0,0,0,1)'); c.globalCompositeOperation = 'destination-out'; c.fillStyle = x; c.fillRect(0, 0, w, h); });
     const rayMat = new THREE.MeshBasicMaterial({ map: rayTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, side: THREE.DoubleSide, fog: true });
     rayMat.userData.glow = true;
@@ -66,7 +67,7 @@ export default {
       const ray = new THREE.Mesh(new THREE.PlaneGeometry(.22, 1.6), rayMat); ray.geometry.translate(0, .8, 0);
       ray.rotation.y = i / 9 * Math.PI; ray.rotation.z = (i % 2 ? 1 : -1) * (.12 + (i % 3) * .1); rays.add(ray);
     }
-    const shine = new THREE.PointLight('#ffc463', 0, 3, 2); shine.position.set(0, 1.1, .2); chest.add(shine);
+    const shine = new THREE.PointLight('#ffb030', 0, 3, 2); shine.position.set(0, 1.1, .2); chest.add(shine);
     // 石滩上散落的铜钱
     const coinGeo = coinGeometry({ r: .08, hole: .022, depth: .016 });
     [[-1.05, .35, .3], [1.0, .3, -.6], [.85, .45, 1.2]].forEach(([x, z, a]) => { const c = new THREE.Mesh(coinGeo, gold); c.position.set(x, -.94, z); c.rotation.set(-Math.PI / 2 + .1, 0, a); world.add(c); });
@@ -105,7 +106,7 @@ export default {
         rays.visible = rayMat.opacity > .01;
         rays.rotation.y = t * .25;
         rays.scale.set(1, .4 + beam * .8, 1);
-        shine.intensity = beam * 2.2;
+        shine.intensity = beam * .55; // 卡通着色下点光太强会把元宝冲成粉白，压低到只染一层暖光
         glow.set('ingots', Math.max(mix, beam * .6) * (.75 + .25 * Math.sin(t * 2.3)));
       },
     };
