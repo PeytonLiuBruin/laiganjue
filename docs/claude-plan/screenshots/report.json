@@ -11,6 +11,17 @@
     "errors": []
   },
   {
+    "route": "home@settings-end",
+    "viewport": "393x852",
+    "file": "home-settings-end-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
     "route": "home@paywall",
     "viewport": "393x852",
     "file": "home-paywall-393x852.png",
@@ -18,30 +29,6 @@
       "scrollW": 393,
       "w": 393,
       "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/qian@read",
-    "viewport": "393x852",
-    "file": "m-qian-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot@read",
-    "viewport": "393x852",
-    "file": "m-tarot-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
     },
     "errors": []
   },
@@ -68,6 +55,17 @@
     "errors": []
   },
   {
+    "route": "home@settings-end",
+    "viewport": "430x932",
+    "file": "home-settings-end-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
     "route": "home@paywall",
     "viewport": "430x932",
     "file": "home-paywall-430x932.png",
@@ -75,30 +73,6 @@
       "scrollW": 430,
       "w": 430,
       "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/qian@read",
-    "viewport": "430x932",
-    "file": "m-qian-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot@read",
-    "viewport": "430x932",
-    "file": "m-tarot-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": [
-        "chip"
-      ]
     },
     "errors": []
   },

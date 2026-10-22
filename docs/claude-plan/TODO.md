@@ -12,15 +12,18 @@ P0 上架必需 · P1 影响付费转化 · P2 体验打磨。完成后打勾并
   完成标准：`src/platform/purchases.js` 封装 `@capgo/native-purchases`（网页版走空实现），产品 ID 与 monetization.md 一致。有 `isPro()`、`purchase(id)`、`restore()`。付费卡显示 StoreKit 本地化价格、周期、自动续期说明、条款与隐私链接、恢复购买、关闭按钮。单元测试覆盖权益判断与网页版降级。
 - [x] **免费额度：深度解读每天 1 次免费，超出弹付费卡** ✅ 2026-10-22（第 2 轮，`src/platform/quota.js`，灵签、塔罗、姻缘正缘、姻缘合婚已接入）
   完成标准：至少灵签、塔罗、姻缘三处深度解读接入额度，计数按本地日期重置，Pro 不受限，有单元测试。
-- [ ] **隐私清单 PrivacyInfo.xcprivacy + 隐私政策补充内购说明 + 使用条款页**
+- [x] **隐私清单 PrivacyInfo.xcprivacy + 隐私政策补充内购说明 + 使用条款页** ✅ 2026-10-22（第 3 轮，声明 UserDefaults CA92.1 与文件时间戳 C617.1，不追踪不收集，已加入 Xcode 资源阶段，tests/legal.test.mjs 4 项）
   完成标准：`ios/App/App/PrivacyInfo.xcprivacy` 声明用到的 Required Reason API（UserDefaults 等），加入 Xcode 工程。privacy.html 写明购买由 Apple 处理、不收集个人数据。新增 terms.html 并在设置页可打开。
-- [ ] **App Store 商店截图生成脚本**
+- [x] **App Store 商店截图生成脚本** ✅ 2026-10-22（第 3 轮，2D 界面明快化后需重新生成）
   完成标准：`scripts/store-shots.mjs` 输出 1290×2796 与 1242×2688 各 6 张带中文标题的截图到 `docs/claude-plan/store/`。
-- [ ] **商店文案草稿与审核备注**
+- [x] **商店文案草稿与审核备注** ✅ 2026-10-22（第 3 轮，待 Peyton 审）
   完成标准：`docs/claude-plan/store-listing.md` 含名称、副标题、描述、关键词、宣传文本（中英）和审核备注。
 
 - [x] **修复 2D 画布回退：无 WebGL 时财运摇钱树点主按钮后不进入揭晓** ✅ 2026-10-22（第 2 轮，原因是抽屉关闭动画期间遮罩仍会吞掉点击，属于真实交互问题，改为关闭中的遮罩不接收点击）
   完成标准：`npm run e2e` 的「不支持 WebGL 时退回 2D 画布」通过（2026-10-22 发现，未改动的 HEAD 上同样失败，属于原有问题）。老 iPhone 或 WebGL 创建失败时会走这条路径。
+
+- [ ] **隐私政策与使用条款网址可访问**：付费卡和设置页链接 `peytonliubruin.github.io/laiganjue/terms.html`，GitHub Pages 发布后才能打开。完成标准：两个网址返回 200（需要本分支合并到 Pages 发布分支，由 Peyton 决定合并时机）。
+- [x] **iOS 模拟器编译确认隐私清单打包进 App** ✅ 2026-10-22（第 3 轮，App.app 根目录有 PrivacyInfo.xcprivacy）：完成标准：`xcodebuild` 后 App 包内有 PrivacyInfo.xcprivacy。
 
 ## P1
 

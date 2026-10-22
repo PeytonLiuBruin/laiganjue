@@ -1168,3 +1168,6 @@
 .birth-form .bf-row2 .chip:disabled { opacity: 0.6; }
 .birth-form .field-label { font-size: 12px; letter-spacing: 0.06em; }
 .birth-form .select { min-height: 46px; }
+
+.setting-legal { font-size: 12px; text-align: center; }
+.setting-legal a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }

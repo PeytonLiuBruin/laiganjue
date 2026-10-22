@@ -57,3 +57,33 @@
 - 【需要处理，第 2 次提醒】给这台 Mac 配好 GitHub 推送凭据，否则定时任务的提交都推不上 GitHub。
 - 在 App Store Connect 创建 5 个内购产品（ID 见 monetization.md 第 3 节）和订阅组「来感觉 Pro」，年度订阅配 3 天免费试用。价格是建议值，由你定。
 - 付费卡的使用条款目前链接 Apple 标准 EULA，如需自有条款，下一轮的 terms.html 做好后会改链接。
+
+## 第 3 轮 · 2026-10-22 13:57–14:40 UTC（PDT 06:57–07:40）
+
+开始状态：分支 claude/polish-ui-monetize，工作区干净，本地比远端多 3 个提交（第 1、2 轮未推送）。pull --rebase 无变化，.lock 为 idle。没有别人留下的未提交改动。
+
+完成的待办：
+- ✅ P0 隐私清单与条款。新增 `ios/App/App/PrivacyInfo.xcprivacy`（不追踪、不收集数据，Required Reason API 声明 UserDefaults CA92.1 与文件时间戳 C617.1），已写进 `project.pbxproj` 的文件引用、App 分组和资源阶段。`privacy.html` 中英文都补上「购买与订阅由 Apple 处理，我们看不到 Apple ID 和付款信息」。新增 `src/terms.html`（中英，补充 Apple 标准 EULA，写明自动续期、24 小时规则、试用、取消、恢复购买与退款），构建时复制到 dist 与 www。付费卡的「使用条款（EULA）」改为链接 terms.html，设置页底部新增「使用条款 · 隐私政策」。新增 `tests/legal.test.mjs`（4 项）。
+- ✅ P0 商店截图脚本。新增 `scripts/store-shots.mjs`：先在 393×852 @3x 截 App 画面，再套渐变底、白色圆体大标题和圆角机身，输出 6.9 寸 1290×2796 与 6.5 寸 1242×2688 各 6 张到 `docs/claude-plan/store/`（首页、灵签、塔罗、财运摇钱树、姻缘、水晶球）。商店图里隐藏「开启手机体感」授权卡。
+- ✅ P0 商店文案。新增 `docs/claude-plan/store-listing.md`：中英名称、副标题、宣传文本、描述、关键词（字符数已核对）、分类与分级建议、英文审核备注（体感说明、4 个内购产品 ID、如何打开付费卡、4.3 说明）。
+
+检查结果：
+- `npm run build` 通过，`npm test` 341 项全部通过，`npm run e2e` 8 项全部通过。
+- 截图（docs/claude-plan/screenshots/，8 张，393×852 与 430×932）：设置页顶部与底部、付费卡、财运。无横向溢出、无报错，「使用条款 · 隐私政策」在两种尺寸下居中一行显示。
+- 商店图 12 张逐张过目，尺寸正确，标题无截断。
+
+同步到 GitHub：仍然失败。Mac 上 `git push` 报 could not read Username（没有凭据），云端会话的 git 代理也不允许这个仓库（not in this session's authorized repository set）。第 1 到 3 轮的提交都在本地分支上。
+
+遗留问题：
+- terms.html 要等 GitHub Pages 发布后才能打开（已加入 TODO P0）。
+- 商店图里的界面仍是旧的米色深红配色，2D 界面明快化完成后要重新生成。
+- 塔罗商店图抽到逆位牌，画面倒置，下次生成时可固定一张正位牌。
+
+- ✅ P0 iOS 模拟器 `xcodebuild` 编译成功，App.app 根目录已包含 PrivacyInfo.xcprivacy。
+
+下一轮计划：做 P1「玩法页首屏重排」和「2D 界面明快化」。
+
+待 Peyton 决定：
+- 【需要处理，第 3 次提醒】GitHub 推送凭据。任选一种：在这台 Mac 的终端里进入 laiganjue 目录运行一次 `git push origin claude/polish-ui-monetize` 并按提示登录，或者在 Claude 的定时任务设置里把 PeytonLiuBruin/laiganjue 加入授权仓库。
+- 审阅 store-listing.md 的名称、副标题与描述，App 名称一旦提交审核后修改要走新版本。
+- 决定何时把本分支合并到 GitHub Pages 的发布分支，让 terms.html 上线（付费卡链接依赖它）。

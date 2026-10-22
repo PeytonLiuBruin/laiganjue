@@ -5,7 +5,8 @@
 // openPaywall(platform, { reason }) → Promise<boolean>：关闭时是否已获得 Pro 或单次解读次数
 import { h, button, sheet, toast } from './kit.js';
 
-export const TERMS_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
+export const TERMS_URL = 'https://peytonliubruin.github.io/laiganjue/terms.html';
+export const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
 export const PRIVACY_URL = 'https://peytonliubruin.github.io/laiganjue/privacy.html';
 
 const BENEFITS = [

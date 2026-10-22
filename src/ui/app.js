@@ -9,7 +9,7 @@ import { createZen } from './zen.js';
 import { registerModel, hasModel } from './model-slot.js';
 import { ritualArt } from './ritual-art.js';
 import { createMotionPrompt } from './motion-prompt.js';
-import { openPaywall } from './paywall.js';
+import { openPaywall, TERMS_URL, PRIVACY_URL } from './paywall.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -500,6 +500,10 @@ export function startApp(root) {
       h('div', { class: 'mt-3' }, button('重看新手引导', { variant: 'ghost', block: true, onClick: () => { sh.close(); setTimeout(() => openOnboarding(true), 300); } })),
       h('div', { class: 'ornament' }, icon('sparkle', { size: 18 })),
       h('p', { class: 't-faint', style: { fontSize: '12px', lineHeight: '1.8' } }, `${APP_NAME} · 玄学占卜合集。所有结果均由随机算法与传统文化文本生成，仅供娱乐与自我觉察，请勿据此做出医疗、财务、法律等重要决定。`),
+      h('p', { class: 'setting-legal t-faint mt-2' },
+        h('a', { attrs: { href: TERMS_URL, target: '_blank', rel: 'noopener' } }, '使用条款'),
+        h('span', null, ' · '),
+        h('a', { attrs: { href: PRIVACY_URL, target: '_blank', rel: 'noopener' } }, '隐私政策')),
       h('p', { class: 't-faint mt-2', style: { fontSize: '11px' } }, `构建时间 ${typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__.slice(0, 16).replace('T', ' ') : '开发模式'}`),
     );
     const sh = sheet({ title: '设置', content });
