@@ -21,8 +21,11 @@
 - 风水罗盘俯视角下石台左右边缘还有少量白色碎边（TODO P1）。
 - 首屏被体感授权卡占掉，舞台在 393 高度的屏幕上被挤到下半部（TODO P1「玩法页首屏重排」）。
 
+同步到 GitHub：本地提交 2f186bb 已完成，但 `git push` 失败——这台 Mac 的钥匙串里没有 GitHub 凭据（osxkeychain 报 could not read Username），云端会话也没有这个仓库的推送授权。提交保存在本地分支上，下一轮拿到凭据后会和新提交一起推送。
+
 下一轮计划：修 2D 画布回退的 e2e 失败，然后做内购基础（权益模块 + 付费卡 + 恢复购买）。
 
 待 Peyton 决定：
+- 【需要处理】给这台 Mac 配好 GitHub 推送凭据（例如在终端里对本仓库 push 一次并在弹窗里登录，或装 gh 后运行 gh auth login），否则定时任务只能在本地提交，推不上 GitHub。
 - 价格档位（monetization.md 第 3 节）是建议值，真实价格、订阅组、试用期需要在 App Store Connect 配置。
 - 包名 `io.github.peytonliubruin.laiganjue` 首次上架后不能再改，是否换成正式名义请在上架前决定。
