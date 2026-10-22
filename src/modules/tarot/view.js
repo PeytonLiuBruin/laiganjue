@@ -474,6 +474,7 @@ export function mount(container, ctx) {
       title: single ? d.card.name : getSpread(spreadId).name,
       text: brief(single ? meaningOf(d) : synthesize(spreadId, draws)),
       onRead: () => showResult(sid, draws, { question: q }),
+      gate: true,
     });
     st.setHint('牌面会留在这里，准备好后再展开解读');
     setButtons();

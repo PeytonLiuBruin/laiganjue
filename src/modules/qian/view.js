@@ -106,7 +106,7 @@ export function mount(container, ctx) {
     if (!await ritual.pause(gentle || instant ? 80 : 900)) return;
     phase = 'paper'; primary.setLabel(AGAIN_LABEL); lock(false); setGuide('tap', REVEALED_HINT);
     const result = lot, resultQuestion = asked;
-    ritual.reveal({ kicker: `${lotLabel(lot)} · ${lot.title}`, title: lot.level + '签', text: lot.gist, onRead: () => read(result, resultQuestion) });
+    ritual.reveal({ kicker: `${lotLabel(lot)} · ${lot.title}`, title: lot.level + '签', text: lot.gist, onRead: () => read(result, resultQuestion), gate: true });
   }
   function read(value, asked = '', { review = false } = {}) {
     if (busy || reading || !ritual.alive) return;

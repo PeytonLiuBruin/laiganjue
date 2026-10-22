@@ -9,6 +9,7 @@ import { createZen } from './zen.js';
 import { registerModel, hasModel } from './model-slot.js';
 import { ritualArt } from './ritual-art.js';
 import { createMotionPrompt } from './motion-prompt.js';
+import { openPaywall } from './paywall.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -432,9 +433,30 @@ export function startApp(root) {
       test.disabled = !hp.enabled;
       hapticControls.append(toggle(hp.enabled, (v) => { hp.setEnabled(v); test.disabled = !v; if (v) hp.settle(); }), test);
     } else hapticControls.append(h('span', { class: 't-faint' }, '不支持'));
+    const iap = platform.purchases;
+    const planName = { yearly: '年度', monthly: '月度', lifetime: '永久' };
+    const proDesc = () => (iap.pro ? `已开通 · ${planName[iap.plan] || 'Pro'}${iap.until ? ' · 续期日 ' + new Date(iap.until).toLocaleDateString('zh-CN') : ''}` : `无限解读 · 全部皮肤 · 无水印分享${iap.credits ? ` · 剩余单次解读 ${iap.credits} 次` : ''}`);
+    const proDescEl = h('div', { class: 'setting-desc' }, proDesc());
+    const proControls = h('div', { class: 'setting-pro' });
+    const renderPro = () => {
+      proDescEl.textContent = proDesc();
+      proControls.replaceChildren(
+        iap.pro
+          ? (iap.available && iap.plan !== 'lifetime' ? button('管理订阅', { variant: 'ghost', size: 'small', onClick: () => iap.manage() }) : h('span', { class: 't-faint' }, '✓'))
+          : button('了解 Pro', { variant: 'primary', size: 'small', onClick: () => openPaywall(platform).then(renderPro) }),
+        button('恢复购买', { variant: 'ghost', size: 'small', onClick: async () => {
+          if (!iap.available) { toast('请在 App 中恢复购买'); return; }
+          const r = await iap.restore();
+          toast(r.ok ? (r.pro ? '已恢复来感觉 Pro' : '没有找到可恢复的购买') : '恢复失败，请检查网络后再试');
+          renderPro();
+        } }),
+      );
+    };
+    renderPro();
     const content = h(
       'div',
       null,
+      h('div', { class: 'setting-row setting-row-pro' }, h('div', null, h('div', { class: 'setting-label' }, '来感觉 Pro'), proDescEl), proControls),
       row('器物动画', '投掷、翻滚与翻牌', kit.chips([{ value: 'full', label: '完整' }, { value: 'gentle', label: '轻柔' }], { value: platform.simpleMotion ? 'gentle' : 'full', onChange: (v) => platform.setMotionStyle(v) }).el),
       row('音效', '合成音效：木块、铜钱、洗牌…', toggle(platform.sound.enabled, (v) => platform.sound.setEnabled(v))),
       row('帧率显示', '在 3D 器物舞台右上角显示每秒帧数', toggle(storage.get('stage.fps', false), (v) => { storage.set('stage.fps', v); document.documentElement.dataset.fps = v ? 'on' : 'off'; })),
@@ -531,6 +553,7 @@ export function startApp(root) {
     registerModel,
     hasModel,
     openOnboarding,
+    openPaywall: (opts) => openPaywall(platform, opts),
     simulate: (type, payload) => platform.motion.simulate(type, payload),
     setTheme: applyTheme,
     get current() {

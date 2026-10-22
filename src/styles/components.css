@@ -419,6 +419,10 @@
   opacity: 0;
   transition: opacity var(--dur);
 }
+/* 关闭动画期间（约 0.4 秒）遮罩仍在 DOM 里，不能吞掉用户紧接着的点击 */
+.sheet-backdrop:not(.open) {
+  pointer-events: none;
+}
 .sheet-backdrop.open {
   opacity: 1;
 }

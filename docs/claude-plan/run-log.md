@@ -29,3 +29,31 @@
 - 【需要处理】给这台 Mac 配好 GitHub 推送凭据（例如在终端里对本仓库 push 一次并在弹窗里登录，或装 gh 后运行 gh auth login），否则定时任务只能在本地提交，推不上 GitHub。
 - 价格档位（monetization.md 第 3 节）是建议值，真实价格、订阅组、试用期需要在 App Store Connect 配置。
 - 包名 `io.github.peytonliubruin.laiganjue` 首次上架后不能再改，是否换成正式名义请在上架前决定。
+
+## 第 2 轮 · 2026-10-22 10:55–11:35 UTC（PDT 03:55–04:35）
+
+开始状态：分支 claude/polish-ui-monetize，工作区干净，本地比远端多 2 个提交（第 1 轮未推送成功）。pull --rebase 无变化，.lock 为 idle。
+
+完成的待办：
+- ✅ P0 修复 2D 画布回退的 e2e 失败。原因不在画布：抽屉关闭时遮罩还要约 0.4 秒才移除，期间会吞掉用户紧接着的点击（真机上表现为关掉体感引导后立刻点主按钮没反应）。`components.css` 里让关闭中的遮罩不接收点击。
+- ✅ P0 内购基础。新增 `src/platform/purchases.js`（`@capgo/native-purchases@8.9.6`，已 cap sync 到 iOS 与安卓）：产品 ID 与 monetization.md 一致，权益判断覆盖有效订阅、过期、宽限期、退款、买断优先，权益缓存离线可用且到期自动失效，单次解读包按交易只入账一次，刚买完时商店列表滞后也不会被判回未购买。网页版不出售，只展示权益。新增 `src/ui/paywall.js` 付费卡：年度（主推）/ 月度 / 永久三档，价格与周期只读 StoreKit 本地化字符串，写清自动续期、试用后扣费和取消方式，链接 Apple 标准 EULA 与隐私政策，有恢复购买、单买 5 次解读、关闭按钮。设置页顶部加「来感觉 Pro」行（了解 Pro / 管理订阅 / 恢复购买）。
+- ✅ P0 免费额度。新增 `src/platform/quota.js`，每个玩法每天免费 1 次，按本地日期重置，Pro 不限，没有 Pro 时先用免费次数再用单次包。`ritual.reveal({ gate })` 统一接入：灵签、塔罗、姻缘正缘、姻缘合婚。按钮显示「展开解读 · 今日免费」或「解锁深度解读」，同一个结果解锁后反复打开不再计次。
+- 截图脚本支持 `路由@动作`（@settings、@paywall、@read）。
+
+检查结果：
+- `npm test` 337 项全部通过（新增 tests/purchases.test.mjs 7 项）。`npm run build` 通过。`npm run e2e` 8 项全部通过（上一轮失败的 2D 回退已修好）。
+- `xcodebuild`（iOS 模拟器，不签名）编译成功，内购插件已链接进 App。
+- 截图（docs/claude-plan/screenshots/，10 张，393×852 与 430×932）：设置、付费卡、灵签结果条、塔罗结果条、财运。无横向溢出、无报错（塔罗标签栏是有意的横向滚动条）。付费卡在两种尺寸下一屏放得下，「永久」说明缩短为「一次买断」避免折行。
+
+同步到 GitHub：仍然失败，这台 Mac 没有 GitHub 推送凭据（`could not read Username`），云端会话也没有这个仓库的授权。第 1、2 轮的提交都在本地分支上，配好凭据后下一轮会一起推送。
+
+遗留问题：
+- 付费卡在网页和无头浏览器里价格显示为「—」，真实价格要等 App Store Connect 建好产品或挂上 StoreKit 配置文件才能看到（已加入 TODO P1）。
+- 体感授权卡仍占据玩法页首屏（TODO P1「玩法页首屏重排」）。
+
+下一轮计划：隐私清单 PrivacyInfo.xcprivacy + 隐私政策补充内购说明 + 使用条款页，然后做商店截图脚本。
+
+待 Peyton 决定：
+- 【需要处理，第 2 次提醒】给这台 Mac 配好 GitHub 推送凭据，否则定时任务的提交都推不上 GitHub。
+- 在 App Store Connect 创建 5 个内购产品（ID 见 monetization.md 第 3 节）和订阅组「来感觉 Pro」，年度订阅配 3 天免费试用。价格是建议值，由你定。
+- 付费卡的使用条款目前链接 Apple 标准 EULA，如需自有条款，下一轮的 terms.html 做好后会改链接。

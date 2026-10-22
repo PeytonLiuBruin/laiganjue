@@ -132,6 +132,7 @@ export function mount(container, ctx) {
       title: love.daily.title,
       text: love.daily.text,
       onRead: openSelfSheet,
+      gate: 'yinyuan.self',
     });
     renderQuickSelf();
     ritual.receipt.insertBefore(quickEl, ritual.receipt.querySelector('.ritual-receipt-actions'));
@@ -238,6 +239,7 @@ export function mount(container, ctx) {
       title: h('span', { class: 'yy-score' }, num, h('small', null, UI.scoreUnit), h('span', { class: 'yy-level' }, match.level.name)),
       text: match.level.text,
       onRead: openPairSheet,
+      gate: 'yinyuan.pair',
     });
     countUp(num, match.score, { duration: ctx.platform.prefersReducedMotion ? 10 : 900 });
     primaryBtn.setLabel(UI.again.pair);

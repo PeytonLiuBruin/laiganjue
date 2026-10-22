@@ -4,6 +4,7 @@
 @import './base.css';
 @import './components.css';
 @import './zen.css';
+@import './paywall.css';
 @import '../modules/index.css';
 
 @import './refinement.css';

@@ -1,6 +1,8 @@
 import { createMotionRecognizer } from './motion.js';
 import { createHaptic } from './haptic.js';
 import { createNative } from './native.js';
+import { createPurchases } from './purchases.js';
+import { createQuota } from './quota.js';
 
 // 平台层（Web 实现）。模块只通过这里拿"体感 / 手势 / 震动 / 音效 / 存储 / 分享"，
 // 迁移微信小程序时只需实现同名接口的 weapp.js（映射表见 docs/PORTING_WEAPP.md）。
@@ -772,6 +774,9 @@ export function createPlatform() {
   const vibrator = native.vibrate && isBrowser ? { vibrate: native.vibrate, get userActivation() { return navigator.userActivation; } } : undefined;
   const haptic = createHaptic(storage, vibrator);
   const sound = createSound(storage);
+  const purchases = createPurchases({ storage });
+  const quota = createQuota({ storage, purchases });
+  purchases.init();
   return {
     name: native.isNative ? native.os : 'web',
     native,
@@ -786,6 +791,8 @@ export function createPlatform() {
     haptic,
     sound,
     storage,
+    purchases,
+    quota,
     share: (text, opts = {}) => share(text, { ...opts, native }),
   };
 }

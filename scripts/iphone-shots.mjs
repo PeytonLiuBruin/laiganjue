@@ -33,11 +33,25 @@ for (const vp of VIEWPORTS) {
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   for (const r of routes) {
-    const hash = r === 'home' ? '#/' : '#/' + r;
+    // 路由后可跟 @动作：home@paywall 打开付费卡、home@settings 打开设置、m/qian@read 出签后停在结果条
+    const [route, action] = r.split('@');
+    const hash = route === 'home' ? '#/' : '#/' + route;
     await page.goto(base + hash);
     await page.waitForTimeout(2500);
     // 体感引导抽屉可能晚一点弹出：按两次 Esc 关掉，再等动画结束
     for (let i = 0; i < 2; i++) { await page.keyboard.press('Escape').catch(() => {}); await page.waitForTimeout(600); }
+    if (action === 'paywall') { await page.evaluate(() => { window.__lgj.openPaywall({ reason: '今天的免费深度解读已用完，开通 Pro 不限次数' }); }); await page.waitForTimeout(900); }
+    if (action === 'settings') { await page.click('.app-header [aria-label="设置"]'); await page.waitForTimeout(900); }
+    if (action === 'read') {
+      // 多步玩法（灵签要先摇再取签）：一直点主按钮，直到结果条出现「展开解读」
+      for (let i = 0; i < 4 && !(await page.locator('.ritual-receipt [data-read]').count()); i++) {
+        await page.locator('.view-module [data-action="primary"]').first().click().catch(() => {});
+        await page.waitForSelector('.ritual-receipt [data-read]', { timeout: 8_000 }).catch(() => {});
+      }
+      await page.waitForTimeout(1200);
+      await page.locator('.ritual-receipt').scrollIntoViewIfNeeded().catch(() => {});
+      await page.waitForTimeout(500);
+    }
     const overflow = await page.evaluate(() => {
       const w = document.documentElement.clientWidth, bad = [];
       for (const el of document.querySelectorAll('body *')) {
@@ -46,7 +60,7 @@ for (const vp of VIEWPORTS) {
       }
       return { scrollW: document.documentElement.scrollWidth, w, bad: [...new Set(bad)].slice(0, 8) };
     });
-    const file = `${r.replace(/\//g, '-')}-${vp.name}.png`;
+    const file = `${r.replace(/[/@]/g, '-')}-${vp.name}.png`;
     await page.screenshot({ path: path.join(out, file) });
     report.push({ route: r, viewport: vp.name, file, overflow, errors: [...errors] });
     console.log(file, overflow.scrollW > overflow.w ? 'H-OVERFLOW' : 'ok', overflow.bad.join(' '), errors.length ? 'errors:' + errors.length : '');

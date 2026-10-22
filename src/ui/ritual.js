@@ -1,5 +1,7 @@
 // Shared pacing: bring the physical scene into view, then let the reader decide
 // when to open the longer interpretation. No result sheet is opened by a timer.
+import { openPaywall } from './paywall.js';
+
 export function createRitual(ctx, stage, labels) {
   const { h, button, clear } = ctx.kit;
   let alive = true;
@@ -65,11 +67,33 @@ export function createRitual(ctx, stage, labels) {
     }
     return true;
   }
-  function reveal({ kicker = '', title, text, onRead, actions = [] }) {
+  // gate：深度解读计入免费额度（每个玩法每天 1 次，Pro 不限）。同一个结果解锁后反复打开不再计次。
+  function reveal({ kicker = '', title, text, onRead, actions = [], gate = false }) {
     if (!alive) return;
     clear(receipt);
     receipt.append(h('div', { class: 'ritual-receipt-copy' }, kicker && h('span', { class: 'ritual-kicker' }, kicker), h('h2', null, title), text && h('p', null, text)));
-    if (onRead || actions.length) receipt.append(h('div', { class: 'ritual-receipt-actions' }, onRead && button('展开解读', { variant: 'primary', onClick: onRead }), actions));
+    const quota = gate ? ctx.platform?.quota : null;
+    const feature = typeof gate === 'string' ? gate : ctx.id;
+    let unlocked = !quota;
+    const label = () => {
+      if (unlocked) return '展开解读';
+      const kind = quota.peek(feature);
+      return kind === 'free' ? '展开解读 · 今日免费' : kind ? '展开解读' : '解锁深度解读';
+    };
+    let readBtn = null;
+    const read = async () => {
+      if (!unlocked) {
+        if (!quota.take(feature)) {
+          const ok = await openPaywall(ctx.platform, { reason: '今天的免费深度解读已用完，开通 Pro 不限次数' });
+          if (!ok || !alive || !quota.take(feature)) { readBtn?.setLabel(label()); return; }
+        }
+        unlocked = true;
+        readBtn?.setLabel(label());
+      }
+      onRead();
+    };
+    if (onRead) { readBtn = button(label(), { variant: 'primary', onClick: read }); readBtn.dataset.read = '1'; }
+    if (onRead || actions.length) receipt.append(h('div', { class: 'ritual-receipt-actions' }, readBtn, actions));
     receipt.hidden = false;
   }
   function clearResult() { receipt.hidden = true; clear(receipt); }
