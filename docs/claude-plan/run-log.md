@@ -247,3 +247,5 @@
 - 在 iPhone 上试一次「分享 → 分享图片」，看能不能存到相册、发微信。
 - Mac 磁盘仍然偏紧（约 1.3GB），iOS 模拟器约 9.5GB，是否清理由你决定。
 - 在 Xcode 里运行 App 方案查看付费卡价格，价格档位、App Store Connect 内购产品、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。
+
+推送结果：提交 993398d 推送成功。
