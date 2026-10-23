@@ -82,3 +82,36 @@ test('没有仪式在进行时点舞台不触发快进', { timeout: 60_000 }, as
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test('第一次较长的仪式等待时提示「轻点舞台可快进」，只出现一次', { timeout: 120_000 }, async () => {
+  const { page, context, errors } = await openCaiyun();
+  // 点主按钮，记录提示是否出现、出现时的文字，以及结果出来时提示是否已经收起
+  const run = () => page.evaluate(() => new Promise((resolve) => {
+    const receipt = document.querySelector('.view-module .ritual-receipt');
+    let text = '';
+    const obs = new MutationObserver(() => {
+      const hint = document.querySelector('.view-module .stage .stage-hurry-hint:not(.out)');
+      if (hint) text = hint.textContent;
+      if (!receipt.hidden) { obs.disconnect(); setTimeout(() => resolve({ text, left: !!document.querySelector('.view-module .stage-hurry-hint:not(.out)') }), 50); }
+    });
+    obs.observe(document.querySelector('.view-module'), { attributes: true, subtree: true, childList: true });
+    document.querySelector('.view-module [data-action="primary"]').click();
+  }));
+  const first = await run();
+  assert.equal(first.text, '轻点舞台可快进', '第一次仪式应出现快进提示');
+  assert.equal(first.left, false, '结果出来时提示应已收起');
+  assert.equal(await page.evaluate(() => localStorage.getItem('lgj:hint.hurry')), 'true');
+  await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
+  await page.waitForTimeout(600);
+  const second = await run();
+  assert.equal(second.text, '', '第二次不应再提示');
+  // 重新打开页面（同一个本地存储）也不再提示
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: 30_000 });
+  await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
+  await page.waitForTimeout(500);
+  const third = await run();
+  assert.equal(third.text, '', '重新打开后不应再提示');
+  assert.deepEqual(errors, []);
+  await context.close();
+});

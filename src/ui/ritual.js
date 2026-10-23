@@ -17,6 +17,24 @@ export function createRitual(ctx, stage, labels) {
   const rushers = new Set();
   const animations = new Set();
   const pausedAnimations = new Set();
+  // 快进的发现性：第一次遇到较长的等待时，舞台底部提示一次「轻点舞台可快进」，之后（含其他玩法）不再出现
+  const HINT_KEY = 'lgj:hint.hurry', HINT_MIN_MS = 1200, HINT_SHOW_MS = 2600;
+  let hintEl = null, hintTimer = 0;
+  function hintSeen() { try { return localStorage.getItem(HINT_KEY) === 'true'; } catch { return true; } }
+  function showHurryHint() {
+    if (hintEl || !alive || hintSeen()) return;
+    try { localStorage.setItem(HINT_KEY, 'true'); } catch { /* 存不了就只在本页显示一次 */ }
+    hintEl = h('span', { class: 'stage-hurry-hint', attrs: { role: 'status' } }, '轻点舞台可快进');
+    stage.el.append(hintEl);
+    hintTimer = setTimeout(hideHurryHint, HINT_SHOW_MS);
+  }
+  function hideHurryHint() {
+    clearTimeout(hintTimer);
+    if (!hintEl) return;
+    const el = hintEl; hintEl = null;
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 220);
+  }
   const pause = (ms) => new Promise((resolve) => {
     if (!alive) return resolve(false);
     let remaining = ms, started = 0, timer = null;
@@ -33,6 +51,7 @@ export function createRitual(ctx, stage, labels) {
       started = performance.now(); timer = setTimeout(() => finish(alive), Math.max(0, remaining));
     };
     if (hurrying) remaining /= HURRY;
+    else if (ms >= HINT_MIN_MS) showHurryHint();
     pending.add(cancel); rushers.add(rush);
     document.addEventListener('visibilitychange', visibility);
     visibility();
@@ -62,6 +81,7 @@ export function createRitual(ctx, stage, labels) {
   const stages = () => [...stage.el.querySelectorAll('[data-model-slot]')].map((el) => el.__stage).filter((x) => x?.setSpeed);
   function setHurry(on) {
     hurrying = on;
+    if (on) hideHurryHint();
     if (on) stage.el.dataset.hurry = '1'; else delete stage.el.dataset.hurry;
     stages().forEach((x) => x.setSpeed(on ? HURRY : 1));
   }
@@ -124,6 +144,7 @@ export function createRitual(ctx, stage, labels) {
   // 返回 { read }，模块里其他打开解读的入口（点签纸、历史、主按钮）也应调用它，免得绕过额度。
   function reveal({ kicker = '', title, text, onRead, actions = [], gate = false, unlockKey = null }) {
     if (!alive) return { read: () => {} };
+    hideHurryHint();
     if (hurrying) setHurry(false);
     clear(receipt);
     receipt.append(h('div', { class: 'ritual-receipt-copy' }, kicker && h('span', { class: 'ritual-kicker' }, kicker), h('h2', null, title), text && h('p', null, text)));
@@ -162,6 +183,7 @@ export function createRitual(ctx, stage, labels) {
   function clearResult() { receipt.hidden = true; clear(receipt); refreshReadLabel = null; if (hurrying) setHurry(false); }
   ctx.addCleanup(() => {
     alive = false;
+    clearTimeout(hintTimer); hintEl?.remove(); hintEl = null;
     pending.forEach((cancel) => cancel());
     pending.clear(); rushers.clear();
     stage.el.removeEventListener('pointerdown', onStageTap);

@@ -153,3 +153,18 @@ body { line-height: 1.6; }
 }
 @keyframes hurry-pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .stage[data-hurry]::after { animation: none; } }
+
+/* 快进的发现性：第一次较长的仪式等待时，舞台底部居中提示一次 */
+.stage-hurry-hint {
+  position: absolute; left: 50%; bottom: 12px; z-index: 12;
+  transform: translateX(-50%);
+  padding: 4px 12px; border-radius: 999px; white-space: nowrap;
+  font: 800 12px/1.4 var(--font-round, inherit); letter-spacing: .04em;
+  color: #2b2240; background: rgba(255, 255, 255, .92); border: 2px solid #2b2240; box-shadow: 0 2px 0 #2b2240;
+  pointer-events: none;
+  animation: hurry-hint-in .26s cubic-bezier(.3, 1.6, .5, 1) both;
+  transition: opacity .2s ease;
+}
+.stage-hurry-hint.out { opacity: 0; }
+@keyframes hurry-hint-in { from { transform: translate(-50%, 8px) scale(.8); opacity: 0; } to { transform: translate(-50%, 0) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .stage-hurry-hint { animation: none; } }
