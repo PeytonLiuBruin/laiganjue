@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/caiyun@stars",
+    "route": "m/caiyun@share",
     "viewport": "393x852",
-    "file": "m-caiyun-stars-393x852.png",
+    "file": "m-caiyun-share-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/crystal@stars",
+    "route": "m/yinyuan@share",
     "viewport": "393x852",
-    "file": "m-crystal-stars-393x852.png",
+    "file": "m-yinyuan-share-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -22,20 +22,9 @@
     "errors": []
   },
   {
-    "route": "m/yinyuan@stars",
-    "viewport": "393x852",
-    "file": "m-yinyuan-stars-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@stars",
+    "route": "m/caiyun@share",
     "viewport": "430x932",
-    "file": "m-caiyun-stars-430x932.png",
+    "file": "m-caiyun-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -44,9 +33,9 @@
     "errors": []
   },
   {
-    "route": "m/crystal@stars",
+    "route": "m/yinyuan@share",
     "viewport": "430x932",
-    "file": "m-crystal-stars-430x932.png",
+    "file": "m-yinyuan-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -55,9 +44,20 @@
     "errors": []
   },
   {
-    "route": "m/yinyuan@stars",
+    "route": "m/qian@share",
+    "viewport": "393x852",
+    "file": "m-qian-share-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/qian@share",
     "viewport": "430x932",
-    "file": "m-yinyuan-stars-430x932.png",
+    "file": "m-qian-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,

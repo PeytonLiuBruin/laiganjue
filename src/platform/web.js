@@ -765,6 +765,28 @@ async function share(text, { title = '来感觉 · 玄学占卜', native = null 
   }
 }
 
+// shareImage(dataUrl) → 'shared' | 'saved'（网页不支持分享文件时下载 PNG）| 'failed'
+async function shareImage(dataUrl, { title = '来感觉', name = 'laiganjue', native = null } = {}) {
+  if (!isBrowser) return 'failed';
+  const nativeResult = native?.isNative ? await native.shareImage({ title, dataUrl, name }) : null;
+  if (nativeResult) return nativeResult;
+  try {
+    const blob = await (await fetch(dataUrl)).blob();
+    const file = new File([blob], `${name}.png`, { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title }); return 'shared'; }
+      catch (e) { if (e && e.name === 'AbortError') return 'failed'; }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `${name}.png`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    return 'saved';
+  } catch {
+    return 'failed';
+  }
+}
+
 /* ---------------------------------- 组装 ---------------------------------- */
 export function createPlatform() {
   const storage = createStorage();
@@ -797,5 +819,6 @@ export function createPlatform() {
     quota,
     streak,
     share: (text, opts = {}) => share(text, { ...opts, native }),
+    shareImage: (dataUrl, opts = {}) => shareImage(dataUrl, { ...opts, native }),
   };
 }

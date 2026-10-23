@@ -46,7 +46,7 @@ export function createNative(cap = Capacitor, register = registerPlugin, bars = 
   const isNative = cap.isNativePlatform();
   const os = cap.getPlatform();
   if (!isNative) {
-    return { isNative: false, os, vibrate: null, share: async () => null, keepAwake: noop, immersive: noop, setBarStyle: noop, onBack: () => noop, minimize: noop, onUrlOpen: () => noop };
+    return { isNative: false, os, vibrate: null, share: async () => null, shareImage: async () => null, keepAwake: noop, immersive: noop, setBarStyle: noop, onBack: () => noop, minimize: noop, onUrlOpen: () => noop };
   }
 
   const Haptics = register('Haptics');
@@ -82,12 +82,26 @@ export function createNative(cap = Capacitor, register = registerPlugin, bars = 
     }
   }
 
+  // 分享图片：先把 PNG 写进缓存目录，再交给系统分享面板（保存到相册、微信、小红书都走这里）
+  const Filesystem = register('Filesystem');
+  async function shareImage({ title, dataUrl, name = 'laiganjue' }) {
+    try {
+      const data = String(dataUrl).replace(/^data:[^,]*,/, '');
+      const { uri } = await Filesystem.writeFile({ path: `${name}-${Date.now()}.png`, data, directory: 'CACHE' });
+      await Share.share({ title, files: [uri], dialogTitle: title });
+      return 'shared';
+    } catch (e) {
+      return /cancel/i.test(String(e?.message || e)) ? 'failed' : null;
+    }
+  }
+
   let lastStyle = null;
   return {
     isNative: true,
     os,
     vibrate,
     share,
+    shareImage,
     keepAwake: (on) => quiet(on ? KeepAwake.keepAwake() : KeepAwake.allowSleep()),
     immersive: (on) => quiet(on ? bars.hide() : bars.show()),
     setBarStyle(background) {

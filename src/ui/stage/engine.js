@@ -100,6 +100,12 @@ export function createStage(el, ctx, id, fallbackFactory = null) {
     advance(seconds = 1) { if (!core && !fallback) init(); core?.advance(seconds); },
     /** 截图用：停住实时动画，画面保持在 advance 推进到的那一帧。 */
     freeze() { core?.freeze(); },
+    /** 分享卡用：返回当前画面的 2D 画布副本（WebGL 渲染后同一任务里立即拷贝，不需要 preserveDrawingBuffer）。 */
+    snapshot() {
+      if (core) return core.snapshot();
+      const c = el.querySelector('canvas');
+      return c && c.width > 1 ? c : null;
+    },
     get time() { return core?.time || 0; },
     get fps() { return core?.fps || 0; },
     get quality() { return core?.level ?? -1; },
@@ -315,6 +321,14 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
       wake(state.active ? 6 : 3);
     },
     freeze() { frozen = true; cancelAnimationFrame(frame); frame = 0; },
+    snapshot() {
+      if (!compiled || canvas.width < 2) return null;
+      render();
+      const out = document.createElement('canvas');
+      out.width = canvas.width; out.height = canvas.height;
+      out.getContext('2d').drawImage(canvas, 0, 0);
+      return out;
+    },
     advance(seconds = 1) { const n = Math.max(1, Math.round(seconds * 60)); for (let i = 0; i < n; i++) step(1 / 60); render(); compiled = true; },
     /** 测试用：报告场景用到的氛围与材质，确认只有登记过的材质在发光。 */
     inspect() {

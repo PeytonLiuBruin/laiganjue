@@ -68,6 +68,23 @@ for (const vp of VIEWPORTS) {
       await page.locator('.ritual-receipt').scrollIntoViewIfNeeded().catch(() => {});
       await page.waitForTimeout(500);
     }
+    if (action === 'share') {
+      // 一直点主按钮直到出现「分享」，点开分享卡预览，并把卡片原图另存为 <路由>-card.png
+      const shareBtn = page.locator('.sheet.open .sheet-actions button, .ritual-receipt button', { hasText: /^分享$/ });
+      const primary = page.locator('.view-module [data-action="primary"]').first();
+      const read = page.locator('.view-module .ritual-receipt [data-read="1"]');
+      for (let i = 0; i < 30 && !(await shareBtn.count()); i++) {
+        if (await read.count()) await read.first().click({ force: true }).catch(() => {});
+        else await primary.click({ force: true }).catch(() => {});
+        await page.waitForTimeout(900);
+      }
+      await page.waitForTimeout(700); // 等结果抽屉滑入完成
+      await shareBtn.first().evaluate((b) => b.click()).catch(() => {});
+      await page.waitForSelector('.sheet.open .share-card-img', { timeout: 10_000 }).catch(() => {});
+      await page.waitForTimeout(700);
+      const src = await page.evaluate(() => document.querySelector('.sheet.open .share-card-img')?.src || '');
+      if (vp.name === VIEWPORTS[0].name && src.startsWith('data:image/png')) await writeFile(path.join(out, `${route.replace(/\//g, '-')}-card.png`), Buffer.from(src.split(',')[1], 'base64'));
+    }
     const overflow = await page.evaluate(() => {
       const w = document.documentElement.clientWidth, bad = [];
       for (const el of document.querySelectorAll('body *')) {

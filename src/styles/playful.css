@@ -135,3 +135,8 @@ body { line-height: 1.6; }
 .chip { font-family: var(--font-round); font-weight: 600; border-radius: 12px; }
 .chip.active { background: var(--glow); border-color: transparent; color: var(--accent); font-weight: 800; }
 .section-head .t-kicker { font-family: var(--font-round); }
+
+/* 结果分享卡预览 */
+.share-card { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.share-card-img { display: block; width: auto; max-width: 100%; max-height: min(56vh, 520px); border-radius: 16px; box-shadow: 0 4px 0 rgba(43,34,64,.12), 0 10px 28px rgba(43,34,64,.14); background: #fffaf0; }
+.share-card-pro { font-size: 13px; }

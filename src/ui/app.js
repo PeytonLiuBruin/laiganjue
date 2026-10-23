@@ -12,6 +12,7 @@ import { createMotionPrompt } from './motion-prompt.js';
 import { openPaywall, TERMS_URL, PRIVACY_URL } from './paywall.js';
 import { routeFromUrl } from './deeplink.js';
 import { versionText } from './version.js';
+import { openShareCard } from './share-card.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -256,7 +257,7 @@ export function startApp(root) {
       sound: platform.sound,
       storage: storage.namespace(meta.id),
       profile,
-      share: platform.share,
+      share: (text, opts) => openShareCard(platform, text, opts),
       navigate,
       toast,
       setTitle(text) {
