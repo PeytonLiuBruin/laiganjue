@@ -28,6 +28,15 @@ export function toonSolidColor(material,normal){
 /** 轮廓色：本色明度 × 0.28，略偏紫褐。 */
 export function solidEdgeColor(material){return cssC(mixC((COLORS[material]||COLORS.ivory).map(v=>v*.28),[50,26,40],.3));}
 const OBJECT_EDGE={coin:'brass',jiaobei:'wood'};
+const DARK_THEMES=['ink','cinnabar','nebula'];
+/** 当前是否深色皮肤（玄墨、朱砂、星穹）。没有 document 时（单元测试）按浅色。 */
+export function isDarkTheme(theme=globalThis.document?.documentElement?.dataset?.theme){return DARK_THEMES.includes(theme);}
+/** 骰子桌垫配色：浅色皮肤白垫，深色皮肤半透明深垫 + 金色描边。 */
+export function plateColors(dark){
+  return dark
+    ?{rim:'rgba(0,0,0,.34)',fill:'rgba(255,255,255,.08)',stroke:'rgba(255,201,60,.5)',width:2.5}
+    :{rim:'rgba(43,34,64,.08)',fill:'rgba(255,255,255,.62)',stroke:'rgba(43,34,64,.16)',width:2};
+}
 export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock=0,worldWidth=350}={}) {
   c.clearRect(0,0,width,height);
   const cy=height*ground+shock, sceneScale=Math.min(1,width/worldWidth,height/320), ow=Math.max(2.4,3.4*sceneScale);
@@ -35,15 +44,18 @@ export function paintSolids(c,width,height,objects,{ground=.75,plate=false,shock
   if(plate){
     // 卡通桌垫：白色半透明圆垫 + 浅描边 + 底部厚度边
     c.save();c.translate(width/2,cy+12);const rx=Math.min(width*.44,185);
-    c.fillStyle='rgba(43,34,64,.08)';c.beginPath();c.ellipse(0,5,rx,67,0,0,Math.PI*2);c.fill();
-    c.fillStyle='rgba(255,255,255,.62)';c.strokeStyle='rgba(43,34,64,.16)';c.lineWidth=2;c.beginPath();c.ellipse(0,0,rx,67,0,0,Math.PI*2);c.fill();c.stroke();c.restore();
+    // 深色皮肤：白垫会在夜色里刺眼，改成半透明深垫 + 金色细描边
+    const m=plateColors(isDarkTheme());
+    c.fillStyle=m.rim;c.beginPath();c.ellipse(0,5,rx,67,0,0,Math.PI*2);c.fill();
+    c.fillStyle=m.fill;c.strokeStyle=m.stroke;c.lineWidth=m.width;c.beginPath();c.ellipse(0,0,rx,67,0,0,Math.PI*2);c.fill();c.stroke();c.restore();
   }
   for(const o of objects){
     const p=project([o.x,o.y,0]),h=o.lift||0;
     c.save();c.translate(p[0],p[1]+6);c.scale(1,.36);
     const r=(o.size*(o.kind==='coin'?1.1:1.35)+h*.07)*sceneScale,g=c.createRadialGradient(0,0,1,0,0,r);
-    const a=.30/(1+h/70);
-    g.addColorStop(0,`rgba(58,44,110,${a})`);g.addColorStop(.55,`rgba(58,44,110,${a*.7})`);g.addColorStop(1,'rgba(58,44,110,0)');
+    // 深色皮肤上冷紫阴影看不见，改用更深的黑影
+    const dark=isDarkTheme(),a=(dark?.55:.30)/(1+h/70),sc=dark?'0,0,0':'58,44,110';
+    g.addColorStop(0,`rgba(${sc},${a})`);g.addColorStop(.55,`rgba(${sc},${a*.7})`);g.addColorStop(1,`rgba(${sc},0)`);
     c.fillStyle=g;c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.fill();c.restore();
   }
   // 按物体由远到近画，每个物体先铺一层粗轮廓再画各面，只有外轮廓露在外面。

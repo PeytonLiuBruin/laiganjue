@@ -6,6 +6,8 @@ const circle = (c, x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); 
 
 // 卡通画风：分格彩色底槽、白色描边隔板、金色描边钉子（两段明暗 + 硬高光点）、描边小球。
 const SLOT_TINTS = ['#ffcfc7', '#ffeaa8', '#c9efd9', '#cfe7ff', '#e2d6ff', '#ffd9b8'];
+// 深色皮肤：同色相的宝石色，饱和但不发亮，替代原来 22% 透明度的灰褐色
+export const SLOT_TINTS_DARK = ['#8a3a4a', '#8a6a1c', '#2f7552', '#2f5f96', '#5e4aa0', '#8f5428'];
 const PEG = { lit: '#ffc93c', dark: '#e39a1e', edge: '#7a4512' };
 export function paintBoard(c, board, colors) {
   const { width, height, left, right, floor, dividerY } = board, ink = colors.ink || '#2b2240';
@@ -15,7 +17,8 @@ export function paintBoard(c, board, colors) {
   c.fillStyle = wash; c.fillRect(0, 0, width, height);
   for (let i = 0; i < board.count; i++) {
     const x = left + i * board.slotWidth;
-    c.fillStyle = SLOT_TINTS[i % SLOT_TINTS.length]; c.globalAlpha = colors.dark ? .22 : .62;
+    const tints = colors.dark ? SLOT_TINTS_DARK : SLOT_TINTS;
+    c.fillStyle = tints[i % tints.length]; c.globalAlpha = colors.dark ? .78 : .62;
     c.fillRect(x + 2, dividerY + 4, board.slotWidth - 4, floor - dividerY - 4);
   }
   c.globalAlpha = 1;
@@ -24,7 +27,7 @@ export function paintBoard(c, board, colors) {
   c.beginPath(); c.moveTo(left, 61); c.lineTo(left, floor); c.lineTo(right, floor); c.lineTo(right, 61); c.stroke();
   c.globalAlpha = 1;
   for (const x of board.dividers) {
-    c.strokeStyle = ink; c.lineWidth = 6.4;
+    c.strokeStyle = colors.dark ? '#120e1c' : ink; c.lineWidth = 6.4;
     c.beginPath(); c.moveTo(x, dividerY); c.lineTo(x, floor); c.stroke();
     c.strokeStyle = '#ffffff'; c.lineWidth = 3.4; c.stroke();
   }

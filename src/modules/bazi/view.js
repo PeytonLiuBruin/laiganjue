@@ -11,7 +11,9 @@ export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
   const { h, button, chips, stage, resultCard, sheet, toast, select, field, clear } = kit;
 
-  const saved = storage.get('birth', { y: 1995, m: 6, d: 18, hour: -1, gender: 'male' });
+  // 八字自己没存过生辰时，带入在姻缘、财运、事业里填过的共享生辰，不让用户再填一遍
+  const shared = storage.get('birth', null) ? null : ctx.profile?.get?.();
+  const saved = storage.get('birth', null) || shared || { y: 1995, m: 6, d: 18, hour: -1, gender: 'male' };
   let input = { y: Number(saved.y) || 1995, m: Number(saved.m) || 6, d: Number(saved.d) || 18, hour: saved.hour == null ? -1 : Number(saved.hour), gender: saved.gender === 'female' ? 'female' : 'male' };
   let chart = null;
   let resultSheet = null;
