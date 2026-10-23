@@ -53,3 +53,4 @@
 - `src/ui/stage/atmosphere.js`：五套皮肤的天空、水、光照参数。
 - `src/ui/stage/scenes/common.js`：MAT 里的材质颜色改为上面的色板。
 - `src/styles/themes.css`、`components.css`：2D 界面的色板、卡片厚度边、按钮。
+- `src/ui/solid-scene.js`（筊杯、硬币、骰子、六爻铜钱）、`src/ui/stick-scene.js`（灵签筒、御神签筒）、`src/modules/plinko/scene.js`（落球盘）：画布 2D 器物，同样用三段明暗、硬高光与本色加深的外轮廓（线宽约 3.4px × 场景缩放，最小 2.4px），色板与第 2 节一致。

@@ -2,7 +2,8 @@ import { createStickPhysics } from '../core/stick-physics.js';
 import { box, lathe, transformed, axisAngle, rotate, add } from './models/geometry.js';
 import { createPainter } from './models/painter.js';
 
-const wood = '#a46b3d', bamboo = '#dfc397', red = '#994d3e';
+// 卡通色板（visual-direction.md）：灵签筒是暖木色配金箍，御神签筒是朱红配金箍，签条为亮竹黄、签头朱红。
+const wood = '#c9772f', lacquer = '#e8463c', bamboo = '#f6d68a', bamboo2 = '#ecbf62', red = '#e8463c', gold = '#ffc93c';
 const meshes = new Map();
 function tubeMesh(half, closed) {
   const key = String(closed);
@@ -12,9 +13,9 @@ function tubeMesh(half, closed) {
   const radius = closed ? 38 : 42, n = closed ? 6 : 40;
   const profile = closed ? [[4,-half],[radius,-half],[radius,half],[0,half]]
     : [[0,-half],[radius,-half],[radius,half],[radius-4,half],[radius-4,-half+5],[0,-half+5]];
-  const body = lathe(profile, wood, n);
-  const rings = [-half + 9, half - 13].flatMap(y => lathe([[radius+.7,y],[radius+.7,y+5]], '#7a4a2e', n));
-  const inside = closed ? [] : lathe([[radius-4,-half+5],[radius-4,half-1]], '#63472f', n);
+  const body = lathe(profile, closed ? lacquer : wood, n);
+  const rings = [-half + 9, half - 13].flatMap(y => lathe([[radius+1.2,y],[radius+1.2,y+6]], gold, n));
+  const inside = closed ? [] : lathe([[radius-4,-half+5],[radius-4,half-1]], '#7a3d1c', n);
   const mesh = [...body, ...inside, ...rings]; meshes.set(key, mesh); return mesh;
 }
 export function paintStickScene(c, width, height, sim, label = '') {
@@ -27,7 +28,7 @@ export function paintStickScene(c, width, height, sim, label = '') {
   for (const b of sim.bodies) {
     if (sim.kind === 'omikuji' && b !== sim.selected) continue;
     const s = sim.pose(b), q = axisAngle([0,0,1], s.r), position = [s.x, s.y, s.z];
-    const stick = box(5.8, b.length, 3.8, b.id % 3 ? bamboo : '#c9a577');
+    const stick = box(5.8, b.length, 3.8, b.id % 3 ? bamboo : bamboo2);
     const tip = transformed(box(6, 18, 4), [0,0,0,1], [0,b.length/2-9,0]).map(f => ({...f,color:red}));
     faces.push(...transformed([...stick, ...tip], q, position));
   }
@@ -35,11 +36,11 @@ export function paintStickScene(c, width, height, sim, label = '') {
   const labelPos = add(rotate([0,0,sim.kind === 'omikuji' ? 34 : 42.5], tq), tp);
   const u = rotate([1,0,0], tq), v = rotate([0,1,0], tq);
   const title = sim.kind === 'omikuji' ? ['御','神','签'] : ['灵','签'];
-  title.forEach((ch,i) => p.text(ch, add(labelPos, rotate([0,(title.length/2-.5-i)*22,0],tq)), {size:19,color:'#f0dcc0',u,v}));
+  title.forEach((ch,i) => p.text(ch, add(labelPos, rotate([0,(title.length/2-.5-i)*22,0],tq)), {size:21,color:'#fff4d6',u,v,weight:800}));
   if (label && sim.selected.free) {
     const s = sim.pose(sim.selected);
     // A small upright number beside the resting stick avoids illegible 5px type.
-    p.text(label, [s.x, -148, s.z], {size:13,color:'#775742'});
+    p.text(label, [s.x, -148, s.z], {size:14,color:'#2b2240',weight:800,stroke:'#ffffff',depth:false});
   }
   return p;
 }

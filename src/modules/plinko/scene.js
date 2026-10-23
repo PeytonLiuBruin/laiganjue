@@ -1,59 +1,65 @@
 import { makeBoard, frameAt } from './core.js';
 
+// 小球轮廓：本色加深一半
+function darken(hex, k) { const m = /^#([a-f\d]{6})$/i.exec(hex.trim()); if (!m) return '#3a1a14'; return '#' + [0, 2, 4].map(i => Math.round(parseInt(m[1].slice(i, i + 2), 16) * k).toString(16).padStart(2, '0')).join(''); }
 const circle = (c, x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); };
 
+// 卡通画风：分格彩色底槽、白色描边隔板、金色描边钉子（两段明暗 + 硬高光点）、描边小球。
+const SLOT_TINTS = ['#ffcfc7', '#ffeaa8', '#c9efd9', '#cfe7ff', '#e2d6ff', '#ffd9b8'];
+const PEG = { lit: '#ffc93c', dark: '#e39a1e', edge: '#7a4512' };
 export function paintBoard(c, board, colors) {
-  const { width, height, left, right, floor, dividerY } = board;
+  const { width, height, left, right, floor, dividerY } = board, ink = colors.ink || '#2b2240';
   c.clearRect(0, 0, width, height);
-  const wash = c.createLinearGradient(0, 0, width, height);
+  const wash = c.createLinearGradient(0, 0, 0, height);
   wash.addColorStop(0, colors.surface); wash.addColorStop(1, colors.bg);
   c.fillStyle = wash; c.fillRect(0, 0, width, height);
-  // Recessed channels and softly machined pegs share the site's material tones.
   for (let i = 0; i < board.count; i++) {
     const x = left + i * board.slotWidth;
-    c.fillStyle = colors.accent; c.globalAlpha = .045;
-    c.fillRect(x + 2, dividerY + 12, board.slotWidth - 4, floor - dividerY - 12);
+    c.fillStyle = SLOT_TINTS[i % SLOT_TINTS.length]; c.globalAlpha = colors.dark ? .22 : .62;
+    c.fillRect(x + 2, dividerY + 4, board.slotWidth - 4, floor - dividerY - 4);
   }
   c.globalAlpha = 1;
   c.lineCap = 'round'; c.lineJoin = 'round';
-  c.strokeStyle = colors.line; c.lineWidth = 1;
+  c.strokeStyle = ink; c.globalAlpha = .28; c.lineWidth = 2.2;
   c.beginPath(); c.moveTo(left, 61); c.lineTo(left, floor); c.lineTo(right, floor); c.lineTo(right, 61); c.stroke();
+  c.globalAlpha = 1;
   for (const x of board.dividers) {
-    c.strokeStyle = colors.line; c.lineWidth = 7;
-    c.beginPath(); c.moveTo(x + .8, dividerY + 2); c.lineTo(x + .8, floor); c.stroke();
-    c.strokeStyle = colors.surface; c.lineWidth = 4;
-    c.beginPath(); c.moveTo(x - .5, dividerY); c.lineTo(x - .5, floor - 2); c.stroke();
-    c.strokeStyle = colors.edge; c.lineWidth = .7; c.stroke();
+    c.strokeStyle = ink; c.lineWidth = 6.4;
+    c.beginPath(); c.moveTo(x, dividerY); c.lineTo(x, floor); c.stroke();
+    c.strokeStyle = '#ffffff'; c.lineWidth = 3.4; c.stroke();
   }
   for (const p of board.pins) {
-    c.fillStyle = 'rgba(0,0,0,.09)'; circle(c, p.x + 1.4, p.y + 2.2, p.r + 1); c.fill();
-    const metal = c.createRadialGradient(p.x - 1.4, p.y - 1.5, .2, p.x, p.y, p.r + .6);
-    metal.addColorStop(0, colors.surface); metal.addColorStop(.42, colors.surface); metal.addColorStop(1, colors.edge);
-    c.fillStyle = metal; circle(c, p.x, p.y, p.r); c.fill();
-    c.strokeStyle = colors.edge; c.lineWidth = .6; c.stroke();
-    c.fillStyle = 'rgba(255,255,255,.7)'; circle(c, p.x - 1.15, p.y - 1.35, .75); c.fill();
+    c.fillStyle = 'rgba(58,44,110,.16)'; circle(c, p.x + 1.2, p.y + 2.4, p.r + .8); c.fill();
+    c.fillStyle = PEG.edge; circle(c, p.x, p.y, p.r + 1.1); c.fill();
+    c.fillStyle = PEG.dark; circle(c, p.x, p.y, p.r); c.fill();
+    c.save(); circle(c, p.x, p.y, p.r); c.clip();
+    c.fillStyle = PEG.lit; circle(c, p.x - .9, p.y - 1, p.r * .9); c.fill(); c.restore();
+    c.fillStyle = '#fffbe8'; circle(c, p.x - 1.4, p.y - 1.6, .95); c.fill();
   }
-  c.strokeStyle = colors.line; c.lineWidth = 1;
+  c.strokeStyle = ink; c.globalAlpha = .28; c.lineWidth = 2;
   for (const x of [165, 195]) { c.beginPath(); c.moveTo(x, 8); c.lineTo(x, 37); c.stroke(); }
+  c.globalAlpha = 1;
   for (const x of [27, 333]) {
-    c.fillStyle = colors.edge; circle(c, x, 24, 2); c.fill();
-    c.strokeStyle = colors.surface; c.lineWidth = .7; c.beginPath(); c.moveTo(x - 1, 24); c.lineTo(x + 1, 24); c.stroke();
+    c.fillStyle = PEG.edge; circle(c, x, 24, 3.2); c.fill();
+    c.fillStyle = PEG.lit; circle(c, x, 24, 2.1); c.fill();
   }
 }
 
 export function paintBall(c, ball, radius, colors) {
   c.save();
-  const shadow = c.createRadialGradient(ball.x + 3, ball.y + 5, 0, ball.x + 3, ball.y + 5, radius * 1.6);
-  shadow.addColorStop(0, 'rgba(0,0,0,.25)'); shadow.addColorStop(1, 'rgba(0,0,0,0)');
-  c.fillStyle = shadow; circle(c, ball.x + 3, ball.y + 5, radius * 1.6); c.fill();
-  const enamel = c.createRadialGradient(ball.x - radius * .4, ball.y - radius * .48, .3, ball.x + radius * .2, ball.y + radius * .2, radius * 1.2);
-  enamel.addColorStop(0, '#fffef6'); enamel.addColorStop(.24, colors.accent2); enamel.addColorStop(.66, colors.accent); enamel.addColorStop(1, colors.accent3);
-  c.fillStyle = enamel; circle(c, ball.x, ball.y, radius); c.fill(); c.clip();
+  const shadow = c.createRadialGradient(ball.x + 2, ball.y + 5, 0, ball.x + 2, ball.y + 5, radius * 1.5);
+  shadow.addColorStop(0, 'rgba(58,44,110,.32)'); shadow.addColorStop(1, 'rgba(58,44,110,0)');
+  c.fillStyle = shadow; circle(c, ball.x + 2, ball.y + 5, radius * 1.5); c.fill();
+  c.fillStyle = colors.ballEdge || '#5a1a14'; circle(c, ball.x, ball.y, radius + 1.5); c.fill();
+  c.fillStyle = colors.accent3; circle(c, ball.x, ball.y, radius); c.fill();
+  c.save(); circle(c, ball.x, ball.y, radius); c.clip();
+  c.fillStyle = colors.accent; circle(c, ball.x - radius * .16, ball.y - radius * .2, radius * .9); c.fill();
   c.translate(ball.x, ball.y); c.rotate(ball.angle);
-  c.strokeStyle = 'rgba(255,255,255,.32)'; c.lineWidth = .75;
+  c.strokeStyle = 'rgba(255,255,255,.45)'; c.lineWidth = 1.1;
   c.beginPath(); c.ellipse(-radius * .1, 0, radius * .48, radius * .98, .4, 0, Math.PI * 2); c.stroke();
   c.restore();
-  c.fillStyle = 'rgba(255,255,255,.8)'; circle(c, ball.x - radius * .3, ball.y - radius * .4, radius * .17); c.fill();
+  c.fillStyle = '#fffdf4'; c.beginPath(); c.ellipse(ball.x - radius * .36, ball.y - radius * .42, radius * .26, radius * .15, -.7, 0, Math.PI * 2); c.fill();
+  c.restore();
 }
 
 export function createPlinkoScene(canvas, ctx, onPhase = () => {}) {
@@ -64,7 +70,8 @@ export function createPlinkoScene(canvas, ctx, onPhase = () => {}) {
   const simple = ctx.platform.simpleMotion;
   function palette() {
     const style = getComputedStyle(canvas), get = (key, fallback) => style.getPropertyValue(key).trim() || fallback;
-    colors = { bg: get('--bg-2', '#f0f1ed'), surface: get('--surface-strong', '#fff'), line: get('--line', '#dfe3dc'), edge: get('--line-strong', '#b8bcae'), accent: get('--accent', '#8d4841'), accent2: get('--accent-2', '#ad6c52'), accent3: get('--accent-3', '#79423b') };
+    colors = { bg: get('--bg-2', '#f0f1ed'), surface: get('--surface-strong', '#fff'), line: get('--line', '#dfe3dc'), edge: get('--line-strong', '#b8bcae'), accent: get('--accent', '#8d4841'), accent2: get('--accent-2', '#ad6c52'), accent3: get('--accent-3', '#79423b'),
+      ink: get('--text', '#2b2240'), ballEdge: darken(get('--accent-3', '#79423b'), .5), dark: ['ink', 'cinnabar', 'nebula'].includes(document.documentElement.dataset.theme) };
   }
   function resize() {
     if (!alive) return;
