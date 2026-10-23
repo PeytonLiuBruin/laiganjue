@@ -13,15 +13,16 @@ import { openPaywall, TERMS_URL, PRIVACY_URL } from './paywall.js';
 import { routeFromUrl } from './deeplink.js';
 import { versionText } from './version.js';
 import { openShareCard } from './share-card.js';
+import { canUseTheme, startSkinTryOn, isFreeTheme } from './skins.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
 export const THEMES = [
   { id: 'ink', name: '玄墨', swatch: 'radial-gradient(circle at 30% 30%, #d4af5a, #0b0b10 65%)' },
-  { id: 'cinnabar', name: '朱砂', swatch: 'radial-gradient(circle at 30% 30%, #e2b04a, #3a1414 40%, #1a0a0a 75%)' },
-  { id: 'nebula', name: '星穹', swatch: 'radial-gradient(circle at 30% 30%, #e6dcff, #4b3fa0 40%, #090a18 75%)' },
+  { id: 'cinnabar', name: '朱砂', pro: true, blurb: '朱红漆器配鎏金，喜庆浓烈', swatch: 'radial-gradient(circle at 30% 30%, #e2b04a, #3a1414 40%, #1a0a0a 75%)' },
+  { id: 'nebula', name: '星穹', pro: true, blurb: '紫色星空舞台，器物泛着星光', swatch: 'radial-gradient(circle at 30% 30%, #e6dcff, #4b3fa0 40%, #090a18 75%)' },
   { id: 'paper', name: '宣纸', swatch: 'radial-gradient(circle at 30% 30%, #fffaf0, #f1e7d3 50%, #8a5a1c 100%)' },
-  { id: 'celadon', name: '青瓷', swatch: 'radial-gradient(circle at 30% 30%, #f2f8f3, #cfe3d6 50%, #2f7d68 100%)' },
+  { id: 'celadon', name: '青瓷', pro: true, blurb: '青瓷釉色，清爽如雨后', swatch: 'radial-gradient(circle at 30% 30%, #f2f8f3, #cfe3d6 50%, #2f7d68 100%)' },
 ];
 
 const MOTION_GESTURES = new Set(['shake', 'toss', 'tilt']);
@@ -53,11 +54,14 @@ export function startApp(root) {
   const themeListeners = new Set();
   document.documentElement.dataset.fps = storage.get('stage.fps', false) ? 'on' : 'off';
   let theme = storage.get('theme', 'paper');
-  if (!THEMES.some((t) => t.id === theme)) theme = 'paper';
-  const applyTheme = (id) => {
+  if (!THEMES.some((t) => t.id === theme) || !canUseTheme(platform.purchases, theme)) theme = 'paper';
+  // 已选定的皮肤（试穿时不写入，试穿结束据此换回）
+  let savedTheme = theme;
+  let tryOn = null;
+  const applyTheme = (id, { persist = true } = {}) => {
     theme = id;
     document.documentElement.dataset.theme = id;
-    storage.set('theme', id);
+    if (persist) { savedTheme = id; storage.set('theme', id); }
     const meta = document.querySelector('meta[name="theme-color"]');
     const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#0b0b10';
     if (meta) meta.content = bg;
@@ -65,6 +69,10 @@ export function startApp(root) {
     for (const cb of themeListeners) cb(id);
   };
   applyTheme(theme);
+  // 订阅到期或退款后，付费皮肤换回宣纸（试穿中不打断）
+  platform.purchases.onChange?.(() => {
+    if (!tryOn && !canUseTheme(platform.purchases, savedTheme)) applyTheme('paper');
+  });
 
   /* ---------------- 屏保 · 静观 ---------------- */
   const zen = createZen({
@@ -396,31 +404,52 @@ export function startApp(root) {
 
   /* ---------------- 皮肤抽屉 ---------------- */
   function openThemeSheet() {
+    tryOn?.end();
+    const iap = platform.purchases;
     const grid = h('div', { class: 'theme-grid' });
+    let sh = null;
     const renderSwatches = () => {
       clear(grid);
       for (const t of THEMES) {
+        const locked = !canUseTheme(iap, t.id);
         grid.append(
           h(
             'button',
             {
               type: 'button',
-              class: ['theme-swatch', t.id === theme && 'active'],
+              class: ['theme-swatch', t.id === theme && 'active', locked && 'locked'],
+              dataset: { skin: t.id },
+              attrs: { 'aria-label': locked ? `${t.name}，付费皮肤，可试穿 10 秒` : t.name },
               onClick: () => {
-                applyTheme(t.id);
                 platform.haptic.tap();
                 platform.sound.play('flip');
+                if (locked) {
+                  sh?.close();
+                  setTimeout(() => {
+                    const mine = startSkinTryOn({ platform, theme: t, openPaywall, apply: applyTheme, revert: () => applyTheme(savedTheme), onDone: () => { if (tryOn === mine) tryOn = null; } });
+                    tryOn = mine;
+                  }, 220);
+                  return;
+                }
+                applyTheme(t.id);
                 renderSwatches();
               },
             },
             h('span', { class: 'swatch-ball', style: { background: t.swatch } }),
             h('span', null, t.name),
+            isFreeTheme(t.id) ? h('span', { class: 'swatch-tag is-free' }, '免费') : h('span', { class: ['swatch-tag', locked ? 'is-locked' : 'is-owned'] }, locked ? 'Pro · 试穿' : '已解锁'),
           ),
         );
       }
     };
     renderSwatches();
-    sheet({ title: '换一身皮肤', content: [h('p', { class: 't-muted mb-3', style: { fontSize: '13px' } }, '所有界面颜色即时切换，选择会记住。'), grid] }).open();
+    const proCard = iap.pro
+      ? null
+      : h('div', { class: 'skin-pro-card' },
+          h('div', null, h('b', null, '来感觉 Pro'), h('span', null, '全部皮肤 · 无限解读 · 无水印分享')),
+          button('了解 Pro', { variant: 'primary', size: 'small', onClick: () => openPaywall(platform, { reason: '全部皮肤，外加无限深度解读' }).then(() => { renderSwatches(); if (iap.pro) proCard.remove(); }) }));
+    sh = sheet({ title: '换一身皮肤', content: [h('p', { class: 't-muted mb-3', style: { fontSize: '13px' } }, '界面与 3D 舞台即时换装。付费皮肤可以先试穿 10 秒。'), grid, proCard] });
+    sh.open();
   }
 
   /* ---------------- 设置抽屉 ---------------- */

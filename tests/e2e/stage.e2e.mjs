@@ -51,7 +51,7 @@ async function openPage({ theme = 'paper', webglBrowser = browser, extra = {} } 
   const context = await webglBrowser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'no-preference' });
   await context.addInitScript(({ theme, extra }) => {
     try {
-      localStorage.setItem('lgj:theme', JSON.stringify(theme));
+      localStorage.setItem('lgj:theme', JSON.stringify(theme)); localStorage.setItem('lgj:dev.skins', 'true');
       localStorage.setItem('lgj:onboarded', 'true');
       for (const [k, v] of Object.entries(extra)) localStorage.setItem('lgj:' + k, JSON.stringify(v));
     } catch {}

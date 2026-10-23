@@ -40,8 +40,7 @@
 
 来感觉 Pro（可选）
 - 无限次深度解读
-- 按生辰的个性化运势
-- 全部皮肤与器物外观
+- 全部付费皮肤（朱砂、星穹、青瓷）
 - 无水印分享卡
 订阅按月或按年自动续期，可随时在 iPhone「设置 → Apple 账户 → 订阅」中取消。也可以一次买断，或单买 5 次深度解读。
 
@@ -62,7 +61,7 @@ Laiganjue puts a fortune-stick cup, moon blocks, I Ching coins, tarot cards and 
 
 Bright cartoon 3D charms that react to your motion, with haptics and sound. No account, no ads. Your data stays on your phone.
 
-Laiganjue Pro (optional): unlimited deep readings, personalized daily luck, all themes and watermark-free share cards. Subscriptions renew automatically and can be cancelled anytime in Settings → Apple Account → Subscriptions. A lifetime unlock and a 5-reading pack are also available.
+Laiganjue Pro (optional): unlimited deep readings, all premium themes and watermark-free share cards. Subscriptions renew automatically and can be cancelled anytime in Settings → Apple Account → Subscriptions. A lifetime unlock and a 5-reading pack are also available.
 
 For entertainment and self-reflection only.
 
@@ -93,6 +92,8 @@ In-App Purchases (all in the “来感觉 Pro” subscription group unless noted
 - laiganjue.pro.yearly (auto-renewable, 3-day free trial)
 - laiganjue.pro.lifetime (non-consumable)
 - laiganjue.reading.pack5 (consumable, 5 deep readings)
+- laiganjue.skin.cinnabar / laiganjue.skin.nebula / laiganjue.skin.celadon (non-consumable, one theme each; included in Pro)
+To see the theme store: tap the palette icon in the top bar, tap a theme marked “Pro · 试穿” to try it on for 10 seconds, then tap “解锁” (Unlock).
 To see the paywall: open 灵签 (Fortune Sticks), tap the main button until a sign appears, tap “展开解读 · 今日免费” once (free daily reading), then draw again and tap “解锁深度解读”. The paywall can also be opened from Settings (gear icon) → 来感觉 Pro → 了解 Pro. “恢复购买” (Restore Purchases) is in both places.
 
 Guideline 4.3: The app contains original 3D interactive charms, 17 rituals in one app, and motion-based interaction. All readings are for entertainment only, as stated in the app and the description.

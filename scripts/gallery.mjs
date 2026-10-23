@@ -46,7 +46,7 @@ const browser = await launch();
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: scale, isMobile: true, hasTouch: true, locale: 'zh-CN', timezoneId: 'Asia/Shanghai' });
 await context.addInitScript((t) => {
   try {
-    localStorage.setItem('lgj:theme', JSON.stringify(t));
+    localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true');
     localStorage.setItem('lgj:onboarded', 'true');
   } catch {}
 }, theme);

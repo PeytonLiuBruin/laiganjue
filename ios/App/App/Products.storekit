@@ -41,6 +41,66 @@
       "productID": "laiganjue.reading.pack5",
       "referenceName": "Reading Pack 5",
       "type": "Consumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6A1C0F10",
+      "localizations": [
+        {
+          "description": "解锁「朱砂」皮肤，界面与 3D 舞台一起换装",
+          "displayName": "朱砂皮肤",
+          "locale": "zh_CN"
+        },
+        {
+          "description": "Unlock the Cinnabar skin for the app and 3D stage",
+          "displayName": "Cinnabar Skin",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "laiganjue.skin.cinnabar",
+      "referenceName": "Skin Cinnabar",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6A1C0F11",
+      "localizations": [
+        {
+          "description": "解锁「星穹」皮肤，界面与 3D 舞台一起换装",
+          "displayName": "星穹皮肤",
+          "locale": "zh_CN"
+        },
+        {
+          "description": "Unlock the Nebula skin for the app and 3D stage",
+          "displayName": "Nebula Skin",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "laiganjue.skin.nebula",
+      "referenceName": "Skin Nebula",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6A1C0F12",
+      "localizations": [
+        {
+          "description": "解锁「青瓷」皮肤，界面与 3D 舞台一起换装",
+          "displayName": "青瓷皮肤",
+          "locale": "zh_CN"
+        },
+        {
+          "description": "Unlock the Celadon skin for the app and 3D stage",
+          "displayName": "Celadon Skin",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "laiganjue.skin.celadon",
+      "referenceName": "Skin Celadon",
+      "type": "NonConsumable"
     }
   ],
   "settings": {

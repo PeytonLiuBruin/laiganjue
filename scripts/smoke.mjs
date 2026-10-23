@@ -75,7 +75,7 @@ const context = await browser.newContext({
 if (theme) {
   await context.addInitScript((t) => {
     try {
-      localStorage.setItem('lgj:theme', JSON.stringify(t));
+      localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true');
     } catch {}
   }, theme);
 }

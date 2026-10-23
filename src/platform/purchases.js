@@ -24,6 +24,10 @@ export const PRODUCTS = {
   monthly: { id: 'laiganjue.pro.monthly', type: 'subs', pro: true },
   lifetime: { id: 'laiganjue.pro.lifetime', type: 'inapp', pro: true },
   pack5: { id: 'laiganjue.reading.pack5', type: 'inapp', credits: 5 },
+  // 单套皮肤（非消耗型），Pro 自动拥有全部皮肤
+  skin_cinnabar: { id: 'laiganjue.skin.cinnabar', type: 'inapp', skin: 'cinnabar' },
+  skin_nebula: { id: 'laiganjue.skin.nebula', type: 'inapp', skin: 'nebula' },
+  skin_celadon: { id: 'laiganjue.skin.celadon', type: 'inapp', skin: 'celadon' },
 };
 export const PRO_IDS = Object.values(PRODUCTS).filter((p) => p.pro).map((p) => p.id);
 const keyOf = (id) => Object.keys(PRODUCTS).find((k) => PRODUCTS[k].id === id) || null;
@@ -59,6 +63,12 @@ export function entitlementFrom(transactions = [], now = Date.now()) {
   return { pro: true, plan: keyOf(best.productIdentifier), until: exp != null && exp > now ? exp : null };
 }
 
+/** 交易列表 → 已买下的单套皮肤 id（退款的不算），按 PRODUCTS 顺序。 */
+export function skinsFrom(transactions = []) {
+  const owned = new Set(transactions.filter((t) => t && !t.revocationDate).map((t) => PRODUCTS[keyOf(t.productIdentifier)]?.skin).filter(Boolean));
+  return Object.values(PRODUCTS).map((p) => p.skin).filter((id) => id && owned.has(id));
+}
+
 /** 订阅周期 → 中文。 */
 export function periodLabel(period) {
   const unit = period?.unitString || ['day', 'week', 'month', 'year'][period?.unit] || null;
@@ -89,16 +99,19 @@ export function createPurchases({ plugin, storage, now = () => Date.now(), os } 
   const available = !!plugin;
   const listeners = new Set();
   // 缓存上次的权益，冷启动、离线时先用它；订阅到期时间过了就自动失效
-  let state = { pro: false, plan: null, until: null, ...(storage?.get('iap.state', null) || {}) };
+  let state = { pro: false, plan: null, until: null, skins: [], ...(storage?.get('iap.state', null) || {}) };
+  if (!Array.isArray(state.skins)) state.skins = [];
   let credits = Math.max(0, Number(storage?.get('iap.credits', 0)) || 0);
   const granted = new Set(storage?.get('iap.granted', []) || []);
   let products = null;
   // 本次会话刚买到的交易：商店列表偶尔滞后（沙盒尤其明显），刷新时并入，避免刚买完又被判成未购买
   let justBought = null;
+  const justSkins = [];
 
   const emit = () => { for (const cb of listeners) { try { cb(api); } catch (e) { console.error('[purchases]', e); } } };
   function save(next) {
-    const changed = next.pro !== state.pro || next.plan !== state.plan || next.until !== state.until;
+    next = { ...next, skins: next.skins || state.skins || [] };
+    const changed = next.pro !== state.pro || next.plan !== state.plan || next.until !== state.until || next.skins.join() !== (state.skins || []).join();
     state = next;
     storage?.set('iap.state', state);
     if (changed) emit();
@@ -118,7 +131,8 @@ export function createPurchases({ plugin, storage, now = () => Date.now(), os } 
     if (!available) return state;
     try {
       const { purchases = [] } = await plugin.getPurchases(os === 'ios' ? { onlyCurrentEntitlements: true } : {});
-      save(entitlementFrom(justBought ? [...purchases, justBought] : purchases, now()));
+      const all = [...purchases, ...(justBought ? [justBought] : []), ...justSkins];
+      save({ ...entitlementFrom(all, now()), skins: skinsFrom(all) });
     } catch (e) {
       console.warn('[purchases] refresh', e?.message || e);
     }
@@ -161,10 +175,14 @@ export function createPurchases({ plugin, storage, now = () => Date.now(), os } 
         ...(p.credits ? { isConsumable: true } : {}),
       });
       if (p.credits) grantCredits(tx);
-      else {
+      else if (p.skin) {
+        const owned = { ...tx, productIdentifier: p.id };
+        justSkins.push(owned);
+        save({ ...state, skins: skinsFrom([...justSkins, ...(state.skins || []).map((id) => ({ productIdentifier: `laiganjue.skin.${id}` }))]) });
+      } else {
         // 购买成功即刻生效；交易字段不全时（例如安卓订阅不带到期时间）先按所买产品开通，再由 refresh() 校正
         justBought = grantsPro(tx, now()) ? tx : { ...tx, productIdentifier: p.id, isActive: true };
-        save(entitlementFrom([justBought], now()));
+        save({ ...entitlementFrom([justBought], now()), skins: state.skins });
       }
       refresh();
       return { ok: true };
@@ -212,6 +230,11 @@ export function createPurchases({ plugin, storage, now = () => Date.now(), os } 
     get plan() { return this.pro ? state.plan : null; },
     get until() { return state.until; },
     get credits() { return credits; },
+    get skins() { return [...(state.skins || [])]; },
+    /** 是否能使用某套付费皮肤：Pro、单独买过，或网页开发预览（dev.skins）。 */
+    ownsSkin(id) {
+      return this.pro || (state.skins || []).includes(id) || (!available && storage?.get('dev.skins', false) === true);
+    },
     useCredit() {
       if (credits <= 0) return false;
       credits -= 1;

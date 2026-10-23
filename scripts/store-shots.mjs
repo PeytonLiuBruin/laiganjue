@@ -56,7 +56,7 @@ async function main() {
   const browser = await launchBrowser();
   // 1) App 画面（393×852 @3x），每个场景截一次，两种外框共用
   const ctx = await browser.newContext({ viewport: SIZES[0].app, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
-  await ctx.addInitScript((t) => { try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:stage.fps', 'false'); } catch {} }, theme);
+  await ctx.addInitScript((t) => { try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:stage.fps', 'false'); } catch {} }, theme);
   const page = await ctx.newPage();
   const shots = [];
   for (const s of SCENES) {
