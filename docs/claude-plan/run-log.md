@@ -176,3 +176,9 @@
 待 Peyton 决定：
 - 在 Xcode 打开 ios/App/App.xcodeproj，选 App 方案点运行，在设置里点「了解 Pro」，确认付费卡显示价格和「免费试用 3 天」。
 - 价格档位、App Store Connect 内购产品、包名、GitHub Pages 合并时机，同第 3 轮。
+
+## 第 6 轮之后 · 2026-10-23 01:00 UTC（Peyton 当面要求）
+
+- 设置页底部加了版本号（第 92 版起），已直接装到 Peyton 的 iPhone。
+- 按 Peyton 要求上了 TestFlight：在开发者后台登记套装 ID `io.github.peytonliubruin.laiganjue`（描述 Laiganjue，带 App 内购买能力），在 App Store Connect 新建 App「来感觉」（简体中文，SKU laiganjue，App ID 6826026534），上传构建号 202610221802。建了内部测试组「内部测试」（自动获得所有新构建），已加入 peytonliu37@gmail.com。
+- 以后更新 TestFlight：`bash scripts/ios-try.sh --testflight`。Peyton 已同意，定时任务可以在每轮结束时上传新的 TestFlight 构建（只限内部测试，不提交审核）。
