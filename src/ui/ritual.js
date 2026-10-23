@@ -11,18 +11,29 @@ export function createRitual(ctx, stage, labels) {
   const energyText = h('span', null, '轻触或上滑');
   const energy = h('div', { class: 'ritual-energy', hidden: true, attrs: { 'aria-hidden': 'true' } }, h('span', { class: 'ritual-energy-track' }, energyFill), energyText);
   const pending = new Set();
+  // 快进：仪式进行中轻点舞台，剩下的等待、界面动画与 3D 器物都按 HURRY 倍速走完，结果出来后恢复正常速度。
+  const HURRY = 3;
+  let hurrying = false;
+  const rushers = new Set();
   const animations = new Set();
   const pausedAnimations = new Set();
   const pause = (ms) => new Promise((resolve) => {
     if (!alive) return resolve(false);
     let remaining = ms, started = 0, timer = null;
-    const finish = (ok) => { clearTimeout(timer); pending.delete(cancel); document.removeEventListener('visibilitychange', visibility); resolve(ok); };
+    const finish = (ok) => { clearTimeout(timer); pending.delete(cancel); rushers.delete(rush); document.removeEventListener('visibilitychange', visibility); resolve(ok); };
     const cancel = () => finish(false);
     const visibility = () => {
       if (timer !== null) { clearTimeout(timer); remaining -= performance.now() - started; timer = null; }
       if (!document.hidden) { started = performance.now(); timer = setTimeout(() => finish(alive), Math.max(0, remaining)); }
     };
-    pending.add(cancel);
+    // 快进时把剩余时间缩短为 1/HURRY，重新计时
+    const rush = () => {
+      if (timer === null) { remaining /= HURRY; return; }
+      clearTimeout(timer); remaining = (remaining - (performance.now() - started)) / HURRY;
+      started = performance.now(); timer = setTimeout(() => finish(alive), Math.max(0, remaining));
+    };
+    if (hurrying) remaining /= HURRY;
+    pending.add(cancel); rushers.add(rush);
     document.addEventListener('visibilitychange', visibility);
     visibility();
   });
@@ -35,7 +46,7 @@ export function createRitual(ctx, stage, labels) {
   document.addEventListener('visibilitychange', visibility);
   function track(a) {
     if (!alive) { a.cancel(); return a; }
-    animations.add(a); visibility();
+    animations.add(a); if (hurrying) a.playbackRate = HURRY; visibility();
     a.finished.catch(() => {}).then(() => { animations.delete(a); pausedAnimations.delete(a); });
     return a;
   }
@@ -48,6 +59,23 @@ export function createRitual(ctx, stage, labels) {
     if (!alive) { a.cancel(); return null; }
     return a;
   }
+  const stages = () => [...stage.el.querySelectorAll('[data-model-slot]')].map((el) => el.__stage).filter((x) => x?.setSpeed);
+  function setHurry(on) {
+    hurrying = on;
+    if (on) stage.el.dataset.hurry = '1'; else delete stage.el.dataset.hurry;
+    stages().forEach((x) => x.setSpeed(on ? HURRY : 1));
+  }
+  /** 快进当前仪式。返回 true 表示确实有在进行的仪式被快进。 */
+  function hurry() {
+    if (!alive || hurrying || (!pending.size && !animations.size)) return false;
+    setHurry(true);
+    [...rushers].forEach((r) => r());
+    animations.forEach((a) => { a.playbackRate = HURRY; });
+    return true;
+  }
+  // 只在仪式进行中响应，不影响平时在舞台上的手势
+  const onStageTap = () => { hurry(); };
+  stage.el.addEventListener('pointerdown', onStageTap);
   function step(index) {
     stage.el.dataset.step = String(index);
   }
@@ -96,6 +124,7 @@ export function createRitual(ctx, stage, labels) {
   // 返回 { read }，模块里其他打开解读的入口（点签纸、历史、主按钮）也应调用它，免得绕过额度。
   function reveal({ kicker = '', title, text, onRead, actions = [], gate = false, unlockKey = null }) {
     if (!alive) return { read: () => {} };
+    if (hurrying) setHurry(false);
     clear(receipt);
     receipt.append(h('div', { class: 'ritual-receipt-copy' }, kicker && h('span', { class: 'ritual-kicker' }, kicker), h('h2', null, title), text && h('p', null, text)));
     const feature = typeof gate === 'string' ? gate : ctx.id;
@@ -130,14 +159,15 @@ export function createRitual(ctx, stage, labels) {
     const note = h('div', { class: 'ritual-nudge', attrs: { role: 'note' } }, h('span', null, `连续 ${n} 天来感觉了 · 年度 Pro 可免费试用`), go, close);
     receipt.append(note);
   }
-  function clearResult() { receipt.hidden = true; clear(receipt); refreshReadLabel = null; }
+  function clearResult() { receipt.hidden = true; clear(receipt); refreshReadLabel = null; if (hurrying) setHurry(false); }
   ctx.addCleanup(() => {
     alive = false;
     pending.forEach((cancel) => cancel());
-    pending.clear();
+    pending.clear(); rushers.clear();
+    stage.el.removeEventListener('pointerdown', onStageTap);
     animations.forEach((a) => a.cancel()); animations.clear(); pausedAnimations.clear();
     document.removeEventListener('visibilitychange', visibility);
   });
   step(0);
-  return { progress, receipt, energy, step, power, focus, pause, animate, track, reveal, gated, gateLabel, clear: clearResult, get alive() { return alive; } };
+  return { progress, receipt, energy, step, power, focus, pause, animate, track, reveal, gated, gateLabel, hurry, clear: clearResult, get alive() { return alive; }, get hurrying() { return hurrying; } };
 }

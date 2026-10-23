@@ -1,6 +1,6 @@
 // iPhone 视口截图：构建 dist → 起本地服务器 → 软件 WebGL 的无头 Chromium，按 393×852 与 430×932 两种尺寸截图。
 // 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean]
-// 每张图同时检查横向溢出，结果写到 <out>/report.json。
+// 每张图同时检查横向溢出，结果写到 <out>/report.json。非宣纸皮肤的文件名前加皮肤名（如 nebula-home-393x852.png）。
 import path from 'node:path';
 import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -95,7 +95,7 @@ for (const vp of VIEWPORTS) {
       }
       return { scrollW: document.documentElement.scrollWidth, w, bad: [...new Set(bad)].slice(0, 8) };
     });
-    const file = `${r.replace(/[/@]/g, '-')}-${vp.name}.png`;
+    const file = `${theme === 'paper' ? '' : theme + '-'}${r.replace(/[/@]/g, '-')}-${vp.name}.png`;
     await page.screenshot({ path: path.join(out, file) });
     report.push({ route: r, viewport: vp.name, file, overflow, errors: [...errors] });
     console.log(file, overflow.scrollW > overflow.w ? 'H-OVERFLOW' : 'ok', overflow.bad.join(' '), errors.length ? 'errors:' + errors.length : '');

@@ -48,7 +48,7 @@ export function createStage(el, ctx, id, fallbackFactory = null) {
   el.dataset.renderer = 'webgl';
 
   let alive = true, core = null, fallback = null, queued = false;
-  let pending = {};
+  let pending = {}, speed = 1;
   const shown = () => {
     if (!el.isConnected || el.closest('[hidden]')) return false;
     const r = el.getBoundingClientRect();
@@ -63,7 +63,7 @@ export function createStage(el, ctx, id, fallbackFactory = null) {
   }
   function init() {
     if (!alive || core || fallback) return;
-    try { core = buildCore(el, ctx, def, canvas, fpsEl); core.set(pending); el.dataset.ready = '1'; }
+    try { core = buildCore(el, ctx, def, canvas, fpsEl); core.set(pending); core.setSpeed(speed); el.dataset.ready = '1'; }
     catch (e) { swapToFallback(e); }
   }
   function request() {
@@ -96,6 +96,9 @@ export function createStage(el, ctx, id, fallbackFactory = null) {
         request();
       }
     },
+    /** 快进：动画时间按 factor 倍速推进（1 为正常）。 */
+    setSpeed(factor = 1) { speed = Math.max(.25, Math.min(4, Number(factor) || 1)); core?.setSpeed(speed); },
+    get speed() { return speed; },
     /** 测试与截图用：立即初始化（如未初始化），按固定步长推进 seconds 秒并渲染一帧。 */
     advance(seconds = 1) { if (!core && !fallback) init(); core?.advance(seconds); },
     /** 截图用：停住实时动画，画面保持在 advance 推进到的那一帧。 */
@@ -214,7 +217,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
 
   let alive = true, frozen = false, frame = 0, last = null, time = 0, visible = true, pageVisible = !document.hidden, width = 320, height = 320;
   let state = {}, tilt = { x: 0, y: 0 }, targetTilt = { x: 0, y: 0 }, wakeUntil = 2;
-  let frames = 0, acc = 0, slow = 0, fast = 0, fps = 0, compiled = false;
+  let frames = 0, acc = 0, slow = 0, fast = 0, fps = 0, compiled = false, speed = 1;
 
   function applyAtmosphere() {
     atm = atmosphereFor(root.dataset.theme);
@@ -276,7 +279,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
     if (!running()) { last = null; return; }
     const real = last === null ? 1 / 60 : Math.min(.1, (now - last) / 1000);
     last = now;
-    step(Math.min(real, 1 / 20));
+    step(Math.min(real, 1 / 20) * speed);
     render();
     frames++; acc += real;
     if (acc >= .5) {
@@ -321,6 +324,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
       wake(state.active ? 6 : 3);
     },
     freeze() { frozen = true; cancelAnimationFrame(frame); frame = 0; },
+    setSpeed(v) { speed = v; canvas.dataset.speed = String(v); },
     snapshot() {
       if (!compiled || canvas.width < 2) return null;
       render();

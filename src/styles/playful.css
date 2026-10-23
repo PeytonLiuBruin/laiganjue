@@ -140,3 +140,16 @@ body { line-height: 1.6; }
 .share-card { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .share-card-img { display: block; width: auto; max-width: 100%; max-height: min(56vh, 520px); border-radius: 16px; box-shadow: 0 4px 0 rgba(43,34,64,.12), 0 10px 28px rgba(43,34,64,.14); background: #fffaf0; }
 .share-card-pro { font-size: 13px; }
+
+/* 仪式进行中轻点舞台快进：右上角一枚描边小角标（左上角是舞台标签） */
+.stage[data-hurry]::after {
+  content: '快进 ×3';
+  position: absolute; top: 10px; right: 10px; z-index: 12;
+  padding: 3px 10px; border-radius: 999px;
+  font: 800 12px/1.4 var(--font-round, inherit); letter-spacing: .04em;
+  color: #2b2240; background: #ffd84a; border: 2px solid #2b2240; box-shadow: 0 2px 0 #2b2240;
+  pointer-events: none;
+  animation: hurry-pop .22s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+@keyframes hurry-pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .stage[data-hurry]::after { animation: none; } }

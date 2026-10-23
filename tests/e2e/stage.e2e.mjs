@@ -1,6 +1,6 @@
 // 3D 器物舞台端到端测试：自己构建、自己起本地服务器、自己开无头 Chromium（软件 WebGL），不依赖任何外部环境。
 // 运行：npm run e2e      截图输出：dist/e2e-shots/
-import test, { before, after } from 'node:test';
+import test, { before, after, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, rm } from 'node:fs/promises';
 import os from 'node:os';
@@ -41,6 +41,9 @@ before(async () => {
   base = `http://127.0.0.1:${server.address().port}/`;
   browser = await launchBrowser({ webgl: true });
 });
+// 失败的用例也要关掉上下文：留着正在渲染的 WebGL 舞台会占满软件渲染的 CPU，拖垮后面所有用例。
+const openContexts = new Set();
+afterEach(async () => { for (const c of openContexts) await c.close().catch(() => {}); openContexts.clear(); });
 after(async () => {
   await browser?.close();
   server?.close();
@@ -56,15 +59,28 @@ async function openPage({ theme = 'paper', webglBrowser = browser, extra = {} } 
       for (const [k, v] of Object.entries(extra)) localStorage.setItem('lgj:' + k, JSON.stringify(v));
     } catch {}
   }, { theme, extra });
+  openContexts.add(context);
+  context.setDefaultTimeout(STAGE_TIMEOUT); context.setDefaultNavigationTimeout(STAGE_TIMEOUT);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !BENIGN.some((r) => r.test(m.text()))) errors.push('console: ' + m.text()); });
   return { page, context, errors };
 }
+/**
+ * 按固定间隔轮询等元素出现（不按 requestAnimationFrame 轮询，软件 WebGL 一帧可能要几百毫秒）。
+ * 第 11 轮查明：Mac 上用 SwiftShader 软件渲染时，舞台首次编译着色器会把页面主线程占住 20 到 40 秒，
+ * 期间任何 evaluate 都没有回应，所以玩法页与舞台的等待都用 STAGE_TIMEOUT。真机有 GPU，不受影响。
+ */
+function waitFor(page, selector, { timeout = STAGE_TIMEOUT, visible = true } = {}) {
+  return page.waitForFunction(({ selector, visible }) => {
+    const el = document.querySelector(selector);
+    return !!el && (!visible || el.getClientRects().length > 0);
+  }, { selector, visible }, { timeout, polling: 200 });
+}
 async function openModule(page, module) {
-  await page.goto(base + `#/m/${module}`, { waitUntil: 'load' });
-  await page.waitForSelector(`.view-module[data-module="${module}"][data-ready="1"]`, { timeout: 30_000 });
+  await page.goto(base + `#/m/${module}`, { waitUntil: 'domcontentloaded' });
+  await waitFor(page, `.view-module[data-module="${module}"][data-ready="1"]`);
   await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
 }
 async function selectTab(page, tab) {
@@ -74,7 +90,7 @@ async function selectTab(page, tab) {
   await target.click();
 }
 async function waitStage(page, slot) {
-  await page.waitForSelector(`${slot}.has-stage[data-compiled="1"]`, { timeout: STAGE_TIMEOUT, state: 'attached' });
+  await waitFor(page, `${slot}.has-stage[data-compiled="1"]`, { timeout: STAGE_TIMEOUT, visible: false });
 }
 /** 在页面里推进一帧并读回像素，统计亮度均值、方差与颜色数。 */
 function frameStats(page, slot) {
@@ -115,7 +131,7 @@ test('每个 3D 器物都用 WebGL 渲染：有雾、倒影水面、随风粒子
     assert.deepEqual(info.undesignated, [], `${o.id} 只有登记过的材质可以发光`);
     assert.ok(info.shadows, `${o.id} 应开启柔和阴影`);
     await shot(page, o.slot, `${o.id}-idle`);
-    await page.waitForFunction((sel) => /^\d+ FPS$/.test(document.querySelector(sel + ' .stage-fps')?.textContent || ''), o.slot, { timeout: 8000 }).catch(() => {});
+    await page.waitForFunction((sel) => /^\d+ FPS$/.test(document.querySelector(sel + ' .stage-fps')?.textContent || ''), o.slot, { timeout: 8000, polling: 200 }).catch(() => {});
     const fps = await page.locator(`${o.slot} .stage-fps`).textContent().catch(() => '');
     console.log(`  ${o.id.padEnd(18)} ${fps}  quality ${info.quality}  draw calls ${info.calls}  triangles ${info.triangles}`);
   }
@@ -131,9 +147,9 @@ test('动作与揭晓：姻缘、事业、财运六件器物摇动后进入动�
     await waitStage(page, o.slot);
     const canvas = `${o.slot} canvas.stage-canvas`;
     await page.locator(`.view-module [data-action="primary"]`).first().click({ force: true });
-    await page.waitForSelector(`${canvas}[data-phase="active"]`, { timeout: 15_000 });
+    await waitFor(page, `${canvas}[data-phase="active"]`, { timeout: 15_000, visible: false });
     await shot(page, o.slot, `${o.id}-active`);
-    await page.waitForSelector(`${canvas}[data-phase="revealed"]`, { timeout: 30_000 });
+    await waitFor(page, `${canvas}[data-phase="revealed"]`, { timeout: 30_000, visible: false });
     await page.evaluate((sel) => document.querySelector(sel).__stage.advance(1.2), o.slot);
     await shot(page, o.slot, `${o.id}-revealed`);
     await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
@@ -148,7 +164,7 @@ test('八字排盘：命牌翻转后显示四柱', { timeout: 300_000 }, async (
   const slot = '[data-model-slot="bazi.pillars"]';
   await waitStage(page, slot);
   await page.locator('.view-module [data-action="primary"]').first().click({ force: true });
-  await page.waitForFunction((sel) => (document.querySelector(sel + ' canvas.stage-canvas')?.dataset.pillars || '').trim().length > 0, slot, { timeout: 20_000 });
+  await page.waitForFunction((sel) => (document.querySelector(sel + ' canvas.stage-canvas')?.dataset.pillars || '').trim().length > 0, slot, { timeout: 20_000, polling: 200 });
   await page.evaluate((sel) => document.querySelector(sel).__stage.advance(3), slot);
   const stats = await frameStats(page, slot);
   assert.ok(stats.std > 6);
@@ -168,15 +184,15 @@ test('帧率计数默认隐藏，在设置里打开后显示在舞台右上角�
   const row = () => page.locator('.setting-row').filter({ hasText: '帧率显示' });
   await page.locator('.app-header [aria-label="设置"]').click();
   await row().locator('input, button, [role="switch"]').first().click();
-  await page.waitForFunction(() => document.documentElement.dataset.fps === 'on');
+  await page.waitForFunction(() => document.documentElement.dataset.fps === 'on', undefined, { polling: 200 });
   await page.keyboard.press('Escape');
   await assert.doesNotReject(fps.waitFor({ state: 'visible' }));
-  await page.waitForFunction((sel) => /^[1-9]\d* FPS$/.test(document.querySelector(sel + ' .stage-fps')?.textContent || ''), slot, { timeout: 60_000 });
+  await page.waitForFunction((sel) => /^[1-9]\d* FPS$/.test(document.querySelector(sel + ' .stage-fps')?.textContent || ''), slot, { timeout: 60_000, polling: 200 });
   const box = await fps.boundingBox(), slotBox = await page.locator(slot).boundingBox();
   assert.ok(box.x > slotBox.x + slotBox.width / 2 && box.y < slotBox.y + 40, '帧率在右上角');
   await page.locator('.app-header [aria-label="设置"]').click();
   await row().locator('input, button, [role="switch"]').first().click();
-  await page.waitForFunction(() => document.documentElement.dataset.fps === 'off');
+  await page.waitForFunction(() => document.documentElement.dataset.fps === 'off', undefined, { polling: 200 });
   assert.equal(await fps.isVisible(), false, '关闭后不再显示');
   assert.deepEqual(errors, []);
   await context.close();
@@ -198,8 +214,8 @@ test('离开玩法页后释放 WebGL 舞台', { timeout: 300_000 }, async () => 
   const { page, context, errors } = await openPage();
   await openModule(page, 'zodiac');
   await waitStage(page, '[data-model-slot="zodiac.sky"]');
-  await page.goto(base + '#/', { waitUntil: 'load' });
-  await page.waitForSelector('[data-view="home"]');
+  await page.goto(base + '#/', { waitUntil: 'domcontentloaded' });
+  await waitFor(page, '[data-view="home"]');
   assert.equal(await page.locator('canvas.stage-canvas').count(), 0);
   assert.deepEqual(errors, []);
   await context.close();
@@ -234,7 +250,7 @@ test('不支持 WebGL 时退回 2D 画布，玩法照常可用', { timeout: 300_
     await slot.locator('canvas.model-canvas').waitFor({ state: 'attached' });
     assert.equal(await slot.evaluate((el) => el.classList.contains('has-stage')), false);
     await page.locator('.view-module [data-action="primary"]').first().click({ force: true });
-    await page.waitForSelector('[data-model-slot="caiyun.tree"] canvas[data-phase="revealed"]', { timeout: 30_000 });
+    await waitFor(page, '[data-model-slot="caiyun.tree"] canvas[data-phase="revealed"]', { visible: false });
     assert.deepEqual(errors, []);
     await context.close();
   } finally { if (!webkit) await noGL.close(); }
