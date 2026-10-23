@@ -1,8 +1,8 @@
 // 结果分享卡：把当前器物画面 + 签文排成一张竖版图片（1080 宽），先在抽屉里预览，再交给系统分享。
 // 免费版在器物画面上铺一层淡淡的「来感觉」水印，Pro 无水印。卡片始终用明快的浅色配色，和皮肤无关。
 //
-// openShareCard(platform, text, { title }) → Promise<'shared'|'copied'|'failed'>，与 ctx.share 同形，
-// 所以 17 个玩法原有的「分享」按钮不用改。
+// openShareCard(platform, text, { title, image }) → Promise<'shared'|'copied'|'failed'>，与 ctx.share 同形，
+// 所以 17 个玩法原有的「分享」按钮不用改。没有器物画布的玩法用 image 传自己的配图（见 share-art.js）。
 import { h, button, sheet, toast } from './kit.js';
 import { openPaywall } from './paywall.js';
 
@@ -173,9 +173,11 @@ export function drawShareCard({ heading, sub = '', lines = [], image = null, wat
 const RESULT_TEXT = { shared: '已分享', copied: '已复制', saved: '图片已保存', failed: '分享已取消' };
 
 /** 预览抽屉：分享图片 / 只分享文字。免费版有「开通 Pro 去水印」。 */
-export function openShareCard(platform, text, { title = '分享' } = {}) {
+export function openShareCard(platform, text, { title = '分享', image: art = null } = {}) {
   const parsed = parseShare(text);
-  const image = captureStage();
+  // 玩法自带配图（塔罗牌面、黄历宜忌等）优先，没有再拍当前器物画面
+  let image = art ? null : captureStage();
+  const artP = art ? Promise.resolve().then(() => (typeof art === 'function' ? art() : art)).catch((e) => { console.warn('[share] 配图生成失败', e); return null; }) : null;
   const isPro = () => !!platform.purchases?.pro;
   let url = '';
   const img = h('img', { class: 'share-card-img', attrs: { alt: `分享卡：${parsed.heading}` } });
@@ -184,6 +186,8 @@ export function openShareCard(platform, text, { title = '分享' } = {}) {
     catch (e) { console.warn('[share] 分享卡生成失败', e); url = ''; }
   };
   render();
+  // 配图异步画好（塔罗要等牌面图）后重画一次，之前先显示金色圆章占位
+  if (artP) artP.then((c) => { image = c || captureStage(); render(); img.dataset.art = c ? '1' : '0'; });
   return new Promise((resolve) => {
     let done = false;
     const finish = (r) => { if (done) return; done = true; resolve(r); };

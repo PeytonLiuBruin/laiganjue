@@ -3,6 +3,7 @@
 import { signFromDate, animalFromYmd, signFortune, animalFortune, shareText, formatDate, signById, animalById, stepIn } from './core.js';
 import { SIGNS, ANIMALS, ASPECT_LABEL, ELEMENTS, QUALITIES, UI, BRANCH_HOUR } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
+import { zodiacArt } from '../../ui/share-art.js';
 import { createModelSlot } from '../../ui/model-slot.js';
 
 export function mount(container, ctx) {
@@ -348,7 +349,7 @@ export function mount(container, ctx) {
           variant: 'ghost',
           icon: 'share',
           onClick: async () => {
-            const r = await ctx.share(shareText(f));
+            const r = await ctx.share(shareText(f), { image: () => zodiacArt(f) });
             toast(r === 'shared' ? '已分享' : r === 'copied' ? '已复制' : '分享已取消');
           },
         }),

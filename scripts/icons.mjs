@@ -24,9 +24,9 @@ async function launch() {
 }
 const browser = await launch();
 const page = await browser.newPage({ viewport: { width: 1024, height: 1024 }, deviceScaleFactor: 1 });
-await page.setContent(`<html><body style="margin:0;background:transparent">${svg}</body></html>`);
+await page.setContent(`<html><head><meta charset="utf-8"></head><body style="margin:0;background:transparent">${svg}</body></html>`);
 await page.waitForTimeout(200);
-const png = await page.locator('svg').screenshot({ omitBackground: true });
+const png = await page.screenshot({ clip: { x: 0, y: 0, width: 1024, height: 1024 }, omitBackground: true, timeout: 60_000 });
 await browser.close();
 // 用 Chromium 再缩放到各尺寸（保持简单：重新加载 img 并截图）
 const b2 = await launch();

@@ -81,6 +81,8 @@ for (const vp of VIEWPORTS) {
       await page.waitForTimeout(700); // 等结果抽屉滑入完成
       await shareBtn.first().evaluate((b) => b.click()).catch(() => {});
       await page.waitForSelector('.sheet.open .share-card-img', { timeout: 10_000 }).catch(() => {});
+      // 塔罗、黄历、星座的配图是异步画的，画好后图片带 data-art
+      await page.waitForSelector('.sheet.open .share-card-img[data-art]', { timeout: 4_000 }).catch(() => {});
       await page.waitForTimeout(700);
       const src = await page.evaluate(() => document.querySelector('.sheet.open .share-card-img')?.src || '');
       if (vp.name === VIEWPORTS[0].name && src.startsWith('data:image/png')) await writeFile(path.join(out, `${route.replace(/\//g, '-')}-card.png`), Buffer.from(src.split(',')[1], 'base64'));

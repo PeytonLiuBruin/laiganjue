@@ -6,6 +6,7 @@ import { SUITS, SUIT_VERSES, SPREAD_VERSES, TEXT } from './data.js';
 import { createCardArt } from './cards.js';
 import { hashString } from '../../core/rng.js';
 import { createRitual } from '../../ui/ritual.js';
+import { tarotArt } from '../../ui/share-art.js';
 
 const PILE_N = 6;
 const FLIP_S = 1.3; // 翻牌时长（秒）：铰链运动约 1.2s 落定，再长只是空等
@@ -558,7 +559,7 @@ export function mount(container, ctx) {
         variant: 'ghost',
         icon: 'share',
         onClick: async () => {
-          const r = await ctx.share(shareText(sid, draws, { question: q }));
+          const r = await ctx.share(shareText(sid, draws, { question: q }), { image: () => tarotArt(draws) });
           toast(r === 'shared' ? '已分享' : r === 'copied' ? '已复制到剪贴板' : '分享失败');
         },
       }),

@@ -1,20 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- 卡通金币图标，与 scripts/app-assets.mjs 画的 App 图标同一图案 -->
   <defs>
-    <radialGradient id="bg" cx="50%" cy="30%" r="80%">
-      <stop offset="0" stop-color="#1f1c26"/>
-      <stop offset="0.6" stop-color="#0f0e14"/>
-      <stop offset="1" stop-color="#0b0b10"/>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3fa4ff"/>
+      <stop offset="1" stop-color="#a8dcff"/>
+    </linearGradient>
+    <radialGradient id="coin" gradientUnits="userSpaceOnUse" cx="512" cy="512" r="340" fx="420" fy="380">
+      <stop offset="0" stop-color="#fff1b0"/>
+      <stop offset="0.35" stop-color="#ffd451"/>
+      <stop offset="0.36" stop-color="#ffc93c"/>
+      <stop offset="0.85" stop-color="#ffc93c"/>
+      <stop offset="0.86" stop-color="#f2a92c"/>
     </radialGradient>
-    <radialGradient id="gold" cx="35%" cy="30%" r="75%">
-      <stop offset="0" stop-color="#f6df98"/>
-      <stop offset="0.55" stop-color="#d4af5a"/>
-      <stop offset="1" stop-color="#8f7030"/>
-    </radialGradient>
+    <clipPath id="r"><rect width="1024" height="1024" rx="228"/></clipPath>
   </defs>
-  <rect width="1024" height="1024" rx="228" fill="url(#bg)"/>
-  <circle cx="512" cy="512" r="400" fill="none" stroke="#d4af5a" stroke-opacity="0.35" stroke-width="3"/>
-  <circle cx="512" cy="512" r="372" fill="none" stroke="#d4af5a" stroke-opacity="0.18" stroke-width="2"/>
-  <circle cx="512" cy="512" r="300" fill="url(#gold)"/>
-  <circle cx="512" cy="512" r="300" fill="none" stroke="#fff3c4" stroke-opacity="0.35" stroke-width="4"/>
-  <text x="512" y="522" text-anchor="middle" dominant-baseline="central" font-family="'Noto Serif SC','Songti SC','STSong','Source Han Serif SC','SimSun',serif" font-weight="900" font-size="340" fill="#1a1408">感</text>
+  <g clip-path="url(#r)">
+    <rect width="1024" height="1024" fill="url(#sky)"/>
+    <g fill="#f4fbff"><circle cx="170" cy="940" r="150"/><circle cx="330" cy="990" r="140"/><circle cx="800" cy="960" r="170"/><circle cx="960" cy="900" r="130"/></g>
+  </g>
+  <circle cx="512" cy="548" r="330" fill="#d8901e" stroke="#2b2240" stroke-width="24"/>
+  <circle cx="512" cy="500" r="330" fill="url(#coin)" stroke="#2b2240" stroke-width="24"/>
+  <circle cx="512" cy="500" r="270" fill="none" stroke="#2b2240" stroke-opacity="0.32" stroke-width="10" stroke-dasharray="26 22"/>
+  <ellipse cx="390" cy="330" rx="70" ry="34" transform="rotate(-40 390 330)" fill="#fff" fill-opacity="0.85"/>
+  <text x="512" y="516" text-anchor="middle" dominant-baseline="central" font-family="'Noto Sans SC','PingFang SC','Hiragino Sans GB',sans-serif" font-weight="900" font-size="330" fill="#e8463c" stroke="#2b2240" stroke-width="34" stroke-linejoin="round" paint-order="stroke">感</text>
+  <g fill="#ffc93c" stroke="#2b2240" stroke-linejoin="round">
+    <path stroke-width="15.6" d="M848 122L868.6 171.6L922.2 175.9L881.4 210.8L893.8 263.1L848 235.1L802.2 263.1L814.6 210.8L773.8 175.9L827.4 171.6Z"/>
+    <path stroke-width="10.4" d="M176 248L189.8 281.1L225.5 283.9L198.3 307.2L206.6 342.1L176 323.4L145.4 342.1L153.7 307.2L126.5 283.9L162.2 281.1Z"/>
+  </g>
 </svg>

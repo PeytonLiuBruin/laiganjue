@@ -1,0 +1,76 @@
+[
+  {
+    "route": "m/tarot@share",
+    "viewport": "393x852",
+    "file": "m-tarot-share-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/almanac@share",
+    "viewport": "393x852",
+    "file": "m-almanac-share-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac@share",
+    "viewport": "393x852",
+    "file": "m-zodiac-share-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/tarot@share",
+    "viewport": "430x932",
+    "file": "m-tarot-share-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/almanac@share",
+    "viewport": "430x932",
+    "file": "m-almanac-share-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac@share",
+    "viewport": "430x932",
+    "file": "m-zodiac-share-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  }
+]

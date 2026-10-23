@@ -93,3 +93,35 @@ test('Pro 的分享卡没有去水印入口', { timeout: 180_000 }, async () => 
     assert.equal(await page.locator('.sheet.open .share-card-pro').count(), 0);
   } finally { await browser.close(); }
 });
+
+// 没有器物画布的玩法：分享卡用玩法自己画的配图（塔罗牌面、黄历宜忌、星座金币）
+for (const mod of ['tarot', 'almanac', 'zodiac']) {
+  test(`${mod} 的分享卡使用玩法配图`, { timeout: 180_000 }, async () => {
+    const browser = await launchBrowser({ webgl: false });
+    try {
+      const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
+      await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); } catch {} });
+      const page = await context.newPage();
+      const errors = [];
+      page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
+      await page.goto(base + '#/m/' + mod, { waitUntil: 'load' });
+      await page.waitForSelector(`.view-module[data-module="${mod}"][data-ready="1"]`, { timeout: 30_000 });
+      await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
+      const share = page.locator('.sheet.open .sheet-actions button', { hasText: /^分享$/ });
+      const primary = page.locator('.view-module [data-action="primary"]').first();
+      const read = page.locator('.view-module .ritual-receipt [data-read="1"]');
+      for (let i = 0; i < 40 && !(await share.count()); i++) {
+        if (await read.count()) await read.first().click({ force: true }).catch(() => {});
+        else await primary.click({ force: true }).catch(() => {});
+        await page.waitForTimeout(800);
+      }
+      assert.ok(await share.count(), `${mod} 结果抽屉里有「分享」`);
+      await page.waitForTimeout(600); await share.first().evaluate((b) => b.click());
+      await page.waitForSelector('.sheet.open .share-card-img[data-art]', { timeout: 10_000 });
+      assert.equal(await page.getAttribute('.sheet.open .share-card-img', 'data-art'), '1', '配图画成功');
+      const s = await imageStats(page);
+      assert.ok(s.colors > 12, `配图区域只有 ${s.colors} 种颜色`);
+      assert.deepEqual(errors, []);
+    } finally { await browser.close(); }
+  });
+}
