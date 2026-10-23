@@ -311,3 +311,5 @@
 - 新图标是否满意（截图在 docs/claude-plan/screenshots/app-icon-1024.png）。满意的话下次上传 TestFlight 时就会带上。
 - App Store Connect 里新增 3 个皮肤内购、价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。
 - 在 iPhone 上试一次「分享 → 分享图片」，塔罗、黄历、星座现在也有配图了。
+
+推送结果：提交 4956701 推送成功。
