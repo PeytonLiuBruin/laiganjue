@@ -17,6 +17,7 @@ function coinFace() {
 export default {
   camera: { position: [0, .4, 7.5], target: [0, .1, 0], fov: 31 },
   fog: [9, 27],
+  pivot: -.97, // 动作弹性的不动点：石台顶面
   waterY: -1.2,
   build(api) {
     const { world, glow } = api;
@@ -86,7 +87,9 @@ export default {
     const sway = spring(0), sway2 = spring(0);
     let mix = 0, fallT = 0;
     const tmp = new THREE.Vector3();
+    const hero = api.gather({ except: coins.filter((c) => c.falls).map((c) => c.coin) });
     return {
+      hero,
       onState(prev, next) {
         if (next.active && !prev.active) { sway.v += 1.6; api.wind.blow(1); leaves.burst([0, .6, 0], .8); }
         if (next.revealed && !prev.revealed) motes.burst([0, -.4, .2], 1);

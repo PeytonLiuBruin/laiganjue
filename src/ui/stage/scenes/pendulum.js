@@ -25,6 +25,8 @@ function drawBoard(c, w, highlight = null, glowOnly = false) {
 export default {
   camera: { position: [0, 2.3, 6.1], target: [0, -.35, 0], fov: 32 },
   fog: [9, 26],
+  pivot: -.94, // 动作弹性的不动点：石台顶面
+  bounce: .6, // 支架高，满幅拉长会顶出画面
   waterY: -1.16,
   build(api) {
     const { world, glow } = api;
@@ -59,7 +61,9 @@ export default {
     const L = 1.66, pos = new THREE.Vector3(), cur = { x: 0, y: 0 };
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3(), sc = new THREE.Vector3(1, 1, 1);
     let lastResult, mix = 0;
+    const hero = api.gather();
     return {
+      hero,
       onState(prev, next) {
         if (next.result !== lastResult) {
           lastResult = next.result;

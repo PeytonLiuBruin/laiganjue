@@ -16,6 +16,7 @@ const BRANCHES = [...'子丑寅卯辰巳午未申酉戌亥'];
 export default {
   camera: { position: [0, .35, 7.0], target: [0, .02, 0], fov: 30 },
   fog: [9, 26],
+  pivot: -1.0, // 动作弹性的不动点：石台顶面
   waterY: -1.2,
   build(api) {
     const { world, glow } = api;
@@ -90,7 +91,9 @@ export default {
       for (const [a, b] of links) if (pts[a] && pts[b]) seg.push(...pts[a], ...pts[b]);
       lines.geometry.dispose(); lines.geometry = new THREE.BufferGeometry(); lines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(seg, 3));
     }
+    const hero = api.gather();
     return {
+      hero,
       onState(prev, next) {
         if (next.kind && next.kind !== mode) mode = next.kind === 'animal' ? 'animal' : 'sign';
         if (next.stars !== prev.stars || next.lines !== prev.lines) setStars(next.stars || [], next.lines || []);

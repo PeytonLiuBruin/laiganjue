@@ -22,6 +22,7 @@ function drawTablet(c, w, h, entry, i, unknownHour) {
 export default {
   camera: { position: [0, .55, 7.5], target: [0, -.2, 0], fov: 30 },
   fog: [9, 26],
+  pivot: -1.0, // 动作弹性的不动点：石台顶面
   waterY: -1.22,
   build(api) {
     const { world, glow } = api;
@@ -70,7 +71,9 @@ export default {
       const unknownHour = list.length === 3;
       tablets.forEach((tb, i) => tb.tex.userData.redraw((c, w, h) => drawTablet(c, w, h, list[i], i, unknownHour && i === 3)));
     }
+    const hero = api.gather({ except: puffs.map((p) => p.sp) });
     return {
+      hero,
       onState(prev, next) {
         if (next.pillars && next.pillars !== prev.pillars) { pillars = next.pillars; redraw(pillars); }
         if (next.duration) duration = next.duration;

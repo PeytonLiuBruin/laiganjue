@@ -79,7 +79,9 @@ export default {
     api.particles('dust', { count: 20, box: [6, 3, 3], center: [0, .3, .5] });
 
     let mix = 0, tight = 0, snapT = -1;
+    const hero = holes.map((object) => ({ object, pivot: -.45 }));
     return {
+      hero,
       onState(prev, next) {
         if (next.revealed && !prev.revealed) { petals.burst([0, 0, .2], .6); api.water.ripple(0, .6, .6); }
       },

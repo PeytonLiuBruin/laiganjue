@@ -32,6 +32,7 @@ export function plinth(api, { x = 0, z = 0, radius = 1.1, height = .5, seed = 3,
   mesh.scale.set(radius, height, radius * scaleZ);
   mesh.position.set(x, top - height * .62, z);
   api.shadows(mesh, true, true);
+  mesh.userData.ground = true; // 石台不参与动作弹性
   return mesh;
 }
 

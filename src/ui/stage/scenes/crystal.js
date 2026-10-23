@@ -30,6 +30,7 @@ const NebulaShader = {
 export default {
   camera: { position: [0, .45, 7.0], target: [0, -.1, 0], fov: 30 },
   fog: [9, 26],
+  pivot: -.98, // 动作弹性的不动点：石台顶面
   waterY: -1.18,
   build(api) {
     const { world, glow } = api;
@@ -61,7 +62,9 @@ export default {
     api.particles('dust', { count: 16, box: [6, 3, 3], center: [0, .3, .4] });
 
     let energy = .2, clearMix = 0, spin = 0;
+    const hero = api.gather();
     return {
+      hero,
       onState(prev, next) { if (next.revealed && !prev.revealed) motes.burst([0, 0, .3], .9); },
       update(dt, t, s) {
         const p = clamp(s.progress || 0);

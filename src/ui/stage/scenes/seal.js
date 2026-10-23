@@ -75,7 +75,9 @@ export default {
     api.particles('dust', { count: 16, box: [6, 3, 3], center: [0, .2, .4] });
 
     let lift = .05, squash = spring(1), mix = 0, stampMix = 0, impacted = false, aside = 0;
+    const hero = seal;
     return {
+      hero,
       onState(prev, next) {
         if (next.active && !prev.active) { impacted = false; stampMix = 0; }
         if (next.level && next.level !== prev.level) stampTex.userData.redraw((c) => drawStamp(c, next.level === '上' ? '大吉' : '官印'));

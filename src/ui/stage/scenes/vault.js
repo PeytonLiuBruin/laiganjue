@@ -80,7 +80,9 @@ export default {
 
     let open = 0, mix = 0, burst = false;
     const jolt = spring(0);
+    const hero = chest;
     return {
+      hero,
       onState(prev, next) {
         if (next.active && !prev.active) { jolt.v += 2; burst = false; }
         if (!next.active && !next.revealed) burst = false;

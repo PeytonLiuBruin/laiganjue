@@ -1,5 +1,6 @@
 // 用法：node scripts/stage-gallery.mjs [--only yinyuan.knot,shiye.seal] [--themes paper,ink] [--out dist/stage-shots]
 // 每个器物截三张：静止、动作中、揭晓后；输出到 dist/stage-shots/<id>-<theme>.png
+// --motion 改截动作弹性四张：静止、预备压扁（0.12 秒）、过冲拉长（0.28 秒）、揭晓放大与金星（0.2 秒），输出 <id>-<theme>-motion.png
 import { build } from 'esbuild';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -31,9 +32,17 @@ const STATES = {
   'bazi.pillars': [[{ pillars: [] }, .2], [{ pillars: [{ label: '年柱', gan: '乙', zhi: '亥', ganElement: '木', zhiElement: '水', shiShen: '正财' }, { label: '月柱', gan: '壬', zhi: '午', ganElement: '水', zhiElement: '火', shiShen: '食神' }, { label: '日柱', gan: '庚', zhi: '辰', ganElement: '金', zhiElement: '土', shiShen: '日主' }], active: true, duration: 2.4 }, 1.0], [{ active: false }, 2.0]],
 };
 
+const motion = args.includes('--motion');
+const LABELS = motion ? ['静止', '预备压扁', '过冲拉长', '揭晓 + 金星'] : ['静止', '动作中', '揭晓'];
+const phasesFor = (id) => {
+  const p = STATES[id];
+  if (!motion) return p;
+  const last = p[p.length - 1][0];
+  return [p[0], [{ active: true }, .12], [{ active: true }, .28], [{ ...last, active: false, revealed: true }, .2]];
+};
 const browser = await launchBrowser();
 const only = opt('--only', '');
-const page = await browser.newPage({ viewport: { width: 1140, height: 400 }, deviceScaleFactor: 1 });
+const page = await browser.newPage({ viewport: { width: motion ? 1500 : 1140, height: 400 }, deviceScaleFactor: 1 });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
@@ -42,21 +51,22 @@ const ids = (only ? only.split(',') : await page.evaluate(() => window.MODEL_IDS
 for (const theme of themes) {
   for (const id of ids) {
     await page.evaluate(() => { document.body.innerHTML = ''; });
-    const info = await page.evaluate(({ id, theme, phases }) => {
+    const info = await page.evaluate(({ id, theme, phases, labels }) => {
       const res = [];
       for (const [i, [state, t]] of phases.entries()) {
-        const { impl } = window.mount(id, { theme, label: ['静止', '动作中', '揭晓'][i] });
+        const { impl } = window.mount(id, { theme, label: labels[i] });
         let acc = {};
         for (const [s] of phases.slice(0, i + 1)) acc = { ...acc, ...s };
         if (i > 0) impl.set(phases[i - 1][0]);
         impl.set(state);
         impl.advance ? impl.advance(t) : null;
+        impl.freeze?.();
         res.push(impl.renderer || 'canvas');
       }
       return res;
-    }, { id, theme, phases: STATES[id] });
+    }, { id, theme, phases: phasesFor(id), labels: LABELS });
     await page.waitForTimeout(150);
-    await page.screenshot({ path: path.join(out, `${id}-${theme}.png`) });
+    await page.screenshot({ path: path.join(out, `${id}-${theme}${motion ? '-motion' : ''}.png`) });
     console.log('shot', id, theme, info.join(','));
   }
 }

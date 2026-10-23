@@ -70,7 +70,9 @@ export default {
 
     const swing = spring(0), lag = spring(0);
     let mix = 0;
+    const hero = pivot;
     return {
+      hero,
       onState(prev, next) {
         if (next.active && !prev.active) { swing.v += 2.4; api.wind.blow(.9); }
         if (next.revealed && !prev.revealed) { petals.burst([0, .6, .2], .7); swing.v -= 1.2; }

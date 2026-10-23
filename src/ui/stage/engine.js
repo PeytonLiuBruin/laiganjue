@@ -7,6 +7,7 @@ import { atmosphereFor, createSky, createWind, createParticles, createReeds, cre
 import { createWater } from './water.js';
 import { toonifyScene, setRimColor } from './toon.js';
 import { SCENES } from './scenes/index.js';
+import { createBounce, createStarBurst } from './bounce.js';
 
 let webgl = null;
 /** 只探测一次（three.js 需要 WebGL2），探测用的上下文立即释放。 */
@@ -97,6 +98,8 @@ export function createStage(el, ctx, id, fallbackFactory = null) {
     },
     /** 测试与截图用：立即初始化（如未初始化），按固定步长推进 seconds 秒并渲染一帧。 */
     advance(seconds = 1) { if (!core && !fallback) init(); core?.advance(seconds); },
+    /** 截图用：停住实时动画，画面保持在 advance 推进到的那一帧。 */
+    freeze() { core?.freeze(); },
     get time() { return core?.time || 0; },
     get fps() { return core?.fps || 0; },
     get quality() { return core?.level ?? -1; },
@@ -177,13 +180,33 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
     /** 投影与受影：把场景物体统一打开阴影。 */
     shadows(object, cast = true, receive = true) { object.traverse((o) => { if (o.isMesh) { o.castShadow = cast; o.receiveShadow = receive; } }); return object; },
     shake(amount = .04) { shakeAmt = Math.max(shakeAmt, amount); },
+    /** 把 world 里除石台（userData.ground）与 except 以外的物体收进一个组，作为整体做动作弹性的主角。 */
+    gather({ except = [] } = {}) {
+      const g = new THREE.Group();
+      for (const o of [...world.children]) if (!o.userData.ground && !except.includes(o)) g.add(o);
+      world.add(g); return g;
+    },
   };
   const built = def.build(api);
   // 手游卡通风格：三段明暗、硬高光、边缘光、描边（天空与水面不处理）
   const toon = toonifyScene(scene, { rimColor: atm.rim, outlineRoot: world, skip: (o) => o === sky.mesh || o === water.object });
   built.onQuality?.(level);
+  // 动作弹性与揭晓金星（主角由场景的 hero 指定，pivot 是主角自身坐标里不动的高度）
+  const heroes = [].concat(built.hero || []).map((h) => (h.isObject3D ? { object: h, pivot: def.pivot || 0 } : h));
+  const bounce = createBounce(heroes, { amount: (reduced ? 0 : gentle ? .5 : 1) * (def.bounce ?? 1) });
+  const stars = createStarBurst({ count: gentle ? 10 : 18 });
+  scene.add(stars.object);
+  const heroBox = new THREE.Box3(), heroCenter = new THREE.Vector3();
+  function revealBurst() {
+    if (reduced || !heroes.length) return;
+    heroBox.makeEmpty();
+    for (const h of heroes) heroBox.expandByObject(h.object);
+    if (heroBox.isEmpty()) return;
+    heroBox.getCenter(heroCenter); heroCenter.y = heroBox.min.y + (heroBox.max.y - heroBox.min.y) * .6;
+    stars.burst(heroCenter, Math.min(1.2, heroBox.max.x - heroBox.min.x));
+  }
 
-  let alive = true, frame = 0, last = null, time = 0, visible = true, pageVisible = !document.hidden, width = 320, height = 320;
+  let alive = true, frozen = false, frame = 0, last = null, time = 0, visible = true, pageVisible = !document.hidden, width = 320, height = 320;
   let state = {}, tilt = { x: 0, y: 0 }, targetTilt = { x: 0, y: 0 }, wakeUntil = 2;
   let frames = 0, acc = 0, slow = 0, fast = 0, fps = 0, compiled = false;
 
@@ -204,6 +227,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
     if (r.width > 0 && r.height > 0) { width = r.width; height = r.height; }
     const q = quality(), ratio = Math.min(deviceRatio, q.ratio);
     renderer.setPixelRatio(ratio); renderer.setSize(width, height, false);
+    stars.object.material.uniforms.scale.value = 200 * ratio;
     water.setSize(width * ratio * q.reflect, height * ratio * q.reflect);
     camera.aspect = width / height;
     // 窄屏时后退一点，让器物完整入画
@@ -221,14 +245,17 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
       built.onQuality?.(level);
     } else if (fast >= 12 && level > minLevel) { level--; fast = 0; resize(); built.onQuality?.(level); }
   }
-  function running() { return alive && compiled && visible && pageVisible && el.isConnected && !el.closest('[hidden]'); }
+  function running() { return alive && !frozen && compiled && visible && pageVisible && el.isConnected && !el.closest('[hidden]'); }
   function schedule() { if (!frame && running()) frame = requestAnimationFrame(tick); }
   function wake(seconds = 2.5) { wakeUntil = Math.max(wakeUntil, time + seconds); schedule(); }
   function step(dt) {
     time += dt;
     wind.update(time, dt); sky.update(time); water.update(time, wind);
     for (const a of ambient) a.update(dt, time, wind);
+    bounce.restore();
     built.update(dt, time, state, api);
+    bounce.apply(time);
+    stars.update(dt);
     const k = 1 - Math.exp(-6 * dt);
     tilt.x += (targetTilt.x - tilt.x) * k; tilt.y += (targetTilt.y - tilt.y) * k;
     const pull = camera.userData.pull || 1;
@@ -277,8 +304,8 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
     set(next) {
       const prev = state;
       state = { ...state, ...next };
-      if (next.active && !prev.active) state.since = time;
-      if (next.revealed && !prev.revealed) state.revealedAt = time;
+      if (next.active && !prev.active) { state.since = time; bounce.trigger(time); }
+      if (next.revealed && !prev.revealed) { state.revealedAt = time; bounce.reveal(time); revealBurst(); }
       canvas.dataset.phase = state.active ? 'active' : state.revealed || state.glow ? 'revealed' : 'idle';
       if (next.angle != null) canvas.dataset.angle = String(next.angle);
       if (next.progress != null) canvas.dataset.progress = String(Math.max(0, Math.min(1, next.progress)));
@@ -287,6 +314,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
       built.onState?.(prev, state, api);
       wake(state.active ? 6 : 3);
     },
+    freeze() { frozen = true; cancelAnimationFrame(frame); frame = 0; },
     advance(seconds = 1) { const n = Math.max(1, Math.round(seconds * 60)); for (let i = 0; i < n; i++) step(1 / 60); render(); compiled = true; },
     /** 测试用：报告场景用到的氛围与材质，确认只有登记过的材质在发光。 */
     inspect() {
@@ -298,7 +326,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
         fog: [scene.fog.near, scene.fog.far], water: !!water.object.isReflector, reflection: [rt.width, rt.height],
         particles: ambient.filter((a) => a.kind).map((a) => `${a.kind}:${a.count}`), glow: glow.keys(),
         undesignated: glowing.filter((m) => !m.userData.glow).map((m) => m.type), glowing: glowing.length,
-        meshes, toon, toneMapping: renderer.toneMapping, shadows: renderer.shadowMap.enabled, quality: level,
+        meshes, toon, heroes: bounce.count, bounce: bounce.sample(time), stars: stars.active, toneMapping: renderer.toneMapping, shadows: renderer.shadowMap.enabled, quality: level,
         calls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
       };
     },

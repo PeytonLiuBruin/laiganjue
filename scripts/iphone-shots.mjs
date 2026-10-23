@@ -50,6 +50,12 @@ for (const vp of VIEWPORTS) {
     if (action === 'paywall') { await page.evaluate(() => { window.__lgj.openPaywall({ reason: '今天的免费深度解读已用完，开通 Pro 不限次数' }); }); await page.waitForTimeout(900); }
     if (action === 'settings' || action === 'settings-end') { await page.click('.app-header [aria-label="设置"]'); await page.waitForTimeout(900); }
     if (action === 'settings-end') { await page.locator('.setting-legal').scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(500); }
+    if (action === 'stars') {
+      // 点一次主按钮，舞台一进入揭晓就截图，用来检查揭晓放大与金星
+      await page.locator('.view-module [data-action="primary"]').first().click().catch(() => {});
+      await page.waitForFunction(() => document.querySelector('.view-module .stage-canvas[data-phase="revealed"]'), null, { timeout: 15_000 }).catch(() => {});
+      await page.waitForTimeout(250);
+    }
     if (action === 'read') {
       // 多步玩法（灵签要先摇再取签）：一直点主按钮，直到结果条出现「展开解读」
       // 六爻要掷六次，卦成后主按钮本身变成「展开解读」

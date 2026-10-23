@@ -13,6 +13,7 @@ function starGeometry(r = .16) {
 export default {
   camera: { position: [0, .45, 7.7], target: [0, .32, 0], fov: 31 },
   fog: [9, 27],
+  pivot: -.96, // 动作弹性的不动点：石台顶面
   waterY: -1.18,
   build(api) {
     const { world, glow } = api;
@@ -63,7 +64,9 @@ export default {
     const motes = api.particles('motes', { count: 18, box: [3, 3, 2], center: [.1, .4, 0], glow: true });
 
     let mix = 0, lit = 0;
+    const hero = api.gather({ except: [far1, far2] });
     return {
+      hero,
       onState(prev, next) { if (next.revealed && !prev.revealed) motes.burst([top.x, top.y, top.z], .8); },
       update(dt, t, s) {
         const since = s.active ? t - (s.since || 0) : 0;

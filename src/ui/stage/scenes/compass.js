@@ -34,6 +34,7 @@ function faceTexture() {
 export default {
   camera: { position: [0, 4.0, 4.7], target: [0, -.62, -.1], fov: 33 },
   fog: [9, 26],
+  pivot: -.86, // 动作弹性的不动点：石台顶面
   waterY: -1.12,
   build(api) {
     const { world, glow } = api;
@@ -71,7 +72,9 @@ export default {
     api.particles('leaves', { count: 10, box: [7, 2.6, 4], center: [0, .2, 0] });
 
     let angle = 0;
+    const hero = api.gather();
     return {
+      hero,
       update(dt, t, s) {
         const target = -(s.angle || 0) * Math.PI / 180;
         let d = target - angle; d = Math.atan2(Math.sin(d), Math.cos(d));
