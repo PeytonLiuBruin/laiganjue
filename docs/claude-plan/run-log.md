@@ -345,3 +345,5 @@
 - 新图标是否满意（第 10 轮的图标截图可从 git 历史找回，docs/claude-plan/screenshots/app-icon-1024.png）。
 - App Store Connect 里新增 3 个皮肤内购、价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。
 - 在 iPhone 上试一次「分享 → 分享图片」，以及新加的「仪式中轻点舞台快进」手感是否合适（现在是 3 倍速）。
+
+推送结果：提交 6c379af 推送成功。
