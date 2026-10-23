@@ -410,3 +410,5 @@
 待 Peyton 决定：
 - 年龄分级按 13+ 填写、新商店截图、3 个皮肤内购与价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同上一轮。
 - 筊杯、签筒、铜钱、骰子、落球盘的新配色是否喜欢（截图在 docs/claude-plan/screenshots/）。
+
+推送结果：提交 573f1ab 推送成功。
