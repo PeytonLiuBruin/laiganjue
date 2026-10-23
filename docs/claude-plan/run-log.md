@@ -382,3 +382,5 @@
 - 年龄分级：store-listing.md 第 8 节建议按 13+ 填写，确认后在 App Store Connect 里填问卷。
 - 新商店截图在 docs/claude-plan/store/，看看 6 个场景和标题是否满意。
 - App Store Connect 里新增 3 个皮肤内购、价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。
+
+推送结果：提交 4d38cf8 推送成功。
