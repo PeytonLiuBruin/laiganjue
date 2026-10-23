@@ -181,4 +181,4 @@
 
 - 设置页底部加了版本号（第 92 版起），已直接装到 Peyton 的 iPhone。
 - 按 Peyton 要求上了 TestFlight：在开发者后台登记套装 ID `io.github.peytonliubruin.laiganjue`（描述 Laiganjue，带 App 内购买能力），在 App Store Connect 新建 App「来感觉」（简体中文，SKU laiganjue，App ID 6826026534），上传构建号 202610221802。建了内部测试组「内部测试」（自动获得所有新构建），已加入 peytonliu37@gmail.com。
-- 以后更新 TestFlight：`bash scripts/ios-try.sh --testflight`。Peyton 已同意，定时任务可以在每轮结束时上传新的 TestFlight 构建（只限内部测试，不提交审核）。
+- 以后更新 TestFlight：`bash scripts/ios-try.sh --testflight`。定时任务的规则仍是不自动上传 TestFlight，要不要每轮自动上传等 Peyton 决定（已写入待决定）。
