@@ -17,7 +17,9 @@ function drawBoard(c, w, highlight = null, glowOnly = false) {
   const label = (t, x, y, kind) => {
     const on = highlight === kind;
     if (glowOnly && !on) return;
-    c.fillStyle = glowOnly ? '#ffffff' : on ? '#c8281f' : '#2e1a0b'; c.fillText(t, x, y);
+    // 亮起的字加深色粗描边，发光叠上去后仍读得出（第 21 轮，原来发光会把红字冲成淡粉）
+    if (on && !glowOnly) { c.lineJoin = 'round'; c.lineWidth = w * .022; c.strokeStyle = '#5a1410'; c.strokeText(t, x, y); }
+    c.fillStyle = glowOnly ? '#ffffff' : on ? '#e8463c' : '#2e1a0b'; c.fillText(t, x, y);
   };
   label('是', cx, w * .2, 'yes'); label('是', cx, w * .8, 'yes'); label('否', w * .2, cx, 'no'); label('否', w * .8, cx, 'no');
 }
@@ -37,7 +39,7 @@ export default {
     const glowTex = canvasTexture(1024, 1024, (c, w) => drawBoard(c, w, null, true));
     const faceMat = new THREE.MeshStandardMaterial({ map: faceTex, transparent: true, roughness: .7, emissive: '#ff5a1f', emissiveMap: glowTex, emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -1 });
     const face = new THREE.Mesh(new THREE.CircleGeometry(1.12, 96), faceMat); face.rotation.x = -Math.PI / 2; face.position.y = -.838; world.add(face);
-    glow.add('label', { materials: [faceMat], color: '#ff6a2a', base: 0, peak: 1.1 });
+    glow.add('label', { materials: [faceMat], color: '#ff6a2a', base: 0, peak: .6 }); // 峰值 1.1 会把红字冲成淡粉
     const bronze = MAT.bronze(), gold = MAT.gold();
     const anchor = new THREE.Vector3(0, 1.2, 0);
     const arm = new THREE.Mesh(taperedTube([[1.02, -.84, -.62], [1.06, .2, -.62], [1.0, 1.0, -.5], [.6, 1.3, -.22], [0, 1.28, 0]], (t) => .055 - t * .025, { radial: 12, segments: 60, bark: .04, seed: 93 }), bronze);
@@ -46,10 +48,12 @@ export default {
     const LINKS = 30, linkGeo = new THREE.TorusGeometry(.022, .006, 6, 14);
     const chain = new THREE.InstancedMesh(linkGeo, gold, LINKS); chain.castShadow = true; world.add(chain);
     const bob = new THREE.Group(); world.add(bob);
-    const crystalMat = new THREE.MeshPhysicalMaterial({ color: '#b98cf2', roughness: .05, metalness: 0, transmission: .55, thickness: .35, ior: 1.55, flatShading: true, clearcoat: 1, emissive: '#c9a6ff', emissiveIntensity: 0 });
+    // 第 21 轮：原来是半透明玻璃，小屏上淡得看不见。改为不透明的饱和紫宝石，平面着色出切面，可以描边
+    const crystalMat = new THREE.MeshPhysicalMaterial({ color: '#9b6bff', roughness: .2, metalness: 0, flatShading: true, clearcoat: 1, emissive: '#c9a6ff', emissiveIntensity: 0 });
     const gem = new THREE.Mesh(new THREE.LatheGeometry([[0, -.24], [.1, .0], [.115, .04], [.07, .1], [0, .12]].map(([x, y]) => new THREE.Vector2(x, y)), 8), crystalMat);
     const cap = new THREE.Mesh(new THREE.CylinderGeometry(.035, .05, .04, 16), gold); cap.position.y = .13;
     bob.add(gem, cap); api.shadows(bob, true, false);
+    const BOB_SCALE = 1.4; bob.scale.setScalar(BOB_SCALE); // 放大后底尖离木盘仍有约 0.04
     glow.add('gem', { object: bob, materials: [crystalMat], color: '#c9a6ff', size: .7, base: .05, peak: .9 });
 
     api.reeds({ spots: [[-2.6, api.water.y, -1.4], [2.7, api.water.y, -2.0]], perSpot: 12, height: 1.05 });
@@ -81,7 +85,7 @@ export default {
         dir.copy(anchor).sub(pos).normalize();
         bob.quaternion.setFromUnitVectors(up, dir);
         bob.rotateY(t * .4);
-        const top = pos.clone().addScaledVector(dir, .15);
+        const top = pos.clone().addScaledVector(dir, .15 * BOB_SCALE);
         for (let i = 0; i < LINKS; i++) {
           const u = (i + .5) / LINKS; const p = top.clone().lerp(anchor, u);
           q.setFromUnitVectors(up, dir); q.multiply(new THREE.Quaternion().setFromAxisAngle(up, i % 2 ? Math.PI / 2 : 0));

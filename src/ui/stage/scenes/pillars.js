@@ -4,19 +4,46 @@ import { THREE, MAT, RoundedBoxGeometry, plinth, clamp, damp } from './common.js
 import { canvasTexture, woodTexture, softDot, FONT, rng } from '../organic.js';
 import { pillarPose } from '../../models/geometry.js';
 
-const WX = { 木: '#3f7a54', 火: '#b6463c', 土: '#8f6a2c', 金: '#5f7680', 水: '#3a6694' };
-function drawTablet(c, w, h, entry, i, unknownHour) {
+// 第 21 轮卡通化：五行用色板里的饱和色，字带深墨粗描边，像手游卡牌上的字（visual-direction.md 第 2 节「命牌」）
+export const WX = { 木: '#22c46c', 火: '#e8463c', 土: '#e0942a', 金: '#f2b318', 水: '#3a9cf0' };
+export const TABLET_TEX = [300, 880]; // 与牌面 0.44 × 1.29 同比例，字不再被纵向拉长
+function roundRect(c, x, y, w, h, r) { c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, r) : c.rect(x, y, w, h); }
+export function drawTablet(c, w, h, entry, i, unknownHour) {
   c.clearRect(0, 0, w, h);
-  c.fillStyle = '#f3e7cc'; c.fillRect(0, 0, w, h);
-  c.strokeStyle = 'rgba(120,80,40,.35)'; c.lineWidth = 6; c.strokeRect(14, 14, w - 28, h - 28);
+  c.fillStyle = '#fff6df'; c.fillRect(0, 0, w, h);
+  // 内框：朱红粗边 + 一道金线
+  c.lineJoin = 'round';
+  roundRect(c, 14, 14, w - 28, h - 28, 26); c.lineWidth = 10; c.strokeStyle = '#e8463c'; c.stroke();
+  roundRect(c, 30, 30, w - 60, h - 60, 16); c.lineWidth = 4; c.strokeStyle = '#ffc93c'; c.stroke();
   c.textAlign = 'center'; c.textBaseline = 'middle';
-  c.fillStyle = '#6b4a2a'; c.font = `700 34px ${FONT}`;
-  c.fillText(entry?.label || ['年柱', '月柱', '日柱', '时柱'][i], w / 2, 70);
-  const big = (txt, y, el) => { c.font = `900 ${unknownHour ? 80 : 118}px ${FONT}`; c.fillStyle = WX[el] || '#b08a52'; c.fillText(txt, w / 2, y); };
-  big(entry?.gan || (unknownHour ? '未' : '·'), 205, entry?.ganElement);
-  big(entry?.zhi || (unknownHour ? '知' : '·'), 345, entry?.zhiElement);
-  c.fillStyle = '#6b4a2a'; c.font = `600 30px ${FONT}`;
-  c.fillText(entry?.shiShen || (unknownHour ? '未计入' : ''), w / 2, 455);
+  // 顶部红色标签条，白字
+  roundRect(c, 52, 52, w - 104, 76, 38); c.fillStyle = '#e8463c'; c.fill();
+  c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(70, 122, w - 140, 6);
+  c.fillStyle = "#ffffff"; c.font = `900 54px ${FONT}`;
+  c.fillText(entry?.label || ['年柱', '月柱', '日柱', '时柱'][i], w / 2, 92);
+  const big = (txt, y, el, size) => {
+    c.font = `900 ${size}px ${FONT}`;
+    c.lineWidth = size * .1; c.strokeStyle = '#2b2240'; c.strokeText(txt, w / 2, y);
+    c.fillStyle = WX[el] || '#ffc93c'; c.fillText(txt, w / 2, y);
+  };
+  if (entry?.gan) { big(entry.gan, 310, entry.ganElement, 186); big(entry.zhi, 540, entry.zhiElement, 186); }
+  else if (unknownHour) { big('未', 320, null, 150); big('知', 520, null, 150); }
+  else {
+    // 还没排盘：两枚金色问号圆章，等待翻开
+    [310, 540].forEach((y) => {
+      c.beginPath(); c.arc(w / 2, y, 74, 0, Math.PI * 2); c.fillStyle = '#ffe9a8'; c.fill();
+      c.lineWidth = 8; c.strokeStyle = '#e0a21e'; c.stroke();
+      c.font = `900 96px ${FONT}`; c.fillStyle = '#e0a21e'; c.fillText('?', w / 2, y + 4);
+    });
+  }
+  const tag = entry?.shiShen || (unknownHour ? '未计入' : '');
+  if (tag) {
+    c.font = `900 50px ${FONT}`;
+    const tw = Math.min(w - 64, c.measureText(tag).width + 44);
+    roundRect(c, (w - tw) / 2, 726, tw, 78, 39); c.fillStyle = '#ffc93c'; c.fill();
+    c.lineWidth = 4; c.strokeStyle = '#d8901e'; c.stroke();
+    c.fillStyle = '#5a3410'; c.fillText(tag, w / 2, 765);
+  }
 }
 
 export default {
@@ -32,13 +59,13 @@ export default {
     const trim = new THREE.Mesh(new RoundedBoxGeometry(3.04, .03, .76, 3, .012), gold); trim.position.y = -.875; world.add(trim);
     const tabletGeo = new RoundedBoxGeometry(.52, 1.5, .2, 4, .04);
     const capGeo = new RoundedBoxGeometry(.58, .07, .24, 3, .025);
-    const tabMat = MAT.wood(null, '#efe1c2');
+    const tabMat = MAT.lacquer('#e8463c'); // 朱漆牌身，牌面四周露出一圈红边
     const tablets = [0, 1, 2, 3].map((i) => {
       const g = new THREE.Group(); world.add(g);
       g.add(new THREE.Mesh(tabletGeo, tabMat));
       const top = new THREE.Mesh(capGeo, gold); top.position.y = .76; const bot = new THREE.Mesh(capGeo, gold); bot.position.y = -.76; g.add(top, bot);
-      const tex = canvasTexture(320, 520, (c, w, h) => drawTablet(c, w, h, null, i, false));
-      const face = new THREE.Mesh(new THREE.PlaneGeometry(.46, .75 * 1.82), new THREE.MeshStandardMaterial({ map: tex, roughness: .8 })); face.position.z = .102; g.add(face);
+      const tex = canvasTexture(TABLET_TEX[0], TABLET_TEX[1], (c, w, h) => drawTablet(c, w, h, null, i, false));
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(.44, 1.29), new THREE.MeshStandardMaterial({ map: tex, roughness: .8 })); face.position.z = .102; g.add(face);
       api.shadows(g, true, true);
       return { g, tex };
     });

@@ -35,14 +35,16 @@ export default {
   build(api) {
     const { world, glow } = api;
     world.add(plinth(api, { radius: .95, height: .48, seed: 81, top: -.98 }));
-    const bronze = MAT.bronze(), gold = MAT.gold();
-    const base = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [.42, 0], [.46, .04], [.4, .1], [.26, .14], [.2, .24], [.22, .3], [.3, .34], [.32, .38], [0, .38]].map(([x, y]) => new THREE.Vector2(x, y)), 64), bronze);
+    // 第 21 轮：底座原来是青铜，卡通化后成了一大块发亮的橙色塑料。改为哑光紫底座配金色粗托爪，和紫色星雾呼应
+    // 哑光：漆面硬高光在弧形底座上会连成一条亮带
+    const lacquer = MAT.matte('#8a5cf0'), gold = MAT.gold();
+    const base = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [.42, 0], [.46, .04], [.4, .1], [.26, .14], [.2, .24], [.22, .3], [.3, .34], [.32, .38], [0, .38]].map(([x, y]) => new THREE.Vector2(x, y)), 64), lacquer);
     base.position.y = -.98; world.add(api.shadows(base));
     const ring = new THREE.Mesh(new THREE.TorusGeometry(.31, .02, 10, 64), gold); ring.rotation.x = Math.PI / 2; ring.position.y = -.6; world.add(ring);
     const center = new THREE.Vector3(0, .02, 0), R = .66;
     for (let i = 0; i < 4; i++) {
       const a = i / 4 * Math.PI * 2 + Math.PI / 4, c = Math.cos(a), s = Math.sin(a);
-      const claw = new THREE.Mesh(taperedTube([[c * .28, -.6, s * .28], [c * .48, -.53, s * .48], [c * .62, -.4, s * .62], [c * .68, -.22, s * .68], [c * .64, -.12, s * .64]], (t) => .05 - t * .03, { radial: 10, segments: 24, bark: .05, seed: 90 + i }), bronze);
+      const claw = new THREE.Mesh(taperedTube([[c * .28, -.6, s * .28], [c * .48, -.53, s * .48], [c * .62, -.4, s * .62], [c * .68, -.22, s * .68], [c * .64, -.12, s * .64]], (t) => .075 - t * .04, { radial: 10, segments: 24, bark: 0, seed: 90 + i }), gold);
       world.add(api.shadows(claw));
     }
     // 卡通玻璃：半透明浅蓝 + 硬高光 + 边缘光（由 toon.js 统一着色），不用透射（透射在卡通光照下会发黑）
