@@ -34,3 +34,12 @@ test('小组件的两个链接都能打开对应玩法', async () => {
   assert.deepEqual(routeFromUrl('laiganjue://m/almanac', mods), { hash: '#/m/almanac' });
   assert.deepEqual(routeFromUrl('laiganjue://m/qian', mods), { hash: '#/m/qian' });
 });
+
+test('锁屏小组件：iOS 16 起加三种锁屏尺寸，每种尺寸都设了 containerBackground（iOS 17 必需）', async () => {
+  const src = await readFile(new URL('../ios/App/LaiganjueWidget/LaiganjueWidget.swift', import.meta.url), 'utf8');
+  for (const f of ['accessoryInline', 'accessoryCircular', 'accessoryRectangular']) assert.match(src, new RegExp(`\\.${f}`), f);
+  assert.match(src, /supportedFamilies\(almanacFamilies\)/);
+  assert.equal((src.match(/containerBackground\(for: \.widget\)/g) || []).length, 2, '主屏与锁屏各一处');
+  const view = await readFile(new URL('../ios/App/LaiganjueWidget/AlmanacWidgetView.swift', import.meta.url), 'utf8');
+  assert.match(view, /struct AlmanacLockView/);
+});

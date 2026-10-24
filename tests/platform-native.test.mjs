@@ -85,3 +85,16 @@ test('back button listener can be removed; screensaver hooks reach the plugins',
     'KeepAwake.keepAwake', 'KeepAwake.allowSleep', 'SystemBars.hide', 'SystemBars.show', 'App.minimizeApp',
   ]);
 });
+
+test('断签提醒的本地通知：排期带时间与灵签路由，按 id 取消，网页版没有通知器', async () => {
+  assert.equal(rig('web').native.notifier, null);
+  const { native, calls } = rig('ios');
+  const at = new Date(2026, 9, 24, 21);
+  await native.notifier.schedule([{ id: 7100, title: '连续 3 天了', body: 'b', at }]);
+  const sched = calls.find((c) => c[0] === 'LocalNotifications' && c[1] === 'schedule');
+  assert.deepEqual(sched[2].notifications[0], { id: 7100, title: '连续 3 天了', body: 'b', schedule: { at, allowWhileIdle: true }, extra: { route: '#/m/qian' } });
+  await native.notifier.cancel([7100, 7101]);
+  assert.deepEqual(calls.find((c) => c[1] === 'cancel')[2], { notifications: [{ id: 7100 }, { id: 7101 }] });
+  native.onNotificationTap(() => {})();
+  assert.ok(calls.some((c) => c[0] === 'LocalNotifications' && c[1] === 'addListener' && c[2] === 'localNotificationActionPerformed'));
+});

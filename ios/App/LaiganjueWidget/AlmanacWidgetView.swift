@@ -190,3 +190,101 @@ struct WidgetSky: View {
         LinearGradient(colors: [WidgetPalette.skyTop, WidgetPalette.skyBottom], startPoint: .top, endPoint: .bottom)
     }
 }
+
+// MARK: - 锁屏小组件（iOS 16 起）
+// 锁屏由系统统一着色（单色 / 半透明），这里只用 .primary / .secondary 与字重区分层次，不放品牌色。
+// 只用纯 SwiftUI，方便 scripts/widget-preview.swift 在 Mac 上直接画出来过目。
+
+enum LockSize { case inline, circular, rectangular }
+
+/// 农历拆成「九月」「十五」，闰月保留「闰」字
+func splitLunar(_ l: String) -> (month: String, day: String) {
+    guard let i = l.firstIndex(of: "月") else { return ("", l) }
+    return (String(l[...i]), String(l[l.index(after: i)...]))
+}
+
+struct AlmanacLockView: View {
+    let day: AlmanacDay?
+    let size: LockSize
+
+    var body: some View {
+        switch size {
+        case .inline: inline
+        case .circular: circular
+        case .rectangular: rectangular
+        }
+    }
+
+    /// 时间上方一行：「九月十五 · 宜祭祀」。t 也可能是「万圣节前夜」这类长节日名，一行放不下，所以这里只用农历
+    private var inline: some View {
+        Group {
+            if let day = day {
+                Text("\(day.l) · 宜\(day.y.first ?? "随缘")")
+            } else {
+                Text("来感觉 · 今日黄历")
+            }
+        }
+        .lineLimit(1)
+    }
+
+    /// 圆形：上「九月」小字，中间农历日大字，下「宜」首项
+    private var circular: some View {
+        VStack(spacing: 0) {
+            if let day = day {
+                let p = splitLunar(day.l)
+                Text(p.month)
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                Text(p.day)
+                    .font(.system(size: 19, weight: .black, design: .rounded))
+                    .minimumScaleFactor(0.6)
+                Text("宜\(day.y.first ?? "随缘")")
+                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                    .minimumScaleFactor(0.7)
+            } else {
+                Text("黄历")
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+            }
+        }
+        .lineLimit(1)
+        .padding(4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// 矩形：标题行农历 + 干支，下面宜、忌各一行
+    private var rectangular: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            if let day = day {
+                HStack(spacing: 4) {
+                    Text(day.t.isEmpty ? "农历\(day.l)" : "\(day.l) · \(day.t)")
+                        .font(.system(size: 14, weight: .heavy, design: .rounded))
+                    Text("属\(day.z)")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+                lockTag("宜", day.y)
+                lockTag("忌", day.j)
+            } else {
+                Text("来感觉 · 今日黄历")
+                    .font(.system(size: 14, weight: .heavy, design: .rounded))
+                Text("打开 App 查看今日宜忌")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func lockTag(_ badge: String, _ items: [String]) -> some View {
+        HStack(spacing: 4) {
+            Text(badge)
+                .font(.system(size: 11, weight: .black, design: .rounded))
+                .padding(.horizontal, 3)
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(lineWidth: 1.2))
+            Text(items.isEmpty ? "诸事随缘" : items.prefix(3).joined(separator: " · "))
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+        }
+    }
+}

@@ -4,6 +4,7 @@ import { createNative } from './native.js';
 import { createPurchases } from './purchases.js';
 import { createQuota } from './quota.js';
 import { createStreak } from './streak.js';
+import { createReminder } from './reminder.js';
 
 // 平台层（Web 实现）。模块只通过这里拿"体感 / 手势 / 震动 / 音效 / 存储 / 分享"，
 // 迁移微信小程序时只需实现同名接口的 weapp.js（映射表见 docs/PORTING_WEAPP.md）。
@@ -799,8 +800,15 @@ export function createPlatform() {
   const sound = createSound(storage);
   const purchases = createPurchases({ storage });
   const quota = createQuota({ storage, purchases });
-  const streak = createStreak({ storage, purchases });
+  const baseStreak = createStreak({ storage, purchases });
+  // e2e 测试在网页里注入假的通知器（window.__lgjFakeNotifier），用来检查设置页开关；正式环境不会有这个变量
+  const notifier = native.notifier || (isBrowser && window.__lgjFakeNotifier) || null;
+  const reminder = createReminder({ storage, notifier, streak: baseStreak });
+  // 每次来过都重排断签提醒（今天来过就不再提醒今天）
+  const streak = { ...baseStreak, visit() { const n = baseStreak.visit(); reminder.sync(); return n; } };
   purchases.init();
+  reminder.sync();
+  if (isBrowser && reminder.available) document.addEventListener('visibilitychange', () => { if (!document.hidden) reminder.sync(); });
   return {
     name: native.isNative ? native.os : 'web',
     native,
@@ -818,6 +826,7 @@ export function createPlatform() {
     purchases,
     quota,
     streak,
+    reminder,
     share: (text, opts = {}) => share(text, { ...opts, native }),
     shareImage: (dataUrl, opts = {}) => shareImage(dataUrl, { ...opts, native }),
   };

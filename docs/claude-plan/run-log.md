@@ -618,3 +618,37 @@
 - 断签提醒要不要做（需要通知权限），徽章名字是否满意。
 
 推送结果：提交 4c5ee16 推送成功。
+
+
+## 第 20 轮 · 2026-10-24 16:54 UTC 起（PDT 09:54，定时任务）
+
+开始状态：工作区干净，与远端一致，.lock 为 idle。remote-devices 没有连接文件夹，所有命令通过 Desktop Commander 在 Mac 上执行。
+
+完成的待办：
+- ✅ P2 连续天数断签提醒（等了几轮 Peyton 的决定，考虑到它默认关闭、只有用户自己打开才申请权限、随时可关，属于可撤回的改动，本轮直接做了）。
+  - 新增 `src/platform/reminder.js`，依赖 `@capacitor/local-notifications@8.3.1`（已写进 package.json，`npm run app:sync` 同步到 iOS 的 Package.swift 和安卓 gradle）。
+  - 做法：本地通知触发时没法判断今天来没来过，所以每次出结果、启动、回到前台都取消旧的并重排未来 7 晚 9 点，今天来过就跳过今晚。id 固定 7100 到 7106。昨天来过、今晚还能续上时标题「连续 N 天了」，正文「今晚来抽一签就能续上，别让连续天数断在这里」，其余是「今天还没来感觉 · 抽一支今日签，看看今天的运气」。轻点通知打开灵签页。
+  - 设置页「连续天数提醒」只在 App 里显示，默认关闭。权限被拒时开关弹回，说明改为「通知权限未开启，可在 iPhone 设置 › 通知 › 来感觉 里打开」。
+  - 隐私政策加一段说明本地通知不经过服务器，商店描述与审核备注同步。
+  - 测试：`tests/reminder.test.mjs` 3 项，`tests/platform-native.test.mjs` 新增 1 项，`tests/e2e/reminder.e2e.mjs` 3 项（网页里用 `window.__lgjFakeNotifier` 模拟 App 的通知器）。
+- ✅ 锁屏小组件（本轮新增并完成）：同一个扩展 iOS 16 起加时间上方一行、圆形、矩形三种锁屏尺寸，参数写进 visual-direction.md 4.1 节。`scripts/widget-preview.swift` 新增锁屏预览图。`tests/widget-data.test.mjs` 新增 1 项。
+
+检查结果：
+- `npm run build` 通过，`npm test` 399 项全部通过（新增 5 项）。
+- `npm run e2e` 35 项全部通过（约 8 分钟，新增 3 项）。
+- `xcodebuild` 模拟器 Debug 编译通过两次（加锁屏小组件后、加通知插件后）。注意：用新的 `-derivedDataPath` 编译会因为 Capacitor 二进制包没下载而失败，用默认 DerivedData 正常。
+- 截图（docs/claude-plan/screenshots/，已用 git rm 删掉上一轮 11 张）：设置页打开提醒后 393×852 与 430×932 两张，report.json 无横向溢出、无报错，文字无截断。锁屏小组件 5 张（今天、宜忌最长的 2027-03-03、节日 2026-10-31、闰五月 2028-06-27、表外兜底），无截断，闰月「闰五月」在圆形里放得下。
+
+遗留问题：
+- 发现 Desktop Commander 的 shell 里 `NODE_ENV=production` 且 npm `omit=dev`，直接 `npm install <包>` 会把 esbuild、playwright、@capacitor/cli 等开发依赖从 node_modules 删掉。本轮立刻用 `npm install --include=dev` 装回，package.json 和 lock 文件没有受影响。以后装包要带 `--include=dev`。
+- 断签提醒和锁屏小组件都还没在真机上看过（TODO 记了「断签提醒真机验证」）。
+- 财运滚动白带（P2）仍需真机录屏确认。
+
+下一轮计划：剩下的未完成项大多需要真机或 Peyton 的账号。下一轮回到 3D 器物观感，重拍 gallery:3d 全部 11 件，对照 visual-direction.md 找出最弱的一两件继续打磨（动作弹性、揭晓特效或材质），或者把英文界面拆出第一步（只做商店页英文截图所需的界面）。
+
+待 Peyton 决定：
+- 断签提醒：本轮按「默认关闭、用户自己打开」做了。如果不想要，删掉设置页那一行即可（`src/ui/app.js` 的 reminderRow），通知插件留着无害。
+- 小组件：下次跑 `bash scripts/ios-try.sh` 装到 iPhone，主屏「+」和锁屏自定义里都能找到「来感觉 · 今日黄历」。签名报错多半是开发者账号要确认新的 `.widget` App ID。
+- 在 Xcode 里选 App 方案点一次运行，看付费卡与皮肤单买卡的本地化价格（StoreKit 配置已挂好）。
+- 年龄分级按 13+ 填写、3 个皮肤内购与价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。
+- 徽章名字是否满意。

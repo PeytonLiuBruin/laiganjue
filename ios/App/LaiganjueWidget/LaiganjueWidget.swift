@@ -38,6 +38,42 @@ struct AlmanacWidgetEntryView: View {
     let entry: AlmanacEntry
 
     var body: some View {
+        if let lock = lockSize {
+            if #available(iOSApplicationExtension 16.0, *) {
+                lockView(lock)
+            }
+        } else {
+            homeView
+        }
+    }
+
+    /// 锁屏三种尺寸（iOS 16 起），主屏返回 nil
+    private var lockSize: LockSize? {
+        guard #available(iOSApplicationExtension 16.0, *) else { return nil }
+        switch family {
+        case .accessoryInline: return .inline
+        case .accessoryCircular: return .circular
+        case .accessoryRectangular: return .rectangular
+        default: return nil
+        }
+    }
+
+    @available(iOSApplicationExtension 16.0, *)
+    @ViewBuilder private func lockView(_ lock: LockSize) -> some View {
+        let view = AlmanacLockView(day: entry.day, size: lock)
+            .widgetURL(URL(string: "laiganjue://m/almanac"))
+        if #available(iOSApplicationExtension 17.0, *) {
+            view.containerBackground(for: .widget) {
+                if lock == .circular { AccessoryWidgetBackground() } else { Color.clear }
+            }
+        } else if lock == .circular {
+            ZStack { AccessoryWidgetBackground(); view }
+        } else {
+            view
+        }
+    }
+
+    @ViewBuilder private var homeView: some View {
         let size: WidgetSize = family == .systemMedium ? .medium : .small
         let view = AlmanacWidgetView(date: entry.date, day: entry.day, size: size)
             .widgetURL(URL(string: "laiganjue://m/almanac"))
@@ -49,6 +85,15 @@ struct AlmanacWidgetEntryView: View {
     }
 }
 
+/// 主屏小号、中号，iOS 16 起加锁屏圆形、矩形与时间上方一行
+private var almanacFamilies: [WidgetFamily] {
+    var families: [WidgetFamily] = [.systemSmall, .systemMedium]
+    if #available(iOSApplicationExtension 16.0, *) {
+        families += [.accessoryInline, .accessoryCircular, .accessoryRectangular]
+    }
+    return families
+}
+
 @main
 struct LaiganjueWidget: Widget {
     let kind = "LaiganjueAlmanac"
@@ -58,7 +103,7 @@ struct LaiganjueWidget: Widget {
             AlmanacWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("今日黄历")
-        .description("每天的农历、宜忌，轻点打开来感觉。")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("每天的农历、宜忌，轻点打开来感觉。主屏和锁屏都能放。")
+        .supportedFamilies(almanacFamilies)
     }
 }

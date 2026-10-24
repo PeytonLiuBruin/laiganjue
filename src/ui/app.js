@@ -346,6 +346,8 @@ export function startApp(root) {
     if (r.paywall) openPaywall(platform);
     else if (r.hash) navigate(r.hash);
   });
+  // 轻点断签提醒通知 → 灵签页
+  platform.native.onNotificationTap?.((route) => navigate(route));
 
   /* ---------------- 首页 ---------------- */
   function renderHome() {
@@ -526,12 +528,30 @@ export function startApp(root) {
       );
     };
     renderPro();
+    // 断签提醒：只在 App 里出现，默认关闭，打开时才申请通知权限
+    const rem = platform.reminder;
+    let reminderRow = null;
+    if (rem?.available) {
+      const remDesc = h('div', { class: 'setting-desc' }, '晚上 9 点还没来过时提醒一次，来过就不打扰');
+      const sw = toggle(rem.enabled(), async (v) => {
+        if (!v) { await rem.disable(); return; }
+        const r = await rem.enable();
+        if (r !== 'on') {
+          sw.classList.remove('on');
+          sw.setAttribute('aria-checked', 'false');
+          remDesc.textContent = '通知权限未开启，可在 iPhone 设置 › 通知 › 来感觉 里打开';
+        } else toast('已开启，今晚 9 点前没来会提醒你');
+      });
+      sw.dataset.setting = 'reminder';
+      reminderRow = h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '连续天数提醒'), remDesc), sw);
+    }
     const content = h(
       'div',
       null,
       h('div', { class: 'setting-row setting-row-pro' }, h('div', null, h('div', { class: 'setting-label' }, '来感觉 Pro'), proDescEl), proControls),
       row('器物动画', '投掷、翻滚与翻牌', kit.chips([{ value: 'full', label: '完整' }, { value: 'gentle', label: '轻柔' }], { value: platform.simpleMotion ? 'gentle' : 'full', onChange: (v) => platform.setMotionStyle(v) }).el),
       row('音效', '合成音效：木块、铜钱、洗牌…', toggle(platform.sound.enabled, (v) => platform.sound.setEnabled(v))),
+      reminderRow,
       row('帧率显示', '在 3D 器物舞台右上角显示每秒帧数', toggle(storage.get('stage.fps', false), (v) => { storage.set('stage.fps', v); document.documentElement.dataset.fps = v ? 'on' : 'off'; })),
       h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '震动反馈'), hapticDesc), hapticControls),
       h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '体感（摇一摇 / 甩一甩）'), motionDesc), motionControl),

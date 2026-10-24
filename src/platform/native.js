@@ -9,6 +9,8 @@
 // onBack(cb) → 取消函数   安卓返回键（注册后不再走 WebView 默认的历史后退）
 // minimize()  退到后台
 // onUrlOpen(cb) → 取消函数   App 被 laiganjue:// 链接打开（含冷启动时的链接）
+// notifier   本地通知（断签提醒），网页版为 null
+// onNotificationTap(cb(route)) → 取消函数   轻点提醒通知
 //
 // 各插件只用 registerPlugin 按名字取原生实现，不把插件的网页实现打进包里。
 import { Capacitor, registerPlugin, SystemBars } from '@capacitor/core';
@@ -46,7 +48,7 @@ export function createNative(cap = Capacitor, register = registerPlugin, bars = 
   const isNative = cap.isNativePlatform();
   const os = cap.getPlatform();
   if (!isNative) {
-    return { isNative: false, os, vibrate: null, share: async () => null, shareImage: async () => null, keepAwake: noop, immersive: noop, setBarStyle: noop, onBack: () => noop, minimize: noop, onUrlOpen: () => noop };
+    return { isNative: false, os, vibrate: null, notifier: null, onNotificationTap: () => noop, share: async () => null, shareImage: async () => null, keepAwake: noop, immersive: noop, setBarStyle: noop, onBack: () => noop, minimize: noop, onUrlOpen: () => noop };
   }
 
   const Haptics = register('Haptics');
@@ -95,8 +97,27 @@ export function createNative(cap = Capacitor, register = registerPlugin, bars = 
     }
   }
 
+  // 断签提醒用的本地通知（src/platform/reminder.js），只在用户打开设置开关时才申请权限
+  const LocalNotifications = register('LocalNotifications');
+  const notifier = {
+    async requestPermission() {
+      const r = await LocalNotifications.requestPermissions();
+      return r?.display === 'granted';
+    },
+    schedule: (list) => LocalNotifications.schedule({
+      notifications: list.map((n) => ({ id: n.id, title: n.title, body: n.body, schedule: { at: n.at, allowWhileIdle: true }, extra: { route: '#/m/qian' } })),
+    }),
+    cancel: (ids) => LocalNotifications.cancel({ notifications: ids.map((id) => ({ id })) }),
+  };
+  function onNotificationTap(cb) {
+    const handle = quiet(LocalNotifications.addListener('localNotificationActionPerformed', (e) => cb(e?.notification?.extra?.route || '#/m/qian')));
+    return () => quiet(handle?.then?.((h) => h.remove()));
+  }
+
   let lastStyle = null;
   return {
+    notifier,
+    onNotificationTap,
     isNative: true,
     os,
     vibrate,

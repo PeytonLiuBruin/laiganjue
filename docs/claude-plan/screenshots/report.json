@@ -1,68 +1,14 @@
 [
   {
-    "route": "m/almanac",
-    "viewport": "393x852",
-    "file": "m-almanac-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
+    "size": "393x852",
+    "errors": [],
+    "docOverflow": false,
+    "bad": []
   },
   {
-    "route": "home",
-    "viewport": "393x852",
-    "file": "home-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/almanac",
-    "viewport": "430x932",
-    "file": "m-almanac-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home",
-    "viewport": "430x932",
-    "file": "home-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/qian@read",
-    "viewport": "393x852",
-    "file": "m-qian-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/qian@read",
-    "viewport": "430x932",
-    "file": "m-qian-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
+    "size": "430x932",
+    "errors": [],
+    "docOverflow": false,
+    "bad": []
   }
 ]
