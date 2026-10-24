@@ -578,3 +578,5 @@
 - 年龄分级按 13+ 填写、3 个皮肤内购与价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。
 - 断签提醒要不要做（需要通知权限），徽章名字是否满意。
 - 新石台和远山的观感，装到 iPhone 上看一眼。新商店截图在 docs/claude-plan/store/，可以直接用于 App Store Connect。
+
+推送结果：提交 437dd56 推送成功。
