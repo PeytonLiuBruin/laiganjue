@@ -94,6 +94,46 @@ export function toonRock({ seed = 1, radius = 1, height = 1, flatTop = .62, roug
   return g;
 }
 
+/**
+ * 卡通远山（手游背景里的大块山形）：低段数圆锥按噪声歪一歪，平面着色，
+ * 每座一个主峰加一个矮肩峰，山顶一圈浅色峰帽，山脚深一档，中间切面明度微调。
+ * 顶点色按面写（非索引），颜色硬分界。参数见 visual-direction.md 第 2 节「远山」。
+ */
+export const TOON_MOUNTAIN = { radial: 8, rings: 4, body: '#86c9b4', foot: '#6bb39f', cap: '#eefaf4', capAt: .7, footAt: .22, jitter: .05 };
+export function toonMountain({ seed = 1, palette = TOON_MOUNTAIN, shoulder = true } = {}) {
+  const nz = noise(seed), rand = rng(seed * 13 + 5);
+  const cone = (s, h, dx, lean) => {
+    const g = new THREE.ConeGeometry(1, 1, palette.radial, palette.rings);
+    g.deleteAttribute('normal'); g.deleteAttribute('uv');
+    const m = mergeVertices(g); g.dispose();
+    const p = m.attributes.position, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const t = v.y + .5; // 0 山脚 → 1 山尖
+      const n = nz.fbm(v.x * 1.3 + dx, v.y * 1.6, v.z * 1.3, 2);
+      const r = Math.hypot(v.x, v.z) * (1 + n * .32);
+      const a = Math.atan2(v.z, v.x);
+      p.setXYZ(i, (Math.cos(a) * r + lean * t) * s + dx, t * h * (1 + (t < 1 ? n * .12 : 0)), Math.sin(a) * r * s);
+    }
+    const ni = m.toNonIndexed(); m.dispose();
+    return ni;
+  };
+  const parts = [cone(1, 1, 0, (rand() - .5) * .35)];
+  if (shoulder) parts.push(cone(.62, .62, (rand() > .5 ? 1 : -1) * (.55 + rand() * .2), (rand() - .5) * .3));
+  const g = mergeGeometries(parts); parts.forEach((x) => x.dispose());
+  g.computeVertexNormals();
+  const pos = g.attributes.position, colors = new Float32Array(pos.count * 3);
+  const cb = new THREE.Color(palette.body), cf = new THREE.Color(palette.foot), cc = new THREE.Color(palette.cap), c = new THREE.Color();
+  for (let f = 0; f < pos.count; f += 3) {
+    const cy = (pos.getY(f) + pos.getY(f + 1) + pos.getY(f + 2)) / 3;
+    const k = 1 + (rand() - .5) * 2 * palette.jitter;
+    c.copy(cy > palette.capAt ? cc : cy < palette.footAt ? cf : cb).multiplyScalar(cy > palette.capAt ? 1 : k);
+    for (let j = 0; j < 3; j++) colors.set([c.r, c.g, c.b], (f + j) * 3);
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  return g;
+}
+
 /** 渐细的管：沿样条走，半径按 radius(t) 变化，可加树皮噪声。用于树干、枝条、梯杆、红绳。 */
 export function taperedTube(points, radius, { radial = 10, segments = 48, bark = 0, seed = 3, closed = false } = {}) {
   const curve = points instanceof THREE.Curve ? points : new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)), closed, 'centripetal');

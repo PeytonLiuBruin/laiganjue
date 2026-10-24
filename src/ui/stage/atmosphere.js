@@ -1,7 +1,7 @@
 // 氛围：随皮肤变化的天空与雾、风场、随风飘的粒子（花瓣 / 落叶 / 金尘 / 微尘）、
 // 岸边芦苇、浮萍荷叶、远山，以及只挂在指定材质上的柔光晕。
 import * as THREE from 'three';
-import { rng, noise, petalGeometry, leafGeometry, softDot, rock } from './organic.js';
+import { rng, noise, petalGeometry, leafGeometry, softDot, toonMountain, TOON_MOUNTAIN } from './organic.js';
 
 /** 每套皮肤的天空、雾、水色与光照强度。 */
 export const ATMOSPHERES = {
@@ -229,15 +229,30 @@ export function createLilyPads({ pads = [[1.6, .6, .32]], seed = 41, color = '#5
   return { object: group, update(t) { for (const it of items) { it.mesh.position.y = Math.sin(t * .9 + it.phase) * .006 + (it.mesh.isGroup ? .02 : 0); it.mesh.rotation.z = Math.sin(t * .7 + it.phase) * .02; } } };
 }
 
-/** 远山：雾里几座低矮山影，给画面纵深。 */
+/**
+ * 远山：雾里两排卡通山形，给画面纵深（visual-direction.md 第 2 节「远山」）。
+ * 后排偏天蓝、前排薄荷绿，平面着色切面 + 浅色峰帽，深色皮肤乘一层夜色。
+ */
+export const MOUNTAIN_ROWS = [
+  // [x, z, 宽, 高, 是否后排]
+  [-13, -27, 7, 4.6, true], [-1, -30, 9, 5.4, true], [12, -28, 8, 4.8, true],
+  [-8, -21, 5.5, 3.2, false], [3, -23, 6, 3.6, false], [15, -22, 6, 3.0, false],
+];
+export const MOUNTAIN_NIGHT = '#6a64b4';
 export function createMountains(atm, seed = 51) {
   const group = new THREE.Group();
-  const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1 });
-  const tone = new THREE.Color(atm.dark ? '#3a3570' : '#7fb8c9');
-  [[-9, -20, 6, 2.4], [-2, -24, 8, 3.2], [7, -21, 6.5, 2.6], [14, -26, 9, 3.6]].forEach(([x, z, w, h], i) => {
-    const g = rock({ seed: seed + i, radius: 1, height: 1, flatTop: 2, roughness: .45, detail: 3, stone: '#' + tone.getHexString(), dark: '#' + tone.clone().multiplyScalar(.7).getHexString(), mossAmount: 0 });
-    const m = new THREE.Mesh(g, mat); m.scale.set(w, h, w * .4); m.position.set(x, -1.5, z); group.add(m);
+  const back = { ...TOON_MOUNTAIN, body: '#9fd2e8', foot: '#86bfdc', cap: '#f4fbff' };
+  const mats = [];
+  MOUNTAIN_ROWS.forEach(([x, z, w, h, far], i) => {
+    const g = toonMountain({ seed: seed + i * 7, palette: far ? back : TOON_MOUNTAIN, shoulder: i % 3 !== 1 });
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, color: '#ffffff', roughness: 1, metalness: 0, flatShading: true });
+    mats.push(mat);
+    const m = new THREE.Mesh(g, mat); m.scale.set(w, h, w * .45); m.position.set(x, -1.6, z);
+    m.userData.ground = true;
+    group.add(m);
   });
+  const tint = (a) => mats.forEach((m) => m.color.set(a?.dark ? MOUNTAIN_NIGHT : '#ffffff'));
+  group.userData.tint = tint; tint(atm);
   return { object: group };
 }
 
