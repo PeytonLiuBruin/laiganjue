@@ -288,19 +288,44 @@ export function softDot(size = 64, hard = .0) {
   });
 }
 
-/** 木纹贴图：横向年轮细纹，带少量节疤。 */
+/**
+ * 卡通木纹参数（第 22 轮）：原来是 90 道 0.6–2.4px 的细年轮 + 两个同心节疤，小屏上像噪点。
+ * 现在是纯色底 + 3 道粗波浪深纹（各配一道细亮边）+ 至多 1 个实心节疤，和卡通石台的大色块一致。
+ */
+export const WOOD_TOON = { size: 256, bands: 3, bandWidth: [14, 22], dark: .2, light: .22, amp: [3, 7], knots: 1 };
+
+/** 木纹的排布方案（纯数据，便于测试）：每道深纹的位置、粗细、波形，以及节疤。 */
+export function woodGrainPlan(seed = 5, opt = {}) {
+  const o = { ...WOOD_TOON, ...opt }, r = rng(seed), h = o.size, gap = h / o.bands;
+  const bands = [];
+  for (let i = 0; i < o.bands; i++) {
+    const lerp = (a) => a[0] + r() * (a[1] - a[0]);
+    bands.push({ y: gap * (i + .3 + r() * .4), width: lerp(o.bandWidth), amp: lerp(o.amp), freq: (1 + Math.floor(r() * 2)) * Math.PI * 2 / h, phase: r() * Math.PI * 2 });
+  }
+  const knots = [];
+  for (let k = 0; k < o.knots; k++) {
+    const b = bands[Math.floor(r() * bands.length)];
+    knots.push({ x: h * (.2 + r() * .6), y: b.y, rx: 12 + r() * 6, ry: 5 + r() * 2 });
+  }
+  return { size: h, bands, knots, dark: o.dark, light: o.light };
+}
+
+/** 木纹贴图：卡通粗纹。签名不变，罗盘托盘、灵摆底盘、八字木台、树干、扶手、树枝共用。 */
 export function woodTexture(base = '#a8673a', seed = 5) {
-  const r = rng(seed);
-  return canvasTexture(256, 256, (c, w, h) => {
+  const plan = woodGrainPlan(seed);
+  return canvasTexture(plan.size, plan.size, (c, w, h) => {
     c.fillStyle = base; c.fillRect(0, 0, w, h);
-    for (let i = 0; i < 90; i++) {
-      const y = r() * h, a = .04 + r() * .08;
-      c.strokeStyle = r() > .5 ? `rgba(60,30,10,${a})` : `rgba(255,220,180,${a * .7})`;
-      c.lineWidth = .6 + r() * 1.8; c.beginPath(); c.moveTo(0, y);
-      for (let x = 0; x <= w; x += 16) c.lineTo(x, y + Math.sin(x * .03 + i) * 2.5);
-      c.stroke();
+    const wave = (b, dy) => { c.beginPath(); for (let x = 0; x <= w; x += 4) { const y = b.y + dy + Math.sin(x * b.freq + b.phase) * b.amp; x ? c.lineTo(x, y) : c.moveTo(x, y); } };
+    c.lineCap = 'round';
+    for (const b of plan.bands) {
+      // 上方一道细亮边（受光的纹脊），下方一道粗深纹
+      c.strokeStyle = `rgba(255,236,206,${plan.light})`; c.lineWidth = Math.max(3, b.width * .28); wave(b, -b.width * .62); c.stroke();
+      c.strokeStyle = `rgba(70,32,10,${plan.dark})`; c.lineWidth = b.width; wave(b, 0); c.stroke();
     }
-    for (let k = 0; k < 2; k++) { const x = r() * w, y = r() * h; c.strokeStyle = 'rgba(60,30,10,.25)'; for (let i = 1; i < 5; i++) { c.beginPath(); c.ellipse(x, y, i * 4, i * 2, 0, 0, Math.PI * 2); c.stroke(); } }
+    for (const k of plan.knots) {
+      c.fillStyle = `rgba(70,32,10,${plan.dark * 1.6})`; c.beginPath(); c.ellipse(k.x, k.y, k.rx, k.ry, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = `rgba(255,236,206,${plan.light})`; c.beginPath(); c.ellipse(k.x - k.rx * .25, k.y - k.ry * .3, k.rx * .35, k.ry * .3, 0, 0, Math.PI * 2); c.fill();
+    }
   });
 }
 

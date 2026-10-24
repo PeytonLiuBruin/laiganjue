@@ -76,7 +76,8 @@ for (const webgl of [false, true]) {
       assert.ok(s.h >= 1350, `高度 ${s.h}`);
       assert.ok(s.colors > 12, `器物区域只有 ${s.colors} 种颜色，像是空白`);
       assert.equal(await page.locator('.sheet.open .share-card-pro').count(), 1, '免费版显示去水印入口');
-      await page.locator('.sheet.open .sheet-actions button', { hasText: '只分享文字' }).click({ force: true });
+      // 抽屉还在滑入时 Playwright 会判定按钮在视口外（Mac 高负载下偶发），直接派发点击
+      await page.locator('.sheet.open .sheet-actions button', { hasText: '只分享文字' }).evaluate((b) => b.click());
       await page.waitForFunction(() => !document.querySelector('.sheet.open .share-card'), null, { timeout: 10_000 });
       assert.deepEqual(errors, []);
     } finally { await browser.close(); }

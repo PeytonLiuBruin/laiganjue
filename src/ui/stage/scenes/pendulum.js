@@ -1,7 +1,7 @@
 // 灵摆：水中石上一面圆木盘，刻「是 / 否」；青铜曲臂垂下细链，链端一枚多面紫晶。
 // 拖动或倾斜时灵摆跟着走（state.x / state.y），得出结果时对应的字亮起（指定发光），紫晶也泛光。
 import { THREE, MAT, plinth, damp, clamp } from './common.js';
-import { taperedTube, canvasTexture, woodTexture, FONT } from '../organic.js';
+import { taperedTube, canvasTexture, FONT } from '../organic.js';
 
 function drawBoard(c, w, highlight = null, glowOnly = false) {
   const cx = w / 2;
@@ -33,7 +33,7 @@ export default {
   build(api) {
     const { world, glow } = api;
     world.add(plinth(api, { radius: 1.45, height: .5, seed: 91, top: -.94, scaleZ: .8 }));
-    const board = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.18, .09, 96), MAT.wood(woodTexture('#dcae78', 92), '#fff4e6'));
+    const board = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.18, .09, 96), MAT.wood(null, '#e6b984')); // 纯色木盘：盘面是半透明贴图，木纹会透过来压住「是 / 否」
     board.position.y = -.885; world.add(api.shadows(board));
     const faceTex = canvasTexture(1024, 1024, (c, w) => drawBoard(c, w));
     const glowTex = canvasTexture(1024, 1024, (c, w) => drawBoard(c, w, null, true));
