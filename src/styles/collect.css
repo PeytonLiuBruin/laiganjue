@@ -28,3 +28,16 @@
 .home-streak .qn-album-bar { height: 8px; }
 .home-streak-album { flex: none; font: 700 12px var(--font-sans); color: var(--text-2); font-variant-numeric: tabular-nums; }
 .home-streak > svg { flex: none; color: var(--text-3); }
+/* 签册徽章：5 枚一行，点亮的是金色描边圆章 + 厚度边，没到的是虚线圆和所需数量 */
+.qn-badges { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin: 14px 0 4px; }
+.qn-badge { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.qn-badge i { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; font: 800 15px/1 var(--font-round, var(--font-sans)); font-style: normal; font-variant-numeric: tabular-nums; color: var(--text-3); border: 2px dashed color-mix(in srgb, var(--text) 22%, transparent); background: color-mix(in srgb, var(--text) 4%, transparent); }
+.qn-badge small { font-size: 11px; line-height: 1; color: var(--text-3); white-space: nowrap; }
+.qn-badge.on i { font-size: 19px; color: #5a2a00; border: 2.5px solid #7a4210; background: radial-gradient(circle at 34% 28%, #fff4d6 0 14%, #ffd75a 30%, #ffb020 78%); box-shadow: 0 3px 0 #b86a12, inset 0 -3px 0 rgba(160,80,0,.25); }
+.qn-badge.on small { color: var(--text); font-weight: 800; }
+.qn-badge.pop i { animation: qn-badge-pop .7s cubic-bezier(.34,1.56,.64,1) .25s both; }
+@keyframes qn-badge-pop { 0% { transform: scale(.4) rotate(-20deg); } 60% { transform: scale(1.18) rotate(6deg); } 100% { transform: scale(1) rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .qn-badge.pop i { animation: none; } }
+.qn-badge-note { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-2); text-align: center; }
+.qn-album-level.done { box-shadow: 0 0 0 1.5px var(--tone); }
+.qn-album-level.done::after { content: ' ✓'; color: var(--tone); font-weight: 800; }

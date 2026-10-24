@@ -81,8 +81,27 @@ function roundRect(g, x, y, w, hh, r) {
 
 const font = (size, weight = 700) => `${weight} ${size}px ${FONT}`;
 
-/** 画分享卡，返回 1080 宽的画布（高度随文字变化，至少 1350，文字行数有上限所以不超过约 2100）。 */
-export function drawShareCard({ heading, sub = '', lines = [], image = null, watermark = true, date = new Date() }, doc = document) {
+/** 签册徽章：白底胶囊 + 金色描边圆章（徽章名首字）+「签册 · 名字」，右端对齐到 right。 */
+export function drawBadge(g, name, right, cy) {
+  g.font = font(30, 800);
+  const label = `签册 · ${name}`, tw = g.measureText(label).width;
+  const r = 30, w = r * 2 + 16 + tw + 26, x = right - w, top = cy - 36;
+  g.fillStyle = 'rgba(184,106,18,.55)'; roundRect(g, x, top + 5, w, 72, 36); g.fill();
+  g.fillStyle = '#fff'; roundRect(g, x, top, w, 72, 36); g.fill();
+  g.strokeStyle = '#ffc93c'; g.lineWidth = 4; roundRect(g, x, top, w, 72, 36); g.stroke();
+  const cx = x + 6 + r, ccy = cy;
+  g.fillStyle = '#b86a12'; g.beginPath(); g.arc(cx, ccy + 3, r - 2, 0, Math.PI * 2); g.fill();
+  const coin = g.createRadialGradient(cx - 9, ccy - 10, 2, cx, ccy, r); coin.addColorStop(0, '#fff4d6'); coin.addColorStop(.35, '#ffd75a'); coin.addColorStop(1, '#ffb020');
+  g.fillStyle = coin; g.beginPath(); g.arc(cx, ccy, r - 3, 0, Math.PI * 2); g.fill();
+  g.strokeStyle = '#7a4210'; g.lineWidth = 3.5; g.stroke();
+  g.fillStyle = '#5a2a00'; g.font = font(30, 800); g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText([...name][0], cx, ccy + 1);
+  g.textAlign = 'left'; g.fillStyle = C.ink; g.fillText(label, cx + r + 14, cy);
+  return w;
+}
+
+/** 画分享卡，返回 1080 宽的画布（高度随文字变化，至少 1350，文字行数有上限所以不超过约 2100）。badge 是签册徽章 { name }。 */
+export function drawShareCard({ heading, sub = '', lines = [], image = null, watermark = true, badge = null, date = new Date() }, doc = document) {
   const canvas = doc.createElement('canvas');
   const g = canvas.getContext('2d');
   const cardX = 48, cardW = CARD_W - 96, inner = cardW - 96;
@@ -113,8 +132,11 @@ export function drawShareCard({ heading, sub = '', lines = [], image = null, wat
   g.fillStyle = btn; roundRect(g, PAD, 64, bw, 84, 28); g.fill();
   g.fillStyle = '#fff'; g.textBaseline = 'middle'; g.fillText(brand, PAD + 32, 107);
   g.font = font(32, 600); g.fillStyle = C.soft; g.textAlign = 'right';
-  g.fillText(`${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`, CARD_W - PAD, 107);
+  const dateText = `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`;
+  g.fillText(dateText, CARD_W - PAD, 107);
+  const dateW = g.measureText(dateText).width;
   g.textAlign = 'left';
+  if (badge?.name) drawBadge(g, badge.name, CARD_W - PAD - dateW - 28, 107);
 
   // 白卡 + 厚度边
   g.fillStyle = C.edge; roundRect(g, cardX, cardY + 10, cardW, cardH, 48); g.fill();
@@ -173,7 +195,7 @@ export function drawShareCard({ heading, sub = '', lines = [], image = null, wat
 const RESULT_TEXT = { shared: '已分享', copied: '已复制', saved: '图片已保存', failed: '分享已取消' };
 
 /** 预览抽屉：分享图片 / 只分享文字。免费版有「开通 Pro 去水印」。 */
-export function openShareCard(platform, text, { title = '分享', image: art = null } = {}) {
+export function openShareCard(platform, text, { title = '分享', image: art = null, badge = null } = {}) {
   const parsed = parseShare(text);
   // 玩法自带配图（塔罗牌面、黄历宜忌等）优先，没有再拍当前器物画面
   let image = art ? null : captureStage();
@@ -182,7 +204,7 @@ export function openShareCard(platform, text, { title = '分享', image: art = n
   let url = '';
   const img = h('img', { class: 'share-card-img', attrs: { alt: `分享卡：${parsed.heading}` } });
   const render = () => {
-    try { url = drawShareCard({ ...parsed, image, watermark: !isPro() }).toDataURL('image/png'); img.src = url; }
+    try { url = drawShareCard({ ...parsed, image, badge, watermark: !isPro() }).toDataURL('image/png'); img.src = url; }
     catch (e) { console.warn('[share] 分享卡生成失败', e); url = ''; }
   };
   render();

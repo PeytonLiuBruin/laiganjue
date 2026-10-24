@@ -1,6 +1,6 @@
 import { createStickScene } from '../../ui/stick-scene.js';
 import { drawLot, getLot, lotLabel, formatPoemLines, levelMeta, createShakeMeter, shareText, isFated } from './core.js';
-import { normalizeAlbum, backfillAlbum, collectLot, albumStats } from './album.js';
+import { normalizeAlbum, backfillAlbum, collectLot, albumStats, crossedMilestone, completedLevel, badgeOf, MILESTONES } from './album.js';
 import {
   ITEM_KEYS, QUESTION_PLACEHOLDER, IDLE_HINT, SHAKING_HINT, SENSOR_HINT, DRAWN_HINT, UNFOLD_HINT, REVEALED_HINT,
   IDLE_BADGE, SHAKING_BADGE, SHEET_TITLE, FOOTER, TAKE_LABEL, SHAKE_LABEL, AGAIN_LABEL, SHARE_LABEL,
@@ -107,9 +107,20 @@ export function mount(container, ctx) {
     sound.play('chime'); haptic.success(); st.setBadge(`${lotLabel(lot)} · ${lot.level}`);
     const fated = isFated(history, lot.no);
     history = history.concat({ no: lot.no, question: asked, date: ctx.rng.dateKey() }).slice(-8); storage.set('history', history); renderHistory();
+    const before = album, prevCount = albumStats(before).count;
     const got = collectLot(album, lot.no, ctx.rng.dateKey()); album = got.album; storage.set('album', album); renderHistory();
-    if (fated) kit.toast(FATED_TOAST);
-    else if (got.fresh) { const s = albumStats(album); kit.toast(s.complete ? `收集册集齐了 · ${s.total} 支签` : `新签入册 · ${s.count}/${s.total}`); }
+    const s = albumStats(album);
+    const mile = got.fresh ? crossedMilestone(prevCount, s.count) : null;
+    const levelDone = got.fresh ? completedLevel(before, album) : null;
+    if (mile) {
+      // 里程碑：金星彩屑 + 徽章提示，下次打开收集册时新徽章跳一下。
+      storage.set('badgeNew', mile.id);
+      kit.confetti(st.el, { count: mile.stars, colors: ['#ffc93c', '#ff9f3c', '#fff4d6', '#e8463c', '#4fb8ff'], origin: { x: 0.5, y: 0.42 }, spread: 240 });
+      haptic.success();
+      kit.toast(s.complete ? `收集册集齐了 · 解锁「${mile.name}」徽章` : `解锁签册徽章「${mile.name}」 · 分享卡会带上它`, { duration: 2600 });
+    } else if (fated) kit.toast(FATED_TOAST);
+    else if (levelDone) kit.toast(`${levelDone}签全部集齐 · ${s.count}/${s.total}`, { duration: 2400 });
+    else if (got.fresh) kit.toast(`新签入册 · ${s.count}/${s.total}`);
     if (!await ritual.pause(gentle || instant ? 80 : 900)) return;
     phase = 'paper'; primary.setLabel(AGAIN_LABEL); lock(false); setGuide('tap', REVEALED_HINT);
     const result = lot, resultQuestion = asked;
@@ -160,7 +171,19 @@ export function mount(container, ctx) {
     if (busy || reading || albumSheet) return;
     haptic.tap();
     const s = albumStats(album);
-    const levels = h('div', { class: 'qn-album-levels' }, s.byLevel.map((x) => h('span', { class: `qn-album-level tone-${x.tone}` }, h('b', null, x.id), ` ${x.have}/${x.total}`)));
+    const levels = h('div', { class: 'qn-album-levels' }, s.byLevel.map((x) => h('span', { class: `qn-album-level tone-${x.tone}${x.total && x.have === x.total ? ' done' : ''}` }, h('b', null, x.id), ` ${x.have}/${x.total}`)));
+    // 徽章行：5 枚，点亮的是金色描边圆章，没到的是灰色虚线圆和所需数量。刚解锁的那枚跳一下。
+    const fresh = storage.get('badgeNew', '');
+    if (fresh) storage.set('badgeNew', '');
+    const next = MILESTONES.find((m) => s.count < m.at);
+    const badges = h('div', { class: 'qn-badges', attrs: { role: 'list', 'aria-label': '签册徽章' } }, MILESTONES.map((m) => {
+      const on = s.count >= m.at;
+      return h('span', { class: `qn-badge${on ? ' on' : ''}${on && m.id === fresh ? ' pop' : ''}`, dataset: { badge: m.id }, attrs: { role: 'listitem', 'aria-label': on ? `徽章「${m.name}」已点亮` : `集到 ${m.at} 支点亮「${m.name}」` } },
+        h('i', null, on ? m.name[0] : String(m.at)), h('small', null, m.name));
+    }));
+    const badgeNote = h('p', { class: 'qn-badge-note' }, next
+      ? `再集 ${next.at - s.count} 支点亮「${next.name}」${badgeOf(s.count) ? '，最高徽章会印在分享卡上' : ''}`
+      : '五枚徽章全部点亮，分享卡上印着「圆满」。');
     const grid = h('div', { class: 'qn-album-grid', attrs: { role: 'list' } });
     for (let no = 1; no <= s.total; no++) {
       const l = getLot(no), have = album[no];
@@ -174,7 +197,7 @@ export function mount(container, ctx) {
       h('div', null, h('b', null, `${s.count}`), h('span', null, ` / ${s.total} 支`)),
       h('span', { class: 'qn-album-bar big' }, h('i', { style: { width: `${(s.count / s.total) * 100}%` } })),
       h('p', null, s.complete ? '六十四支签全部集齐，诸事圆满。' : s.count ? '每天摇一支，看看哪天能集齐。点亮的签可以回看签诗。' : '还没有收到签。摇一支签，它就会收进册子里。'));
-    albumSheet = sheet({ title: '签纸收集册', content: [head, levels, grid], onClose: () => { albumSheet = null; } });
+    albumSheet = sheet({ title: '签纸收集册', content: [head, badges, badgeNote, levels, grid], onClose: () => { albumSheet = null; } });
     albumSheet.open();
   }
   // 从首页「收集册」入口进来：#/m/qian/album 直接打开册子。

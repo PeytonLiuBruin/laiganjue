@@ -46,3 +46,33 @@ export function albumStats(album, lots = LOTS) {
   }
   return { count, total: lots.length, byLevel, complete: count === lots.length };
 }
+
+// 里程碑：集到一定数量点亮一枚签册徽章。奖励只是看得见的荣誉（徽章印在所有分享卡上、结果金星加量），
+// 不送任何付费内容，免得和内购冲突。
+export const MILESTONES = [
+  { at: 8, id: 'chu', name: '初窥', stars: 24 },
+  { at: 16, id: 'ru', name: '入门', stars: 30 },
+  { at: 32, id: 'ban', name: '半册', stars: 36 },
+  { at: 48, id: 'tong', name: '通达', stars: 42 },
+  { at: 64, id: 'man', name: '圆满', stars: 54 },
+];
+
+/** 已收数量对应的最高徽章，没到第一档返回 null。 */
+export function badgeOf(count, list = MILESTONES) {
+  let got = null;
+  for (const m of list) if (count >= m.at) got = m;
+  return got;
+}
+
+/** 从 prev 支收到 next 支时新跨过的里程碑（一次只会跨一档，防御起见取最高的）。 */
+export function crossedMilestone(prevCount, nextCount, list = MILESTONES) {
+  const a = badgeOf(prevCount, list), b = badgeOf(nextCount, list);
+  return b && b !== a ? b : null;
+}
+
+/** 收进这支签后刚好集齐的等级（如「上上」），没有返回 null。 */
+export function completedLevel(prevAlbum, nextAlbum, lots = LOTS) {
+  const before = albumStats(prevAlbum, lots).byLevel, after = albumStats(nextAlbum, lots).byLevel;
+  const hit = after.find((x, i) => x.total && x.have === x.total && before[i].have < before[i].total);
+  return hit ? hit.id : null;
+}

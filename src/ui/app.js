@@ -14,7 +14,7 @@ import { routeFromUrl } from './deeplink.js';
 import { versionText } from './version.js';
 import { openShareCard } from './share-card.js';
 import { canUseTheme, startSkinTryOn, isFreeTheme } from './skins.js';
-import { albumStats, normalizeAlbum, ALBUM_TOTAL } from '../modules/qian/album.js';
+import { albumStats, normalizeAlbum, badgeOf, ALBUM_TOTAL } from '../modules/qian/album.js';
 import { dayKey } from '../platform/quota.js';
 
 export const APP_NAME = '来感觉';
@@ -267,7 +267,7 @@ export function startApp(root) {
       sound: platform.sound,
       storage: storage.namespace(meta.id),
       profile,
-      share: (text, opts) => openShareCard(platform, text, opts),
+      share: (text, opts) => openShareCard(platform, text, { badge: albumBadge(), ...opts }),
       navigate,
       toast,
       setTitle(text) {
@@ -386,6 +386,12 @@ export function startApp(root) {
       ),
     );
     return el;
+  }
+
+  // 签册最高徽章：所有玩法的分享卡都印上它（集到 8 支起）。
+  function albumBadge() {
+    try { return badgeOf(albumStats(normalizeAlbum(storage.namespace('qian').get('album', null))).count); }
+    catch (e) { console.error('[album]', e); return null; }
   }
 
   // 连续天数 + 签纸收集册进度：每天回来的小理由，点开直接到收集册。

@@ -98,3 +98,44 @@ test('摇一支新签后收进册子，入口进度加一，首页连续天数�
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test('集到第 8 支：解锁「初窥」徽章，收集册里徽章点亮并跳一下，第二次打开不再跳', async () => {
+  const seed = {};
+  for (const no of [2, 9, 21, 30, 38, 45, 57]) seed[no] = { first: '2026-10-20', times: 1 };
+  const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
+  await context.addInitScript((a) => { try { localStorage.setItem('lgj:onboarded', 'true'); if (!localStorage.getItem('lgj:qian:album')) localStorage.setItem('lgj:qian:album', JSON.stringify(a)); } catch {} }, seed);
+  const page = await context.newPage();
+  const errors = [], toasts = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.exposeFunction('__toast', (t) => toasts.push(t));
+  await page.addInitScript(() => { new MutationObserver(() => { const t = document.querySelector('.toast'); if (t && t.textContent && t.dataset.seen !== t.textContent) { t.dataset.seen = t.textContent; window.__toast(t.textContent); } }).observe(document, { subtree: true, childList: true, characterData: true }); });
+  await page.goto(base + '#/m/qian', { waitUntil: 'load' });
+  await page.waitForSelector('.view-module[data-module="qian"][data-ready="1"]', { timeout: 30_000 });
+  assert.equal(await page.textContent('.qn-album-count'), '7/64');
+  // 抽到已有的签不算，循环到第 8 支入册
+  for (let i = 0; i < 160 && (await page.textContent('.qn-album-count')) !== '8/64'; i++) {
+    await page.evaluate(() => { document.querySelectorAll('.sheet.open').forEach((s) => s.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))); const b = document.querySelector('.view-module [data-action="primary"]'); if (b && !b.disabled) b.click(); });
+    await page.waitForTimeout(400);
+  }
+  assert.equal(await page.textContent('.qn-album-count'), '8/64');
+  await page.waitForFunction(() => document.querySelector('.ritual-receipt:not([hidden])'), null, { timeout: 30_000 });
+  assert.ok(toasts.some((t) => /初窥/.test(t)), `提示里有徽章名：${toasts.join(' | ')}`);
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('lgj:qian:badgeNew'))), 'chu');
+  await page.evaluate(() => document.querySelectorAll('.sheet.open').forEach((s) => s.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))));
+  await page.waitForFunction(() => !document.querySelector('.sheet.open'), null, { timeout: 5000 });
+  await page.click('.qn-album-btn');
+  await page.waitForSelector('.sheet.open .qn-badges');
+  assert.deepEqual(await page.$$eval('.sheet.open .qn-badge.on', (els) => els.map((e) => e.dataset.badge)), ['chu']);
+  assert.equal(await page.$$eval('.sheet.open .qn-badge.pop', (els) => els.length), 1);
+  assert.match(await page.textContent('.sheet.open .qn-badge-note'), /再集 8 支点亮「入门」/);
+  const overflow = await page.evaluate(() => { const r = document.querySelector('.sheet.open .qn-badges').getBoundingClientRect(); return r.right > innerWidth + 1 || r.left < -1; });
+  assert.equal(overflow, false);
+  // 第二次打开不再跳
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('.sheet.open'), null, { timeout: 5000 });
+  await page.click('.qn-album-btn');
+  await page.waitForSelector('.sheet.open .qn-badges');
+  assert.equal(await page.$$eval('.sheet.open .qn-badge.pop', (els) => els.length), 0);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
