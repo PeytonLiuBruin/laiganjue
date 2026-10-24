@@ -27,7 +27,7 @@ export default {
   build(api) {
     const { world, glow } = api;
     world.add(plinth(api, { radius: 1.95, height: .5, seed: 111, top: -1.0, scaleZ: .5 }));
-    const wood = MAT.wood(woodTexture('#6b3e22', 112), '#c79a76'), gold = MAT.gold();
+    const wood = MAT.wood(woodTexture('#a85a30', 112), '#ffdcc0'), gold = MAT.gold();
     const deck = new THREE.Mesh(new RoundedBoxGeometry(3.0, .12, .72, 4, .04), wood); deck.position.y = -.94; world.add(api.shadows(deck));
     const trim = new THREE.Mesh(new RoundedBoxGeometry(3.04, .03, .76, 3, .012), gold); trim.position.y = -.875; world.add(trim);
     const tabletGeo = new RoundedBoxGeometry(.52, 1.5, .2, 4, .04);

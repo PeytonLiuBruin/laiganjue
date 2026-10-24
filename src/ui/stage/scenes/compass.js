@@ -39,7 +39,7 @@ export default {
   build(api) {
     const { world, glow } = api;
     world.add(plinth(api, { radius: 1.75, height: .5, seed: 71, top: -.86, scaleZ: .85 }));
-    const tray = new THREE.Mesh(new RoundedBoxGeometry(2.4, .16, 2.4, 4, .05), MAT.wood(woodTexture('#5a2a1a', 72), '#c08a6a'));
+    const tray = new THREE.Mesh(new RoundedBoxGeometry(2.4, .16, 2.4, 4, .05), MAT.wood(woodTexture('#c0643a', 72), '#ffe0c8'));
     tray.position.y = -.78; world.add(api.shadows(tray));
     const plate = new THREE.Group(); plate.position.y = -.68; world.add(plate);
     const rimMat = MAT.bronze();

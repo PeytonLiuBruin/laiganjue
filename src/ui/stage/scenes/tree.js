@@ -33,8 +33,8 @@ export default {
 
     // 树：盘曲树干与几根主枝，整体放在可摆动的 group 里
     const tree = new THREE.Group(); tree.position.y = -.56; world.add(tree);
-    const bark = woodTexture('#6e4a2f', 45); bark.wrapS = bark.wrapT = THREE.RepeatWrapping; bark.repeat.set(2, 3);
-    const barkMat = MAT.wood(bark, '#9a7356');
+    const bark = woodTexture('#9a6238', 45); bark.wrapS = bark.wrapT = THREE.RepeatWrapping; bark.repeat.set(2, 3);
+    const barkMat = MAT.wood(bark, '#e6c2a2');
     tree.add(new THREE.Mesh(taperedTube([[0, 0, 0], [.07, .35, .02], [-.06, .75, -.02], [.03, 1.15, 0]], (t) => .1 - t * .05, { radial: 14, segments: 40, bark: .22, seed: 46 }), barkMat));
     [[[0, .72, 0], [-.2, .92, .03], [-.36, 1.12, -.06]], [[0, .8, 0], [.2, .98, .02], [.34, 1.14, -.04]], [[.02, 1.1, 0], [.03, 1.28, -.08], [0, 1.4, -.1]], [[0, .9, 0], [-.05, 1.0, .12], [-.14, 1.12, .2]]].forEach((pts, i) => {
       tree.add(new THREE.Mesh(taperedTube(pts, (t) => .045 - t * .025, { radial: 8, segments: 16, bark: .15, seed: 50 + i }), barkMat));

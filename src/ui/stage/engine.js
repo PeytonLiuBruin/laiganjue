@@ -227,6 +227,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
     const wu = water.object.material.uniforms; wu.shallow.value.set(atm.water); wu.deep.value.set(atm.deep); wu.fogColor.value.set(atm.horizon); wu.sunColor.value.set(atm.sun); wu.reflectivity.value = atm.dark ? .75 : .85;
     hemi.color.set(atm.hemiSky || '#fff6e8'); hemi.groundColor.set(atm.hemiGround || atm.water); hemi.intensity = atm.hemi; key.color.set(atm.sun); key.intensity = atm.key; rim.intensity = atm.rimLight ?? (atm.dark ? 1.1 : .8);
     setRimColor(scene, atm.rim || '#fff4d6');
+    scene.traverse((o) => o.userData.tint?.(atm));
     scene.environmentIntensity = atm.env; renderer.toneMappingExposure = atm.exposure;
     built.onTheme?.(atm);
     wake();

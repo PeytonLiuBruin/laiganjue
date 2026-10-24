@@ -18,8 +18,8 @@ export default {
   build(api) {
     const { world, glow } = api;
     world.add(plinth(api, { x: -.3, z: .15, radius: .9, height: .5, seed: 33, top: -.96 }));
-    const grain = woodTexture('#9a6238', 34); grain.wrapS = grain.wrapT = THREE.RepeatWrapping; grain.repeat.set(1, 4);
-    const railMat = MAT.wood(grain, '#a87a55');
+    const grain = woodTexture('#b06d3a', 34); grain.wrapS = grain.wrapT = THREE.RepeatWrapping; grain.repeat.set(1, 4);
+    const railMat = MAT.wood(grain, '#f0cfae');
     const base = new THREE.Vector3(-.45, -.95, .2), top = new THREE.Vector3(.5, 1.32, -.5);
     const dir = top.clone().sub(base), side = new THREE.Vector3(.95, 0, .3).normalize().multiplyScalar(.3);
     const along = (u) => base.clone().addScaledVector(dir, u);

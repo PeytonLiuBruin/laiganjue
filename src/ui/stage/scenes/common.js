@@ -1,7 +1,7 @@
 // 场景共用：材质、动画曲线、常用小部件（流苏、石台、文字牌）。
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { rock, canvasTexture, FONT, taperedTube } from '../organic.js';
+import { toonRock, canvasTexture, FONT, taperedTube } from '../organic.js';
 
 export { THREE, RoundedBoxGeometry };
 export const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
@@ -21,18 +21,24 @@ export const MAT = {
   ceramic: (color = '#c73a30') => new THREE.MeshPhysicalMaterial({ color, roughness: .18, metalness: 0, clearcoat: 1, clearcoatRoughness: .06 }),
   wood: (map = null, color = '#ffffff') => new THREE.MeshStandardMaterial({ color, map, roughness: .72, metalness: 0 }),
   stone: () => new THREE.MeshStandardMaterial({ vertexColors: true, color: '#ffe6c4', roughness: .93, metalness: 0 }),
+  toonStone: () => new THREE.MeshStandardMaterial({ vertexColors: true, color: '#ffffff', roughness: 1, metalness: 0, flatShading: true }),
   matte: (color) => new THREE.MeshStandardMaterial({ color, roughness: .85, metalness: 0 }),
 };
 
+export const PLINTH_NIGHT = '#9c97c8';
 /** 水中的石台：顶面平整可放器物，水线以下颜色变深。返回 mesh，顶面高度 top。 */
 export function plinth(api, { x = 0, z = 0, radius = 1.1, height = .5, seed = 3, top = -.98, moss = .45, scaleZ = .8 } = {}) {
   const waterY = api.water.y;
-  const g = rock({ seed, radius: 1, height: 1, flatTop: .62, roughness: .26, detail: 5, mossAmount: moss, wetBelow: (waterY + .04 - (top - height * .62)) / height });
-  const mesh = new THREE.Mesh(g, MAT.stone());
+  // 卡通小岛：平面着色的大切面、顶面亮草地、侧面浅暖沙岩（visual-direction.md 第 2 节「石台」）
+  const g = toonRock({ seed, radius: 1, height: 1, flatTop: .62, roughness: .2, grass: moss > 0 ? 1 : 0, wetBelow: (waterY + .04 - (top - height * .62)) / height });
+  const mesh = new THREE.Mesh(g, MAT.toonStone());
   mesh.scale.set(radius, height, radius * scaleZ);
   mesh.position.set(x, top - height * .62, z);
   api.shadows(mesh, true, true);
   mesh.userData.ground = true; // 石台不参与动作弹性
+  // 深色皮肤：顶点色乘一层冷紫夜色，免得夜里小岛亮得像白天（换皮肤时引擎会再调一次）
+  mesh.userData.tint = (atm) => mesh.material.color.set(atm?.dark ? PLINTH_NIGHT : '#ffffff');
+  mesh.userData.tint(api.atm);
   return mesh;
 }
 

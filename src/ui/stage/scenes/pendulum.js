@@ -31,13 +31,13 @@ export default {
   build(api) {
     const { world, glow } = api;
     world.add(plinth(api, { radius: 1.45, height: .5, seed: 91, top: -.94, scaleZ: .8 }));
-    const board = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.18, .09, 96), MAT.wood(woodTexture('#a0683a', 92), '#d8b08a'));
+    const board = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.18, .09, 96), MAT.wood(woodTexture('#dcae78', 92), '#fff4e6'));
     board.position.y = -.885; world.add(api.shadows(board));
     const faceTex = canvasTexture(1024, 1024, (c, w) => drawBoard(c, w));
     const glowTex = canvasTexture(1024, 1024, (c, w) => drawBoard(c, w, null, true));
-    const faceMat = new THREE.MeshStandardMaterial({ map: faceTex, transparent: true, roughness: .7, emissive: '#ffb347', emissiveMap: glowTex, emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -1 });
+    const faceMat = new THREE.MeshStandardMaterial({ map: faceTex, transparent: true, roughness: .7, emissive: '#ff5a1f', emissiveMap: glowTex, emissiveIntensity: 0, polygonOffset: true, polygonOffsetFactor: -1 });
     const face = new THREE.Mesh(new THREE.CircleGeometry(1.12, 96), faceMat); face.rotation.x = -Math.PI / 2; face.position.y = -.838; world.add(face);
-    glow.add('label', { materials: [faceMat], color: '#ffb347', base: 0, peak: 1.1 });
+    glow.add('label', { materials: [faceMat], color: '#ff6a2a', base: 0, peak: 1.1 });
     const bronze = MAT.bronze(), gold = MAT.gold();
     const anchor = new THREE.Vector3(0, 1.2, 0);
     const arm = new THREE.Mesh(taperedTube([[1.02, -.84, -.62], [1.06, .2, -.62], [1.0, 1.0, -.5], [.6, 1.3, -.22], [0, 1.28, 0]], (t) => .055 - t * .025, { radial: 12, segments: 60, bark: .04, seed: 93 }), bronze);

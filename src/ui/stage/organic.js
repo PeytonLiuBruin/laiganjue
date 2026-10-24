@@ -49,6 +49,51 @@ export function rock({ seed = 1, radius = 1, height = .55, flatTop = .45, roughn
   return g;
 }
 
+/**
+ * 卡通石台（手游里的小岛）：低细分二十面体 + 大块起伏，平面着色出现一块块切面，
+ * 朝上的顶面是一整块亮草地，侧面是浅暖沙岩，每个切面明度微调像手绘，水线以下偏蓝变深。
+ * 顶点色按面写（非索引几何），所以切面之间颜色是硬分界，不会糊成写实石纹。
+ */
+export const TOON_ROCK = { detail: 3, stone: '#f2dcab', dark: '#cf9f66', grass: '#86dc5c', grassEdge: '#5cbf4c', wet: '#6f9fb8', grassY: .3, grassTop: .86, edgeR: .66, jitter: .045 };
+export function toonRock({ seed = 1, radius = 1, height = 1, flatTop = .62, roughness = .2, wetBelow = null, grass = 1, palette = TOON_ROCK } = {}) {
+  const base = new THREE.IcosahedronGeometry(1, palette.detail);
+  base.deleteAttribute('normal'); base.deleteAttribute('uv');
+  const g0 = mergeVertices(base);
+  const pos0 = g0.attributes.position, nz = noise(seed), v = new THREE.Vector3();
+  const disp = new Float32Array(pos0.count);
+  for (let i = 0; i < pos0.count; i++) {
+    v.fromBufferAttribute(pos0, i).normalize();
+    const big = nz.fbm(v.x * 1.1, v.y * 1.1, v.z * 1.1, 2);
+    const r = 1 + big * roughness;
+    disp[i] = big;
+    let y = v.y * r * height;
+    if (y > flatTop * height) y = flatTop * height + (y - flatTop * height) * .1;
+    pos0.setXYZ(i, v.x * r * radius, y, v.z * r * radius);
+  }
+  const g = g0.toNonIndexed(); g0.dispose();
+  g.computeVertexNormals(); // 非索引几何：每个面一条法线，即平面着色的切面
+  const pos = g.attributes.position, nrm = g.attributes.normal, colors = new Float32Array(pos.count * 3);
+  const cs = new THREE.Color(palette.stone), cd = new THREE.Color(palette.dark), cg = new THREE.Color(palette.grass), ce = new THREE.Color(palette.grassEdge), cw = new THREE.Color(palette.wet), c = new THREE.Color();
+  const rand = rng(seed * 7 + 3), topY = flatTop * height;
+  const band = wetBelow != null ? (wetBelow * height + topY) / 2 : topY * .1; // 侧面浅 / 深两段的分界
+  for (let f = 0; f < pos.count; f += 3) {
+    const ny = nrm.getY(f), cy = (pos.getY(f) + pos.getY(f + 1) + pos.getY(f + 2)) / 3;
+    const k = 1 + (rand() - .5) * 2 * palette.jitter;
+    if (grass > 0 && ny > palette.grassY && cy > topY * palette.grassTop) {
+      // 顶面草地（按面中心高度判断，草地和岩壁的分界是一圈连续的边）：外圈深一档，像手绘的草边
+      const rr = Math.hypot((pos.getX(f) + pos.getX(f + 1) + pos.getX(f + 2)) / 3, (pos.getZ(f) + pos.getZ(f + 1) + pos.getZ(f + 2)) / 3) / radius;
+      c.copy(rr > palette.edgeR ? ce : cg).multiplyScalar(1 + (k - 1) * .5);
+    } else {
+      // 侧面：上浅下深两段（不是连续渐变），切面明度微调
+      c.copy(cy > band ? cs : cd).multiplyScalar(k);
+      if (wetBelow != null && cy < wetBelow * height) c.lerp(cw, .45).multiplyScalar(.85);
+    }
+    for (let j = 0; j < 3; j++) colors.set([c.r, c.g, c.b], (f + j) * 3);
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  return g;
+}
+
 /** 渐细的管：沿样条走，半径按 radius(t) 变化，可加树皮噪声。用于树干、枝条、梯杆、红绳。 */
 export function taperedTube(points, radius, { radial = 10, segments = 48, bark = 0, seed = 3, closed = false } = {}) {
   const curve = points instanceof THREE.Curve ? points : new THREE.CatmullRomCurve3(points.map(p => new THREE.Vector3(...p)), closed, 'centripetal');

@@ -24,7 +24,7 @@ float toonRamp(float x) {
 `;
 const DIRECT_FROM = 'vec3 irradiance = dotNL * directLight.color;';
 const DIRECT_TO = `vec3 irradiance = toonRamp(dotNL) * directLight.color;
-	reflectedLight.directSpecular += directLight.color * toonSpec * smoothstep(.2, .4, dotNL) * smoothstep(.955, .975, dot(reflect(-directLight.direction, geometryNormal), geometryViewDir));`;
+	reflectedLight.directSpecular += directLight.color * mix(vec3(1.0), min(material.diffuseColor * 1.8, vec3(1.0)), .6) * toonSpec * smoothstep(.2, .4, dotNL) * smoothstep(.955, .975, dot(reflect(-directLight.direction, geometryNormal), geometryViewDir));`;
 // 原版 GGX 高光乘的是 irradiance：卡通三段明暗让背光面（dotNL≈0）也有 0.42 的 irradiance，
 // 轮廓处 dotNV 也≈0 时 GGX 分母趋零、高光冲到无穷大，石台边缘出现纯白碎边。高光改回按真实 dotNL 计算。
 const GGX_FROM = 'reflectedLight.directSpecular += irradiance * BRDF_GGX(';

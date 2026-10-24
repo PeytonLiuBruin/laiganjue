@@ -18,8 +18,8 @@ export default {
   waterY: -1.05,
   build(api) {
     const { world, glow } = api;
-    const bark = woodTexture('#6a4630', 12); bark.wrapS = bark.wrapT = THREE.RepeatWrapping; bark.repeat.set(1, 3);
-    const barkMat = MAT.wood(bark, '#8a6a52');
+    const bark = woodTexture('#94603a', 12); bark.wrapS = bark.wrapT = THREE.RepeatWrapping; bark.repeat.set(1, 3);
+    const barkMat = MAT.wood(bark, '#e2bfa0');
     const branchPts = [[-3.1, 2.05, -.5], [-2.1, 1.72, -.25], [-1.05, 1.5, -.06], [-.05, 1.46, 0], [.6, 1.56, .04], [1.15, 1.8, 0]];
     const branch = new THREE.Mesh(taperedTube(branchPts, (t) => .12 * (1 - t) + .022, { radial: 12, segments: 64, bark: .16, seed: 4 }), barkMat);
     const twigA = new THREE.Mesh(taperedTube([[-1.4, 1.55, -.1], [-1.25, 1.85, -.05], [-1.0, 2.05, 0]], (t) => .035 * (1 - t) + .008, { radial: 8, segments: 16 }), barkMat);
