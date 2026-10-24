@@ -14,6 +14,8 @@ import { routeFromUrl } from './deeplink.js';
 import { versionText } from './version.js';
 import { openShareCard } from './share-card.js';
 import { canUseTheme, startSkinTryOn, isFreeTheme } from './skins.js';
+import { albumStats, normalizeAlbum, ALBUM_TOTAL } from '../modules/qian/album.js';
+import { dayKey } from '../platform/quota.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
@@ -348,7 +350,7 @@ export function startApp(root) {
   /* ---------------- 首页 ---------------- */
   function renderHome() {
     const el = h('section', { class: 'view view-home', dataset: { view: 'home' } });
-    el.append(h('div', { class: 'home-intro' }, h('span', { class: 'home-eyebrow' }, '片刻留白 · 一点灵感'), h('h1', null, '此刻，想问什么？')), renderHero());
+    el.append(h('div', { class: 'home-intro' }, h('span', { class: 'home-eyebrow' }, '片刻留白 · 一点灵感'), h('h1', null, '此刻，想问什么？')), renderHero(), renderStreak());
     for (const region of REGIONS) {
       const mods = MODULE_LIST.filter((m) => m.region === region.id);
       if (!mods.length) continue;
@@ -384,6 +386,24 @@ export function startApp(root) {
       ),
     );
     return el;
+  }
+
+  // 连续天数 + 签纸收集册进度：每天回来的小理由，点开直接到收集册。
+  function renderStreak() {
+    let n = 0, today = false, s = { count: 0, total: ALBUM_TOTAL };
+    try {
+      n = platform.streak?.days() || 0;
+      const raw = storage.get('streak', null);
+      today = !!raw && raw.last === dayKey(Date.now());
+      s = albumStats(normalizeAlbum(storage.namespace('qian').get('album', null)));
+    } catch (e) { console.error('[streak]', e); }
+    const lit = Math.min(7, n);
+    return h('button', { type: 'button', class: 'home-streak', dataset: { streak: n }, onClick: () => { platform.haptic.tap(); navigate('#/m/qian/album'); }, attrs: { 'aria-label': `连续 ${n} 天，签纸收集册 ${s.count}/${s.total}` } },
+      h('span', { class: 'home-streak-days' }, h('b', null, n ? `连续 ${n} 天` : '开始连续打卡'), h('small', null, n ? (today ? '今天已来过' : '今天来一签就能续上') : '每天来一次，签纸收进册子')),
+      h('span', { class: 'home-streak-dots', attrs: { 'aria-hidden': 'true' } }, Array.from({ length: 7 }, (_, i) => h('i', { class: i < lit ? 'on' : '' }))),
+      h('span', { class: 'qn-album-bar', attrs: { 'aria-hidden': 'true' } }, h('i', { style: { width: `${(s.count / s.total) * 100}%` } })),
+      h('span', { class: 'home-streak-album' }, `签册 ${s.count}/${s.total}`),
+      icon('chevron', { size: 16 }));
   }
 
   function renderHero() {

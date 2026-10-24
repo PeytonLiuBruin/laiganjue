@@ -352,6 +352,8 @@ export function stars(n, max = 5) {
 
 /* ------------------------------ Toast / 抽屉 ------------------------------ */
 const openSheets = [];
+/** 当前是否有抽屉打开（含刚调用 open、还没加上 .open 类的那一帧）。 */
+export function anySheetOpen() { return openSheets.length > 0; }
 let sheetPageLock = null;
 function syncSheets() {
   const top = openSheets.at(-1);

@@ -1,5 +1,6 @@
 import { createStickScene } from '../../ui/stick-scene.js';
 import { drawLot, getLot, lotLabel, formatPoemLines, levelMeta, createShakeMeter, shareText, isFated } from './core.js';
+import { normalizeAlbum, backfillAlbum, collectLot, albumStats } from './album.js';
 import {
   ITEM_KEYS, QUESTION_PLACEHOLDER, IDLE_HINT, SHAKING_HINT, SENSOR_HINT, DRAWN_HINT, UNFOLD_HINT, REVEALED_HINT,
   IDLE_BADGE, SHAKING_BADGE, SHEET_TITLE, FOOTER, TAKE_LABEL, SHAKE_LABEL, AGAIN_LABEL, SHARE_LABEL,
@@ -16,6 +17,10 @@ export function mount(container, ctx) {
   let question = String(storage.get('question', '') || '').slice(0, 60);
   let asked = question;
   let history = storage.get('history', []).filter((x) => getLot(x.no)).slice(-8);
+  // 签纸收集册：抽到过的每支签都收进来。旧版只有最近 8 条历史，第一次打开时补录。
+  let album = backfillAlbum(normalizeAlbum(storage.get('album', null)), history);
+  storage.set('album', album);
+  let albumSheet = null;
   // 舞台高度按签的飞行高度定：竹签抛到最高点仍在框内，顶部不留大块空白。
   const st = stage({ cls: 'qn-stage', badge: IDLE_BADGE, minHeight: 384 });
   const ritual = createRitual(ctx, st, ['问事', '摇签', '出签', '展签']);
@@ -102,7 +107,9 @@ export function mount(container, ctx) {
     sound.play('chime'); haptic.success(); st.setBadge(`${lotLabel(lot)} · ${lot.level}`);
     const fated = isFated(history, lot.no);
     history = history.concat({ no: lot.no, question: asked, date: ctx.rng.dateKey() }).slice(-8); storage.set('history', history); renderHistory();
+    const got = collectLot(album, lot.no, ctx.rng.dateKey()); album = got.album; storage.set('album', album); renderHistory();
     if (fated) kit.toast(FATED_TOAST);
+    else if (got.fresh) { const s = albumStats(album); kit.toast(s.complete ? `收集册集齐了 · ${s.total} 支签` : `新签入册 · ${s.count}/${s.total}`); }
     if (!await ritual.pause(gentle || instant ? 80 : 900)) return;
     phase = 'paper'; primary.setLabel(AGAIN_LABEL); lock(false); setGuide('tap', REVEALED_HINT);
     const result = lot, resultQuestion = asked;
@@ -134,14 +141,43 @@ export function mount(container, ctx) {
   }
   function renderHistory() {
     kit.clear(hist);
-    if (!history.length) return;
-    hist.append(
-      h('span', { class: 't-kicker' }, HISTORY_KICKER),
-      h('div', { class: 'qn-history-row' }, history.slice(-5).reverse().map((x) => {
-        const l = getLot(x.no);
-        return button(`${lotLabel(x.no)} · ${l.level}`, { variant: 'soft', size: 'small', onClick: () => read(l, x.question, { review: true }) });
-      })),
-    );
+    const s = albumStats(album);
+    const albumBtn = h('button', { type: 'button', class: 'qn-album-btn', dataset: { album: s.count }, onClick: () => openAlbum() },
+      h('b', null, '签纸收集册'), h('span', { class: 'qn-album-bar' }, h('i', { style: { width: `${(s.count / s.total) * 100}%` } })), h('span', { class: 'qn-album-count' }, `${s.count}/${s.total}`));
+    if (history.length) {
+      hist.append(
+        h('span', { class: 't-kicker' }, HISTORY_KICKER),
+        h('div', { class: 'qn-history-row' }, history.slice(-5).reverse().map((x) => {
+          const l = getLot(x.no);
+          return button(`${lotLabel(x.no)} · ${l.level}`, { variant: 'soft', size: 'small', onClick: () => read(l, x.question, { review: true }) });
+        })),
+      );
+    }
+    hist.append(albumBtn);
   }
-  return () => { reading?.close(); st.el.getAnimations({ subtree: true }).forEach((a) => a.cancel()); };
+  // 收集册抽屉：8 列签格，抽到过的按等级上色、可点开回看，没抽到的只露签号。
+  function openAlbum() {
+    if (busy || reading || albumSheet) return;
+    haptic.tap();
+    const s = albumStats(album);
+    const levels = h('div', { class: 'qn-album-levels' }, s.byLevel.map((x) => h('span', { class: `qn-album-level tone-${x.tone}` }, h('b', null, x.id), ` ${x.have}/${x.total}`)));
+    const grid = h('div', { class: 'qn-album-grid', attrs: { role: 'list' } });
+    for (let no = 1; no <= s.total; no++) {
+      const l = getLot(no), have = album[no];
+      grid.append(have
+        ? h('button', { type: 'button', class: `qn-cell tone-${levelMeta(l.level)?.tone || 'neutral'}`, dataset: { no }, attrs: { role: 'listitem', 'aria-label': `${lotLabel(no)} · ${l.level}签 · 抽到 ${have.times} 次` },
+            onClick: () => { const sh = albumSheet; albumSheet = null; sh?.close(); setTimeout(() => read(l, '', { review: true }), 220); } },
+            h('span', { class: 'qn-cell-no' }, String(no)), h('small', null, l.level), have.times > 1 ? h('em', null, `×${have.times}`) : null)
+        : h('span', { class: 'qn-cell empty', dataset: { no }, attrs: { role: 'listitem', 'aria-label': `${lotLabel(no)} · 还没抽到` } }, h('span', { class: 'qn-cell-no' }, String(no)), h('small', null, '?')));
+    }
+    const head = h('div', { class: 'qn-album-head' },
+      h('div', null, h('b', null, `${s.count}`), h('span', null, ` / ${s.total} 支`)),
+      h('span', { class: 'qn-album-bar big' }, h('i', { style: { width: `${(s.count / s.total) * 100}%` } })),
+      h('p', null, s.complete ? '六十四支签全部集齐，诸事圆满。' : s.count ? '每天摇一支，看看哪天能集齐。点亮的签可以回看签诗。' : '还没有收到签。摇一支签，它就会收进册子里。'));
+    albumSheet = sheet({ title: '签纸收集册', content: [head, levels, grid], onClose: () => { albumSheet = null; } });
+    albumSheet.open();
+  }
+  // 从首页「收集册」入口进来：#/m/qian/album 直接打开册子。
+  if (/^#\/m\/qian\/album/.test(location.hash)) { window.history.replaceState(null, '', '#/m/qian'); openAlbum(); }
+  return () => { albumSheet?.close(); reading?.close(); st.el.getAnimations({ subtree: true }).forEach((a) => a.cancel()); };
 }

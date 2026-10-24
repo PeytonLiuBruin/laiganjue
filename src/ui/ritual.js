@@ -164,6 +164,7 @@ export function createRitual(ctx, stage, labels) {
     if (onRead) { readBtn = button(label(), { variant: 'primary', onClick: read }); readBtn.dataset.read = '1'; }
     refreshReadLabel = readBtn ? () => readBtn.setLabel(label()) : null;
     if (onRead || actions.length) receipt.append(h('div', { class: 'ritual-receipt-actions' }, readBtn, actions));
+    ctx.platform?.streak?.visit(); // 每次出结果都算今天来过（首页的连续天数）
     if (onRead) trialNudge();
     receipt.hidden = false;
     return { read };

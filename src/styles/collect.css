@@ -1,0 +1,30 @@
+/* 签纸收集册抽屉与首页连续天数行（抽屉挂在 body 上，不在 .m-qian 作用域内）。 */
+.qn-album-bar { flex: 1; min-width: 40px; height: 10px; border-radius: 99px; background: color-mix(in srgb, var(--text) 10%, transparent); overflow: hidden; box-shadow: inset 0 1px 0 rgba(0,0,0,.08); }
+.qn-album-bar i { display: block; height: 100%; min-width: 4px; border-radius: inherit; background: linear-gradient(90deg, var(--c-gold, #ffc93c), #ff9f3c); box-shadow: inset 0 -2px 0 rgba(0,0,0,.12); }
+.qn-album-bar.big { display: block; height: 14px; margin: 8px 0 6px; }
+.qn-album-head > div b { font: 800 30px var(--font-round, var(--font-sans)); color: var(--accent); }
+.qn-album-head > div span { font-size: 14px; color: var(--text-2); }
+.qn-album-head p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-2); }
+.qn-album-levels { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.qn-album-level { font-size: 12px; padding: 4px 9px; border-radius: 99px; color: var(--text-2); background: color-mix(in srgb, var(--tone) 16%, transparent); font-variant-numeric: tabular-nums; }
+.qn-album-level b { color: var(--tone); font-weight: 800; }
+.qn-album-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+.qn-cell { position: relative; aspect-ratio: 3 / 4; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; border-radius: 9px; border: 2px solid color-mix(in srgb, var(--tone) 70%, #2b2240); background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 30%, #fffaf0), color-mix(in srgb, var(--tone) 52%, #fffaf0)); box-shadow: 0 2px 0 color-mix(in srgb, var(--tone) 60%, #2b2240); color: #2b2240; font: inherit; cursor: pointer; }
+.qn-cell:active { transform: translateY(1px); box-shadow: none; }
+.qn-cell-no { font: 800 16px/1.05 var(--font-round, var(--font-sans)); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qn-cell small { font-size: 10px; line-height: 1; opacity: .8; }
+.qn-cell em { position: absolute; top: -6px; right: -5px; font: 800 9px/1 var(--font-sans); font-style: normal; padding: 2px 3px; border-radius: 6px; background: var(--c-red, #e8463c); color: #fff; }
+.qn-cell.empty { border: 2px dashed color-mix(in srgb, var(--text) 22%, transparent); background: color-mix(in srgb, var(--text) 4%, transparent); box-shadow: none; color: var(--text-3); cursor: default; }
+.tone-great { --tone: #ffb020; } .tone-good { --tone: #e8463c; } .tone-fair { --tone: #3fcf8e; }
+.tone-neutral { --tone: #4fb8ff; } .tone-low { --tone: #9b6bff; } .tone-bad { --tone: #8a8199; }
+/* 首页：连续天数 + 收集册进度一行 */
+.home-streak { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 10px 14px; min-height: 52px; border-radius: var(--radius-card, 18px); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--edge, none); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.home-streak-days { flex: none; display: flex; flex-direction: column; line-height: 1.15; }
+.home-streak-days b { font: 800 15px var(--font-round, var(--font-sans)); }
+.home-streak-days small { font-size: 11px; color: var(--text-2); }
+.home-streak-dots { display: flex; gap: 4px; flex: none; }
+.home-streak-dots i { width: 9px; height: 9px; border-radius: 50%; background: color-mix(in srgb, var(--text) 14%, transparent); }
+.home-streak-dots i.on { background: var(--c-gold, #ffc93c); box-shadow: 0 0 0 1.5px var(--c-gold-deep, #d8901e); }
+.home-streak .qn-album-bar { height: 8px; }
+.home-streak-album { flex: none; font: 700 12px var(--font-sans); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.home-streak > svg { flex: none; color: var(--text-3); }

@@ -36,3 +36,8 @@
 .m-qian .qn-item { display: flex; flex-direction: column; gap: 3px; padding-top: 10px; border-top: 1px solid var(--line); min-width: 0; }
 .m-qian .qn-item b { font: 500 12px var(--font-display); letter-spacing: .12em; color: var(--accent); }
 .m-qian .qn-item span { font-size: 14px; line-height: 1.7; color: var(--text-2); overflow-wrap: anywhere; }
+/* 签纸收集册：历史下方一条带进度的入口，抽屉里 8 列签格，按等级上色。 */
+.m-qian .qn-album-btn { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 360px; margin: 14px auto 0; min-height: 48px; padding: 10px 14px; border-radius: 16px; border: 2px solid color-mix(in srgb, var(--c-gold, #ffc93c) 60%, transparent); background: color-mix(in srgb, var(--c-gold, #ffc93c) 14%, var(--surface)); box-shadow: 0 3px 0 color-mix(in srgb, var(--c-gold-deep, #d8901e) 55%, transparent); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.m-qian .qn-album-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 color-mix(in srgb, var(--c-gold-deep, #d8901e) 55%, transparent); }
+.m-qian .qn-album-btn b { flex: none; font: 800 15px var(--font-round, var(--font-sans)); letter-spacing: .04em; }
+.m-qian .qn-album-count { flex: none; font: 800 14px var(--font-round, var(--font-sans)); font-variant-numeric: tabular-nums; color: var(--text-2); }

@@ -1,4 +1,4 @@
-import { h, icon, button, sheet } from './kit.js';
+import { h, icon, button, sheet, anySheetOpen } from './kit.js';
 
 const ACTIONS = {
   jiaobei: ['toss', '轻甩手机，抛出筊杯'],
@@ -66,7 +66,7 @@ export function createMotionPrompt({ motion, meta, requestPermission, haptic, in
   function enter() {
     if (!alive || offered || !supported || motion.state === 'granted' || motion.state === 'unsupported' || !el.isConnected) return;
     // The first welcome screen owns focus until its Start action completes.
-    if (document.querySelector('.onboard, .sheet.open')) return;
+    if (document.querySelector('.onboard, .sheet.open') || anySheetOpen()) return;
     offered = true;
     detail = h('p', { class: 'motion-invite-detail', attrs: { role: 'status' } }, instructions());
     const content = h('div', { class: 'motion-invite' },
