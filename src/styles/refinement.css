@@ -430,8 +430,9 @@ button:disabled { cursor: default; }
 .m-omikuji .ok-set { pointer-events: none; z-index: 5; }
 .m-omikuji .ok-set .ok-slip { pointer-events: auto; }
 .m-omikuji .ok-stage[data-tie] .stick-pick-target { pointer-events: none; }
-.m-qian .qn-vessel.stick-scene.qn-dim,
 .m-omikuji .ok-tube-wrap.stick-scene.ok-dim { opacity: .13; }
+/* 第 19 轮：灵签筒画布里落在纸右下方的竹签会以模糊残影从签纸边露出来，看着像渲染残留，签纸展开后签筒整体淡出 */
+.m-qian .qn-vessel.stick-scene.qn-dim { opacity: 0; }
 
 /* The rope sits behind the raised cylinder; it remains tappable at rest. */
 [data-ok-phase='shaking'] .ok-rack { z-index: 2; pointer-events: none; }

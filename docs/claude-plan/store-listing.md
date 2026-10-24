@@ -33,6 +33,7 @@
 - 卡通 3D 器物，摇签筒、摇钱树、同心结都会跟着你的手机动
 - 震动与音效配合每一次出手
 - 多套皮肤，白天明快，夜里安静
+- 主屏小组件「今日黄历」：农历、宜忌一眼看到，轻点抽今日一签
 
 不打扰
 - 不用注册，没有广告
@@ -59,7 +60,7 @@ Laiganjue puts a fortune-stick cup, moon blocks, I Ching coins, tarot cards and 
 - Love, career and wealth readings from your birth date
 - Almanac, BaZi, zodiac, feng shui compass, crystal ball, omikuji and more
 
-Bright cartoon 3D charms that react to your motion, with haptics and sound. No account, no ads. Your data stays on your phone.
+Bright cartoon 3D charms that react to your motion, with haptics and sound. A Home Screen widget shows today's almanac at a glance. No account, no ads. Your data stays on your phone.
 
 Laiganjue Pro (optional): unlimited deep readings, all premium themes and watermark-free share cards. Subscriptions renew automatically and can be cancelled anytime in Settings → Apple Account → Subscriptions. A lifetime unlock and a 5-reading pack are also available.
 
@@ -95,6 +96,8 @@ In-App Purchases (all in the “来感觉 Pro” subscription group unless noted
 - laiganjue.skin.cinnabar / laiganjue.skin.nebula / laiganjue.skin.celadon (non-consumable, one theme each; included in Pro)
 To see the theme store: tap the palette icon in the top bar, tap a theme marked “Pro · 试穿” to try it on for 10 seconds, then tap “解锁” (Unlock).
 To see the paywall: open 灵签 (Fortune Sticks), tap the main button until a sign appears, tap “展开解读 · 今日免费” once (free daily reading), then draw again and tap “解锁深度解读”. The paywall can also be opened from Settings (gear icon) → 来感觉 Pro → 了解 Pro. “恢复购买” (Restore Purchases) is in both places.
+
+Home Screen widget: long-press the Home Screen → “+” → 来感觉 → “今日黄历” (small or medium). It shows today's lunar date and almanac from data bundled in the app, makes no network requests, and opens the app on tap.
 
 Guideline 4.3: The app contains original 3D interactive charms, 17 rituals in one app, and motion-based interaction. All readings are for entertainment only, as stated in the app and the description.
 

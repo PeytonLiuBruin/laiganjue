@@ -14,7 +14,8 @@
     "app:android": "npm run app:sync && cap open android",
     "app:ios": "npm run app:sync && cap open ios",
     "e2e": "node --test --test-concurrency=1 --test-reporter=spec tests/e2e/*.e2e.mjs",
-    "gallery:3d": "node scripts/stage-gallery.mjs --themes paper,ink"
+    "gallery:3d": "node scripts/stage-gallery.mjs --themes paper,ink",
+    "widget:data": "node scripts/widget-data.mjs"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.2",

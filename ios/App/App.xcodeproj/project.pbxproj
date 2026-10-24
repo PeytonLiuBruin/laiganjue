@@ -7,22 +7,54 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A1C0FFEE0000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */; };
+		02AC8CB9E3E57980E471C3AC /* AlmanacData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1093E46903AA55772A3E3A5 /* AlmanacData.swift */; };
+		0BB86EC261AC6371B58E1E7B /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 09C257F4C542E2B4B1EB8556 /* WidgetKit.framework */; };
+		1F1769B9EBA352550C7D35F7 /* AlmanacWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE0CB9B938D27EA27A2265BB /* AlmanacWidgetView.swift */; };
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
+		3B6CCDA0D39198BA4385AC7D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DB35645E690C6A4B0E5B94E9 /* SwiftUI.framework */; };
 		4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */ = {isa = PBXBuildFile; productRef = 4D22ABE82AF431CB00220026 /* CapApp-SPM */; };
+		4EDF42EE37FC1AEAD66B16AA /* almanac.json in Resources */ = {isa = PBXBuildFile; fileRef = 47BC944B6B95AB420C5D447C /* almanac.json */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		5FA3982277A5C16F59D6DF74 /* LaiganjueWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = FA68365462751C82E15E1BDB /* LaiganjueWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
+		A1C0FFEE0000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */; };
+		EE6967C0A27EB41389F944DE /* LaiganjueWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7CC59E175D6E7EFBA650C6C /* LaiganjueWidget.swift */; };
+		FA8E535AF56198C8789C23F9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6195DD2FBA2FDFA48C7975C /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A04A55DEEEE1F8C2655D38F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 09ED8925A15C73A1BE4189BB;
+			remoteInfo = LaiganjueWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F15FA178E05C1CC7342F5861 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5FA3982277A5C16F59D6DF74 /* LaiganjueWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
-		A1C0FFEE0000000000000003 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
-		A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		09C257F4C542E2B4B1EB8556 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
+		47BC944B6B95AB420C5D447C /* almanac.json */ = {isa = PBXFileReference; includeInIndex = 1; path = almanac.json; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
 		504EC3041FED79650016851F /* App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = App.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -33,6 +65,15 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		A1093E46903AA55772A3E3A5 /* AlmanacData.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlmanacData.swift; sourceTree = "<group>"; };
+		A1C0FFEE0000000000000002 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A1C0FFEE0000000000000003 /* Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = Products.storekit; sourceTree = "<group>"; };
+		A6195DD2FBA2FDFA48C7975C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		A7CC59E175D6E7EFBA650C6C /* LaiganjueWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LaiganjueWidget.swift; sourceTree = "<group>"; };
+		A86A71F7A2ECD275393AA4E4 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		DB35645E690C6A4B0E5B94E9 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		DE0CB9B938D27EA27A2265BB /* AlmanacWidgetView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AlmanacWidgetView.swift; sourceTree = "<group>"; };
+		FA68365462751C82E15E1BDB /* LaiganjueWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LaiganjueWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +82,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				4D22ABE92AF431CB00220026 /* CapApp-SPM in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		84E8BDBF7C3C75D6BB2B9A91 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA8E535AF56198C8789C23F9 /* Foundation.framework in Frameworks */,
+				0BB86EC261AC6371B58E1E7B /* WidgetKit.framework in Frameworks */,
+				3B6CCDA0D39198BA4385AC7D /* SwiftUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,6 +104,8 @@
 				958DCC722DB07C7200EA8C5F /* debug.xcconfig */,
 				504EC3061FED79650016851F /* App */,
 				504EC3051FED79650016851F /* Products */,
+				A46301995FC5702BC51AE155 /* Frameworks */,
+				8BDB91739B30A1C33E5E5176 /* LaiganjueWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -60,6 +113,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				FA68365462751C82E15E1BDB /* LaiganjueWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -82,9 +136,57 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		6C90C32B1BACC0DF0586F811 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				A6195DD2FBA2FDFA48C7975C /* Foundation.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		8BDB91739B30A1C33E5E5176 /* LaiganjueWidget */ = {
+			isa = PBXGroup;
+			children = (
+				A7CC59E175D6E7EFBA650C6C /* LaiganjueWidget.swift */,
+				A1093E46903AA55772A3E3A5 /* AlmanacData.swift */,
+				DE0CB9B938D27EA27A2265BB /* AlmanacWidgetView.swift */,
+				47BC944B6B95AB420C5D447C /* almanac.json */,
+				A86A71F7A2ECD275393AA4E4 /* Info.plist */,
+			);
+			name = LaiganjueWidget;
+			path = LaiganjueWidget;
+			sourceTree = "<group>";
+		};
+		A46301995FC5702BC51AE155 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6C90C32B1BACC0DF0586F811 /* iOS */,
+				09C257F4C542E2B4B1EB8556 /* WidgetKit.framework */,
+				DB35645E690C6A4B0E5B94E9 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		09ED8925A15C73A1BE4189BB /* LaiganjueWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8EBB549F4FF7DAD96B982CEE /* Build configuration list for PBXNativeTarget "LaiganjueWidget" */;
+			buildPhases = (
+				9C6476DA0D571A3BA2919B6A /* Sources */,
+				84E8BDBF7C3C75D6BB2B9A91 /* Frameworks */,
+				A6B13407D78278FA1D674E32 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LaiganjueWidget;
+			productName = LaiganjueWidget;
+			productReference = FA68365462751C82E15E1BDB /* LaiganjueWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		504EC3031FED79650016851F /* App */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 504EC3161FED79650016851F /* Build configuration list for PBXNativeTarget "App" */;
@@ -92,10 +194,12 @@
 				504EC3001FED79650016851F /* Sources */,
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
+				F15FA178E05C1CC7342F5861 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				BE82483219185DAC1C83BF42 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -138,6 +242,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				09ED8925A15C73A1BE4189BB /* LaiganjueWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -157,6 +262,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6B13407D78278FA1D674E32 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4EDF42EE37FC1AEAD66B16AA /* almanac.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -169,7 +282,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		9C6476DA0D571A3BA2919B6A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EE6967C0A27EB41389F944DE /* LaiganjueWidget.swift in Sources */,
+				02AC8CB9E3E57980E471C3AC /* AlmanacData.swift in Sources */,
+				1F1769B9EBA352550C7D35F7 /* AlmanacWidgetView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BE82483219185DAC1C83BF42 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = LaiganjueWidget;
+			target = 09ED8925A15C73A1BE4189BB /* LaiganjueWidget */;
+			targetProxy = A04A55DEEEE1F8C2655D38F1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -191,6 +323,55 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		0A1D4CDC7EBC25C8D19A9F4B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LaiganjueWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.peytonliubruin.laiganjue.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		1BF200CA49DC28173B8A1F2C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = LaiganjueWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.peytonliubruin.laiganjue.widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		504EC3141FED79650016851F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;
@@ -361,6 +542,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8EBB549F4FF7DAD96B982CEE /* Build configuration list for PBXNativeTarget "LaiganjueWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A1D4CDC7EBC25C8D19A9F4B /* Release */,
+				1BF200CA49DC28173B8A1F2C /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

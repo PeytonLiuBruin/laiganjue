@@ -580,3 +580,39 @@
 - 新石台和远山的观感，装到 iPhone 上看一眼。新商店截图在 docs/claude-plan/store/，可以直接用于 App Store Connect。
 
 推送结果：提交 437dd56 推送成功。
+
+
+## 第 19 轮 · 2026-10-24 13:55 UTC 起（PDT 06:55，定时任务）
+
+开始状态：工作区干净，与远端一致，.lock 为 idle。所有命令通过 Desktop Commander 在 Mac 上执行。
+
+完成的待办：
+- ✅ P2 各玩法结果条在 430 宽下复查（拖了两轮）：灵签、塔罗、姻缘、六爻、八字、御神签、卢恩、筊杯、财运 9 个玩法 393×852 与 430×932 结果条截图过目，无横向溢出、无截断。
+- ✅ 复查中发现并修好：灵签结果页签纸右下方有一块模糊的红色和字，是签筒画布里落下的竹签以 13% 透明度从纸边露出来，看着像渲染残留。`src/styles/refinement.css` 改为签纸展开后签筒整体淡出（御神签左侧淡出的签筒形状完整、看得出是底景，保持不变）。
+- ✅ P2 主屏小组件（最小可行版「今日黄历」）：
+  - 新增 WidgetKit 扩展目标 `LaiganjueWidget`（`io.github.peytonliubruin.laiganjue.widget`，iOS 15 起），嵌入 App。小号：日期大字、月份星期、农历或节气、宜两项。中号：再加干支生肖、宜忌各三项与红色胶囊按钮「抽今日一签 ›」。
+  - 数据：`scripts/widget-data.mjs`（`npm run widget:data`）用 App 同一套农历库算好 2026 到 2029 年共 1461 天，写成 `ios/App/LaiganjueWidget/almanac.json`（250 KB）打包进扩展。不需要 App Group，不联网，不读用户数据。
+  - 轻点整块打开 `laiganjue://m/almanac`，按钮打开 `laiganjue://m/qian`，深链早已注册。
+  - 工程改动由 `scripts/add-widget-target.rb`（xcodeproj gem，装在 ~/.lgj-gems，不需要 sudo）完成，重复运行不会重复添加。本机 CocoaPods 自带的 gem 缺依赖跑不起来，所以单独装了一份。
+  - 视觉按 visual-direction.md 新增的 4.1 节：晴天蓝渐变、白卡厚度边、红字日期带深红下影、宜红章忌玉绿章。
+  - 免费，不进 Pro，monetization.md 第 2 节已改。商店描述中英两段和审核备注加了小组件说明。
+  - `tests/widget-data.test.mjs` 3 项：条目与 App 内黄历一致、数据覆盖今天起至少 2 年且与当前农历库一致、两个深链可用。
+
+检查结果：
+- `npm run build` 通过，`npm test` 394 项全部通过（新增 3 项）。
+- `npm run e2e` 32 项全部通过（约 13 分钟）。
+- `xcodebuild` 模拟器 Debug 编译通过，App.app/PlugIns 里有 LaiganjueWidget.appex 与 almanac.json。
+- 小组件用 `scripts/widget-preview.swift` 在 Mac 上画成 PNG 过目：今天、宜忌字数最多的一天（2029-04-08，长词自动缩小不截断）、表外日期兜底「打开来感觉看今日黄历」。
+- 截图（docs/claude-plan/screenshots/，已用 git rm 删掉上一轮 12 张）：首页、黄历、灵签结果 393×852 与 430×932 共 6 张，加小组件预览 5 张。report.json 无横向溢出、无报错。灵签结果页修复后重截，签纸边缘干净。
+
+遗留问题：
+- 小组件还没在真机主屏上看过。扩展是新的 App ID，第一次用 `scripts/ios-try.sh` 装真机或传 TestFlight 时 Xcode 自动签名会注册 `.widget` 的 App ID（已在 TODO 记为 P1）。
+- 财运滚动白带（P2）仍需真机录屏确认。
+
+下一轮计划：P2 剩下断签提醒（等 Peyton 决定要不要通知权限）。可以先做不依赖原生能力的打磨：复查各玩法分享卡在 430 宽下的预览抽屉，或评估锁屏小组件（同一个扩展加 accessoryRectangular，改动小）。
+
+待 Peyton 决定：
+- 小组件：下次跑 `bash scripts/ios-try.sh` 装到 iPhone，长按主屏 → 左上「+」→ 搜「来感觉」→ 加「今日黄历」，看看是否喜欢。如果脚本提示签名错误，多半是开发者账号需要确认新的 App ID。
+- 在 Xcode 里选 App 方案点一次运行，看付费卡与皮肤单买卡的本地化价格（StoreKit 配置已挂好）。
+- 年龄分级按 13+ 填写、3 个皮肤内购与价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。
+- 断签提醒要不要做（需要通知权限），徽章名字是否满意。
