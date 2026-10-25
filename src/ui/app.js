@@ -13,7 +13,7 @@ import { openPaywall, TERMS_URL, PRIVACY_URL } from './paywall.js';
 import { routeFromUrl } from './deeplink.js';
 import { versionText } from './version.js';
 import { openShareCard } from './share-card.js';
-import { canUseTheme, startSkinTryOn, isFreeTheme } from './skins.js';
+import { canUseTheme, startSkinTryOn, isFreeTheme, openSkinOffer } from './skins.js';
 import { albumStats, normalizeAlbum, badgeOf, ALBUM_TOTAL } from '../modules/qian/album.js';
 import { dayKey } from '../platform/quota.js';
 
@@ -339,11 +339,17 @@ export function startApp(root) {
   });
 
   /* ---------------- 深链（App） ---------------- */
-  // laiganjue://pro 打开付费卡，laiganjue://m/<玩法> 打开玩法页。
+  // laiganjue://pro 打开付费卡，laiganjue://m/<玩法> 打开玩法页，laiganjue://skin/<id> 打开单套皮肤购买卡。
+  const PAID_SKINS = THEMES.filter((t) => !isFreeTheme(t.id)).map((t) => t.id);
   platform.native.onUrlOpen?.((url) => {
-    const r = routeFromUrl(url, MODULES);
+    const r = routeFromUrl(url, MODULES, PAID_SKINS);
     if (!r) return;
     if (r.paywall) openPaywall(platform);
+    else if (r.skin) {
+      // 从推广链接买下（或已经拥有）就直接换上，不然买完界面没有任何变化
+      if (canUseTheme(platform.purchases, r.skin)) applyTheme(r.skin, { persist: true });
+      else openSkinOffer(platform, THEMES.find((t) => t.id === r.skin), { openPaywall }).then((owned) => { if (owned) applyTheme(r.skin, { persist: true }); });
+    }
     else if (r.hash) navigate(r.hash);
   });
   // 轻点断签提醒通知 → 灵签页

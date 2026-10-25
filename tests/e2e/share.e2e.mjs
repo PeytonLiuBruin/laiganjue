@@ -38,7 +38,7 @@ async function openCaiyun(browser, extra = {}) {
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !BENIGN.some((r) => r.test(m.text()))) errors.push('console: ' + m.text()); });
   await page.goto(base + '#/m/caiyun', { waitUntil: 'load' });
-  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: 30_000 });
+  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: 120_000 }); // SwiftShader 首次编译着色器在高负载下可超过 30 秒，与 stage.e2e 一致
   await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
   const share = page.locator('.sheet.open .sheet-actions button', { hasText: '分享' });
   const primary = page.locator('.view-module [data-action="primary"]').first();

@@ -775,3 +775,34 @@
 - 年龄分级按 13+ 填写、3 个皮肤内购与价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。
 
 推送结果：提交 a9542cd 推送成功。
+
+
+## 第 25 轮 · 2026-10-25 07:55 UTC 起（PDT 00:55，定时任务）
+
+开始状态：工作区干净，与远端一致，.lock 为 idle。remote-devices 没有连接文件夹，所有命令通过 Desktop Commander 在 Mac 上执行。
+
+完成的待办：
+- ✅ P1 付费卡在模拟器上验证：新增 UI 测试目标 `AppUITests`（`scripts/add-uitest-target.rb`，xcodeproj gem 在 ~/.lgj-gems，重复运行不重复加），方案的测试动作挂上它。`ios/App/AppUITests/PaywallScreenshotTests.swift` 用 StoreKitTest 的 `SKTestSession` 加载测试包里的 `Products.storekit`，不连 App Store、不需要沙盒账号。深链打开付费卡后断言出现本地化价格、没有「暂不可用」，截图作为附件。`bash scripts/paywall-shot.sh` 负责同步、编译、跑测试，从结果包读出失败原因，并把截图导出成 `screenshots/ios-<机型>-paywall.png`。
+- ✅ P1 皮肤购买在模拟器上验证：新增深链 `laiganjue://skin/<id>`，只认付费皮肤，已拥有就直接换上，买下后自动换上并保存。UI 测试截到「¥6.00 单买这套皮肤」。`tests/deeplink.test.mjs` 新增 1 项。
+- ✅ 模拟器截图里发现并修好：抽屉打开时关闭按钮顶着一圈红色焦点框（WebKit 对程序聚焦也画焦点环）。触屏上改为聚焦抽屉本身且不画框，键盘用户不变。
+- ✅ `Products.storekit` 价格改为中国区档位（店面本来就是中国，原来的美区数字显示成「¥1.99」「¥29.99 / 年」）。
+- `tests/e2e/share.e2e.mjs` 等财运舞台的超时从 30 秒改为 120 秒，与 stage.e2e 一致（高负载下 SwiftShader 首次编译着色器超过 30 秒）。
+- 新增 TODO：P0 中国大陆上架的 App 备案号（需要 Peyton 决定），P1 UI 测试走通购买与恢复，P2 大屏模拟器截图。
+
+检查结果：
+- `npm run build` 通过，`npm test` 409 项全部通过（新增 1 项）。
+- e2e：skins、quota、share、album、reminder 共 22 项，第一次 21 项通过，失败的是 share 里等财运 WebGL 舞台 30 秒超时（当时系统负载 690，模拟器在编译）。改为 120 秒后 share 6 项重跑全部通过。本轮没碰 3D 场景，没跑 stage 系列。
+- iOS 模拟器（iPhone 17）：`testPaywallShowsLocalizedPrices`、`testSkinOfferShowsLocalizedPrice` 两项通过。付费卡：年度 ¥98.00 / 年 前 3 天免费、月度 ¥18.00 / 月、永久 ¥198.00，主按钮「免费试用 3 天」，试用与续期条款、单买 5 次、恢复购买、条款与隐私链接都在，一屏放得下。皮肤卡价格、Pro 入口、恢复购买齐全。关闭按钮不再有红框。
+- iPhone 网页截图（已用 git rm 删掉上一轮 8 个文件）：首页付费卡、设置页 393×852 与 430×932 共 4 张，report.json 无横向溢出、无报错。设置页「无限解读 · 全部皮肤 · 无水印分享」在 393 宽下「分享」折到第二行，属于正常换行。
+
+遗留问题：
+- **Mac 磁盘几乎写满**：本轮开始前数据卷已用 198G / 228G。iPhone 18 Pro Max 那次 UI 测试因磁盘写满失败，xcodebuild 随后启动 `simctl diagnose` 收集诊断继续写盘，多个系统服务崩溃（ReportCrashService 占满 CPU，负载到 690）。已停掉测试与诊断、关掉模拟器、删掉本轮自己的编译缓存，回到约 1.1GB 空余。`paywall-shot.sh` 已加上不足 6GB 就不跑、`-collect-test-diagnostics never`。已推送通知给 Peyton。
+- iPhone 18 Pro Max 付费卡截图没跑完（P2）。
+
+下一轮计划：先看磁盘空余。够 6GB 就做 P1「UI 测试走通购买与恢复」，不够就只做网页侧的事（例如重拍 gallery 找下一件最弱的器物），不跑任何模拟器构建。
+
+待 Peyton 决定：
+- 清理 Mac 磁盘（建议：`~/Library/Developer/Xcode/iOS DeviceSupport` 6.8G、`~/Library/Caches` 8.1G、`xcrun simctl delete unavailable` 删掉旧系统版本的模拟器）。这些是你的数据，我没有动。
+- 首发是否包含中国大陆：包含就需要先办 App 备案号（工信部要求，几周），不包含就先上港澳台、新加坡、美国等地区，价格按美区与港区档位。
+- 小组件与断签提醒的真机验证（跑一次 `bash scripts/ios-try.sh`）。
+- 年龄分级按 13+ 填写、3 个皮肤内购与价格档位、GitHub Pages 合并时机、TestFlight 是否每轮自动上传，同前几轮。

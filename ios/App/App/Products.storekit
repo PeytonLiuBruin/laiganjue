@@ -3,7 +3,7 @@
   "nonRenewingSubscriptions": [],
   "products": [
     {
-      "displayPrice": "59.99",
+      "displayPrice": "198",
       "familyShareable": false,
       "internalID": "6A1C0F01",
       "localizations": [
@@ -23,7 +23,7 @@
       "type": "NonConsumable"
     },
     {
-      "displayPrice": "2.99",
+      "displayPrice": "12",
       "familyShareable": false,
       "internalID": "6A1C0F02",
       "localizations": [
@@ -43,7 +43,7 @@
       "type": "Consumable"
     },
     {
-      "displayPrice": "1.99",
+      "displayPrice": "6",
       "familyShareable": false,
       "internalID": "6A1C0F10",
       "localizations": [
@@ -63,7 +63,7 @@
       "type": "NonConsumable"
     },
     {
-      "displayPrice": "1.99",
+      "displayPrice": "6",
       "familyShareable": false,
       "internalID": "6A1C0F11",
       "localizations": [
@@ -83,7 +83,7 @@
       "type": "NonConsumable"
     },
     {
-      "displayPrice": "1.99",
+      "displayPrice": "6",
       "familyShareable": false,
       "internalID": "6A1C0F12",
       "localizations": [
@@ -120,7 +120,7 @@
         {
           "adHocOffers": [],
           "codeOffers": [],
-          "displayPrice": "29.99",
+          "displayPrice": "98",
           "familyShareable": false,
           "groupNumber": 1,
           "internalID": "6A1C0F11",
@@ -151,7 +151,7 @@
         {
           "adHocOffers": [],
           "codeOffers": [],
-          "displayPrice": "4.99",
+          "displayPrice": "18",
           "familyShareable": false,
           "groupNumber": 2,
           "internalID": "6A1C0F13",

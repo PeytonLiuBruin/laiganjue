@@ -471,7 +471,10 @@ export function sheet({ title = '', content = null, actions = null, onClose, dis
         if (!opened) return;
         backdrop.classList.add('open');
         el.classList.add('open');
-        (dismissible ? closeBtn : el).focus({ preventScroll: true });
+        // 触屏上把焦点放在抽屉本身：WebKit 对没有键盘操作的程序聚焦也会画焦点环，
+        // 从深链或通知打开时关闭按钮会顶着一圈红框。键盘用户仍落在关闭按钮上。
+        const touch = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+        (dismissible && !touch ? closeBtn : el).focus({ preventScroll: true });
       });
       return api;
     },

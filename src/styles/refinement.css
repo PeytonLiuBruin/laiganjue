@@ -47,6 +47,7 @@
 body::before { opacity: .018; }
 button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, [tabindex]:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.sheet[tabindex]:focus, .sheet[tabindex]:focus-visible { outline: none; } /* 抽屉本身只是焦点落点，不画框 */
 button:disabled { cursor: default; }
 .app-header { padding-inline: 24px; gap: 8px; border-color: var(--line); }
 .app-header .hd-title { text-align: left; font-size: 20px; font-weight: 600; letter-spacing: .1em; }
