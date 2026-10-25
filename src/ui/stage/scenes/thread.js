@@ -1,6 +1,21 @@
 // 红线：两块水中青石上各立一枚刻谷纹的玉璧，一根红线穿过两璧。
 // 牵线时由松到紧、绷直回弹，线心浮出一颗红心（指定发光），小心形缓缓上飘，上方悬一枚剪纸「囍」。
-import { THREE, MAT, plinth, textTexture, damp, backOut, clamp, ease } from './common.js';
+import { THREE, MAT, plinth, damp, backOut, clamp, ease } from './common.js';
+import { canvasTexture, FONT } from '../organic.js';
+
+// 第 27 轮：剪纸「囍」加金边与深红描边，和其他描边卡通元素一致（原来是平面红字浮在天空里）
+export const XI_TOON = { fill: '#e8463c', stroke: '#7a1a14', edge: '#ffc93c', px: 256, font: 188, strokeW: 20, edgeW: 44 };
+function xiTexture() {
+  const { px, font, fill, stroke, edge, strokeW, edgeW } = XI_TOON;
+  return canvasTexture(px, px, (c) => {
+    c.clearRect(0, 0, px, px);
+    c.font = `900 ${font}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+    const y = px / 2 + font * .04;
+    c.lineWidth = edgeW; c.strokeStyle = edge; c.strokeText('囍', px / 2, y);
+    c.lineWidth = strokeW; c.strokeStyle = stroke; c.strokeText('囍', px / 2, y);
+    c.fillStyle = fill; c.fillText('囍', px / 2, y);
+  });
+}
 import { taperedTube } from '../organic.js';
 
 function biGeometry() {
@@ -69,7 +84,7 @@ export default {
       const m = new THREE.Mesh(heartGeometry(.045), new THREE.MeshStandardMaterial({ color: '#ff8fa0', roughness: .4, transparent: true, opacity: 0 }));
       m.userData.phase = i / 4; world.add(m); return m;
     });
-    const xi = new THREE.Mesh(new THREE.PlaneGeometry(.62, .62), new THREE.MeshStandardMaterial({ map: textTexture('囍', { size: 210, color: '#d22b2b' }), transparent: true, alphaTest: .4, side: THREE.DoubleSide, roughness: .7 }));
+    const xi = new THREE.Mesh(new THREE.PlaneGeometry(.62, .62), new THREE.MeshStandardMaterial({ map: xiTexture(), transparent: true, alphaTest: .4, side: THREE.DoubleSide, roughness: 1 }));
     xi.position.set(0, .95, -.2); xi.visible = false; xi.castShadow = true; world.add(xi);
 
     api.lilies({ pads: [[.15, 1.3, .3], [-.6, 2.0, .22], [2.0, 1.1, .26]] });

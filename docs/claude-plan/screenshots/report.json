@@ -42,5 +42,75 @@
       "bad": []
     },
     "errors": []
+  },
+  {
+    "route": "m/yinyuan",
+    "viewport": "393x852",
+    "file": "m-yinyuan-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/yinyuan@tab1",
+    "viewport": "393x852",
+    "file": "m-yinyuan-tab1-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac",
+    "viewport": "393x852",
+    "file": "m-zodiac-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/yinyuan",
+    "viewport": "430x932",
+    "file": "m-yinyuan-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/yinyuan@tab1",
+    "viewport": "430x932",
+    "file": "m-yinyuan-tab1-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac",
+    "viewport": "430x932",
+    "file": "m-zodiac-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
   }
 ]

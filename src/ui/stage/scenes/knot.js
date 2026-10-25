@@ -12,6 +12,9 @@ function blossom(scale = 1, color = '#ffd3dc') {
   return g;
 }
 
+// 第 27 轮：揭晓不再整只结泛白发粉。粉色补光换成弱暖金，光晕移到金章背后只露一圈金边，字面哑光并加深棕描边
+export const KNOT_REVEAL = { text: '#ffc93c', textStroke: '#8a3a10', halo: '#ffc93c', haloSize: .5, haloZ: -.06, textPeak: .4, light: '#ffe2a0', lightPeak: .45 };
+
 export default {
   camera: { position: [0, .05, 7.3], target: [0, -.12, 0], fov: 31 },
   fog: [9, 26],
@@ -56,11 +59,11 @@ export default {
     const medal = new THREE.Group(); medal.position.set(0, 0, .16); medal.visible = false; body.add(medal);
     const disc = new THREE.Mesh(new THREE.CylinderGeometry(.165, .165, .035, 48), gold); disc.rotation.x = Math.PI / 2; medal.add(disc);
     const enamel = new THREE.Mesh(new THREE.CylinderGeometry(.13, .13, .04, 48), MAT.lacquer('#b32a26')); enamel.rotation.x = Math.PI / 2; medal.add(enamel);
-    const tex = textTexture('缘', { size: 170, color: '#ffd67a' });
-    const textMat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, metalness: .6, roughness: .3, emissive: '#ffcf70', emissiveMap: tex, emissiveIntensity: 0 });
+    const tex = textTexture('缘', { size: 170, color: KNOT_REVEAL.text, stroke: KNOT_REVEAL.textStroke, weight: 900 });
+    const textMat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, metalness: 0, roughness: 1, emissive: KNOT_REVEAL.halo, emissiveMap: tex, emissiveIntensity: 0 });
     const label = new THREE.Mesh(new THREE.PlaneGeometry(.23, .23), textMat); label.position.z = .022; medal.add(label);
-    glow.add('medal', { object: medal, materials: [textMat], color: '#ffc46b', size: .55, base: 0, peak: 1.1 });
-    const warm = new THREE.PointLight('#ff8f9a', 0, 2.2, 2); warm.position.set(0, -.1, .6); body.add(warm);
+    glow.add('medal', { object: medal, materials: [textMat], color: KNOT_REVEAL.halo, size: KNOT_REVEAL.haloSize, base: 0, peak: KNOT_REVEAL.textPeak, haloAt: [0, 0, KNOT_REVEAL.haloZ] });
+    const warm = new THREE.PointLight(KNOT_REVEAL.light, 0, 2.2, 2); warm.position.set(0, -.1, .6); body.add(warm);
 
     api.lilies({ pads: [[1.45, 1.0, .34], [1.95, .35, .24], [-1.7, 1.25, .28], [-2.3, .2, .2]] });
     api.reeds({ spots: [[-2.6, api.water.y, -1.3], [2.7, api.water.y, -1.8]], perSpot: 14, height: 1.2 });
@@ -93,7 +96,7 @@ export default {
         medal.scale.setScalar(Math.max(.001, backOut(clamp(since / .6)) * mix));
         medal.rotation.y = Math.sin(t * .9) * .18;
         glow.set('medal', mix * (.8 + .2 * Math.sin(t * 2.2)));
-        warm.intensity = mix * 1.6;
+        warm.intensity = mix * KNOT_REVEAL.lightPeak;
       },
     };
   },

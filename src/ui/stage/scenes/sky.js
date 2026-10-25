@@ -1,6 +1,7 @@
 // 星仪：青铜浑仪立在水中石座上，三道环缓缓转动，环内一层薄玻璃天球。
 // 星座模式：所选星座的星点与连线浮在天球上（指定发光）；生肖模式：中央一枚玉章刻地支，十二地支环绕，当前一枚亮起。
 import { THREE, MAT, plinth, textTexture, damp } from './common.js';
+import { canvasTexture, FONT } from '../organic.js';
 
 const GlassShader = {
   uniforms: { tint: { value: new THREE.Color('#bcd4ff') }, strength: { value: .5 } },
@@ -12,6 +13,17 @@ const GlassShader = {
     }`,
 };
 const BRANCHES = [...'子丑寅卯辰巳午未申酉戌亥'];
+// 第 27 轮：十二支原来是浅灰细字，手机上看不见。改成奶油圆章配深棕粗字，当前生肖的那枚染金放大
+export const SKY_BRANCH = { badge: '#fff4d8', ring: '#3a2410', text: '#3a2410', on: '#ffc93c', size: .2, onSize: .26, px: 128, font: 78 };
+function branchTexture(ch) {
+  const { px, badge, ring, text, font } = SKY_BRANCH;
+  return canvasTexture(px, px, (c) => {
+    c.clearRect(0, 0, px, px);
+    c.beginPath(); c.arc(px / 2, px / 2, px / 2 - 6, 0, Math.PI * 2); c.fillStyle = badge; c.fill();
+    c.lineWidth = 8; c.strokeStyle = ring; c.stroke();
+    c.font = `900 ${font}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = text; c.fillText(ch, px / 2, px / 2 + font * .04);
+  });
+}
 
 export default {
   camera: { position: [0, .35, 7.0], target: [0, .02, 0], fov: 30 },
@@ -66,8 +78,8 @@ export default {
     const glyphPlane = new THREE.Mesh(new THREE.PlaneGeometry(.5, .5), glyphMat); glyphPlane.position.z = .04; medal.add(glyphPlane);
     glow.add('glyph', { materials: [glyphMat], color: '#ffcf70', base: .1, peak: .7 });
     const branchSprites = BRANCHES.map((b, i) => {
-      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: textTexture(b, { w: 128, h: 128, size: 90, color: '#f3dcae', stroke: '#4a2f12' }), transparent: true, depthWrite: false }));
-      const a = Math.PI / 2 - i / 12 * Math.PI * 2; sp.position.set(Math.cos(a) * .64, Math.sin(a) * .64, .05); sp.scale.setScalar(.17); medal.add(sp); return sp;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: branchTexture(b), transparent: true, depthWrite: false }));
+      const a = Math.PI / 2 - i / 12 * Math.PI * 2; sp.position.set(Math.cos(a) * .64, Math.sin(a) * .64, .05); sp.scale.setScalar(SKY_BRANCH.size); medal.add(sp); return sp;
     });
 
     api.lilies({ pads: [[1.5, 1.0, .3], [-1.7, 1.3, .26]] });
@@ -113,7 +125,7 @@ export default {
         lineMat.opacity = .4 + energy * .4;
         stars.rotation.y = lines.rotation.y = Math.sin(t * .25) * .15;
         medal.rotation.y = Math.sin(t * .5) * .2;
-        branchSprites.forEach((sp, i) => { const on = BRANCHES[i] === s.glyph; sp.material.color.set(on ? '#ffd27a' : '#ffffff'); sp.scale.setScalar(on ? .22 : .16); sp.material.opacity = on ? 1 : .7; });
+        branchSprites.forEach((sp, i) => { const on = BRANCHES[i] === s.glyph; sp.material.color.set(on ? SKY_BRANCH.on : '#ffffff'); sp.scale.setScalar(on ? SKY_BRANCH.onSize : SKY_BRANCH.size); sp.material.opacity = 1; });
         glow.set('glyph', animal ? .45 + energy * .5 + .1 * Math.sin(t * 2) : 0);
       },
     };
