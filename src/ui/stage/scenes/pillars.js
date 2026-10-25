@@ -46,6 +46,27 @@ export function drawTablet(c, w, h, entry, i, unknownHour) {
   }
 }
 
+// 第 23 轮：命牌背面。排盘开始时四块牌先背对镜头再依次翻过来，原来背面是一整块素红，翻转中像四块空板。
+// 改为卡牌背面：深朱底、金色双线框、四角金点、中间金色圆章上一个朱红「命」字，像手游卡牌的卡背。
+export const TABLET_BACK = { base: '#c8302a', gold: '#ffc93c', goldDark: '#d8901e', ink: '#8a1c16' };
+export function drawTabletBack(c, w, h) {
+  const B = TABLET_BACK;
+  c.clearRect(0, 0, w, h);
+  c.fillStyle = B.base; c.fillRect(0, 0, w, h);
+  c.lineJoin = 'round';
+  roundRect(c, 18, 18, w - 36, h - 36, 26); c.lineWidth = 10; c.strokeStyle = B.gold; c.stroke();
+  roundRect(c, 40, 40, w - 80, h - 80, 16); c.lineWidth = 4; c.strokeStyle = B.gold; c.stroke();
+  for (const [x, y] of [[40, 40], [w - 40, 40], [40, h - 40], [w - 40, h - 40]]) { c.beginPath(); c.arc(x, y, 12, 0, Math.PI * 2); c.fillStyle = B.gold; c.fill(); }
+  // 上下各一道金色云纹短线，和正面的标签条、十神胶囊位置对应
+  for (const y of [120, h - 120]) { roundRect(c, w / 2 - 70, y - 7, 140, 14, 7); c.fillStyle = B.gold; c.fill(); }
+  const cy = h / 2;
+  c.beginPath(); c.arc(w / 2, cy, 104, 0, Math.PI * 2); c.fillStyle = B.gold; c.fill();
+  c.lineWidth = 8; c.strokeStyle = B.goldDark; c.stroke();
+  c.beginPath(); c.arc(w / 2, cy, 82, 0, Math.PI * 2); c.lineWidth = 4; c.strokeStyle = B.ink; c.stroke();
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 112px ${FONT}`;
+  c.fillStyle = B.ink; c.fillText('命', w / 2, cy + 6);
+}
+
 export default {
   camera: { position: [0, .55, 7.5], target: [0, -.2, 0], fov: 30 },
   fog: [9, 26],
@@ -60,12 +81,14 @@ export default {
     const tabletGeo = new RoundedBoxGeometry(.52, 1.5, .2, 4, .04);
     const capGeo = new RoundedBoxGeometry(.58, .07, .24, 3, .025);
     const tabMat = MAT.lacquer('#e8463c'); // 朱漆牌身，牌面四周露出一圈红边
+    const backMat = new THREE.MeshStandardMaterial({ map: canvasTexture(TABLET_TEX[0], TABLET_TEX[1], (c, w, h) => drawTabletBack(c, w, h)), roughness: .8 }); // 四块共用
     const tablets = [0, 1, 2, 3].map((i) => {
       const g = new THREE.Group(); world.add(g);
       g.add(new THREE.Mesh(tabletGeo, tabMat));
       const top = new THREE.Mesh(capGeo, gold); top.position.y = .76; const bot = new THREE.Mesh(capGeo, gold); bot.position.y = -.76; g.add(top, bot);
       const tex = canvasTexture(TABLET_TEX[0], TABLET_TEX[1], (c, w, h) => drawTablet(c, w, h, null, i, false));
       const face = new THREE.Mesh(new THREE.PlaneGeometry(.44, 1.29), new THREE.MeshStandardMaterial({ map: tex, roughness: .8 })); face.position.z = .102; g.add(face);
+      const back = new THREE.Mesh(new THREE.PlaneGeometry(.44, 1.29), backMat); back.position.z = -.102; back.rotation.y = Math.PI; g.add(back);
       api.shadows(g, true, true);
       return { g, tex };
     });

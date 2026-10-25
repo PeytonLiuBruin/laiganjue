@@ -25,7 +25,9 @@ function drawBoard(c, w, highlight = null, glowOnly = false) {
 }
 
 export default {
-  camera: { position: [0, 2.3, 6.1], target: [0, -.35, 0], fov: 32 },
+  // 第 23 轮：原来 [0, 2.3, 6.1] 看向 -.35，静止时曲臂顶端离画面上沿只剩约 1.4°，过冲拉长时顶出画面。
+  // 拉远一点并抬高目标，过冲时仍留约 2° 的余量，石台前沿离下沿约 3°（tests/stage-frame.test.mjs）
+  camera: { position: [0, 2.3, 6.4], target: [0, -.15, 0], fov: 32 },
   fog: [9, 26],
   pivot: -.94, // 动作弹性的不动点：石台顶面
   bounce: .6, // 支架高，满幅拉长会顶出画面

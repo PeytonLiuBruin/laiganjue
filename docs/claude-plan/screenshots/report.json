@@ -1,44 +1,11 @@
 [
   {
-    "route": "m/crystal",
-    "viewport": "393x852",
-    "file": "m-crystal-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
     "route": "m/fengshui",
     "viewport": "393x852",
     "file": "m-fengshui-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/bazi",
-    "viewport": "393x852",
-    "file": "m-bazi-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/crystal",
-    "viewport": "430x932",
-    "file": "m-crystal-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
       "bad": []
     },
     "errors": []
@@ -56,8 +23,41 @@
   },
   {
     "route": "m/bazi",
+    "viewport": "393x852",
+    "file": "m-bazi-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/crystal",
+    "viewport": "393x852",
+    "file": "m-crystal-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi",
     "viewport": "430x932",
     "file": "m-bazi-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/crystal",
+    "viewport": "430x932",
+    "file": "m-crystal-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
