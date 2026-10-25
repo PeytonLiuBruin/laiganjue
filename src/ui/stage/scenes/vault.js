@@ -17,6 +17,10 @@ function halfDome(radius, length, segments = 40) {
   g.rotateZ(Math.PI / 2); g.rotateX(-Math.PI / 2); return g;
 }
 
+// 第 26 轮：开库时箱内是近黑的深红丝绒，元宝是金属 1.0 的橙金，在卡通光照下发成橙粉色。
+// 改为朱红内衬、箱口一层亮金「金堆」，元宝换哑光饱和金，揭晓发光压低，金光不再把元宝冲白
+export const VAULT_TOON = { lining: '#d8402e', pile: '#ffc93c', ingot: '#f0a500', ingotGlow: '#ffb020', glowPeak: .18 };
+
 export default {
   camera: { position: [0, 1.0, 7.2], target: [0, -.32, 0], fov: 30 },
   fog: [9, 27],
@@ -27,9 +31,9 @@ export default {
     const chest = new THREE.Group(); chest.position.y = -.95; world.add(chest);
     const planks = lacquerPlanks();
     const lacquer = new THREE.MeshPhysicalMaterial({ map: planks, roughness: .3, clearcoat: .9, clearcoatRoughness: .2 });
-    const gold = MAT.gold(), velvet = MAT.matte('#4a1612');
+    const gold = MAT.gold(), velvet = MAT.matte(VAULT_TOON.lining);
     const body = new THREE.Mesh(new RoundedBoxGeometry(1.6, .68, .96, 4, .04), lacquer); body.position.y = .36; chest.add(body);
-    const inside = new THREE.Mesh(new THREE.PlaneGeometry(1.48, .84), velvet); inside.rotation.x = -Math.PI / 2; inside.position.y = .705; chest.add(inside);
+    const inside = new THREE.Mesh(new THREE.PlaneGeometry(1.48, .84), MAT.matte(VAULT_TOON.pile)); inside.rotation.x = -Math.PI / 2; inside.position.y = .705; chest.add(inside);
     const bandGeo = new RoundedBoxGeometry(.15, .7, 1.0, 3, .03);
     for (const x of [-.62, .62]) { const b = new THREE.Mesh(bandGeo, gold); b.position.set(x, .36, 0); chest.add(b); }
     const foot = new THREE.Mesh(new RoundedBoxGeometry(1.68, .1, 1.04, 3, .035), gold); foot.position.y = .05; chest.add(foot);
@@ -51,18 +55,19 @@ export default {
     api.shadows(chest, true, true);
 
     // 元宝与金光（指定发光）
-    const ingotMat = new THREE.MeshStandardMaterial({ color: '#d98c12', metalness: 1, roughness: .2, emissive: '#ff9a1f', emissiveIntensity: 0 });
+    const ingotMat = new THREE.MeshStandardMaterial({ color: VAULT_TOON.ingot, metalness: 0, roughness: .5, emissive: VAULT_TOON.ingotGlow, emissiveIntensity: 0 });
     const ingotGeo = yuanbaoGeometry(1);
     const ingots = [[-.42, -.12, .3, 0], [.4, -.14, -.4, .2], [0, .02, .1, .1], [-.18, .22, -.2, .15], [.22, .22, .25, .05]].map(([x, z, a, d]) => {
       const mesh = new THREE.Mesh(ingotGeo, ingotMat); mesh.rotation.y = a; mesh.castShadow = true; chest.add(mesh);
       return { mesh, home: new THREE.Vector3(x, .74, z), delay: d };
     });
     // 卡通着色后元宝本体已经很亮，金光用更深的橙金、峰值压低，免得发白
-    glow.add('ingots', { materials: [ingotMat], color: '#ff8a10', base: 0, peak: .22 });
+    glow.add('ingots', { materials: [ingotMat], color: VAULT_TOON.ingotGlow, base: 0, peak: VAULT_TOON.glowPeak });
     const rayTex = canvasTexture(64, 256, (c, w, h) => { const g = c.createLinearGradient(0, h, 0, 0); g.addColorStop(0, 'rgba(255,214,120,.9)'); g.addColorStop(1, 'rgba(255,214,120,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); const x = c.createLinearGradient(0, 0, w, 0); x.addColorStop(0, 'rgba(0,0,0,1)'); x.addColorStop(.5, 'rgba(0,0,0,0)'); x.addColorStop(1, 'rgba(0,0,0,1)'); c.globalCompositeOperation = 'destination-out'; c.fillStyle = x; c.fillRect(0, 0, w, h); });
     const rayMat = new THREE.MeshBasicMaterial({ map: rayTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, side: THREE.DoubleSide, fog: true });
     rayMat.userData.glow = true;
-    const rays = new THREE.Group(); rays.position.y = .72; chest.add(rays);
+    // 光束底部最亮，原来从 0.72 起正好叠在元宝上（叠加混合）把元宝冲成粉白，抬到元宝顶上方
+    const rays = new THREE.Group(); rays.position.y = .9; chest.add(rays);
     for (let i = 0; i < 9; i++) {
       const ray = new THREE.Mesh(new THREE.PlaneGeometry(.22, 1.6), rayMat); ray.geometry.translate(0, .8, 0);
       ray.rotation.y = i / 9 * Math.PI; ray.rotation.z = (i % 2 ? 1 : -1) * (.12 + (i % 3) * .1); rays.add(ray);
@@ -108,7 +113,7 @@ export default {
         rays.visible = rayMat.opacity > .01;
         rays.rotation.y = t * .25;
         rays.scale.set(1, .4 + beam * .8, 1);
-        shine.intensity = beam * .55; // 卡通着色下点光太强会把元宝冲成粉白，压低到只染一层暖光
+        shine.intensity = beam * .3; // 卡通着色下点光太强会把元宝冲成粉白，压低到只染一层暖光
         glow.set('ingots', Math.max(mix, beam * .6) * (.75 + .25 * Math.sin(t * 2.3)));
       },
     };

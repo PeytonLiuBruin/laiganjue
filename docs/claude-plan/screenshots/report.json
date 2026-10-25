@@ -1,8 +1,8 @@
 [
   {
-    "route": "home@paywall",
+    "route": "m/fengshui",
     "viewport": "393x852",
-    "file": "home-paywall-393x852.png",
+    "file": "m-fengshui-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,9 @@
     "errors": []
   },
   {
-    "route": "home@settings",
+    "route": "m/caiyun@tab1",
     "viewport": "393x852",
-    "file": "home-settings-393x852.png",
+    "file": "m-caiyun-tab1-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -22,9 +22,9 @@
     "errors": []
   },
   {
-    "route": "home@paywall",
+    "route": "m/fengshui",
     "viewport": "430x932",
-    "file": "home-paywall-430x932.png",
+    "file": "m-fengshui-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -33,9 +33,9 @@
     "errors": []
   },
   {
-    "route": "home@settings",
+    "route": "m/caiyun@tab1",
     "viewport": "430x932",
-    "file": "home-settings-430x932.png",
+    "file": "m-caiyun-tab1-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
