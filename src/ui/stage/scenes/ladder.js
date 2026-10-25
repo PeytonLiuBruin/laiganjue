@@ -10,8 +10,11 @@ function starGeometry(r = .16) {
   const g = new THREE.ExtrudeGeometry(s, { depth: r * .18, bevelEnabled: true, bevelThickness: r * .12, bevelSize: r * .08, bevelSegments: 3 }); g.center(); return g;
 }
 
+export const LADDER_STAR = { radius: .24, sway: .45, glowPeak: .5 };
+
 export default {
-  camera: { position: [0, .45, 7.7], target: [0, .32, 0], fov: 31 },
+  // 第 24 轮：揭晓时顶端金星随放大 1.08 顶到 ndc.y 0.99，相机后退并抬高看点，给过冲留余量（scripts/stage-frame.mjs 检查）
+  camera: { position: [0, .6, 8.1], target: [0, .5, 0], fov: 31 },
   fog: [9, 27],
   pivot: -.96, // 动作弹性的不动点：石台顶面
   waterY: -1.18,
@@ -49,13 +52,15 @@ export default {
     const far1 = new THREE.Mesh(cloudGeometry({ seed: 8, puffs: [[0, 0, 0, .5], [-.6, -.1, 0, .35], [.6, -.08, 0, .38]], detail: 2 }), cloudMat); far1.position.set(-2.6, 1.2, -4); far1.scale.setScalar(1.3); world.add(far1);
     const far2 = new THREE.Mesh(cloudGeometry({ seed: 9, puffs: [[0, 0, 0, .45], [-.5, -.1, 0, .3], [.55, -.06, 0, .32]], detail: 2 }), cloudMat); far2.position.set(2.8, .7, -5.5); far2.scale.setScalar(1.5); world.add(far2);
     // 揭晓：金星（指定发光）与「青云」金字
-    const starMat = new THREE.MeshStandardMaterial({ color: '#f6c453', metalness: .8, roughness: .25, emissive: '#ffcf66', emissiveIntensity: 0 });
-    const star = new THREE.Mesh(starGeometry(.17), starMat); star.position.copy(top).add(new THREE.Vector3(.05, .78, .2)); star.visible = false; world.add(star);
-    glow.add('star', { object: star, materials: [starMat], color: '#ffd27a', size: 1.0, base: .2, peak: 1.4 });
-    const textMat = new THREE.MeshStandardMaterial({ map: textTexture('青云', { w: 512, h: 256, size: 170, color: '#ffd77e', stroke: '#9a5a14' }), transparent: true, metalness: .3, roughness: .4, emissive: '#ffcf70', emissiveIntensity: 0 });
+    // 第 24 轮：金星原来是金属 0.8、发光峰值 1.4、整圈自转，揭晓时多半侧对镜头，只剩一道发白的细条。
+    // 改为不透明饱和金 #ffc93c 哑光（卡通着色负责分段明暗）、放大到 0.24、只左右摆 ±0.45 弧度，发光峰值压到 0.5
+    const starMat = new THREE.MeshStandardMaterial({ color: '#ffc93c', metalness: 0, roughness: 1, emissive: '#ffb020', emissiveIntensity: 0 });
+    const star = new THREE.Mesh(starGeometry(LADDER_STAR.radius), starMat); star.position.copy(top).add(new THREE.Vector3(.05, .74, .2)); star.visible = false; world.add(star);
+    glow.add('star', { object: star, materials: [starMat], color: '#ffd27a', size: 1.0, base: .1, peak: LADDER_STAR.glowPeak });
+    const textMat = new THREE.MeshStandardMaterial({ map: textTexture('青云', { w: 512, h: 256, size: 170, color: '#ffc93c', stroke: '#8a3a10' }), transparent: true, metalness: .3, roughness: .4, emissive: '#ffcf70', emissiveIntensity: 0 });
     textMat.emissiveMap = textMat.map;
     const words = new THREE.Mesh(new THREE.PlaneGeometry(.9, .45), textMat); words.position.copy(top).add(new THREE.Vector3(.02, .1, .78)); words.visible = false; world.add(words);
-    glow.add('words', { materials: [textMat], color: '#ffcf70', base: 0, peak: .6 });
+    glow.add('words', { materials: [textMat], color: '#ffcf70', base: 0, peak: .35 });
 
     api.lilies({ pads: [[1.3, 1.1, .3], [1.9, .3, .22]] });
     api.reeds({ spots: [[-2.4, api.water.y, -.9], [2.6, api.water.y, -1.5]], perSpot: 12, height: 1.15 });
@@ -84,7 +89,7 @@ export default {
         mix = damp(mix, s.revealed ? 1 : 0, 2.5, dt);
         const pop = Math.max(.001, backOut(mix));
         star.visible = words.visible = mix > .01;
-        star.scale.setScalar(pop); star.rotation.y = t * .8; star.rotation.z = Math.sin(t) * .1;
+        star.scale.setScalar(pop); star.rotation.y = Math.sin(t * 1.2) * LADDER_STAR.sway; star.rotation.z = Math.sin(t) * .1;
         words.scale.setScalar(pop);
         glow.set('star', mix * (.75 + .25 * Math.sin(t * 2.6)));
         glow.set('words', mix);

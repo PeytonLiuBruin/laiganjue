@@ -38,3 +38,16 @@ test('命牌背面：深朱底、金框与中间「命」字圆章', () => {
   const text = calls.find((c) => c.n === 'fillText');
   assert.equal(text.a[0], '命'); assert.equal(text.fill, TABLET_BACK.ink);
 });
+
+// 第 24 轮：青云梯揭晓时顶端金星原来随放大 1.08 顶到 ndc.y 0.99；金星改为正对镜头的饱和金
+import ladder, { LADDER_STAR } from '../src/ui/stage/scenes/ladder.js';
+test('青云梯：揭晓放大时金星顶端仍在画面内，金星只左右摆不整圈自转', () => {
+  const cam = cameraOf(ladder);
+  const pop = 1 + BOUNCE.pop, pivot = ladder.pivot;
+  // 梯顶 (.5, 1.32, -.5) 加金星偏移 (.05, .74, .2)，再加半径
+  const starTop = [.55 * pop, pivot + (1.32 + .74 + LADDER_STAR.radius - pivot) * pop, -.3 * pop];
+  const p = ndc(cam, starTop);
+  assert.ok(p.y < .9, `金星顶端 ndc.y = ${p.y.toFixed(3)}`);
+  assert.ok(LADDER_STAR.sway < Math.PI / 4, '摆幅小于 45°，不会侧对镜头变成细条');
+  assert.ok(LADDER_STAR.radius >= .22 && LADDER_STAR.glowPeak <= .6);
+});

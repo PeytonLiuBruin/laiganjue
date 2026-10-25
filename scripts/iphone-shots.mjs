@@ -47,6 +47,9 @@ for (const vp of VIEWPORTS) {
     await page.waitForTimeout(2500);
     // 体感引导抽屉可能晚一点弹出：按两次 Esc 关掉，再等动画结束
     for (let i = 0; i < 2; i++) { await page.keyboard.press('Escape').catch(() => {}); await page.waitForTimeout(600); }
+    // m/shiye@tab1：切到第 2 个标签（事业页的青云梯、财运页的财库）再截图，文件名带 -tab1
+    const tabMatch = /^tab(\d)$/.exec(action || '');
+    if (tabMatch) { await page.locator('.view-module .tabs .tab').nth(Number(tabMatch[1])).click().catch(() => {}); await page.waitForTimeout(2500); }
     if (action === 'paywall') { await page.evaluate(() => { window.__lgj.openPaywall({ reason: '今天的免费深度解读已用完，开通 Pro 不限次数' }); }); await page.waitForTimeout(900); }
     if (action === 'settings' || action === 'settings-end') { await page.click('.app-header [aria-label="设置"]'); await page.waitForTimeout(900); }
     if (action === 'settings-end') { await page.locator('.setting-legal').scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(500); }

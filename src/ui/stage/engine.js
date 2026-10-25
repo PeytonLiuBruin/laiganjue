@@ -114,6 +114,8 @@ export function createStage(el, ctx, id, fallbackFactory = null) {
     get quality() { return core?.level ?? -1; },
     get ready() { return !!core; },
     inspect() { return core?.inspect() || null; },
+    /** 测试用：主角当前在画面里的范围（归一化设备坐标）。 */
+    frame() { return core?.frame() || null; },
     dispose() {
       if (!alive) return; alive = false;
       resizeObserver.disconnect(); intersection?.disconnect();
@@ -335,6 +337,26 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
       return out;
     },
     advance(seconds = 1) { const n = Math.max(1, Math.round(seconds * 60)); for (let i = 0; i < n; i++) step(1 / 60); render(); compiled = true; },
+    /**
+     * 测试用：主角所有可见网格（含描边外壳）的顶点投影到画面后的范围，归一化设备坐标 -1 到 1。
+     * 用来检查动作弹性过冲、揭晓放大时器物不顶出画面（visual-direction.md 第 2 节「动效」要求 ndc.y < 0.9）。
+     */
+    frame() {
+      const v = new THREE.Vector3(), box = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+      scene.updateMatrixWorld(true); camera.updateMatrixWorld(); camera.updateProjectionMatrix();
+      for (const h of heroes) h.object.traverseVisible((o) => {
+        const pos = o.isMesh && o.geometry?.attributes?.position;
+        // 叠加混合的光束、光晕是渐隐到透明的软光，顶出画面没关系，不计入
+        if (!pos || o.material?.blending === THREE.AdditiveBlending || o.material?.transparent && o.material.opacity < .05) return;
+        for (let i = 0; i < pos.count; i++) {
+          v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld).project(camera);
+          if (v.z > 1) continue;
+          box.minX = Math.min(box.minX, v.x); box.maxX = Math.max(box.maxX, v.x);
+          box.minY = Math.min(box.minY, v.y); box.maxY = Math.max(box.maxY, v.y);
+        }
+      });
+      return Number.isFinite(box.maxY) ? box : null;
+    },
     /** 测试用：报告场景用到的氛围与材质，确认只有登记过的材质在发光。 */
     inspect() {
       const mats = new Set(); let meshes = 0;

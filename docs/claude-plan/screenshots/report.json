@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/bazi",
+    "route": "m/shiye",
     "viewport": "393x852",
-    "file": "m-bazi-393x852.png",
+    "file": "m-shiye-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/crystal",
+    "route": "m/shiye@tab1",
     "viewport": "393x852",
-    "file": "m-crystal-393x852.png",
+    "file": "m-shiye-tab1-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -22,9 +22,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi",
+    "route": "m/shiye",
     "viewport": "430x932",
-    "file": "m-bazi-430x932.png",
+    "file": "m-shiye-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -33,9 +33,9 @@
     "errors": []
   },
   {
-    "route": "m/crystal",
+    "route": "m/shiye@tab1",
     "viewport": "430x932",
-    "file": "m-crystal-430x932.png",
+    "file": "m-shiye-tab1-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
