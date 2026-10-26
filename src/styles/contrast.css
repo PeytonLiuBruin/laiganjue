@@ -42,3 +42,9 @@
 
 /* 付费卡「最划算」小角标：10px 白字，红底加深到主按钮厚边色 */
 [data-theme='paper'] .pw-plan-name em { background: var(--btn-edge); }
+
+/* 第 34 轮：深色皮肤舞台换成卡通夜空后，舞台上的半透明小字底变亮，小字改用二级文字色 */
+:is([data-theme='ink'], [data-theme='cinnabar'], [data-theme='nebula']) :is(.stage-badge, .stage-hint) { color: var(--text-2); }
+:is([data-theme='ink'], [data-theme='cinnabar'], [data-theme='nebula']) :is(.m-liuyao .ly-line-pos, .m-liuyao .ly-board-foot, .m-liuyao .ly-board-title) { color: var(--text); }
+.stage-badge, .stage-hint { background: color-mix(in srgb, var(--surface-strong) 88%, transparent); }
+[data-theme='paper'] :is(.stage-badge, .stage-hint) { color: var(--text-2); background: rgba(255, 255, 255, 0.9); }

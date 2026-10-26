@@ -215,3 +215,84 @@
   stroke-width: 2.2px;
   filter: drop-shadow(0 1.5px 0 var(--tr-back-ink)) drop-shadow(0 -1px 0 var(--tr-back-ink));
 }
+
+/* —— 舞台卡通底（第 34 轮）——
+   2D 玩法（灵签、御神签、筊杯、硬币骰子、六爻、转盘、落球盘、卢恩、塔罗、黄历）的舞台原来是近白底配灰地影，器物像摆在白纸上。
+   改成和 3D 舞台同一套晴空：上段天空渐变，64% 处一道硬边地平线，下段纯色地面，天上两朵硬边白云（深色皮肤换成星点）。
+   3D 玩法的画布盖满舞台，这层底只在画布出来前和关掉 WebGL 时露出，也是同一片天。 */
+:root {
+  --toon-sky-1: #8fd3ff;
+  --toon-sky-2: #d4f0ff;
+  --toon-ground: #fff0cc;
+  --toon-ground-edge: #f0d49a;
+  --toon-deco: rgba(255, 255, 255, 0.92);
+  --toon-deco-size: 15% 5.5%;
+  --toon-floor: rgba(106, 123, 214, 0.22);
+}
+[data-theme='celadon'] {
+  --toon-sky-1: #93dcc8;
+  --toon-sky-2: #daf5ec;
+  --toon-ground: #f6f0d6;
+  --toon-ground-edge: #dccf9c;
+  --toon-floor: rgba(20, 90, 70, 0.2);
+}
+[data-theme='ink'] {
+  --toon-sky-1: #12293c;
+  --toon-sky-2: #224a66;
+  --toon-ground: #1a3038;
+  --toon-ground-edge: #3a6a78;
+  --toon-deco: rgba(255, 244, 214, 0.85);
+  --toon-deco-size: 2.2px 2.2px;
+  --toon-floor: rgba(0, 0, 0, 0.35);
+}
+[data-theme='cinnabar'] {
+  --toon-sky-1: #3a1022;
+  --toon-sky-2: #7a2a34;
+  --toon-ground: #3a1418;
+  --toon-ground-edge: #9a4030;
+  --toon-deco: rgba(255, 220, 160, 0.85);
+  --toon-deco-size: 2.2px 2.2px;
+  --toon-floor: rgba(0, 0, 0, 0.35);
+}
+[data-theme='nebula'] {
+  --toon-sky-1: #1b1446;
+  --toon-sky-2: #4a3a8c;
+  --toon-ground: #2a2160;
+  --toon-ground-edge: #6a58c0;
+  --toon-deco: rgba(230, 226, 255, 0.9);
+  --toon-deco-size: 2.2px 2.2px;
+  --toon-floor: rgba(0, 0, 0, 0.35);
+}
+.stage {
+  background:
+    linear-gradient(180deg, var(--toon-sky-1) 0%, var(--toon-sky-2) 64%, var(--toon-ground) 64% 100%);
+}
+.m-tarot .tr-stage {
+  /* refinement.css 给塔罗舞台单独铺了一层浅灰底，盖掉换回晴空 */
+  background:
+    linear-gradient(180deg, var(--toon-sky-1) 0%, var(--toon-sky-2) 64%, var(--toon-ground) 64% 100%);
+}
+/* 云朵、星点与地平线那道硬边画在伪元素上：它在舞台所有子元素之下，不压字，也不算进文字的背景 */
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse var(--toon-deco-size) at 20% 15%, var(--toon-deco) 0 96%, transparent 99%),
+    radial-gradient(ellipse var(--toon-deco-size) at 27% 13%, var(--toon-deco) 0 96%, transparent 99%),
+    radial-gradient(ellipse var(--toon-deco-size) at 78% 24%, var(--toon-deco) 0 96%, transparent 99%),
+    radial-gradient(ellipse var(--toon-deco-size) at 84% 22%, var(--toon-deco) 0 96%, transparent 99%),
+    linear-gradient(180deg, transparent 64%, var(--toon-ground-edge) 64% 66.5%, transparent 66.5%);
+}
+.stage,
+[data-theme='paper'] .stage,
+[data-theme='celadon'] .stage {
+  /* 去掉压暗四周的内阴影（显得阴沉），换成手游卡片的底部厚边 */
+  box-shadow: var(--shadow-1), 0 4px 0 var(--edge-color, rgba(43, 34, 64, 0.12));
+}
+.stage-floor {
+  /* 器物脚下一块硬边冷紫影，不再是糊开的灰圈 */
+  background: radial-gradient(ellipse 34% 20% at 50% 50%, var(--toon-floor) 0 96%, transparent 100%);
+}

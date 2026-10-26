@@ -25,3 +25,11 @@ test('卢恩与塔罗器物用硬边色块和深色描边，不再是深灰石�
 test('塔罗插画不再压低饱和度', () => {
   assert.match(css, /\.tr-illustration \{\s*filter: saturate\(1\.08\)/);
 });
+
+test('2D 舞台换成卡通晴空：天空渐变、64% 处地平线、云朵星点在伪元素上不压字', () => {
+  assert.match(css, /\.stage \{\s*background:\s*linear-gradient\(180deg, var\(--toon-sky-1\) 0%, var\(--toon-sky-2\) 64%, var\(--toon-ground\) 64% 100%\)/);
+  assert.match(css, /\.stage::before \{[^}]*pointer-events: none;[^}]*var\(--toon-ground-edge\) 64% 66\.5%/);
+  for (const t of ['celadon', 'ink', 'cinnabar', 'nebula']) assert.match(css, new RegExp(`\\[data-theme='${t}'\\] \\{[^}]*--toon-sky-1`));
+  // 灵签筒由土棕木改朱漆
+  assert.match(read('src/ui/stick-scene.js'), /const wood = '#d8402e'/);
+});

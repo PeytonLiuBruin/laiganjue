@@ -2,8 +2,8 @@ import { createStickPhysics } from '../core/stick-physics.js';
 import { box, lathe, transformed, axisAngle, rotate, add } from './models/geometry.js';
 import { createPainter } from './models/painter.js';
 
-// 卡通色板（visual-direction.md）：灵签筒是暖木色配金箍，御神签筒是朱红配金箍，签条为亮竹黄、签头朱红。
-const wood = '#c9772f', lacquer = '#e8463c', bamboo = '#f6d68a', bamboo2 = '#ecbf62', red = '#e8463c', gold = '#ffc93c';
+// 卡通色板（visual-direction.md）：灵签筒是朱漆圆筒配金箍（第 34 轮由暖木改，土棕在三段明暗下发闷），御神签筒是朱红六角筒配金箍，签条为亮竹黄、签头朱红。
+const wood = '#d8402e', lacquer = '#e8463c', bamboo = '#f6d68a', bamboo2 = '#ecbf62', red = '#e8463c', gold = '#ffc93c';
 const meshes = new Map();
 function tubeMesh(half, closed) {
   const key = String(closed);
@@ -15,7 +15,7 @@ function tubeMesh(half, closed) {
     : [[0,-half],[radius,-half],[radius,half],[radius-4,half],[radius-4,-half+5],[0,-half+5]];
   const body = lathe(profile, closed ? lacquer : wood, n);
   const rings = [-half + 9, half - 13].flatMap(y => lathe([[radius+1.2,y],[radius+1.2,y+6]], gold, n));
-  const inside = closed ? [] : lathe([[radius-4,-half+5],[radius-4,half-1]], '#7a3d1c', n);
+  const inside = closed ? [] : lathe([[radius-4,-half+5],[radius-4,half-1]], '#7a1a14', n);
   const mesh = [...body, ...inside, ...rings]; meshes.set(key, mesh); return mesh;
 }
 export function paintStickScene(c, width, height, sim, label = '') {
