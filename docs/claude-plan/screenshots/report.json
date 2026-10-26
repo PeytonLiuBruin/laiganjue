@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/fengshui",
+    "route": "home",
     "viewport": "393x852",
-    "file": "m-fengshui-393x852.png",
+    "file": "home-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/caiyun@tab1",
+    "route": "home@settings",
     "viewport": "393x852",
-    "file": "m-caiyun-tab1-393x852.png",
+    "file": "home-settings-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -22,31 +22,9 @@
     "errors": []
   },
   {
-    "route": "m/fengshui",
-    "viewport": "430x932",
-    "file": "m-fengshui-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@tab1",
-    "viewport": "430x932",
-    "file": "m-caiyun-tab1-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/yinyuan",
+    "route": "home@paywall",
     "viewport": "393x852",
-    "file": "m-yinyuan-393x852.png",
+    "file": "home-paywall-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -55,9 +33,9 @@
     "errors": []
   },
   {
-    "route": "m/yinyuan@tab1",
+    "route": "m/qian",
     "viewport": "393x852",
-    "file": "m-yinyuan-tab1-393x852.png",
+    "file": "m-qian-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -66,22 +44,42 @@
     "errors": []
   },
   {
-    "route": "m/zodiac",
+    "route": "m/almanac",
     "viewport": "393x852",
-    "file": "m-zodiac-393x852.png",
+    "file": "m-almanac-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
     },
     "errors": []
   },
   {
-    "route": "m/yinyuan",
+    "route": "m/runes",
+    "viewport": "393x852",
+    "file": "m-runes-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/caiyun",
+    "viewport": "393x852",
+    "file": "m-caiyun-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "home",
     "viewport": "430x932",
-    "file": "m-yinyuan-430x932.png",
+    "file": "home-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -90,9 +88,9 @@
     "errors": []
   },
   {
-    "route": "m/yinyuan@tab1",
+    "route": "home@settings",
     "viewport": "430x932",
-    "file": "m-yinyuan-tab1-430x932.png",
+    "file": "home-settings-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -101,15 +99,57 @@
     "errors": []
   },
   {
-    "route": "m/zodiac",
+    "route": "home@paywall",
     "viewport": "430x932",
-    "file": "m-zodiac-430x932.png",
+    "file": "home-paywall-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/qian",
+    "viewport": "430x932",
+    "file": "m-qian-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/almanac",
+    "viewport": "430x932",
+    "file": "m-almanac-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes",
+    "viewport": "430x932",
+    "file": "m-runes-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/caiyun",
+    "viewport": "430x932",
+    "file": "m-caiyun-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
     },
     "errors": []
   }

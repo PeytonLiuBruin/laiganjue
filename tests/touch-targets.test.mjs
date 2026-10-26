@@ -6,9 +6,13 @@ import { readFileSync } from 'node:fs';
 
 const read = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
-test('touch.css 在样式入口最后引入，后面没有别的层覆盖它', () => {
+test('touch.css 之后只有只改颜色的 contrast.css，没有别的层能覆盖尺寸', () => {
   const imports = read('src/styles/index.css').split('\n').filter((l) => /^@import/.test(l.trim()));
-  assert.match(imports.at(-1), /touch\.css/);
+  const i = imports.findIndex((l) => /touch\.css/.test(l));
+  assert.ok(i >= 0);
+  assert.deepEqual(imports.slice(i + 1).map((l) => l.match(/\.\/([a-z-]+)\.css/)[1]), ['contrast']);
+  const contrast = read('src/styles/contrast.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.doesNotMatch(contrast, /(^|[;{\s])(min-|max-)?(width|height|padding[a-z-]*|margin[a-z-]*|font-size|inset|top|left|right|bottom)\s*:/);
 });
 
 test('图标按钮、小号按钮、芯片与收窄过的按钮都不小于 44px', () => {

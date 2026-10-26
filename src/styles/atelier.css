@@ -21,7 +21,7 @@ textarea, select { font-size: 16px; }
   padding: 18px; margin-bottom: 20px; border: 1px solid var(--accent);
   border-radius: 18px; background: var(--surface); box-shadow: 0 6px 22px var(--glow);
 }
-.motion-entry-mark { display: grid; place-items: center; align-self: center; width: 46px; height: 46px; color: var(--accent); background: var(--glow); border-radius: 14px; }
+.motion-entry-mark { display: grid; place-items: center; align-self: center; width: 46px; height: 46px; color: var(--accent-text); background: var(--glow); border-radius: 14px; }
 .motion-entry-copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .motion-entry-title { color: var(--text); font-size: 16px; line-height: 1.5; font-weight: 600; letter-spacing: .03em; }
 .motion-entry-desc { color: var(--text-2); font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
@@ -30,10 +30,10 @@ textarea, select { font-size: 16px; }
 .motion-entry.ready .motion-entry-mark { width: 28px; height: 34px; background: transparent; }
 .motion-entry.ready .motion-entry-mark svg { width: 22px; height: 26px; }
 .motion-entry.ready .motion-entry-copy { gap: 1px; }
-.motion-entry.ready .motion-entry-title { color: var(--accent); font-size: 13px; }
+.motion-entry.ready .motion-entry-title { color: var(--accent-text); font-size: 13px; }
 .motion-entry.ready .motion-entry-desc { font-size: 12px; }
 .motion-invite { padding: 8px 0 14px; text-align: center; }
-.motion-invite-phone { display: grid; place-items: center; width: 112px; height: 112px; margin: 0 auto 22px; border: 1px solid var(--line); border-radius: 32px; color: var(--accent); background: var(--surface-2); }
+.motion-invite-phone { display: grid; place-items: center; width: 112px; height: 112px; margin: 0 auto 22px; border: 1px solid var(--line); border-radius: 32px; color: var(--accent-text); background: var(--surface-2); }
 .motion-invite-phone svg { animation: motion-invite-shake 2.6s ease-in-out 2; }
 .motion-invite-action { margin: 0 auto 12px; max-width: 24em; font-size: 21px; line-height: 1.65; text-wrap: balance; color: var(--text); }
 .motion-invite-detail { margin: 0 auto; max-width: 25em; font-size: 14px; line-height: 1.85; color: var(--text-2); text-wrap: balance; }
@@ -51,7 +51,7 @@ textarea, select { font-size: 16px; }
 /* Individually drawn objects replace identical letter medallions. */
 .tile { min-height: 176px; gap: 14px; }
 .tile-head { align-items: center; gap: 10px; }
-.ritual-art { width: 60px; height: 60px; flex: none; color: var(--accent); filter: drop-shadow(0 3px 3px var(--glow)); }
+.ritual-art { width: 60px; height: 60px; flex: none; color: var(--accent-text); filter: drop-shadow(0 3px 3px var(--glow)); }
 .tile-gest { letter-spacing: 0; font-size: 11px; }
 .tile-sub { font-size: 13px; line-height: 1.75; }
 .tile[data-ritual] { border-top-width: 1px; border-top-color: var(--line); }

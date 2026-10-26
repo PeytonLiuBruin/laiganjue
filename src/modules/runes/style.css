@@ -597,7 +597,7 @@
   font-family: var(--font-latin-display);
   font-size: 12px;
   letter-spacing: 0.2em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-runes .rn-tag {
   font-size: 10px;
@@ -616,7 +616,7 @@
   margin-top: 2px;
   font-size: var(--fs-s);
   letter-spacing: 0.12em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-runes .rn-sec-text {
   margin-top: 6px;
@@ -646,7 +646,7 @@
 .m-runes .rn-sound {
   font-family: var(--font-latin-display);
   letter-spacing: 0.2em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* —— 符文一览 —— */
@@ -676,7 +676,7 @@
 .m-runes .rn-aett-head span {
   font-size: var(--fs-xs);
   letter-spacing: 0.16em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-runes .rn-aett-desc {
   margin: 8px 0 10px;

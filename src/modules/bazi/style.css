@@ -9,7 +9,7 @@
 /* 性别做成与下拉框同高同形的分段控件，一眼看出可点 */
 .m-bazi .bz-form .bz-row2 .chips { display: flex; gap: 0; min-height: 48px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
 .m-bazi .bz-form .bz-row2 .chip { flex: 1 1 0; min-width: 0; min-height: 46px; border-radius: 11px; border-color: transparent; background: transparent; color: var(--text-2); justify-content: center; }
-.m-bazi .bz-form .bz-row2 .chip.active { background: var(--surface-2); color: var(--accent); border-color: transparent; font-weight: 500; }
+.m-bazi .bz-form .bz-row2 .chip.active { background: var(--surface-2); color: var(--accent-text); border-color: transparent; font-weight: 500; }
 .m-bazi .bz-form .bz-row2 .chip:disabled { opacity: .6; }
 .m-bazi .bz-note { font-size: 12px; color: var(--text-3); line-height: 1.7; }
 
@@ -32,7 +32,7 @@
 .m-bazi .bz-bar-count { text-align: right; color: var(--text-2); }
 .m-bazi .bz-bar-tag { font-size: 11px; color: var(--text-3); text-align: center; }
 .m-bazi .bz-bar-tag.lack { color: var(--danger); }
-.m-bazi .bz-bar-tag.rich { color: var(--accent); }
+.m-bazi .bz-bar-tag.rich { color: var(--accent-text); }
 .m-bazi .bz-bars .bz-note { margin-top: 10px; }
 .m-bazi .bz-today-text { font-size: 14px; line-height: 1.8; color: var(--text-2); border-left: 2px solid var(--line-strong); padding-left: 12px; }
 

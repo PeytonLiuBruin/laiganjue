@@ -654,7 +654,7 @@
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface-2);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 14px;
   letter-spacing: 0.02em;
 }
@@ -677,7 +677,7 @@
 }
 .m-almanac .al-rating-label {
   font-family: var(--font-display);
-  color: var(--accent);
+  color: var(--accent-text);
   letter-spacing: 0.2em;
   font-size: var(--fs-m);
 }
@@ -705,7 +705,7 @@
   border-color: var(--danger);
 }
 .m-almanac .al-term.jishen {
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: var(--line-strong);
 }
 .m-almanac .al-term.xiongsha {
@@ -753,7 +753,7 @@
   font-family: var(--font-serif);
   font-weight: 500;
   letter-spacing: 0.04em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-almanac .al-dl {
   display: flex;
@@ -888,7 +888,7 @@
   width: 200px;
   max-width: 100%;
   height: auto;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-almanac .al-legend {
   display: flex;
@@ -910,7 +910,7 @@
   letter-spacing: 0.04em;
 }
 .m-almanac .al-legend-item b {
-  color: var(--accent);
+  color: var(--accent-text);
   font-family: var(--font-display);
   font-weight: 600;
 }

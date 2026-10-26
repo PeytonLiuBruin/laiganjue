@@ -58,15 +58,15 @@ button:disabled { cursor: default; }
 .view { padding: 26px 24px 40px; }
 .view-module { max-width: 650px; margin-inline: auto; }
 .home-intro { margin: 10px 0 26px; }
-.home-eyebrow { color: var(--accent); letter-spacing: .18em; font-size: 12px; }
+.home-eyebrow { color: var(--accent-text); letter-spacing: .18em; font-size: 12px; }
 .home-intro h1 { font-family: var(--font-serif); font-size: clamp(28px, 4.5vw, 38px); line-height: 1.5; font-weight: 500; margin-top: 8px; letter-spacing: .035em; }
 .home-calendar { display: flex; align-items: center; gap: 16px; width: 100%; border-block: 1px solid var(--line); padding: 16px 0; text-align: left; }
-.home-calendar-day { font-family: var(--font-latin-display); font-size: 40px; line-height: 1; color: var(--accent); }
+.home-calendar-day { font-family: var(--font-latin-display); font-size: 40px; line-height: 1; color: var(--accent-text); }
 .home-calendar-date { display: flex; flex-direction: column; gap: 3px; flex: 1; }
 .home-calendar-date b { font-weight: 500; font-size: 14px; }
 .home-calendar-date small { color: var(--text-2); font-size: 12px; }
 .home-calendar-yi { font-size: 14px; color: var(--text-2); display: flex; align-items: center; gap: 10px; }
-.home-calendar-yi i { font-style: normal; color: var(--accent); border: 1px solid var(--line); border-radius: 50%; width: 28px; height: 28px; display: grid; place-items: center; }
+.home-calendar-yi i { font-style: normal; color: var(--accent-text); border: 1px solid var(--line); border-radius: 50%; width: 28px; height: 28px; display: grid; place-items: center; }
 .home-calendar > svg { color: var(--text-3); flex: none; }
 .section-head { margin-top: 36px; margin-bottom: 15px; }
 .section-head .t-display { font-size: 18px; font-weight: 500; letter-spacing: .09em; }
@@ -77,7 +77,7 @@ button:disabled { cursor: default; }
 .tile::before, .tile::after { display: none; }
 .tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-1); border-color: var(--line-strong); }
 .tile:active { transform: scale(.98); }
-.tile .medal { width: 42px; height: 42px; border-radius: 50%; background: var(--bg-2); border: 0; box-shadow: none; color: var(--accent); font-size: 23px; font-weight: 500; }
+.tile .medal { width: 42px; height: 42px; border-radius: 50%; background: var(--bg-2); border: 0; box-shadow: none; color: var(--accent-text); font-size: 23px; font-weight: 500; }
 .tile .medal::before, .tile .medal::after { display: none; }
 .tile-gest { font-size: 12px; letter-spacing: .025em; color: var(--text-3); }
 .tile-title { font-size: 20px; font-weight: 500; letter-spacing: .1em; }
@@ -87,7 +87,7 @@ button:disabled { cursor: default; }
 .input::placeholder { color: var(--text-3); font-size: 14px; }
 .chips { gap: 6px; }
 .chip { font-family: var(--font-sans); border-radius: 8px; min-height: 38px; padding: 8px 13px; font-size: 14px; letter-spacing: 0; border-color: transparent; background: transparent; }
-.chip.active { box-shadow: none; background: var(--surface-2); border-color: var(--line); color: var(--accent); }
+.chip.active { box-shadow: none; background: var(--surface-2); border-color: var(--line); color: var(--accent-text); }
 .stage, [data-theme='paper'] .stage, [data-theme='celadon'] .stage { border: 1px solid var(--line); box-shadow: none; border-radius: 20px; isolation: isolate; scroll-margin-top: 84px; }
 .stage-badge { left: 20px; top: 17px; font-size: 12px; letter-spacing: .08em; z-index: 10; }
 .stage-hint { font-size: 12px; letter-spacing: .04em; padding: 0 16px; z-index: 10; }
@@ -106,14 +106,14 @@ button:disabled { cursor: default; }
 .ritual-progress { display: flex; gap: 8px; justify-content: space-between; padding: 0 2px 17px; margin-bottom: 8px; }
 .ritual-step { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--text-3); transition: color .25s; }
 .ritual-step i { font: 11px var(--font-latin-display); opacity: .55; }
-.ritual-step.current { color: var(--accent); }
+.ritual-step.current { color: var(--accent-text); }
 .ritual-step.current i { opacity: 1; }
 .ritual-step.complete { color: var(--text-2); }
 .ritual-energy { position: absolute; top: 44px; left: 20px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-3); pointer-events: none; }
 .ritual-energy-track { display: block; width: 34px; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .ritual-energy-track i { display: block; width: 100%; height: 100%; transform: scaleX(0); transform-origin: left; background: var(--accent); transition: transform .12s linear; }
 .ritual-receipt { margin: 20px 0 12px; padding: 22px 0 4px; border-top: 1px solid var(--line); animation: ritual-appear .6s ease both; }
-.ritual-kicker { display: block; font-size: 12px; letter-spacing: .08em; color: var(--accent); margin-bottom: 8px; }
+.ritual-kicker { display: block; font-size: 12px; letter-spacing: .08em; color: var(--accent-text); margin-bottom: 8px; }
 .ritual-receipt h2 { font: 500 28px/1.4 var(--font-serif); letter-spacing: .07em; margin-bottom: 8px; }
 .ritual-receipt p { font-size: 15px; color: var(--text-2); line-height: 1.85; }
 .ritual-receipt-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
@@ -127,7 +127,7 @@ button:disabled { cursor: default; }
 .result::before, .result::after, .result .corner-b { display: none; }
 .result .result-title { font-size: 40px; font-weight: 500; }
 .result .result-sub, .result-section-text { line-height: 1.85; }
-.result-title.gold-text, .gold-text { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.result-title.gold-text, .gold-text { background: none; color: var(--accent-text); -webkit-text-fill-color: currentColor; }
 .result-verse { border: 0; border-left: 2px solid var(--line-strong); background: var(--surface-2); font-size: 18px; }
 .result-section { border-color: var(--line); padding-block: 16px; }
 .result-label { font-size: 14px; }
@@ -183,7 +183,7 @@ button:disabled { cursor: default; }
 .m-omikuji .ok-slip-no { font-size: 12px; letter-spacing: .12em; }
 .m-omikuji .ok-slip-kana { font-size: 11px; }
 .m-omikuji .ok-slip-blurb { font: 12px/1.7 var(--font-serif); color: var(--ok-ink-p); }
-.m-omikuji .ok-drop-hint { position: absolute; inset: -15px 0 auto; text-align: center; font-size: 13px; color: var(--accent); opacity: 0; transition: opacity .3s; }
+.m-omikuji .ok-drop-hint { position: absolute; inset: -15px 0 auto; text-align: center; font-size: 13px; color: var(--accent-text); opacity: 0; transition: opacity .3s; }
 .m-omikuji .ok-stage[data-tie] .ok-rack { opacity: 1; z-index: 8; border-radius: 14px; transition: background .2s, box-shadow .2s; }
 .m-omikuji .ok-stage[data-tie] .ok-drop-hint { opacity: 1; }
 .m-omikuji .ok-stage[data-tie] .ok-tube-wrap, .m-omikuji .ok-stage[data-tie] .ok-stick, .m-omikuji .ok-stage[data-tie] .ok-shelf { opacity: 0; pointer-events: none; }

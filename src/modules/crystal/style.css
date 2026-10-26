@@ -15,7 +15,7 @@
 .m-crystal .cr-answer { position: absolute; left: 50%; top: 46%; width: min(60%, 200px); transform: translate(-50%, -50%); text-align: center; pointer-events: none; z-index: 2; animation: cr-answer-in .5s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes cr-answer-in { from { opacity: 0; transform: translate(-50%, -50%) scale(.94); } to { opacity: 1; transform: translate(-50%, -50%); } }
 .m-crystal .cr-answer-text { font-family: var(--font-serif); font-size: clamp(18px, 5vw, 23px); line-height: 1.6; letter-spacing: .06em; color: var(--text); text-shadow: 0 0 18px var(--glow); text-wrap: balance; }
-.m-crystal .cr-answer-text.word { font-size: clamp(62px, 20vw, 84px); line-height: 1; letter-spacing: 0; font-weight: 600; color: var(--accent); }
+.m-crystal .cr-answer-text.word { font-size: clamp(62px, 20vw, 84px); line-height: 1; letter-spacing: 0; font-weight: 600; color: var(--accent-text); }
 
 /* 舞台正下方唯一的一行提示；充能 / 摆动时旁边多一条 3px 的进度 */
 .m-crystal .cr-hint { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 22px; margin-top: 12px; font-size: 12px; line-height: 1.6; letter-spacing: .04em; color: var(--text-2); text-align: center; }

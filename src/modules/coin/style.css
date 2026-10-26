@@ -18,11 +18,11 @@
 .m-coin .cn-dice-panel .cn-ctl-row:first-child .chip { min-width: 44px; padding-inline: 8px; justify-content: center; font-variant-numeric: tabular-nums; }
 .m-coin .cn-vs { display: flex; align-items: center; gap: 8px; width: 100%; }
 .m-coin .cn-vs .input { flex: 1; min-width: 0; text-align: center; font-family: var(--font-serif); font-weight: 600; letter-spacing: 0.08em; }
-.m-coin .cn-vs-mark { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-family: var(--font-serif); font-size: 13px; color: var(--accent); }
+.m-coin .cn-vs-mark { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-family: var(--font-serif); font-size: 13px; color: var(--accent-text); }
 /* 预设是一行横滑的芯片：末尾露出半个，看得出还有更多 */
 .m-coin .cn-presets { width: 100%; }
 .m-coin .cn-presets .chip { padding-inline: 10px; color: var(--text-2); }
-.m-coin .cn-presets .chip.active { color: var(--accent); }
+.m-coin .cn-presets .chip.active { color: var(--accent-text); }
 .m-coin.cn-busy .cn-head { opacity: 0.55; pointer-events: none; transition: opacity var(--dur); }
 
 /* —— 舞台：画布是唯一的实物层，可以直接上手拖 —— */

@@ -43,7 +43,7 @@
 .m-caiyun .cy-hours li b { font-weight: 500; color: var(--text-2); }
 .m-caiyun .cy-hours li i { font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .m-caiyun .cy-hours li.on { border-color: var(--accent); color: var(--text-2); }
-.m-caiyun .cy-hours li.on b, .m-caiyun .cy-hours li.on i { color: var(--accent); }
+.m-caiyun .cy-hours li.on b, .m-caiyun .cy-hours li.on i { color: var(--accent-text); }
 .m-caiyun .cy-hours li.now { background: var(--surface-2); }
 .m-caiyun .cy-years { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .m-caiyun .cy-years li { display: grid; grid-template-columns: 3.2em 6.5em 1fr; gap: 8px; align-items: baseline; font-size: 13px; line-height: 1.7; color: var(--text-3); padding: 2px 0; border-bottom: 1px dashed var(--line); }
@@ -52,7 +52,7 @@
 .m-caiyun .cy-years li i { font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .m-caiyun .cy-years li.on { color: var(--text-2); }
 .m-caiyun .cy-years li.on b, .m-caiyun .cy-years li.on i { color: var(--text); }
-.m-caiyun .cy-years li.hot i { color: var(--accent); font-weight: 500; }
+.m-caiyun .cy-years li.hot i { color: var(--accent-text); font-weight: 500; }
 
 @media (max-height: 720px) {
   .m-caiyun .stage.cy-stage { min-height: 210px; }

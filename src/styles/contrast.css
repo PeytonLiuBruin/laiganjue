@@ -1,0 +1,43 @@
+/* 文字对比度（visual-direction.md 第 4.3 节，scripts/contrast-audit.mjs 审计）。
+   WCAG 2.1 AA：正文 ≥ 4.5，大字 ≥ 3。放在样式链最后。
+   --accent-text：主色用作文字时的颜色。明快皮肤的主色偏亮，做底色和图标好看，做小字不够深，单独加深一档。
+   --btn-outline：主按钮和选中页签的白字外加一圈深色描边，像 Clash Royale 的按钮字，白字对描边的对比度按 AA 计。 */
+:root { --accent-text: var(--accent); }
+[data-theme='paper'] {
+  --accent-text: #b8302a;
+  --text-3: #67617f;
+  --btn-outline: -1px -1px 0 var(--btn-edge), 1px -1px 0 var(--btn-edge), -1px 1px 0 var(--btn-edge), 1px 1px 0 var(--btn-edge),
+    0 -1.5px 0 var(--btn-edge), 0 1.5px 0 var(--btn-edge), -1.5px 0 0 var(--btn-edge), 1.5px 0 0 var(--btn-edge), 0 2.5px 0 var(--btn-edge);
+}
+
+[data-theme='paper'] :is(.btn.primary, .tab.active, .wh-cap-text, .pw-mark) { text-shadow: var(--btn-outline); }
+[data-theme='paper'] .btn.primary, [data-theme='paper'] .view .btn.primary,
+[data-theme='paper'] .tab.active, [data-theme='paper'] .tabs .tab.active { color: #ffffff; }
+
+/* 青瓷：主色偏浅，白字按钮同样加深色描边，辅助字改实色 */
+[data-theme='celadon'] {
+  --accent-text: #1f5546;
+  --text-2: #31453f;
+  --text-3: #3d524b;
+  --btn-outline: -1px -1px 0 var(--btn-edge), 1px -1px 0 var(--btn-edge), -1px 1px 0 var(--btn-edge), 1px 1px 0 var(--btn-edge),
+    0 -1.5px 0 var(--btn-edge), 0 1.5px 0 var(--btn-edge), -1.5px 0 0 var(--btn-edge), 1.5px 0 0 var(--btn-edge), 0 2.5px 0 var(--btn-edge);
+}
+[data-theme='celadon'] :is(.btn.primary, .tab.active, .wh-cap-text, .pw-mark) { text-shadow: var(--btn-outline); }
+
+/* 深色皮肤：第三级文字原来只有 42% 到 45% 不透明，提到 60% 以上；选中胶囊的主色字提亮一档 */
+[data-theme='cinnabar'] { --text-3: rgba(246, 231, 210, 0.62); --accent-text: #f6d27a; }
+[data-theme='nebula'] { --text-3: rgba(233, 236, 255, 0.6); --accent-text: #d7cdff; }
+[data-theme='ink'] { --text-3: #a3aaa0; }
+
+/* 黄历纸页在所有皮肤下都是金黄底：红绿字加深，原来靠 opacity 变淡的小字改实色 */
+.m-almanac { --al-red: #9e2a22; --al-green: #245c42; }
+.m-almanac .al-head { opacity: 1; }
+.m-almanac .al-tags.al-next, .m-almanac .al-meta .al-meta-sub, .m-almanac .al-fine-row i { opacity: 1; color: #6a5528; }
+
+/* 六爻爻位、卢恩槽位的小字 */
+.m-liuyao .ly-line-pos { opacity: 1; }
+.m-runes .rn-slot-label { color: var(--text-2); }
+:is([data-theme='paper'], [data-theme='celadon']) .m-runes .rn-slot-label { color: var(--text); }
+
+/* 付费卡「最划算」小角标：10px 白字，红底加深到主按钮厚边色 */
+[data-theme='paper'] .pw-plan-name em { background: var(--btn-edge); }

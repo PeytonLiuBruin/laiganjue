@@ -226,7 +226,7 @@
 .hint-glyph {
   width: 28px;
   height: 28px;
-  color: var(--accent);
+  color: var(--accent-text);
   flex: none;
 }
 .hint-glyph svg {
@@ -515,7 +515,7 @@
   text-align: center;
   font-size: var(--fs-xs);
   letter-spacing: 0.34em;
-  color: var(--accent);
+  color: var(--accent-text);
   margin-bottom: var(--sp-2);
 }
 .result-title {
@@ -546,7 +546,7 @@
   border: var(--hairline) solid var(--line-strong);
   font-size: var(--fs-xs);
   letter-spacing: 0.2em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .result-badge-wrap {
   text-align: center;
@@ -576,7 +576,7 @@
   font-family: var(--font-display);
   font-size: var(--fs-s);
   letter-spacing: 0.16em;
-  color: var(--accent);
+  color: var(--accent-text);
   padding-top: 2px;
   white-space: nowrap;
 }
@@ -643,7 +643,7 @@
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  color: var(--accent);
+  color: var(--accent-text);
   opacity: 0.7;
   margin: var(--sp-4) 0;
 }
@@ -666,7 +666,7 @@
 .stars {
   display: inline-flex;
   gap: 2px;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: var(--fs-m);
   letter-spacing: 0;
 }
@@ -793,7 +793,7 @@
   font-family: var(--font-display);
   font-size: 150px;
   line-height: 1;
-  color: var(--accent);
+  color: var(--accent-text);
   opacity: 0.07;
   pointer-events: none;
   font-weight: 900;
@@ -1054,7 +1054,7 @@
   font-family: var(--font-display);
   font-size: 60px;
   line-height: 1;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* —— 首次引导 —— */
@@ -1099,7 +1099,7 @@
   place-items: center;
   font-family: var(--font-display);
   font-size: 28px;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--bg-2);
 }
 .onboard-title {
@@ -1111,7 +1111,7 @@
 .onboard-sub {
   font-size: 12px;
   letter-spacing: 0.18em;
-  color: var(--accent);
+  color: var(--accent-text);
   margin-top: 4px;
 }
 .onboard-rows {
@@ -1134,7 +1134,7 @@
   display: grid;
   place-items: center;
   font-family: var(--font-display);
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--surface-2);
 }
 .onboard-row b {
@@ -1164,7 +1164,7 @@
 .birth-form .bf-row2 > .field:only-child { grid-column: span 2; }
 .birth-form .bf-row2 .chips { display: flex; gap: 0; min-height: 48px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
 .birth-form .bf-row2 .chip { flex: 1 1 0; min-width: 0; min-height: 46px; border-radius: 11px; border-color: transparent; background: transparent; color: var(--text-2); justify-content: center; }
-.birth-form .bf-row2 .chip.active { background: var(--surface-2); color: var(--accent); border-color: transparent; font-weight: 500; }
+.birth-form .bf-row2 .chip.active { background: var(--surface-2); color: var(--accent-text); border-color: transparent; font-weight: 500; }
 .birth-form .bf-row2 .chip:disabled { opacity: 0.6; }
 .birth-form .field-label { font-size: 12px; letter-spacing: 0.06em; }
 .birth-form .select { min-height: 46px; }

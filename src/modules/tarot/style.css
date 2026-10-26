@@ -109,7 +109,7 @@
 .m-tarot .tr-slot-ornament {
   width: 34%;
   height: auto;
-  color: var(--accent);
+  color: var(--accent-text);
   opacity: 0.32;
   transition: opacity var(--dur);
 }
@@ -128,7 +128,7 @@
   white-space: nowrap;
 }
 .m-tarot .tr-slot-wrap.filled .tr-slot-label {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* —— 牌堆 —— */
@@ -482,7 +482,7 @@
   transform: scale(0.97);
 }
 .m-tarot .tr-hist b {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
   margin-right: 2px;
 }
@@ -541,7 +541,7 @@
   padding: 1px 7px 1px 9px;
   border-radius: var(--r-pill);
   border: var(--hairline) solid var(--line-strong);
-  color: var(--accent);
+  color: var(--accent-text);
   line-height: 1.6;
   transform: translateY(-2px);
 }
@@ -561,7 +561,7 @@
   margin-top: 3px;
   font-size: var(--fs-s);
   letter-spacing: 0.1em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-tarot .tr-read-text {
   margin-top: 6px;
@@ -590,6 +590,6 @@
   font-family: var(--font-serif);
   font-weight: 600;
   letter-spacing: 0.12em;
-  color: var(--accent);
+  color: var(--accent-text);
   margin-right: 8px;
 }

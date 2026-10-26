@@ -91,7 +91,7 @@
   font-size: 14px;
   letter-spacing: 0.25em;
   text-indent: 0.25em;
-  color: var(--accent);
+  color: var(--accent-text);
   white-space: nowrap;
 }
 .m-liuyao .ly-board.done .ly-board-title {
@@ -167,7 +167,7 @@
   font-size: 13px;
   line-height: 1;
   text-align: center;
-  color: var(--accent);
+  color: var(--accent-text);
   animation: ly-mark-in 0.5s var(--ease-bounce) both;
 }
 @keyframes ly-bar-in {
@@ -258,7 +258,7 @@
 .m-liuyao .ly-hist-item:active {
   transform: scale(0.96);
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* —— 结果抽屉里的卦象对照 / 象曰 / 动爻 / 变卦 / 四格分项 —— */
@@ -270,7 +270,7 @@
   padding: var(--sp-2) 0 var(--sp-1);
 }
 .m-liuyao .ly-pair-arrow {
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 20px;
 }
 .m-liuyao .ly-pair-still {
@@ -337,7 +337,7 @@
   margin-right: 8px;
   font-size: 12px;
   letter-spacing: 0.16em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-liuyao .ly-gist {
   font-family: var(--font-serif);
@@ -359,7 +359,7 @@
 .m-liuyao .ly-bian-sym {
   font-size: 22px;
   line-height: 1;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-liuyao .ly-mv {
   display: flex;
@@ -386,7 +386,7 @@
   margin-bottom: 2px;
 }
 .m-liuyao .ly-mv-mark {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 700;
 }
 .m-liuyao .ly-mv-text {
@@ -412,7 +412,7 @@
   font-weight: 500;
   font-size: 13px;
   letter-spacing: 0.12em;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .m-liuyao .ly-aspect span {
   font-size: 14px;

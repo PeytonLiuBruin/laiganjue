@@ -29,7 +29,7 @@
 .m-jiaobei .jb-face-labels span:last-child { left: calc(50% + 80px); }
 /* 连掷进度：舞台右上角三枚小印 */
 .m-jiaobei .jb-streak { position: absolute; right: 18px; top: 14px; display: flex; gap: 6px; z-index: 10; pointer-events: none; }
-.m-jiaobei .jb-streak > span { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 12px; line-height: 1; color: var(--accent); }
+.m-jiaobei .jb-streak > span { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line-strong); display: grid; place-items: center; font-size: 12px; line-height: 1; color: var(--accent-text); }
 .m-jiaobei .jb-streak .earned { border-color: var(--accent); background: var(--surface-2); }
 .m-jiaobei .jb-streak .fresh { animation: jb-pip .5s var(--ease-bounce) both; }
 @keyframes jb-pip { from { transform: scale(1.7); opacity: 0; } to { transform: none; opacity: 1; } }
