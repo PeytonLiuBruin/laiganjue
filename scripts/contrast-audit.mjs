@@ -4,6 +4,7 @@
 // 背景按祖先的 background-color 逐层合成，遇到渐变时取每个色标里最差的一个。
 // 祖先的 opacity 会乘到文字颜色上。不可用的按钮按 WCAG 豁免。四周一圈实心 text-shadow 描边时，文字对描边的对比度也算数。
 // 浮在 3D 舞台上的字（背景一路透明到画布）单独标出，不计入合计。
+// --stage：打开 WebGL，把浮在舞台上的字隐去后截下它所在的方块，逐像素算对比度，取最差的 10% 分位（字的大部分笔画都要看得清），计入合计。
 import path from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -17,13 +18,14 @@ const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 && args[i + 1] 
 const DEFAULT_ROUTES = 'home,home@settings,home@paywall,home@skins,m/qian,m/tarot,m/almanac,m/zodiac,m/liuyao,m/bazi,m/yinyuan,m/caiyun,m/coin,m/jiaobei,m/runes,m/omikuji,m/wheel,m/crystal,m/plinko,m/fengshui,m/shiye';
 const routes = opt('--routes', DEFAULT_ROUTES).split(',');
 const themes = opt('--themes', 'paper,celadon,ink,cinnabar,nebula').split(',');
+const STAGE = args.includes('--stage');
 
 const dist = path.join(root, 'dist');
 await buildAll({ out: dist, min: false });
 const server = createStaticServer(dist);
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}/index.html`;
-const browser = await launchBrowser({ webgl: false });
+const browser = await launchBrowser({ webgl: STAGE });
 const all = [];
 for (const theme of themes) {
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
@@ -38,6 +40,7 @@ for (const theme of themes) {
     const [route, action] = r.split('@');
     await page.goto(base + (route === 'home' ? '#/' : '#/' + route));
     await page.waitForTimeout(1500);
+    if (STAGE && route !== 'home') await page.waitForSelector('.model-slot[data-ready="1"]', { timeout: 60_000 }).then(() => page.waitForTimeout(2500)).catch(() => {});
     for (let i = 0; i < 2; i++) { await page.keyboard.press('Escape').catch(() => {}); await page.waitForTimeout(300); }
     await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
     if (action === 'settings') { await page.click('.app-header [aria-label="设置"]').catch(() => {}); await page.waitForTimeout(700); }
@@ -45,6 +48,21 @@ for (const theme of themes) {
     if (action === 'skins') { await page.click('.app-header button[aria-label="换皮肤"]').catch(() => {}); await page.waitForTimeout(700); }
     await page.waitForTimeout(500); // 等转场动画的 opacity 走完
     const found = await page.evaluate(auditInPage);
+    if (STAGE) for (const it of found.stageItems) {
+      const r = it.rect;
+      if (r.width < 2 || r.height < 2) continue;
+      await page.evaluate((id) => {
+        const st = document.createElement('style'); st.id = 'cs-probe-style';
+        st.textContent = `[data-cs-probe="${id}"]{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;-webkit-text-stroke:0!important}`;
+        document.head.append(st);
+      }, it.id);
+      const png = await page.screenshot({ clip: r, animations: 'disabled' });
+      const res = await page.evaluate(sampleInPage, { b64: png.toString('base64'), fg: it.fg });
+      await page.evaluate(() => document.getElementById('cs-probe-style')?.remove());
+      const line = `${res.p10.toFixed(2)} (中位 ${res.p50.toFixed(2)}) 需 ${it.need}  ${it.size}px  ${it.tag}  「${it.text}」 舞台底 ${res.bg}`;
+      if (res.p10 < it.need - 0.005) { found.low.push({ ratio: res.p10, need: it.need, fg: res.fg, bg: res.bg, size: it.size, tag: it.tag + ' [舞台]', text: it.text }); console.log(`  [舞台 不达标] ${theme} ${route} ${line}`); }
+      else console.log(`  [舞台 达标] ${theme} ${route} ${line}`);
+    }
     all.push({ theme, route: r, low: found.low, stage: found.stage });
     if (found.low.length) {
       console.log(`\n# ${theme} ${r}  (${found.low.length})`);
@@ -57,8 +75,28 @@ await browser.close();
 server.close();
 const total = all.reduce((n, x) => n + x.low.length, 0);
 const stage = all.reduce((n, x) => n + x.stage, 0);
-console.log(`\n合计 ${total} 处文字对比度不达标（浮在舞台上未计入 ${stage} 处）`);
+console.log(STAGE ? `\n合计 ${total} 处文字对比度不达标（含浮在舞台上按截图取样的字，共查 ${stage} 处舞台字）` : `\n合计 ${total} 处文字对比度不达标（浮在舞台上未计入 ${stage} 处，用 --stage 取样）`);
 if (opt('--json', '')) await writeFile(path.resolve(root, opt('--json', '')), JSON.stringify(all, null, 2));
+
+/* 在页面里运行：解码截图，逐像素算文字色对底色的对比度，返回 10% 分位与中位 */
+async function sampleInPage({ b64, fg }) {
+  const bin = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const bmp = await createImageBitmap(new Blob([bin], { type: 'image/png' }));
+  const cv = new OffscreenCanvas(bmp.width, bmp.height); const cx = cv.getContext('2d');
+  cx.drawImage(bmp, 0, 0);
+  const d = cx.getImageData(0, 0, bmp.width, bmp.height).data;
+  const lum = (r, g, b) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const rs = []; let worstPx = [0, 0, 0], wr = Infinity;
+  for (let i = 0; i < d.length; i += 4) {
+    const a = fg[3]; const f = [0, 1, 2].map((k) => fg[k] * a + d[i + k] * (1 - a));
+    const x = lum(...f), y = lum(d[i], d[i + 1], d[i + 2]);
+    const r = (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+    rs.push(r); if (r < wr) { wr = r; worstPx = [d[i], d[i + 1], d[i + 2]]; }
+  }
+  rs.sort((a, b) => a - b);
+  const hex = (c) => '#' + c.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+  return { p10: rs[Math.floor(rs.length * 0.1)] ?? 0, p50: rs[Math.floor(rs.length / 2)] ?? 0, bg: hex(worstPx), fg: hex(fg.slice(0, 3)) };
+}
 
 /* 在页面里运行，不能引用外部变量 */
 function auditInPage() {
@@ -96,7 +134,7 @@ function auditInPage() {
     }
     return acc;
   };
-  const low = []; let stage = 0;
+  const low = []; let stage = 0; const stageItems = [];
   const seen = new Set();
   const scope = document.querySelector('.sheet.open') || document.body;
   const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
@@ -117,17 +155,10 @@ function auditInPage() {
     if (alpha < 0.05) continue;
     const fg0 = parse(cs.color); if (!fg0) continue;
     const bgs = backgrounds(el);
-    if (!bgs) { stage++; continue; }
     const size = parseFloat(cs.fontSize);
     const bold = Number(cs.fontWeight) >= 700;
     const large = size >= 24 || (size >= 18.66 && bold);
     const need = large ? 3 : 4.5;
-    let worst = Infinity, wb = bgs[0], wf = fg0;
-    for (const bg of bgs) {
-      const fg = over([fg0[0], fg0[1], fg0[2], fg0[3] * alpha], bg);
-      const r = ratio(fg, bg);
-      if (r < worst) { worst = r; wb = bg; wf = fg; }
-    }
     // 四周一圈实心描边（≥ 4 个无模糊、偏移 ≥ 1px 的 text-shadow 同色）时，文字对描边的对比度也算数
     let outline = 0;
     if (cs.textShadow !== 'none') {
@@ -136,11 +167,30 @@ function auditInPage() {
         .filter((x) => x.c && x.c[3] >= 0.95 && x.n.length >= 2 && (x.n[2] || 0) === 0 && Math.hypot(x.n[0], x.n[1]) >= 1);
       if (hard.length >= 4) outline = Math.min(...hard.map((x) => ratio(over([fg0[0], fg0[1], fg0[2], fg0[3] * alpha], x.c), x.c)));
     }
-    if (Math.max(worst, outline) >= need - 0.005) continue;
-    const stroke = parseFloat(cs.webkitTextStrokeWidth) > 0 || cs.textShadow !== 'none';
     const cls = typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : '';
     const pcls = el.parentElement && typeof el.parentElement.className === 'string' && el.parentElement.className.trim() ? el.parentElement.className.trim().split(/\s+/)[0] + ' > ' : '';
-    low.push({ ratio: worst, need, fg: hex(wf), bg: hex(wb), size: Math.round(size), tag: pcls + el.tagName.toLowerCase() + cls + (stroke ? ' [描边]' : ''), text: text.replace(/\s+/g, ' ').slice(0, 16) });
+    const label = pcls + el.tagName.toLowerCase() + cls;
+    const short = text.replace(/\s+/g, ' ').slice(0, 16);
+    if (!bgs) {
+      // 背景一路透明到 3D 舞台：记下位置，--stage 模式按截图取样
+      stage++;
+      if (outline < need - 0.005) {
+        const id = 'p' + stageItems.length;
+        el.setAttribute('data-cs-probe', id);
+        stageItems.push({ id, fg: [fg0[0], fg0[1], fg0[2], fg0[3] * alpha], need, size: Math.round(size), tag: label, text: short,
+          rect: { x: Math.max(0, b.left), y: Math.max(0, b.top), width: Math.min(innerWidth, b.right) - Math.max(0, b.left), height: Math.min(innerHeight, b.bottom) - Math.max(0, b.top) } });
+      }
+      continue;
+    }
+    let worst = Infinity, wb = bgs[0], wf = fg0;
+    for (const bg of bgs) {
+      const fg = over([fg0[0], fg0[1], fg0[2], fg0[3] * alpha], bg);
+      const r = ratio(fg, bg);
+      if (r < worst) { worst = r; wb = bg; wf = fg; }
+    }
+    if (Math.max(worst, outline) >= need - 0.005) continue;
+    const stroke = parseFloat(cs.webkitTextStrokeWidth) > 0 || cs.textShadow !== 'none';
+    low.push({ ratio: worst, need, fg: hex(wf), bg: hex(wb), size: Math.round(size), tag: label + (stroke ? ' [描边]' : ''), text: short });
   }
-  return { low, stage };
+  return { low, stage, stageItems };
 }

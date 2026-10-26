@@ -91,6 +91,8 @@ for (const vp of VIEWPORTS) {
       const src = await page.evaluate(() => document.querySelector('.sheet.open .share-card-img')?.src || '');
       if (vp.name === VIEWPORTS[0].name && src.startsWith('data:image/png')) await writeFile(path.join(out, `${route.replace(/\//g, '-')}-card.png`), Buffer.from(src.split(',')[1], 'base64'));
     }
+    // 等平滑滚动停下再截：滚动途中截图，无头 Chromium 会把 sticky 顶栏画到半路、上方露出白带（第 32 轮用 scroll-probe 逐帧确认顶栏本身一直在 0）
+    await page.waitForFunction(() => new Promise((ok) => { const y = scrollY; requestAnimationFrame(() => requestAnimationFrame(() => ok(scrollY === y))); }), null, { timeout: 5_000, polling: 100 }).catch(() => {});
     const overflow = await page.evaluate(() => {
       const w = document.documentElement.clientWidth, bad = [];
       for (const el of document.querySelectorAll('body *')) {

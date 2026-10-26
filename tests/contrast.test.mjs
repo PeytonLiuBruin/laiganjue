@@ -43,3 +43,17 @@ test('皮肤抽屉 Pro 卡的说明字样式不会染到按钮里的字', () => 
   assert.doesNotMatch(paywall, /\.skin-pro-card span \{/);
   assert.match(paywall, /\.skin-pro-card > div > span \{/);
 });
+
+test('审计脚本能按截图取样浮在 3D 舞台上的字，并计入合计', () => {
+  const audit = readFileSync(new URL('../scripts/contrast-audit.mjs', import.meta.url), 'utf8');
+  assert.match(audit, /args\.includes\('--stage'\)/);
+  assert.match(audit, /launchBrowser\(\{ webgl: STAGE \}\)/);
+  assert.match(audit, /async function sampleInPage/);
+  assert.match(audit, /found\.low\.push\(\{ ratio: res\.p10/);
+});
+
+test('iPhone 截图脚本等平滑滚动停下再截', () => {
+  const shots = readFileSync(new URL('../scripts/iphone-shots.mjs', import.meta.url), 'utf8');
+  const wait = shots.indexOf('requestAnimationFrame(() => ok(scrollY === y))');
+  assert.ok(wait > 0 && wait < shots.indexOf('const overflow = await page.evaluate'));
+});
