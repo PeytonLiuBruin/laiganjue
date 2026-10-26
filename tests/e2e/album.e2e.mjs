@@ -27,7 +27,7 @@ after(async () => {
 
 async function open(hash, seed = {}) {
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN' });
-  await context.addInitScript((s) => { try { localStorage.setItem('lgj:onboarded', 'true'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, JSON.stringify(v)); } catch {} }, seed);
+  await context.addInitScript((s) => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, JSON.stringify(v)); } catch {} }, seed);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -79,7 +79,7 @@ test('首页连续天数行：显示天数与签册进度，点开直接打开�
 
 test('摇一支新签后收进册子，入口进度加一，首页连续天数变成 1', async () => {
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
-  await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); } catch {} });
+  await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); } catch {} });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -103,7 +103,7 @@ test('集到第 8 支：解锁「初窥」徽章，收集册里徽章点亮并�
   const seed = {};
   for (const no of [2, 9, 21, 30, 38, 45, 57]) seed[no] = { first: '2026-10-20', times: 1 };
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
-  await context.addInitScript((a) => { try { localStorage.setItem('lgj:onboarded', 'true'); if (!localStorage.getItem('lgj:qian:album')) localStorage.setItem('lgj:qian:album', JSON.stringify(a)); } catch {} }, seed);
+  await context.addInitScript((a) => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); if (!localStorage.getItem('lgj:qian:album')) localStorage.setItem('lgj:qian:album', JSON.stringify(a)); } catch {} }, seed);
   const page = await context.newPage();
   const errors = [], toasts = [];
   page.on('pageerror', (e) => errors.push(e.message));

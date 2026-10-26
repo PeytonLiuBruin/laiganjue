@@ -27,7 +27,7 @@ after(async () => {
 
 async function baziForm(seed) {
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN' });
-  await context.addInitScript((s) => { try { localStorage.setItem('lgj:onboarded', 'true'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, JSON.stringify(v)); } catch {} }, seed);
+  await context.addInitScript((s) => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); for (const [k, v] of Object.entries(s)) localStorage.setItem(k, JSON.stringify(v)); } catch {} }, seed);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));

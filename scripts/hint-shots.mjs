@@ -19,7 +19,7 @@ for (const vp of [{ width: 393, height: 852 }, { width: 430, height: 932 }]) {
  // 软件渲染下截图本身要一两秒，提示 2.6 秒后收起，可能拍到时已经不在：截完检查一下，最多重拍 3 次
  for (let attempt = 1; attempt <= 3; attempt++) {
   const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'zh-CN' });
-  await ctx.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:stage.fps', 'false'); } catch {} });
+  await ctx.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); localStorage.setItem('lgj:stage.fps', 'false'); } catch {} });
   ctx.setDefaultTimeout(120_000);
   const page = await ctx.newPage();
   await page.goto(base + '#/m/caiyun', { waitUntil: 'domcontentloaded' });

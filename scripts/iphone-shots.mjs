@@ -32,7 +32,7 @@ for (const vp of VIEWPORTS) {
   const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await context.addInitScript(({ t, seed }) => {
     try {
-      localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true');
+      localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false');
       if (!sessionStorage.getItem('lgj-seeded')) { for (const [k, v] of Object.entries(seed)) localStorage.setItem('lgj:' + k, JSON.stringify(v)); sessionStorage.setItem('lgj-seeded', '1'); }
     } catch {}
   }, { t: theme, seed });

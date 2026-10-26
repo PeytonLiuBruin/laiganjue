@@ -20,7 +20,7 @@ const d = new Date(), today = `${d.getFullYear()}-${String(d.getMonth() + 1).pad
 // 收了 23 支，各等级都有，几支抽到多次
 const album = {};
 [1, 2, 3, 5, 8, 9, 12, 14, 17, 20, 21, 25, 28, 30, 33, 38, 41, 44, 47, 52, 55, 60, 63].forEach((no, i) => { album[no] = { first: today, times: i % 5 === 0 ? 3 : 1 }; });
-const seed = { 'lgj:onboarded': true, 'lgj:streak': { last: today, count: 5, nudged: null }, 'lgj:qian:album': album, 'lgj:qian:history': [{ no: 17, date: today }, { no: 3, date: today }], 'lgj:qian:badgeNew': 'ru' };
+const seed = { 'lgj:onboarded': true, 'lgj:zen.auto': false, 'lgj:streak': { last: today, count: 5, nudged: null }, 'lgj:qian:album': album, 'lgj:qian:history': [{ no: 17, date: today }, { no: 3, date: today }], 'lgj:qian:badgeNew': 'ru' };
 const problems = [];
 for (const theme of themes) {
   for (const vp of [{ width: 393, height: 852 }, { width: 430, height: 932 }]) {

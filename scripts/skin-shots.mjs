@@ -42,7 +42,7 @@ for (const vp of VIEWPORTS) {
     const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
     await context.addInitScript((pro) => {
       try {
-        localStorage.setItem('lgj:onboarded', 'true');
+        localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false');
         localStorage.setItem('lgj:theme', '"paper"');
         localStorage.setItem('lgj:stage.fps', 'false');
         if (pro) localStorage.setItem('lgj:dev.pro', 'true');

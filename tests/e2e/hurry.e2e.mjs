@@ -8,6 +8,7 @@ import path from 'node:path';
 import { buildAll } from '../../scripts/build.mjs';
 import { createStaticServer } from '../../scripts/serve.mjs';
 import { launchBrowser } from '../../scripts/browser.mjs';
+import { STAGE_TIMEOUT, scaled } from '../../scripts/stage-timeout.mjs';
 
 const out = path.join(os.tmpdir(), `lgj-hurry-${process.pid}`);
 const BENIGN = [/AudioContext was not allowed/, /ERR_TUNNEL_CONNECTION_FAILED|fonts\.g(oogleapis|static)\.com|Failed to load resource/, /WebGL|GL Driver/];
@@ -29,13 +30,13 @@ after(async () => {
 
 async function openCaiyun() {
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'no-preference' });
-  await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); } catch {} });
+  await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); } catch {} });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !BENIGN.some((r) => r.test(m.text()))) errors.push('console: ' + m.text()); });
   await page.goto(base + '#/m/caiyun', { waitUntil: 'load' });
-  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: 30_000 });
+  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: STAGE_TIMEOUT });
   await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
   await page.waitForTimeout(500);
   return { page, context, errors };
@@ -59,7 +60,7 @@ function timeRitual(page, tapAfter = null) {
   }), tapAfter);
 }
 
-test('仪式进行中轻点舞台快进，结果更早出来，出结果后角标消失', { timeout: 120_000 }, async () => {
+test('仪式进行中轻点舞台快进，结果更早出来，出结果后角标消失', { timeout: scaled(120_000) }, async () => {
   const { page, context, errors } = await openCaiyun();
   const normal = await timeRitual(page);
   assert.equal(normal.sawBadge, false, '不点舞台时不应快进');
@@ -74,7 +75,7 @@ test('仪式进行中轻点舞台快进，结果更早出来，出结果后角�
   await context.close();
 });
 
-test('没有仪式在进行时点舞台不触发快进', { timeout: 60_000 }, async () => {
+test('没有仪式在进行时点舞台不触发快进', { timeout: scaled(60_000) }, async () => {
   const { page, context, errors } = await openCaiyun();
   await page.evaluate(() => document.querySelector('.view-module .stage').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
   await page.waitForTimeout(200);
@@ -83,7 +84,7 @@ test('没有仪式在进行时点舞台不触发快进', { timeout: 60_000 }, as
   await context.close();
 });
 
-test('第一次较长的仪式等待时提示「轻点舞台可快进」，只出现一次', { timeout: 120_000 }, async () => {
+test('第一次较长的仪式等待时提示「轻点舞台可快进」，只出现一次', { timeout: scaled(120_000) }, async () => {
   const { page, context, errors } = await openCaiyun();
   // 点主按钮，记录提示是否出现、出现时的文字，以及结果出来时提示是否已经收起
   const run = () => page.evaluate(() => new Promise((resolve) => {
@@ -107,7 +108,7 @@ test('第一次较长的仪式等待时提示「轻点舞台可快进」，只�
   assert.equal(second.text, '', '第二次不应再提示');
   // 重新打开页面（同一个本地存储）也不再提示
   await page.reload({ waitUntil: 'load' });
-  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: 30_000 });
+  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: STAGE_TIMEOUT });
   await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
   await page.waitForTimeout(500);
   const third = await run();

@@ -28,7 +28,7 @@ after(async () => {
 async function open({ fake = null } = {}) {
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN' });
   await context.addInitScript((grant) => {
-    try { localStorage.setItem('lgj:onboarded', 'true'); } catch {}
+    try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); } catch {}
     if (grant === null) return;
     const log = (window.__lgjNotifierLog = { asked: 0, scheduled: [], cancelled: 0 });
     window.__lgjFakeNotifier = {

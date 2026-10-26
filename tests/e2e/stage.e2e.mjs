@@ -9,11 +9,11 @@ import { fileURLToPath } from 'node:url';
 import { buildAll } from '../../scripts/build.mjs';
 import { createStaticServer } from '../../scripts/serve.mjs';
 import { launchBrowser } from '../../scripts/browser.mjs';
+import { STAGE_TIMEOUT, scaled } from '../../scripts/stage-timeout.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const shots = path.join(root, 'dist/e2e-shots');
 const out = path.join(os.tmpdir(), `lgj-e2e-${process.pid}`);
-const STAGE_TIMEOUT = 120_000;
 const BENIGN = [/AudioContext was not allowed/, /ERR_TUNNEL_CONNECTION_FAILED|fonts\.g(oogleapis|static)\.com|Failed to load resource/, /GPU stall due to ReadPixels/, /GL Driver Message/, /WebGL: INVALID_OPERATION: drawArrays|Automatic fallback to software WebGL/];
 
 // 每个 3D 器物：所在模块、切换到它要点的标签、它的槽位选择器
@@ -55,7 +55,7 @@ async function openPage({ theme = 'paper', webglBrowser = browser, extra = {} } 
   await context.addInitScript(({ theme, extra }) => {
     try {
       localStorage.setItem('lgj:theme', JSON.stringify(theme)); localStorage.setItem('lgj:dev.skins', 'true');
-      localStorage.setItem('lgj:onboarded', 'true');
+      localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false');
       for (const [k, v] of Object.entries(extra)) localStorage.setItem('lgj:' + k, JSON.stringify(v));
     } catch {}
   }, { theme, extra });
@@ -112,7 +112,7 @@ function frameStats(page, slot) {
 }
 const shot = (page, slot, name) => page.locator(slot).screenshot({ path: path.join(shots, name + '.png') }).catch(() => {});
 
-test('每个 3D 器物都用 WebGL 渲染：有雾、倒影水面、随风粒子，只有指定材质发光', { timeout: 900_000 }, async () => {
+test('每个 3D 器物都用 WebGL 渲染：有雾、倒影水面、随风粒子，只有指定材质发光', { timeout: scaled(900_000) }, async () => {
   const { page, context, errors } = await openPage();
   let lastModule = null;
   for (const o of OBJECTS) {
@@ -139,7 +139,7 @@ test('每个 3D 器物都用 WebGL 渲染：有雾、倒影水面、随风粒子
   await context.close();
 });
 
-test('动作与揭晓：姻缘、事业、财运六件器物摇动后进入动作并揭晓', { timeout: 900_000 }, async () => {
+test('动作与揭晓：姻缘、事业、财运六件器物摇动后进入动作并揭晓', { timeout: scaled(900_000) }, async () => {
   const { page, context, errors } = await openPage();
   for (const o of OBJECTS.filter((x) => /^(yinyuan|shiye|caiyun)\./.test(x.id))) {
     await openModule(page, o.module);
@@ -147,9 +147,9 @@ test('动作与揭晓：姻缘、事业、财运六件器物摇动后进入动�
     await waitStage(page, o.slot);
     const canvas = `${o.slot} canvas.stage-canvas`;
     await page.locator(`.view-module [data-action="primary"]`).first().click({ force: true });
-    await waitFor(page, `${canvas}[data-phase="active"]`, { timeout: 15_000, visible: false });
+    await waitFor(page, `${canvas}[data-phase="active"]`, { timeout: scaled(15_000), visible: false });
     await shot(page, o.slot, `${o.id}-active`);
-    await waitFor(page, `${canvas}[data-phase="revealed"]`, { timeout: 30_000, visible: false });
+    await waitFor(page, `${canvas}[data-phase="revealed"]`, { timeout: scaled(30_000), visible: false });
     await page.evaluate((sel) => document.querySelector(sel).__stage.advance(1.2), o.slot);
     await shot(page, o.slot, `${o.id}-revealed`);
     await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
@@ -158,13 +158,13 @@ test('动作与揭晓：姻缘、事业、财运六件器物摇动后进入动�
   await context.close();
 });
 
-test('八字排盘：命牌翻转后显示四柱', { timeout: 300_000 }, async () => {
+test('八字排盘：命牌翻转后显示四柱', { timeout: scaled(300_000) }, async () => {
   const { page, context, errors } = await openPage();
   await openModule(page, 'bazi');
   const slot = '[data-model-slot="bazi.pillars"]';
   await waitStage(page, slot);
   await page.locator('.view-module [data-action="primary"]').first().click({ force: true });
-  await page.waitForFunction((sel) => (document.querySelector(sel + ' canvas.stage-canvas')?.dataset.pillars || '').trim().length > 0, slot, { timeout: 20_000, polling: 200 });
+  await page.waitForFunction((sel) => (document.querySelector(sel + ' canvas.stage-canvas')?.dataset.pillars || '').trim().length > 0, slot, { timeout: scaled(20_000), polling: 200 });
   await page.evaluate((sel) => document.querySelector(sel).__stage.advance(3), slot);
   const stats = await frameStats(page, slot);
   assert.ok(stats.std > 6);
@@ -173,7 +173,7 @@ test('八字排盘：命牌翻转后显示四柱', { timeout: 300_000 }, async (
   await context.close();
 });
 
-test('帧率计数默认隐藏，在设置里打开后显示在舞台右上角，再关闭后隐藏', { timeout: 300_000 }, async () => {
+test('帧率计数默认隐藏，在设置里打开后显示在舞台右上角，再关闭后隐藏', { timeout: scaled(300_000) }, async () => {
   const { page, context, errors } = await openPage();
   await openModule(page, 'fengshui');
   const slot = '[data-model-slot="fengshui.compass"]';
@@ -187,7 +187,7 @@ test('帧率计数默认隐藏，在设置里打开后显示在舞台右上角�
   await page.waitForFunction(() => document.documentElement.dataset.fps === 'on', undefined, { polling: 200 });
   await page.keyboard.press('Escape');
   await assert.doesNotReject(fps.waitFor({ state: 'visible' }));
-  await page.waitForFunction((sel) => /^[1-9]\d* FPS$/.test(document.querySelector(sel + ' .stage-fps')?.textContent || ''), slot, { timeout: 60_000, polling: 200 });
+  await page.waitForFunction((sel) => /^[1-9]\d* FPS$/.test(document.querySelector(sel + ' .stage-fps')?.textContent || ''), slot, { timeout: scaled(60_000), polling: 200 });
   const box = await fps.boundingBox(), slotBox = await page.locator(slot).boundingBox();
   assert.ok(box.x > slotBox.x + slotBox.width / 2 && box.y < slotBox.y + 40, '帧率在右上角');
   await page.locator('.app-header [aria-label="设置"]').click();
@@ -198,7 +198,7 @@ test('帧率计数默认隐藏，在设置里打开后显示在舞台右上角�
   await context.close();
 });
 
-test('隐藏的器物不预先创建：切到合婚时红线舞台才初始化', { timeout: 300_000 }, async () => {
+test('隐藏的器物不预先创建：切到合婚时红线舞台才初始化', { timeout: scaled(300_000) }, async () => {
   const { page, context, errors } = await openPage({ extra: { 'yinyuan.tab': 'self' } });
   await openModule(page, 'yinyuan');
   await selectTab(page, '正缘');
@@ -210,7 +210,7 @@ test('隐藏的器物不预先创建：切到合婚时红线舞台才初始化',
   await context.close();
 });
 
-test('离开玩法页后释放 WebGL 舞台', { timeout: 300_000 }, async () => {
+test('离开玩法页后释放 WebGL 舞台', { timeout: scaled(300_000) }, async () => {
   const { page, context, errors } = await openPage();
   await openModule(page, 'zodiac');
   await waitStage(page, '[data-model-slot="zodiac.sky"]');
@@ -221,7 +221,7 @@ test('离开玩法页后释放 WebGL 舞台', { timeout: 300_000 }, async () => 
   await context.close();
 });
 
-test('深色皮肤下场景随之变暗（天空、雾、水色跟着皮肤走）', { timeout: 300_000 }, async () => {
+test('深色皮肤下场景随之变暗（天空、雾、水色跟着皮肤走）', { timeout: scaled(300_000) }, async () => {
   const slot = '[data-model-slot="crystal.ball"]';
   const measure = async (theme) => {
     const { page, context, errors } = await openPage({ theme });
@@ -238,7 +238,7 @@ test('深色皮肤下场景随之变暗（天空、雾、水色跟着皮肤走�
   assert.ok(dark < light - 40, `星穹皮肤应明显更暗（paper ${light.toFixed(0)} / nebula ${dark.toFixed(0)}）`);
 });
 
-test('不支持 WebGL 时退回 2D 画布，玩法照常可用', { timeout: 300_000 }, async () => {
+test('不支持 WebGL 时退回 2D 画布，玩法照常可用', { timeout: scaled(300_000) }, async () => {
   // Chromium 直接关掉 WebGL；其他内核用 lgj.render=canvas 强制走同一条回退路径
   const webkit = (process.env.E2E_BROWSER || 'chromium') !== 'chromium';
   const noGL = webkit ? browser : await launchBrowser({ webgl: false });

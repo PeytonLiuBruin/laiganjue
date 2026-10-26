@@ -4,8 +4,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { measureFrames, FRAME_STATES } from '../../scripts/stage-frame.mjs';
+import { scaled } from '../../scripts/stage-timeout.mjs';
 
-test('11 件器物过冲与揭晓时不顶出画面', { timeout: 600_000 }, async () => {
+test('11 件器物过冲与揭晓时不顶出画面', { timeout: scaled(600_000) }, async () => {
   const res = await measureFrames();
   assert.equal(Object.keys(res).length, Object.keys(FRAME_STATES).length, '每件器物都测到');
   const bad = [];

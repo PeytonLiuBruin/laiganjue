@@ -47,7 +47,7 @@ const context = await browser.newContext({ viewport: { width: 390, height: 844 }
 await context.addInitScript((t) => {
   try {
     localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true');
-    localStorage.setItem('lgj:onboarded', 'true');
+    localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false');
   } catch {}
 }, theme);
 const page = await context.newPage();

@@ -37,7 +37,7 @@ for (const vp of VIEWPORTS) {
   for (const shot of SHOTS) {
     const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     await context.addInitScript((t) => {
-      try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:hint.hurry', 'true'); } catch {}
+      try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); localStorage.setItem('lgj:hint.hurry', 'true'); } catch {}
     }, theme);
     const page = await context.newPage();
     const errors = [];

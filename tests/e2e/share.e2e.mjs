@@ -8,6 +8,7 @@ import path from 'node:path';
 import { buildAll } from '../../scripts/build.mjs';
 import { createStaticServer } from '../../scripts/serve.mjs';
 import { launchBrowser } from '../../scripts/browser.mjs';
+import { STAGE_TIMEOUT, scaled } from '../../scripts/stage-timeout.mjs';
 
 const out = path.join(os.tmpdir(), `lgj-share-${process.pid}`);
 const BENIGN = [/AudioContext was not allowed/, /ERR_TUNNEL_CONNECTION_FAILED|fonts\.g(oogleapis|static)\.com|Failed to load resource/, /WebGL|GL Driver|GPU stall/];
@@ -29,7 +30,7 @@ async function openCaiyun(browser, extra = {}) {
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
   await context.addInitScript((extra) => {
     try {
-      localStorage.setItem('lgj:onboarded', 'true');
+      localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false');
       for (const [k, v] of Object.entries(extra)) localStorage.setItem('lgj:' + k, JSON.stringify(v));
     } catch {}
   }, extra);
@@ -38,7 +39,7 @@ async function openCaiyun(browser, extra = {}) {
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
   page.on('console', (m) => { if (m.type() === 'error' && !BENIGN.some((r) => r.test(m.text()))) errors.push('console: ' + m.text()); });
   await page.goto(base + '#/m/caiyun', { waitUntil: 'load' });
-  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: 120_000 }); // SwiftShader 首次编译着色器在高负载下可超过 30 秒，与 stage.e2e 一致
+  await page.waitForSelector('.view-module[data-module="caiyun"][data-ready="1"]', { timeout: STAGE_TIMEOUT }); // SwiftShader 首次编译着色器在高负载下可超过 30 秒，与 stage.e2e 一致
   await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
   const share = page.locator('.sheet.open .sheet-actions button', { hasText: '分享' });
   const primary = page.locator('.view-module [data-action="primary"]').first();
@@ -65,7 +66,7 @@ const imageStats = (page) => page.evaluate(async () => {
 });
 
 for (const webgl of [false, true]) {
-  test(`分享卡预览（${webgl ? 'WebGL 舞台' : '2D 画布回退'}）：有器物画面，免费版有去水印入口`, { timeout: 180_000 }, async () => {
+  test(`分享卡预览（${webgl ? 'WebGL 舞台' : '2D 画布回退'}）：有器物画面，免费版有去水印入口`, { timeout: scaled(180_000) }, async () => {
     const browser = await launchBrowser({ webgl });
     try {
       const { page, errors, share } = await openCaiyun(browser);
@@ -84,7 +85,7 @@ for (const webgl of [false, true]) {
   });
 }
 
-test('Pro 的分享卡没有去水印入口', { timeout: 180_000 }, async () => {
+test('Pro 的分享卡没有去水印入口', { timeout: scaled(180_000) }, async () => {
   const browser = await launchBrowser({ webgl: false });
   try {
     // 权益缓存里预置永久 Pro（网页版没有商店，不会被刷新覆盖）
@@ -97,11 +98,11 @@ test('Pro 的分享卡没有去水印入口', { timeout: 180_000 }, async () => 
 
 // 没有器物画布的玩法：分享卡用玩法自己画的配图（塔罗牌面、黄历宜忌、星座金币）
 for (const mod of ['tarot', 'almanac', 'zodiac']) {
-  test(`${mod} 的分享卡使用玩法配图`, { timeout: 180_000 }, async () => {
+  test(`${mod} 的分享卡使用玩法配图`, { timeout: scaled(180_000) }, async () => {
     const browser = await launchBrowser({ webgl: false });
     try {
       const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
-      await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); } catch {} });
+      await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); } catch {} });
       const page = await context.newPage();
       const errors = [];
       page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));

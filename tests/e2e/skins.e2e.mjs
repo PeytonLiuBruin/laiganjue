@@ -31,7 +31,7 @@ async function open(extra = {}) {
   const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
   await context.addInitScript((extra) => {
     try {
-      localStorage.setItem('lgj:onboarded', 'true');
+      localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false');
       for (const [k, v] of Object.entries(extra)) localStorage.setItem('lgj:' + k, JSON.stringify(v));
     } catch {}
   }, extra);

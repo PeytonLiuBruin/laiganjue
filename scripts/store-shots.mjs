@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { buildAll } from './build.mjs';
 import { createStaticServer } from './serve.mjs';
 import { launchBrowser } from './browser.mjs';
+import { STAGE_TIMEOUT } from './stage-timeout.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -46,7 +47,6 @@ export function frameHtml(scene, size, dataUrl) {
   </style></head><body><div class="t"><h1>${scene.title}</h1><p>${scene.sub}</p></div><div class="phone"><img src="${dataUrl}"></div></body></html>`;
 }
 
-const STAGE_TIMEOUT = 120_000;
 const PRIMARY = '.view-module [data-action="primary"]';
 const RESULT = '.ritual-receipt:not([hidden]) [data-read]';
 
@@ -143,7 +143,7 @@ async function main() {
   for (const s of SCENES) {
     const ts = Date.now();
     const ctx = await browser.newContext({ viewport: SIZES[0].app, deviceScaleFactor: 3, isMobile: true, hasTouch: true, locale: 'zh-CN' });
-    await ctx.addInitScript((t) => { try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:stage.fps', 'false'); localStorage.setItem('lgj:tarot:spread', JSON.stringify('single')); localStorage.setItem('lgj:hint.hurry', 'true'); } catch {} }, theme);
+    await ctx.addInitScript((t) => { try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); localStorage.setItem('lgj:stage.fps', 'false'); localStorage.setItem('lgj:tarot:spread', JSON.stringify('single')); localStorage.setItem('lgj:hint.hurry', 'true'); } catch {} }, theme);
     ctx.setDefaultTimeout(STAGE_TIMEOUT);
     const page = await ctx.newPage();
     await page.goto(base + (s.route === 'home' ? '#/' : '#/' + s.route), { waitUntil: 'domcontentloaded', timeout: STAGE_TIMEOUT });

@@ -1060,3 +1060,5 @@ Mac 上 `npm test` 435 项全部通过（含第 28 轮未提交的 3 项，负�
 - 首发是否包含中国大陆（需 App 备案号）、小组件与断签提醒真机验证、年龄分级 13+、皮肤内购价格档位、GitHub Pages 合并时机，同前几轮。
 
 推送结果：提交 aa3077a 推送成功。
+
+补记（2026-10-26 第 34 轮之后）：Peyton 在对话里确认提交第 28 轮留在工作区的改动（`LGJ_STAGE_TIMEOUT` 放宽舞台等待、e2e 与截图脚本初始化里关掉自动屏保，`scripts/stage-timeout.mjs`、`tests/stage-timeout.test.mjs` 3 项，TODO 对应项打勾）。这些改动在第 33、34 轮的 Mac `npm test` 里都一起跑过，436 项全部通过。「待 Peyton 决定」里的这一条从此关闭。
