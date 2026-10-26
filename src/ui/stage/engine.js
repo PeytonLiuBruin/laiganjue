@@ -8,6 +8,7 @@ import { createWater } from './water.js';
 import { toonifyScene, setRimColor } from './toon.js';
 import { SCENES } from './scenes/index.js';
 import { createBounce, createStarBurst } from './bounce.js';
+import { bufferChanged } from './buffer.js';
 
 let webgl = null;
 /** 只探测一次（three.js 需要 WebGL2），探测用的上下文立即释放。 */
@@ -238,7 +239,9 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
     const r = el.getBoundingClientRect();
     if (r.width > 0 && r.height > 0) { width = r.width; height = r.height; }
     const q = quality(), ratio = Math.min(deviceRatio, q.ratio);
-    renderer.setPixelRatio(ratio); renderer.setSize(width, height, false);
+    // 改画布尺寸会清空缓冲：没变就不改，改了在本函数末尾立刻补画（见 buffer.js）
+    const changed = bufferChanged(canvas, renderer.getPixelRatio(), width, height, ratio);
+    if (changed) { renderer.setPixelRatio(ratio); renderer.setSize(width, height, false); }
     stars.object.material.uniforms.scale.value = 200 * ratio;
     water.setSize(width * ratio * q.reflect, height * ratio * q.reflect);
     camera.aspect = width / height;
@@ -246,6 +249,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
     camera.userData.pull = camera.aspect < 1 ? Math.pow(1 / camera.aspect, .9) : 1;
     camera.updateProjectionMatrix();
     canvas.dataset.quality = String(level);
+    if (changed && compiled) render();
     wake();
   }
   function adapt(fpsNow) {
