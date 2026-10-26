@@ -1,0 +1,217 @@
+/* 卡通器物层（第 33 轮）：卢恩皮袋、麻布、符石与塔罗牌背改成 visual-direction.md 第 2 节的手游卡通画法。
+   规则：纯色块 + 硬边分段明暗（不用柔和渐变），深色粗描边（用 box-shadow 画，不改尺寸），一块硬边高光。
+   这一层只改颜色、背景、阴影与滤镜（皮袋高光块除外），不改器物的尺寸和位置。参数见 visual-direction.md 第 2 节「卢恩皮袋与麻布」「塔罗牌背」。 */
+
+/* —— 卢恩：材质参数 —— */
+.m-runes {
+  --rn-bag: #e08a2e;
+  --rn-bag-dark: #b05a1c;
+  --rn-bag-ink: #4a2410;
+  --rn-gold: #ffc93c;
+  --rn-gold-dark: #d8901e;
+  --rn-mat: #7a52e0;
+  --rn-mat-dark: #5b3bc0;
+  --rn-mat-ink: #2b1a5c;
+  --rn-mat-line: rgba(255, 236, 190, 0.75);
+  --rn-stone-ink: #2b2240;
+}
+.m-runes[data-rn-theme='paper'],
+.m-runes[data-rn-theme='celadon'] {
+  /* 浅色皮肤原来是深灰石配米色麻布，换成亮沙岩石配紫色绒布，和石台小岛同一套沙岩色 */
+  --rn-stone-1: #f8e6bc;
+  --rn-stone-2: #e2b878;
+  --rn-stone-3: #b07a3e;
+  --rn-carve: #d8402e;
+  --rn-carve-hi: rgba(255, 255, 255, 0.5);
+  --rn-carve-lo: rgba(90, 30, 10, 0.45);
+  --rn-shadow: rgba(60, 40, 120, 0.32);
+}
+.m-runes[data-rn-theme='celadon'] {
+  --rn-mat: #22a88f;
+  --rn-mat-dark: #16846f;
+  --rn-mat-ink: #0e3d33;
+}
+.m-runes[data-rn-theme='cinnabar'] {
+  --rn-mat: #d8402e;
+  --rn-mat-dark: #a82a1e;
+  --rn-mat-ink: #4a120c;
+  --rn-bag: #f0a43c;
+  --rn-bag-dark: #c06a1c;
+}
+.m-runes[data-rn-theme='nebula'] {
+  --rn-mat: #4a3ab8;
+  --rn-mat-dark: #33278c;
+  --rn-mat-ink: #120c38;
+}
+.m-runes:not([data-rn-theme='paper']):not([data-rn-theme='celadon']):not([data-rn-theme='cinnabar']):not([data-rn-theme='nebula']) {
+  --rn-mat: #3f6fd8;
+  --rn-mat-dark: #2c52a8;
+  --rn-mat-ink: #10224a;
+}
+
+/* —— 卢恩：皮袋 —— */
+.m-runes .rn-bag-body {
+  background:
+    radial-gradient(ellipse 62% 70% at 36% 30%, var(--rn-bag) 0 70%, var(--rn-bag-dark) 71%);
+  box-shadow: 0 0 0 3px var(--rn-bag-ink), 0 9px 0 -1px rgba(43, 34, 64, 0.18);
+}
+.m-runes .rn-bag-stitch {
+  border-bottom: 3px dashed rgba(255, 236, 200, 0.7);
+}
+.m-runes .rn-bag-sheen {
+  background: rgba(255, 255, 255, 0.55);
+  left: 20%;
+  top: 14%;
+  width: 22%;
+  height: 13%;
+  transform: rotate(-24deg);
+}
+.m-runes .rn-bag-neck {
+  background: linear-gradient(90deg, var(--rn-bag) 0 62%, var(--rn-bag-dark) 62%);
+  box-shadow: 0 0 0 3px var(--rn-bag-ink);
+}
+.m-runes .rn-bag-neck::before {
+  background: repeating-linear-gradient(90deg, rgba(74, 36, 16, 0.35) 0 2px, transparent 2px 7px);
+}
+.m-runes .rn-bag-mouth {
+  background: repeating-linear-gradient(90deg, var(--rn-bag) 0 6px, var(--rn-bag-dark) 6px 10.4px);
+  filter: drop-shadow(0 -2px 0 var(--rn-bag-ink)) drop-shadow(2px 0 0 var(--rn-bag-ink)) drop-shadow(-2px 0 0 var(--rn-bag-ink));
+}
+.m-runes .rn-cord {
+  background: linear-gradient(var(--rn-gold) 0 55%, var(--rn-gold-dark) 55%);
+  box-shadow: 0 0 0 2px var(--rn-bag-ink);
+}
+.m-runes .rn-cord-knot {
+  background: radial-gradient(circle at 38% 36%, #fff3c4 0 18%, var(--rn-gold) 20% 62%, var(--rn-gold-dark) 64%);
+  box-shadow: 0 0 0 2px var(--rn-bag-ink);
+}
+.m-runes .rn-cord-tail {
+  background: var(--rn-gold);
+  box-shadow: 0 0 0 1.5px var(--rn-bag-ink);
+}
+.m-runes .rn-cord-tail::after {
+  background: var(--rn-gold);
+  box-shadow: 0 0 0 1.5px var(--rn-bag-ink);
+}
+.m-runes .rn-bag-shadow {
+  background: rgba(60, 40, 120, 0.3);
+  filter: none;
+  opacity: 1;
+}
+
+/* —— 卢恩：绒布垫 —— */
+.m-runes .rn-cloth {
+  border-radius: 14px;
+  background-color: var(--rn-mat);
+  background-image:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.1) 0 38%, transparent 38%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.07) 0 1px, transparent 1.6px);
+  background-size: 100% 100%, 9px 9px;
+  box-shadow: 0 0 0 3px var(--rn-mat-ink), inset 0 0 0 5px var(--rn-mat), inset 0 0 0 8px var(--rn-gold), inset 0 -10px 0 8px var(--rn-mat-dark), 0 10px 0 -2px rgba(43, 34, 64, 0.2);
+}
+.m-runes .rn-cloth::before {
+  inset: 16px;
+  border: 2px dashed var(--rn-mat-line);
+  border-radius: 8px;
+  opacity: 1;
+}
+.m-runes .rn-cloth::after {
+  /* 原来的麻布毛边，绒布不要 */
+  display: none;
+}
+.m-runes .rn-revealed .rn-cloth {
+  box-shadow: 0 0 0 3px var(--rn-mat-ink), inset 0 0 0 5px var(--rn-mat), inset 0 0 0 8px var(--rn-gold), inset 0 -10px 0 8px var(--rn-mat-dark), 0 10px 0 -2px rgba(43, 34, 64, 0.2), 0 0 38px var(--glow);
+}
+.m-runes .rn-slot {
+  border: 2px dashed var(--rn-mat-line);
+  background: rgba(0, 0, 0, 0.08);
+  opacity: 1;
+}
+
+/* —— 卢恩：符石（硬边两段明暗 + 深描边 + 一块硬高光） —— */
+.m-runes .rn-face {
+  background:
+    radial-gradient(ellipse 30% 18% at 32% 24%, rgba(255, 255, 255, 0.6) 0 60%, transparent 64%),
+    radial-gradient(ellipse 78% 74% at 40% 36%, var(--rn-stone-1) 0 72%, var(--rn-stone-2) 73% 100%);
+  box-shadow: inset 0 0 0 2.5px var(--rn-stone-ink), inset -5px -7px 0 0 var(--rn-stone-3);
+}
+.m-runes[data-rn-theme='cinnabar'] .rn-stone .rn-face {
+  background-image:
+    radial-gradient(ellipse 30% 18% at 32% 24%, rgba(255, 255, 255, 0.5) 0 60%, transparent 64%),
+    repeating-linear-gradient(98deg, rgba(60, 25, 0, 0.12) 0 3px, transparent 3px 12px),
+    radial-gradient(ellipse 78% 74% at 40% 36%, var(--rn-stone-1) 0 72%, var(--rn-stone-2) 73% 100%);
+}
+.m-runes .rn-stone-edge {
+  background: var(--rn-stone-ink);
+}
+.m-runes .rn-speck {
+  display: none;
+}
+
+/* —— 塔罗：牌背 —— */
+.m-tarot {
+  --tr-back: #7b4fe0;
+  --tr-back-hi: #9b6bff;
+  --tr-back-ink: #24124f;
+  --tr-gold: #ffc93c;
+}
+[data-theme='cinnabar'] .m-tarot {
+  --tr-back: #d8402e;
+  --tr-back-hi: #ee5a44;
+  --tr-back-ink: #4a120c;
+}
+[data-theme='celadon'] .m-tarot {
+  --tr-back: #1f9a84;
+  --tr-back-hi: #2fbea2;
+  --tr-back-ink: #0e3d33;
+}
+[data-theme='nebula'] .m-tarot {
+  --tr-back: #5a46d0;
+  --tr-back-hi: #7660ee;
+  --tr-back-ink: #120c38;
+}
+.m-tarot .tr-back-art {
+  background:
+    linear-gradient(150deg, var(--tr-back-hi) 0 34%, var(--tr-back) 34%);
+  border: 0;
+  box-shadow: 0 0 0 2.5px var(--tr-back-ink), 0 5px 0 -1px rgba(43, 34, 64, 0.2);
+}
+.m-tarot .tr-back-art::before {
+  background:
+    radial-gradient(circle at 12px 12px, var(--tr-gold) 2.2px, transparent 2.8px),
+    radial-gradient(circle at calc(100% - 12px) 12px, var(--tr-gold) 2.2px, transparent 2.8px),
+    radial-gradient(circle at 12px calc(100% - 12px), var(--tr-gold) 2.2px, transparent 2.8px),
+    radial-gradient(circle at calc(100% - 12px) calc(100% - 12px), var(--tr-gold) 2.2px, transparent 2.8px),
+    radial-gradient(circle, rgba(255, 236, 190, 0.22) 0 1.3px, transparent 1.9px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 12px 12px;
+  opacity: 1;
+}
+.m-tarot .tr-back-frame {
+  border: 2px solid var(--tr-gold);
+  border-radius: 6px;
+  opacity: 1;
+}
+.m-tarot .tr-back-frame::before {
+  border: 1px solid rgba(255, 201, 60, 0.6);
+  opacity: 1;
+}
+.m-tarot .tr-back-emblem {
+  color: var(--tr-gold);
+  filter: drop-shadow(0 1.5px 0 var(--tr-back-ink)) drop-shadow(0 -1px 0 var(--tr-back-ink)) drop-shadow(1px 0 0 var(--tr-back-ink)) drop-shadow(-1px 0 0 var(--tr-back-ink));
+}
+.m-tarot .tr-pile-shadow {
+  background: rgba(43, 34, 64, 0.35);
+}
+/* 牌面插画原来压到 0.48 饱和并加棕黄，成了旧照片色，改回原色 */
+.m-tarot .tr-illustration {
+  filter: saturate(1.08) contrast(1.02);
+}
+.m-tarot .tr-illustration::after {
+  opacity: 0;
+}
+/* 牌背实际画的是 .tr-back-engraving 这张线描（refinement.css 把旧的点阵底关掉了）：线加粗到 2.2、改亮金、外围一圈深色描边 */
+.m-tarot .tr-back-engraving {
+  color: var(--tr-gold);
+  stroke-width: 2.2px;
+  filter: drop-shadow(0 1.5px 0 var(--tr-back-ink)) drop-shadow(0 -1px 0 var(--tr-back-ink));
+}

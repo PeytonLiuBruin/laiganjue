@@ -36,8 +36,9 @@
 
 /* 六爻爻位、卢恩槽位的小字 */
 .m-liuyao .ly-line-pos { opacity: 1; }
-.m-runes .rn-slot-label { color: var(--text-2); }
-:is([data-theme='paper'], [data-theme='celadon']) .m-runes .rn-slot-label { color: var(--text); }
+.m-runes .rn-slot-label { color: #fff4d6; text-shadow: 1px 0 0 var(--rn-mat-ink, #2b1a5c), -1px 0 0 var(--rn-mat-ink, #2b1a5c), 0 1px 0 var(--rn-mat-ink, #2b1a5c), 0 -1px 0 var(--rn-mat-ink, #2b1a5c); }
+.m-runes .rn-stone-label { color: #fff4d6; text-shadow: 1px 0 0 var(--rn-mat-ink, #2b1a5c), -1px 0 0 var(--rn-mat-ink, #2b1a5c), 0 1px 0 var(--rn-mat-ink, #2b1a5c), 0 -1px 0 var(--rn-mat-ink, #2b1a5c); }
+.m-runes .rn-stone-label i { color: var(--rn-mat-ink, #2b1a5c); background: #ffc93c; border-color: var(--rn-mat-ink, #2b1a5c); text-shadow: none; }
 
 /* 付费卡「最划算」小角标：10px 白字，红底加深到主按钮厚边色 */
 [data-theme='paper'] .pw-plan-name em { background: var(--btn-edge); }
