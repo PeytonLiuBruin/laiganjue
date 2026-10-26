@@ -41,3 +41,9 @@
 .qn-badge-note { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-2); text-align: center; }
 .qn-album-level.done { box-shadow: 0 0 0 1.5px var(--tone); }
 .qn-album-level.done::after { content: ' ✓'; color: var(--tone); font-weight: 800; }
+/* 393 宽下「开始连续打卡 + 7 点 + 进度条 + 签册 0/64 + 箭头」超出卡片 18px，箭头被挤出屏幕。
+   左侧文字允许收缩并在副标题处省略，进度条最窄 24px，间距 12 → 10 */
+.home-streak { gap: 10px; }
+.home-streak-days { flex: 0 1 auto; min-width: 0; }
+.home-streak-days b, .home-streak-days small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-streak .qn-album-bar { min-width: 24px; }

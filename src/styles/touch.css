@@ -1,0 +1,35 @@
+/* 触控目标：Apple 人机界面指南要求可点元素至少 44×44 pt。
+   `node scripts/tap-audit.mjs` 在 393×852 下逐页检查，这里统一补齐。放在样式入口最后，覆盖前面各层的尺寸。
+   视觉上要保持紧凑的小控件（开关、黄历宜忌标签）用透明伪元素把点按区域扩到 44，外观不变。 */
+
+/* 顶栏与抽屉的图标按钮：42 → 44 */
+.icon-btn { width: 44px; height: 44px; }
+
+/* 小号按钮（了解 Pro、恢复购买、开启体感、去填生辰、试一下）与芯片（塔罗牌阵、卢恩牌阵、转盘题目、设置里的档位） */
+.btn.small { min-height: 44px; }
+.chip { min-height: 44px; min-width: 44px; justify-content: center; }
+/* 玩法页舞台下的「开启体感」、横幅里的按钮、财运与事业的「去填生辰」，前面几层按更具体的选择器压到 34 到 38px */
+.view-module .motion-entry > .btn, .motion-banner .btn { min-height: 44px; }
+.m-caiyun .cy-profile .btn, .m-shiye .sy-profile .btn { min-height: 44px; }
+
+/* 设置页开关：48×28 的外观不变，::before 把点按区域扩到 52×44（::after 是圆钮，不能占用） */
+.switch::before { content: ''; position: absolute; inset: -9px -3px; }
+
+/* 付费卡底部：恢复购买与两条法律链接原来只有 18 到 34px 高 */
+.pw-link { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding-inline: 8px; }
+.pw-legal { align-items: center; gap: 4px; }
+.pw-legal a { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 8px; }
+
+/* 黄历：宜忌标签外观 36px 高，行距 8px，伪元素上下各扩 4px、左右各扩 1px（两字标签 43 宽，列距 4px），相邻标签的点按区域不重叠，一行仍排 6 个 */
+.m-almanac .al-chips { gap: 8px 4px; }
+.m-almanac .al-chip { position: relative; min-height: 36px; }
+.m-almanac .al-chip::before { content: ''; position: absolute; inset: -4px -1px; }
+.m-almanac .al-chip.empty::before { content: none; }
+/* 冲煞、值神、建除、星宿四格与纳音、彭祖两行细印 */
+.m-almanac .al-cell { min-height: 44px; }
+.m-almanac .al-fine-row { min-height: 44px; align-items: center; }
+
+/* 六爻卦象台：每爻 34 → 40px，行距 4px，伪元素上下各扩 2px 到 44，相邻爻的点按区域不重叠 */
+.m-liuyao .ly-lines { gap: 4px; }
+.m-liuyao .ly-line { position: relative; height: 40px; }
+.m-liuyao .ly-line::before { content: ''; position: absolute; inset: -2px 0; }

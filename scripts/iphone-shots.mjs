@@ -1,5 +1,6 @@
 // iPhone 视口截图：构建 dist → 起本地服务器 → 软件 WebGL 的无头 Chromium，按 393×852 与 430×932 两种尺寸截图。
-// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean]
+// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl]
+// --no-webgl：关掉 WebGL，玩法页退回 2D 器物。只检查 2D 界面（设置、付费卡、黄历等）时用，Mac 负载高时也能很快截完。
 // 每张图同时检查横向溢出，结果写到 <out>/report.json。非宣纸皮肤的文件名前加皮肤名（如 nebula-home-393x852.png）。
 import path from 'node:path';
 import { mkdir, writeFile, readFile, readdir, rm } from 'node:fs/promises';
@@ -25,7 +26,7 @@ await buildAll({ out: dist, min: false });
 const server = createStaticServer(dist);
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}/index.html`;
-const browser = await launchBrowser();
+const browser = await launchBrowser({ webgl: !args.includes('--no-webgl') });
 const report = [];
 for (const vp of VIEWPORTS) {
   const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });

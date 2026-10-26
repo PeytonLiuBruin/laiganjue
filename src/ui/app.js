@@ -413,7 +413,7 @@ export function startApp(root) {
     } catch (e) { console.error('[streak]', e); }
     const lit = Math.min(7, n);
     return h('button', { type: 'button', class: 'home-streak', dataset: { streak: n }, onClick: () => { platform.haptic.tap(); navigate('#/m/qian/album'); }, attrs: { 'aria-label': `连续 ${n} 天，签纸收集册 ${s.count}/${s.total}` } },
-      h('span', { class: 'home-streak-days' }, h('b', null, n ? `连续 ${n} 天` : '开始连续打卡'), h('small', null, n ? (today ? '今天已来过' : '今天来一签就能续上') : '每天来一次，签纸收进册子')),
+      h('span', { class: 'home-streak-days' }, h('b', null, n ? `连续 ${n} 天` : '开始连续打卡'), h('small', null, n ? (today ? '今天已来过' : '今天来一签就能续上') : '每天来一签')),
       h('span', { class: 'home-streak-dots', attrs: { 'aria-hidden': 'true' } }, Array.from({ length: 7 }, (_, i) => h('i', { class: i < lit ? 'on' : '' }))),
       h('span', { class: 'qn-album-bar', attrs: { 'aria-hidden': 'true' } }, h('i', { style: { width: `${(s.count / s.total) * 100}%` } })),
       h('span', { class: 'home-streak-album' }, `签册 ${s.count}/${s.total}`),
