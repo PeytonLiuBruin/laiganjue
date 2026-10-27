@@ -60,7 +60,7 @@ for (const vp of VIEWPORTS) {
       await page.waitForFunction(() => document.querySelector('.view-module .stage-canvas[data-phase="revealed"]'), null, { timeout: 15_000 }).catch(() => {});
       await page.waitForTimeout(250);
     }
-    if (action === 'read') {
+    if (action === 'read' || action === 'read2') {
       // 多步玩法（灵签要先摇再取签）：一直点主按钮，直到结果条出现「展开解读」
       // 六爻要掷六次，卦成后主按钮本身变成「展开解读」
       const primary = page.locator('.view-module [data-action="primary"]').first();
@@ -71,6 +71,8 @@ for (const vp of VIEWPORTS) {
       await page.waitForTimeout(1200);
       await page.locator('.ritual-receipt').scrollIntoViewIfNeeded().catch(() => {});
       await page.waitForTimeout(500);
+      // read2：出结果后再往下滚大半屏，看排在结果条下面的小节（八字「五行分布」「今日与你」等）
+      if (action === 'read2') { await page.evaluate(() => window.scrollBy({ top: innerHeight * 0.7, behavior: 'instant' })); await page.waitForTimeout(500); }
     }
     if (action === 'share' || action === 'sheet' || action === 'sheet2') {
       // share：一直点主按钮直到出现「分享」，点开分享卡预览，并把卡片原图另存为 <路由>-card.png
@@ -115,7 +117,8 @@ for (const vp of VIEWPORTS) {
       return { scrollW: document.documentElement.scrollWidth, w, bad: [...new Set(bad)].slice(0, 8) };
     });
     const file = `${theme === 'paper' ? '' : theme + '-'}${r.replace(/[/@]/g, '-')}-${vp.name}.png`;
-    await page.screenshot({ path: path.join(out, file) });
+    // home@full：整页长图，一次看完 17 张玩法卡的图标
+    await page.screenshot({ path: path.join(out, file), fullPage: action === 'full' });
     report.push({ route: r, viewport: vp.name, file, overflow, errors: [...errors] });
     console.log(file, overflow.scrollW > overflow.w ? 'H-OVERFLOW' : 'ok', overflow.bad.join(' '), errors.length ? 'errors:' + errors.length : '');
     errors.length = 0;

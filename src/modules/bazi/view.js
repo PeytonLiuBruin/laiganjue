@@ -197,7 +197,7 @@ export function mount(container, ctx) {
     const ss = Object.entries(chart.shiShenCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 4)
-      .map(([k, n]) => `${k} ×${n}：${SHISHEN_TEXT[k]}`);
+      .map(([k, n]) => [h('b', { class: 'bz-ss-k' }, `${k} ×${n}`), SHISHEN_TEXT[k]]);
     if (ss.length) sections.push({ label: '十神分布', node: lines(ss), stack: true });
     sections.push({ label: '纳音', text: `${chart.pillars.map((p) => `${p.label} ${p.naYin}`).join(' · ')}。${NAYIN_TEXT[chart.pillars[2].naYinElement] || ''}` });
     sections.push({ label: '命宫胎元', text: `命宫 ${chart.mingGong}，胎元 ${chart.taiYuan}，身宫 ${chart.shenGong}。命宫看志向所寄，胎元看先天根基，身宫看后天着力之处。` });

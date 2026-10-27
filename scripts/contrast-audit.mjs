@@ -57,6 +57,15 @@ for (const theme of themes) {
       }
       await page.waitForTimeout(700);
     }
+    if (action === 'read') {
+      // m/bazi@read：点主按钮直到结果条出来，审计排在结果条下面的小节（八字五行分布、星座档案等）
+      const primary = page.locator('.view-module [data-action="primary"]').first();
+      for (let i = 0; i < 8 && !(await page.locator('.view-module .ritual-receipt').count()); i++) {
+        await primary.click({ force: true }).catch(() => {});
+        await page.waitForTimeout(1200);
+      }
+      await page.waitForTimeout(1000);
+    }
     await page.waitForTimeout(500); // 等转场动画的 opacity 走完
     const found = await page.evaluate(auditInPage);
     if (STAGE) for (const it of found.stageItems) {

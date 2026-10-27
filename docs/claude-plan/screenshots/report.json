@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/caiyun@sheet2",
+    "route": "home",
     "viewport": "393x852",
-    "file": "m-caiyun-sheet2-393x852.png",
+    "file": "home-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/shiye@sheet2",
+    "route": "home@full",
     "viewport": "393x852",
-    "file": "m-shiye-sheet2-393x852.png",
+    "file": "home-full-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -22,46 +22,66 @@
     "errors": []
   },
   {
-    "route": "m/wheel@sheet",
+    "route": "m/bazi",
     "viewport": "393x852",
-    "file": "m-wheel-sheet-393x852.png",
+    "file": "m-bazi-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi@read2",
+    "viewport": "393x852",
+    "file": "m-bazi-read2-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi@sheet2",
+    "viewport": "393x852",
+    "file": "m-bazi-sheet2-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/yinyuan@sheet2",
+    "viewport": "393x852",
+    "file": "m-yinyuan-sheet2-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac@read2",
+    "viewport": "393x852",
+    "file": "m-zodiac-read2-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
       "bad": [
-        "chip",
-        "wh-halo",
-        "wh-rotor"
+        "chip"
       ]
     },
     "errors": []
   },
   {
-    "route": "m/crystal@sheet",
-    "viewport": "393x852",
-    "file": "m-crystal-sheet-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@settings",
-    "viewport": "393x852",
-    "file": "home-settings-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@sheet2",
+    "route": "home",
     "viewport": "430x932",
-    "file": "m-caiyun-sheet2-430x932.png",
+    "file": "home-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -70,9 +90,9 @@
     "errors": []
   },
   {
-    "route": "m/shiye@sheet2",
+    "route": "home@full",
     "viewport": "430x932",
-    "file": "m-shiye-sheet2-430x932.png",
+    "file": "home-full-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -81,45 +101,66 @@
     "errors": []
   },
   {
-    "route": "m/wheel@sheet",
+    "route": "m/bazi",
     "viewport": "430x932",
-    "file": "m-wheel-sheet-430x932.png",
+    "file": "m-bazi-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi@read2",
+    "viewport": "430x932",
+    "file": "m-bazi-read2-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi@sheet2",
+    "viewport": "430x932",
+    "file": "m-bazi-sheet2-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/yinyuan@sheet2",
+    "viewport": "430x932",
+    "file": "m-yinyuan-sheet2-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac@read2",
+    "viewport": "430x932",
+    "file": "m-zodiac-read2-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
       "bad": [
-        "chip",
-        "wh-rotor"
+        "chip"
       ]
     },
     "errors": []
   },
   {
-    "route": "m/crystal@sheet",
-    "viewport": "430x932",
-    "file": "m-crystal-sheet-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@settings",
-    "viewport": "430x932",
-    "file": "home-settings-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@sheet2",
+    "route": "home@full",
     "viewport": "393x852",
-    "file": "ink-m-caiyun-sheet2-393x852.png",
+    "file": "ink-home-full-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -128,24 +169,20 @@
     "errors": []
   },
   {
-    "route": "m/wheel@sheet",
+    "route": "m/bazi@read2",
     "viewport": "393x852",
-    "file": "ink-m-wheel-sheet-393x852.png",
+    "file": "ink-m-bazi-read2-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
-      "bad": [
-        "chip",
-        "wh-halo",
-        "wh-rotor"
-      ]
+      "bad": []
     },
     "errors": []
   },
   {
-    "route": "m/caiyun@sheet2",
+    "route": "home@full",
     "viewport": "430x932",
-    "file": "ink-m-caiyun-sheet2-430x932.png",
+    "file": "ink-home-full-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -154,16 +191,13 @@
     "errors": []
   },
   {
-    "route": "m/wheel@sheet",
+    "route": "m/bazi@read2",
     "viewport": "430x932",
-    "file": "ink-m-wheel-sheet-430x932.png",
+    "file": "ink-m-bazi-read2-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": [
-        "chip",
-        "wh-rotor"
-      ]
+      "bad": []
     },
     "errors": []
   }
