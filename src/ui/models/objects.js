@@ -5,7 +5,6 @@ const TAU=Math.PI*2;
 const cache=new Map();
 function cached(key,build){if(!cache.has(key))cache.set(key,build());return cache.get(key);}
 const shift=(mesh,p)=>transformed(mesh,undefined,p);
-const wx={'木':'#47755e','火':'#ac564c','土':'#94723e','金':'#687a83','水':'#486f99'};
 
 export function drawCompass(p,s){
   const {metal,stone,accent,ink:text}=p.palette, q=axisAngle([0,1,0],-(s.angle||0)*Math.PI/180);
@@ -131,25 +130,50 @@ export function drawSky(p,s,time){
   }
 }
 
+// 第 42 轮：2D 回退命牌与 3D 命牌（stage/scenes/pillars.js 第 21、23 轮）同一套配色。
+// 原来是米色牌身、灰褐细字、未排盘时一个小点，WebGL 创建失败的老机型上像四块空告示牌。
+export const PILLAR_2D = {
+  body: '#e8463c', cap: '#ffc93c', base: '#a85a30', face: '#fff6df', frame: '#e8463c', gold: '#ffc93c',
+  edge: '#2b2240', tag: '#ffc93c', tagEdge: '#d8901e', tagInk: '#5a3410', coin: '#ffe9a8', coinInk: '#e0a21e',
+  back: '#c8302a', backInk: '#8a1c16',
+  wx: { 木: '#22c46c', 火: '#e8463c', 土: '#e0942a', 金: '#f2b318', 水: '#3a9cf0' },
+};
 export function drawPillars(p,s,time){
-  const {metal,stone,ink:text}=p.palette,progress=s.active?clamp(time/(s.duration||2.4)):1;
+  const P=PILLAR_2D,progress=s.active?clamp(time/(s.duration||2.4)):1;
   p.shadow([0,-111,0],151,.18);
-  p.mesh(cached('pillars-base'+metal+stone,()=>[
-    ...shift(box(298,9,61,metal),[0,-104,0]),...shift(box(286,5,53,stone),[0,-97,0]),
+  p.mesh(cached('pillars-base-toon',()=>[
+    ...shift(box(298,9,61,P.base),[0,-104,0]),...shift(box(290,4,57,P.cap),[0,-98,0]),
   ]));
   for(let i=0;i<4;i++){
     const entry=s.pillars?.[i],pose=pillarPose(i,progress),q=pose.rotation,at=point=>add(rotate(point,q),pose.position);
-    const color=entry?stone:'#d6d5ce';
-    p.mesh(transformed(cached('pillar'+color+metal,()=>[
-      ...box(49,164,28,color),...shift(box(52,5,31,metal),[0,-82,0]),...shift(box(52,4,31,metal),[0,82,0]),
+    p.mesh(transformed(cached('pillar-toon',()=>[
+      ...box(49,164,28,P.body),...shift(box(53,6,32,P.cap),[0,-82,0]),...shift(box(53,6,32,P.cap),[0,82,0]),
     ]),q,pose.position));
-    if(pose.visible){
-      const u=rotate([1,0,0],q),v=[0,1,0];
-      p.text(entry?.label||['年柱','月柱','日柱','时柱'][i],at([0,60,14.5]),{size:12,u,v,color:text});
-      const unknownHour=i===3&&s.pillars?.length===3;
-      p.text(entry?.gan||(unknownHour?'未':'·'),at([0,28,14.5]),{size:unknownHour?20:29,u,v,color:wx[entry?.ganElement]||metal,weight:600});
-      p.text(entry?.zhi||(unknownHour?'知':'·'),at([0,-12,14.5]),{size:unknownHour?20:29,u,v,color:wx[entry?.zhiElement]||metal,weight:600});
-      p.text(entry?.shiShen||(unknownHour?'未计入':''),at([0,-56,14.5]),{size:10,u,v,color:text});
+    const front=pose.visible,z=front?14.3:-14.3,u=rotate([front?1:-1,0,0],q),v=[0,1,0];
+    const rect=(cx,cy,w,h)=>[[cx-w/2,cy+h/2,z],[cx+w/2,cy+h/2,z],[cx+w/2,cy-h/2,z],[cx-w/2,cy-h/2,z]].map(pt=>at([front?pt[0]:-pt[0],pt[1],pt[2]]));
+    if(!front){ // 卡背：深朱底、金色双线框、金色圆章上朱红「命」字
+      p.face(rect(0,0,43,150),P.back,{stroke:P.gold,width:2});
+      p.face(rect(0,0,35,140),P.back,{stroke:P.gold,width:1});
+      p.blob(at([0,0,z]),11,P.gold,{shine:false,edge:P.tagEdge});
+      p.text('命',at([0,0,z]),{size:12,u,v,color:P.backInk,weight:900,stroke:null,depth:false});
+      continue;
+    }
+    p.face(rect(0,0,43,150),P.face,{stroke:P.frame,width:2.6});
+    p.face(rect(0,0,37,144),P.face,{stroke:P.gold,width:1.1});
+    p.face(rect(0,64,30,13),P.frame);
+    p.text(entry?.label||['年柱','月柱','日柱','时柱'][i],at([0,64,z]),{size:9.5,u,v,color:'#ffffff',weight:900,stroke:null,depth:false});
+    const unknownHour=i===3&&s.pillars?.length===3;
+    const big=(txt,y,el,size)=>p.text(txt,at([0,y,z]),{size,u,v,color:P.wx[el]||P.gold,weight:900,stroke:P.edge});
+    if(entry?.gan){big(entry.gan,24,entry.ganElement,30);big(entry.zhi,-18,entry.zhiElement,30);}
+    else if(unknownHour){big('未',22,null,24);big('知',-16,null,24);}
+    else for(const y of [24,-18]){ // 还没排盘：两枚金色问号圆章
+      p.blob(at([0,y,z]),12,P.coin,{shine:false,edge:P.coinInk,shade:.9}); // 暗部不压灰，保持奶黄
+      p.text('?',at([0,y+.5,z]),{size:15,u,v,color:P.coinInk,weight:900,stroke:null,depth:false});
+    }
+    const tag=entry?.shiShen||(unknownHour?'未计入':'');
+    if(tag){
+      p.face(rect(0,-60,Math.min(40,tag.length*9+10),13),P.tag,{stroke:P.tagEdge,width:1.2});
+      p.text(tag,at([0,-60,z]),{size:8.5,u,v,color:P.tagInk,weight:900,stroke:null,depth:false});
     }
   }
 }

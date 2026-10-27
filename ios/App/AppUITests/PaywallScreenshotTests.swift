@@ -42,11 +42,15 @@ final class PaywallScreenshotTests: XCTestCase {
             throw XCTSkip("这台模拟器上已经看过引导，先卸载 App 再跑")
         }
         app.open(URL(string: "laiganjue://pro")!)
-        sleep(3)
+        // 第 42 轮：app.open 在模拟器上会重新启动 App，网页重新加载，引导在加载完 0.5 秒后才再弹出。
+        // 原来固定等 3 秒，负载高时截到的是空白页或引导刚开始淡入的首页，断言「引导还在」失败。
+        // 改为等引导重新出现（这正是冷启动从推广链接进来的路径），再多等 2 秒确认付费卡没有抢先打开。
+        let back = onboardStart.waitForExistence(timeout: 40)
+        sleep(2)
         let restore = app.buttons.matching(NSPredicate(format: "label CONTAINS '恢复购买'")).firstMatch
         snap("onboard-first")
         XCTAssertFalse(restore.exists, "引导还没关时付费卡不应打开")
-        XCTAssertTrue(onboardStart.exists, "引导应该还在最上面")
+        XCTAssertTrue(back && onboardStart.exists, "引导应该还在最上面")
         onboardStart.tap()
         let opened = restore.waitForExistence(timeout: 20)
         sleep(1)

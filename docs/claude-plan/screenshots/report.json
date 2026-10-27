@@ -1,8 +1,8 @@
 [
   {
-    "route": "home",
+    "route": "m/bazi@read",
     "viewport": "393x852",
-    "file": "home-393x852.png",
+    "file": "m-bazi-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,12 +11,56 @@
     "errors": []
   },
   {
-    "route": "home@full",
+    "route": "m/bazi@read",
+    "viewport": "430x932",
+    "file": "m-bazi-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi",
     "viewport": "393x852",
-    "file": "home-full-393x852.png",
+    "file": "ink-m-bazi-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi@read",
+    "viewport": "393x852",
+    "file": "ink-m-bazi-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi",
+    "viewport": "430x932",
+    "file": "ink-m-bazi-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi@read",
+    "viewport": "430x932",
+    "file": "ink-m-bazi-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
       "bad": []
     },
     "errors": []
@@ -33,9 +77,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi@read2",
+    "route": "m/caiyun@read",
     "viewport": "393x852",
-    "file": "m-bazi-read2-393x852.png",
+    "file": "m-caiyun-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -44,31 +88,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi@sheet2",
+    "route": "m/zodiac@read",
     "viewport": "393x852",
-    "file": "m-bazi-sheet2-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/yinyuan@sheet2",
-    "viewport": "393x852",
-    "file": "m-yinyuan-sheet2-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/zodiac@read2",
-    "viewport": "393x852",
-    "file": "m-zodiac-read2-393x852.png",
+    "file": "m-zodiac-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -79,23 +101,23 @@
     "errors": []
   },
   {
-    "route": "home",
-    "viewport": "430x932",
-    "file": "home-430x932.png",
+    "route": "m/yinyuan@read",
+    "viewport": "393x852",
+    "file": "m-yinyuan-read-393x852.png",
     "overflow": {
-      "scrollW": 430,
-      "w": 430,
+      "scrollW": 393,
+      "w": 393,
       "bad": []
     },
     "errors": []
   },
   {
-    "route": "home@full",
-    "viewport": "430x932",
-    "file": "home-full-430x932.png",
+    "route": "m/shiye@read",
+    "viewport": "393x852",
+    "file": "m-shiye-read-393x852.png",
     "overflow": {
-      "scrollW": 430,
-      "w": 430,
+      "scrollW": 393,
+      "w": 393,
       "bad": []
     },
     "errors": []
@@ -112,9 +134,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi@read2",
+    "route": "m/caiyun@read",
     "viewport": "430x932",
-    "file": "m-bazi-read2-430x932.png",
+    "file": "m-caiyun-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -123,31 +145,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi@sheet2",
+    "route": "m/zodiac@read",
     "viewport": "430x932",
-    "file": "m-bazi-sheet2-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/yinyuan@sheet2",
-    "viewport": "430x932",
-    "file": "m-yinyuan-sheet2-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/zodiac@read2",
-    "viewport": "430x932",
-    "file": "m-zodiac-read2-430x932.png",
+    "file": "m-zodiac-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -158,31 +158,9 @@
     "errors": []
   },
   {
-    "route": "home@full",
-    "viewport": "393x852",
-    "file": "ink-home-full-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/bazi@read2",
-    "viewport": "393x852",
-    "file": "ink-m-bazi-read2-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@full",
+    "route": "m/yinyuan@read",
     "viewport": "430x932",
-    "file": "ink-home-full-430x932.png",
+    "file": "m-yinyuan-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -191,13 +169,61 @@
     "errors": []
   },
   {
-    "route": "m/bazi@read2",
+    "route": "m/shiye@read",
     "viewport": "430x932",
-    "file": "ink-m-bazi-read2-430x932.png",
+    "file": "m-shiye-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
       "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/caiyun@read",
+    "viewport": "393x852",
+    "file": "ink-m-caiyun-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac@read",
+    "viewport": "393x852",
+    "file": "ink-m-zodiac-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/caiyun@read",
+    "viewport": "430x932",
+    "file": "ink-m-caiyun-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac@read",
+    "viewport": "430x932",
+    "file": "ink-m-zodiac-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   }

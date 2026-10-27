@@ -1,5 +1,5 @@
 // iPhone 视口截图：构建 dist → 起本地服务器 → 软件 WebGL 的无头 Chromium，按 393×852 与 430×932 两种尺寸截图。
-// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl]
+// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl] · 动作 @read @read2 @readfull @full @sheet @sheet2 @share
 // --no-webgl：关掉 WebGL，玩法页退回 2D 器物。只检查 2D 界面（设置、付费卡、黄历等）时用，Mac 负载高时也能很快截完。
 // 每张图同时检查横向溢出，结果写到 <out>/report.json。非宣纸皮肤的文件名前加皮肤名（如 nebula-home-393x852.png）。
 import path from 'node:path';
@@ -60,7 +60,7 @@ for (const vp of VIEWPORTS) {
       await page.waitForFunction(() => document.querySelector('.view-module .stage-canvas[data-phase="revealed"]'), null, { timeout: 15_000 }).catch(() => {});
       await page.waitForTimeout(250);
     }
-    if (action === 'read' || action === 'read2') {
+    if (action === 'read' || action === 'read2' || action === 'readfull') {
       // 多步玩法（灵签要先摇再取签）：一直点主按钮，直到结果条出现「展开解读」
       // 六爻要掷六次，卦成后主按钮本身变成「展开解读」
       const primary = page.locator('.view-module [data-action="primary"]').first();
@@ -106,6 +106,8 @@ for (const vp of VIEWPORTS) {
       const src = await page.evaluate(() => document.querySelector('.sheet.open .share-card-img')?.src || '');
       if (vp.name === VIEWPORTS[0].name && src.startsWith('data:image/png')) await writeFile(path.join(out, `${route.replace(/\//g, '-')}-card.png`), Buffer.from(src.split(',')[1], 'base64'));
     }
+    // readfull：整页长图前回到顶部，否则 sticky 顶栏会被画在当时的滚动位置、压住舞台
+    if (action === 'readfull') { await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })); await page.waitForTimeout(300); }
     // 等平滑滚动停下再截：滚动途中截图，无头 Chromium 会把 sticky 顶栏画到半路、上方露出白带（第 32 轮用 scroll-probe 逐帧确认顶栏本身一直在 0）
     await page.waitForFunction(() => new Promise((ok) => { const y = scrollY; requestAnimationFrame(() => requestAnimationFrame(() => ok(scrollY === y))); }), null, { timeout: 5_000, polling: 100 }).catch(() => {});
     const overflow = await page.evaluate(() => {
@@ -117,8 +119,8 @@ for (const vp of VIEWPORTS) {
       return { scrollW: document.documentElement.scrollWidth, w, bad: [...new Set(bad)].slice(0, 8) };
     });
     const file = `${theme === 'paper' ? '' : theme + '-'}${r.replace(/[/@]/g, '-')}-${vp.name}.png`;
-    // home@full：整页长图，一次看完 17 张玩法卡的图标
-    await page.screenshot({ path: path.join(out, file), fullPage: action === 'full' });
+    // home@full：整页长图，一次看完 17 张玩法卡的图标。m/<玩法>@readfull：出结果后的整页长图
+    await page.screenshot({ path: path.join(out, file), fullPage: action === 'full' || action === 'readfull' });
     report.push({ route: r, viewport: vp.name, file, overflow, errors: [...errors] });
     console.log(file, overflow.scrollW > overflow.w ? 'H-OVERFLOW' : 'ok', overflow.bad.join(' '), errors.length ? 'errors:' + errors.length : '');
     errors.length = 0;
