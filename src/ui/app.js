@@ -11,6 +11,7 @@ import { ritualArt } from './ritual-art.js';
 import { createMotionPrompt } from './motion-prompt.js';
 import { openPaywall, TERMS_URL, PRIVACY_URL } from './paywall.js';
 import { routeFromUrl } from './deeplink.js';
+import { createOnboardGate } from './onboard-gate.js';
 import { versionText } from './version.js';
 import { openShareCard } from './share-card.js';
 import { canUseTheme, startSkinTryOn, isFreeTheme, openSkinOffer } from './skins.js';
@@ -341,14 +342,18 @@ export function startApp(root) {
   /* ---------------- 深链（App） ---------------- */
   // laiganjue://pro 打开付费卡，laiganjue://m/<玩法> 打开玩法页，laiganjue://skin/<id> 打开单套皮肤购买卡。
   const PAID_SKINS = THEMES.filter((t) => !isFreeTheme(t.id)).map((t) => t.id);
+  // 新装 App 从深链进来时首次引导还没关，付费卡与皮肤卡排在引导后面打开
+  const onboardGate = createOnboardGate(!storage.get('onboarded', false) && !location.hash.startsWith('#/zen') && !navigator.webdriver);
   platform.native.onUrlOpen?.((url) => {
     const r = routeFromUrl(url, MODULES, PAID_SKINS);
     if (!r) return;
-    if (r.paywall) openPaywall(platform);
+    if (r.paywall) onboardGate.run(() => openPaywall(platform));
     else if (r.skin) {
       // 从推广链接买下（或已经拥有）就直接换上，不然买完界面没有任何变化
-      if (canUseTheme(platform.purchases, r.skin)) applyTheme(r.skin, { persist: true });
-      else openSkinOffer(platform, THEMES.find((t) => t.id === r.skin), { openPaywall }).then((owned) => { if (owned) applyTheme(r.skin, { persist: true }); });
+      onboardGate.run(() => {
+        if (canUseTheme(platform.purchases, r.skin)) applyTheme(r.skin, { persist: true });
+        else openSkinOffer(platform, THEMES.find((t) => t.id === r.skin), { openPaywall }).then((owned) => { if (owned) applyTheme(r.skin, { persist: true }); });
+      });
     }
     else if (r.hash) navigate(r.hash);
   });
@@ -611,12 +616,12 @@ export function startApp(root) {
 
   /* ---------------- 首次引导 ---------------- */
   function openOnboarding(force = false) {
-    if (!force && storage.get('onboarded', false)) return;
+    if (!force && storage.get('onboarded', false)) { onboardGate.release(); return; }
     if (document.querySelector('.onboard')) return;
     const rows = [
       ['摇', '摇一摇 · 甩一甩', '手机就是你的筊杯、签筒与铜钱。也可以在屏幕上滑动，或直接点按钮。'],
       ['问', '一问一答', '每个玩法只有一个主按钮，跟着它走：先出手，看见结果，再展开解读。'],
-      ['静', '静观屏保', platform.inApp ? '左上角的月亮进入屏保；闲置时它就是一面素雅的时钟。' : '左上角的月亮进入屏保；把网页加到主屏幕，闲置时它就是一面素雅的时钟。'],
+      ['静', '静观屏保', platform.inApp ? '左上角的月亮进入屏保。闲置时它就是一面素雅的时钟。' : '左上角的月亮进入屏保。把网页加到主屏幕，闲置时它就是一面素雅的时钟。'],
     ];
     const el = h(
       'div',
@@ -636,7 +641,7 @@ export function startApp(root) {
             storage.set('onboarded', true);
             el.classList.remove('show');
             platform.haptic.tap();
-            setTimeout(() => { el.remove(); motionPrompt?.enter(); }, 400);
+            setTimeout(() => { el.remove(); onboardGate.release(); motionPrompt?.enter(); }, 400);
           },
         }),
         h('p', { class: 'onboard-foot' }, '传统文化演绎 · 仅供娱乐与自我觉察'),

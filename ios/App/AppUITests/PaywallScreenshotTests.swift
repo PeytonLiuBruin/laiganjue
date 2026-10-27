@@ -20,6 +20,40 @@ final class PaywallScreenshotTests: XCTestCase {
         app.launch()
         // 等首页渲染完（WKWebView 里的标题会出现在无障碍树里）
         XCTAssertTrue(app.staticTexts["此刻，想问什么？"].waitForExistence(timeout: 60), "首页没有出现")
+        // 深链的付费卡会排在首次引导后面，其余用例先关掉引导（只有新装的 App 才有）
+        if !name.contains("DeepLinkWaitsForOnboarding") { dismissOnboarding() }
+    }
+
+    private var onboardStart: XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label == '开始'")).firstMatch
+    }
+
+    private func dismissOnboarding() {
+        if onboardStart.waitForExistence(timeout: 6) {
+            onboardStart.tap()
+            sleep(1)
+        }
+    }
+
+    /// 新装 App 从 laiganjue://pro 进来：先看到欢迎引导，点「开始」后才打开付费卡。
+    /// 名字排在最前，paywall-shot.sh 每台模拟器先卸载 App，这一项跑在全新安装上。
+    func testDeepLinkWaitsForOnboarding() throws {
+        guard onboardStart.waitForExistence(timeout: 15) else {
+            throw XCTSkip("这台模拟器上已经看过引导，先卸载 App 再跑")
+        }
+        app.open(URL(string: "laiganjue://pro")!)
+        sleep(3)
+        let restore = app.buttons.matching(NSPredicate(format: "label CONTAINS '恢复购买'")).firstMatch
+        snap("onboard-first")
+        XCTAssertFalse(restore.exists, "引导还没关时付费卡不应打开")
+        XCTAssertTrue(onboardStart.exists, "引导应该还在最上面")
+        onboardStart.tap()
+        let opened = restore.waitForExistence(timeout: 20)
+        sleep(1)
+        snap("onboard-then-paywall")
+        if !opened { dumpTree("onboard-debug") }
+        XCTAssertTrue(opened, "关掉引导后付费卡没有打开")
+        XCTAssertFalse(onboardStart.exists, "付费卡下面不应再压着引导")
     }
 
     private func priceText() -> XCUIElement {

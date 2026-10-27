@@ -37,6 +37,12 @@ for DEV in "${DEVICES[@]}"; do
   SLUG=$(echo "$DEV" | tr 'A-Z ' 'a-z-')
   RES="$WORK/$SLUG.xcresult"
   echo "▶ $DEV"
+  # 先卸载 App，让「深链排在首次引导后面」这一项跑在全新安装上（FRESH=0 跳过）
+  if [ "${FRESH:-1}" != 0 ]; then
+    # 负载很高时 simctl 可能一直不返回（第 36 轮卡了 11 分钟），各给 120 秒，超时就带着旧安装继续
+    perl -e 'alarm 120; exec @ARGV' xcrun simctl boot "$DEV" >/dev/null 2>&1 || true
+    perl -e 'alarm 120; exec @ARGV' xcrun simctl uninstall "$DEV" "${BUNDLE_ID:-io.github.peytonliubruin.laiganjue}" >/dev/null 2>&1 || true
+  fi
   xcodebuild test -quiet \
     -project "$PROJ" -scheme App \
     -destination "platform=iOS Simulator,name=$DEV" \
@@ -65,7 +71,7 @@ for test in json.load(open(os.path.join(src, 'manifest.json'))):
     for a in test.get('attachments', []):
         name = a.get('suggestedHumanReadableName', '')
         key = re.split(r'_\d|\.', name)[0]
-        if key in ('paywall', 'skin-offer', 'purchase-pro', 'restore-pro', 'restore-none', 'skin-bought'):
+        if key in ('paywall', 'skin-offer', 'purchase-pro', 'restore-pro', 'restore-none', 'skin-bought', 'onboard-first', 'onboard-then-paywall'):
             shutil.copy(os.path.join(src, a['exportedFileName']), os.path.join(out, f'ios-{slug}-{key}.png'))
             n += 1
         elif key.endswith('-debug') or key.endswith('-tree'):  # 失败时的现场，放到临时目录方便排查

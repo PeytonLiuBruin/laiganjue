@@ -168,3 +168,36 @@ body { line-height: 1.6; }
 .stage-hurry-hint.out { opacity: 0; }
 @keyframes hurry-hint-in { from { transform: translate(-50%, 8px) scale(.8); opacity: 0; } to { transform: translate(-50%, 0) scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .stage-hurry-hint { animation: none; } }
+
+/* —— 首次引导卡（第 36 轮）：新用户看到的第一屏，和 App 图标同一套金币 + 描边红字，三行说明用三色描边方块 —— */
+.onboard { background: rgba(43, 34, 64, .42); }
+.onboard-card {
+  border: 2px solid var(--line); border-radius: 26px;
+  box-shadow: 0 6px 0 var(--edge-color), 0 18px 40px rgba(20, 12, 40, .22);
+  transition: transform .45s var(--ease-pop);
+}
+.onboard-mark {
+  width: 68px; height: 68px; margin: -4px auto 12px;
+  font-family: var(--font-round); font-weight: 900; font-size: 34px; color: #e8463c;
+  background: radial-gradient(circle at 34% 28%, #fff1b0 0 14%, #ffd457 34%, #ffc93c 62%, #e3a21a 100%);
+  border: 3px solid #8a3a10; box-shadow: 0 4px 0 #8a3a10, inset 0 -5px 0 rgba(138, 58, 16, .28);
+  text-shadow: 2px 0 0 #5a1a10, -2px 0 0 #5a1a10, 0 2px 0 #5a1a10, 0 -2px 0 #5a1a10, 1.5px 1.5px 0 #5a1a10, -1.5px -1.5px 0 #5a1a10, 1.5px -1.5px 0 #5a1a10, -1.5px 1.5px 0 #5a1a10;
+}
+.onboard.show .onboard-mark { animation: lgj-onboard-coin .6s var(--ease-pop) .15s both; }
+@keyframes lgj-onboard-coin { from { transform: scale(.4) rotate(-18deg); } to { transform: none; } }
+.onboard-title { font-family: var(--font-round); font-weight: 900; font-size: 28px; letter-spacing: .08em; }
+.onboard-sub { font-weight: 700; letter-spacing: .14em; }
+.onboard-rows { gap: 12px; margin: 20px 0; }
+.onboard-row { align-items: center; padding: 10px 12px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--line); }
+.onboard-glyph {
+  --g: #e8463c; --g-ink: #6e1712;
+  width: 42px; height: 42px; border-radius: 13px;
+  font-family: var(--font-round); font-weight: 900; font-size: 20px; color: #fff;
+  background: var(--g); border: 2px solid var(--g-ink); box-shadow: 0 3px 0 var(--g-ink);
+  text-shadow: 1.5px 0 0 var(--g-ink), -1.5px 0 0 var(--g-ink), 0 1.5px 0 var(--g-ink), 0 -1.5px 0 var(--g-ink);
+}
+.onboard-row:nth-child(2) .onboard-glyph { --g: #3d8bff; --g-ink: #173a80; }
+.onboard-row:nth-child(3) .onboard-glyph { --g: #9b6bff; --g-ink: #3a2380; }
+.onboard-row b { font-family: var(--font-round); font-weight: 800; letter-spacing: .04em; }
+.onboard-row p { line-height: 1.6; }
+@media (prefers-reduced-motion: reduce) { .onboard.show .onboard-mark { animation: none; } }
