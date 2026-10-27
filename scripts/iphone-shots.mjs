@@ -72,8 +72,9 @@ for (const vp of VIEWPORTS) {
       await page.locator('.ritual-receipt').scrollIntoViewIfNeeded().catch(() => {});
       await page.waitForTimeout(500);
     }
-    if (action === 'share') {
-      // 一直点主按钮直到出现「分享」，点开分享卡预览，并把卡片原图另存为 <路由>-card.png
+    if (action === 'share' || action === 'sheet') {
+      // share：一直点主按钮直到出现「分享」，点开分享卡预览，并把卡片原图另存为 <路由>-card.png
+      // sheet：同样点到结果抽屉（深度解读）打开为止，停在抽屉上截图，不点分享
       const shareBtn = page.locator('.sheet.open .sheet-actions button, .ritual-receipt button', { hasText: /^分享$/ });
       const primary = page.locator('.view-module [data-action="primary"]').first();
       const read = page.locator('.view-module .ritual-receipt [data-read="1"]');
@@ -83,6 +84,9 @@ for (const vp of VIEWPORTS) {
         await page.waitForTimeout(900);
       }
       await page.waitForTimeout(700); // 等结果抽屉滑入完成
+    }
+    if (action === 'share') {
+      const shareBtn = page.locator('.sheet.open .sheet-actions button, .ritual-receipt button', { hasText: /^分享$/ });
       await shareBtn.first().evaluate((b) => b.click()).catch(() => {});
       await page.waitForSelector('.sheet.open .share-card-img', { timeout: 10_000 }).catch(() => {});
       // 塔罗、黄历、星座的配图是异步画的，画好后图片带 data-art

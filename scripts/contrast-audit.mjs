@@ -46,6 +46,17 @@ for (const theme of themes) {
     if (action === 'settings') { await page.click('.app-header [aria-label="设置"]').catch(() => {}); await page.waitForTimeout(700); }
     if (action === 'paywall') { await page.evaluate(() => { window.__lgj?.openPaywall?.({ reason: '审计' }); }); await page.waitForTimeout(700); }
     if (action === 'skins') { await page.click('.app-header button[aria-label="换皮肤"]').catch(() => {}); await page.waitForTimeout(700); }
+    if (action === 'sheet') {
+      // m/qian@sheet：一直点主按钮或「展开解读」，直到结果抽屉（深度解读）打开
+      const primary = page.locator('.view-module [data-action="primary"]').first();
+      const read = page.locator('.view-module .ritual-receipt [data-read="1"]');
+      for (let i = 0; i < 30 && !(await page.locator('.sheet.open .result').count()); i++) {
+        if (await read.count()) await read.first().click({ force: true }).catch(() => {});
+        else await primary.click({ force: true }).catch(() => {});
+        await page.waitForTimeout(900);
+      }
+      await page.waitForTimeout(700);
+    }
     await page.waitForTimeout(500); // 等转场动画的 opacity 走完
     const found = await page.evaluate(auditInPage);
     if (STAGE) for (const it of found.stageItems) {
@@ -116,7 +127,8 @@ function auditInPage() {
     const layers = [];
     for (let n = el; n; n = n.parentElement) {
       const cs = getComputedStyle(n);
-      const img = cs.backgroundImage !== 'none' ? stops(cs.backgroundImage) : [];
+      // background-clip: text 的渐变只填在字形里（如金色大标题），不是后代文字的背景
+      const img = cs.backgroundImage !== 'none' && !/text/.test(cs.backgroundClip || cs.webkitBackgroundClip || '') ? stops(cs.backgroundImage) : [];
       const col = parse(cs.backgroundColor);
       if (img.length) layers.push({ multi: img });
       if (col && col[3] > 0) layers.push({ multi: [col] });

@@ -1,0 +1,66 @@
+/* 结果抽屉（深度解读）卡通化（第 38 轮）。
+   原来抽屉里的结果卡还是宣纸细线版：字距拉开的细字眉标、1px 灰线胶囊、只有左侧细线的诗签框、
+   宋体细字的「签语 / 解曰」标签、底部「分享」是没有边框的纯文字。和厚边按钮、卡通舞台放在一起发闷。
+   改为：眉标与标签用圆体粗字，等级胶囊 2px 描边加 3px 厚边，诗签框整圈 2px 描边加 4px 厚边（签诗正文仍是宋体），
+   分段标签是浅主色底的圆角小块，抽屉底部的次按钮是白底描边厚边按钮，印章边加粗。 */
+.result .result-kicker {
+  font: 800 13px/1.6 var(--font-round, var(--font-sans));
+  letter-spacing: .08em;
+}
+.result .result-badge {
+  margin-bottom: 10px;
+  padding: 4px 14px;
+  border: 2px solid color-mix(in srgb, var(--accent-text) 55%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--sheet-bg, #fff));
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent-text) 32%, transparent);
+  color: var(--accent-text);
+  font: 800 14px/1.4 var(--font-round, var(--font-sans));
+  letter-spacing: .06em;
+}
+.result .result-title { font-weight: 900; }
+.result .result-sub {
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.result .result-verse {
+  border: 2px solid var(--line-strong);
+  border-radius: 18px;
+  background: var(--surface-2);
+  box-shadow: 0 4px 0 var(--edge-color);
+}
+
+/* 分段标签：浅主色底圆角小块。标签列从 4.5em 放宽到 5em，4 个字的标签加内边距后仍放得下 */
+.result .result-section:not(.stack) { grid-template-columns: 5em minmax(0, 1fr); }
+.result .result-section-label {
+  justify-self: start;
+  max-width: 100%;
+  padding: 2px 7px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  color: var(--accent-text);
+  font: 800 13px/1.55 var(--font-round, var(--font-sans));
+  letter-spacing: .03em;
+}
+
+.result .seal { border-width: 3px; border-radius: 12px; }
+/* 玄墨皮肤的印泥红 #b8342b 在深色抽屉上只有 2.3:1（第 38 轮 contrast-audit 打开抽屉后查到），提亮成朱橙 */
+[data-theme='ink'] .result .seal,
+:root:not([data-theme]) .result .seal { --seal: #ff6a55; }
+
+/* 抽屉底部的次按钮（分享、复制等）：白底描边厚边，按下下沉 */
+.sheet-actions .btn.ghost,
+.sheet-actions .btn.soft {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  box-shadow: 0 4px 0 var(--edge-color);
+  color: var(--text);
+  font-weight: 800;
+}
+.sheet-actions .btn.ghost:active:not(:disabled),
+.sheet-actions .btn.soft:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge-color); }
+
+@media (max-width: 360px) {
+  .result .result-section:not(.stack) { grid-template-columns: 1fr; }
+}
