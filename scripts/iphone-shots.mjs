@@ -72,7 +72,7 @@ for (const vp of VIEWPORTS) {
       await page.locator('.ritual-receipt').scrollIntoViewIfNeeded().catch(() => {});
       await page.waitForTimeout(500);
     }
-    if (action === 'share' || action === 'sheet') {
+    if (action === 'share' || action === 'sheet' || action === 'sheet2') {
       // share：一直点主按钮直到出现「分享」，点开分享卡预览，并把卡片原图另存为 <路由>-card.png
       // sheet：同样点到结果抽屉（深度解读）打开为止，停在抽屉上截图，不点分享
       const shareBtn = page.locator('.sheet.open .sheet-actions button, .ritual-receipt button', { hasText: /^分享$/ });
@@ -84,6 +84,15 @@ for (const vp of VIEWPORTS) {
         await page.waitForTimeout(900);
       }
       await page.waitForTimeout(700); // 等结果抽屉滑入完成
+    }
+    if (action === 'sheet2') {
+      // sheet2：抽屉打开后把抽屉里可滚动的那一层往下滚一屏的 60%，看各玩法放在中段的小标签（六爻「象曰」、御神签分项等）
+      await page.evaluate(() => {
+        const sheet = document.querySelector('.sheet.open');
+        const box = sheet && [sheet, ...sheet.querySelectorAll('*')].find((el) => el.scrollHeight > el.clientHeight + 8 && /auto|scroll/.test(getComputedStyle(el).overflowY));
+        if (box) box.scrollTop += box.clientHeight * 0.6;
+      });
+      await page.waitForTimeout(500);
     }
     if (action === 'share') {
       const shareBtn = page.locator('.sheet.open .sheet-actions button, .ritual-receipt button', { hasText: /^分享$/ });

@@ -64,3 +64,63 @@
 @media (max-width: 360px) {
   .result .result-section:not(.stack) { grid-template-columns: 1fr; }
 }
+
+/* 各玩法抽屉里自带的小标签（第 39 轮）。
+   六爻「象曰」「本卦 / 变卦」、御神签分项名、黄历宜忌评级、卢恩与塔罗的正逆位小胶囊，
+   原来是 10 到 12px、字距 0.16 到 0.25em 的细字或 1px 细线胶囊，没走 result-section，第 38 轮没改到。
+   统一成和分段标签同一套：圆体 800、字距 0.03 到 0.06em，胶囊 2px 描边。
+   选择器带上模块类，特异度不低于模块自己的规则，而且本文件在模块样式之后引入。 */
+.m-liuyao .ly-xiang-k,
+.m-omikuji .ok-item-k {
+  display: inline-block;
+  justify-self: start;
+  align-self: flex-start;
+  padding: 2px 7px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  color: var(--accent-text);
+  font: 800 13px/1.55 var(--font-round, var(--font-sans));
+  letter-spacing: .03em;
+}
+.m-liuyao .ly-xiang { border-top: 2px dashed var(--line-strong); }
+.m-omikuji .ok-item { gap: 4px; border-top: 2px dashed var(--line); }
+.m-liuyao .ly-mini-label,
+.m-liuyao .ly-pair-still {
+  font: 800 12px/1.5 var(--font-round, var(--font-sans));
+  letter-spacing: .06em;
+  color: var(--text-2);
+}
+.m-liuyao .ly-mini {
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 3px 0 var(--edge-color);
+}
+.m-almanac .al-rating-label {
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+/* 御神签与黄历的眉标原本单独设了宋体和大字距，盖过了上面的 .result .result-kicker */
+.m-omikuji.ok-sheet-wrap .result-kicker,
+.m-almanac .al-reading .result-kicker {
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+/* 卢恩、塔罗的正位 / 逆位小胶囊 */
+.m-runes .rn-tag,
+.m-tarot .tr-tag {
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0 8px;
+  font: 800 11px/1.6 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+}
+.m-tarot .tr-tag { border-color: color-mix(in srgb, var(--accent-text) 55%, transparent); }
+.m-runes .rn-tag.rev,
+.m-tarot .tr-tag.rev { border-color: var(--seal); color: var(--seal); }
+.m-runes .rn-sec-latin,
+.m-tarot .tr-read-en {
+  font-weight: 700;
+  letter-spacing: .1em;
+}

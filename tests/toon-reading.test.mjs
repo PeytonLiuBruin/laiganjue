@@ -24,3 +24,10 @@ test('标签列放宽到 5em，窄屏改上下排，底部次按钮带厚边并�
   assert.match(css, /\.sheet-actions \.btn\.ghost,\s*\.sheet-actions \.btn\.soft \{[^}]*border: 2px solid[^}]*box-shadow: 0 4px 0 var\(--edge-color\)/);
   assert.match(css, /:active:not\(:disabled\) \{ transform: translateY\(3px\)/);
 });
+
+test('各玩法抽屉自带的小标签也改为圆体粗字，不再用大字距细字', () => {
+  assert.match(css, /\.m-liuyao \.ly-xiang-k,\s*\.m-omikuji \.ok-item-k \{[^}]*font: 800 13px[^}]*letter-spacing: \.03em/);
+  assert.match(css, /\.m-omikuji\.ok-sheet-wrap \.result-kicker,\s*\.m-almanac \.al-reading \.result-kicker \{[^}]*font-family: var\(--font-round/);
+  assert.match(css, /\.m-runes \.rn-tag,\s*\.m-tarot \.tr-tag \{[^}]*border: 2px solid[^}]*font: 800 11px/);
+  assert.match(css, /\.m-liuyao \.ly-mini \{[^}]*border: 2px solid[^}]*box-shadow: 0 3px 0/);
+});

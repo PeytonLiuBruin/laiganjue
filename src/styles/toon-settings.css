@@ -1,0 +1,37 @@
+/* 设置页卡通化（第 39 轮）。
+   设置行原来是 1px 细分隔线、常规字重标签、1px 细线开关，和付费卡、结果抽屉的厚边描边风格不搭。
+   改为：行标签圆体 800，分隔线 2px 虚线，开关 2px 描边加 3px 厚边，滑块白底描边，打开时用主色并带深色厚边。 */
+.setting-row {
+  border-bottom: 2px dashed var(--line);
+}
+.setting-row:last-child { border-bottom: 0; }
+.setting-label {
+  font: 800 16px/1.45 var(--font-round, var(--font-sans));
+  letter-spacing: .02em;
+  color: var(--text);
+}
+.setting-desc {
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.switch {
+  border: 2px solid var(--line-strong);
+  background: var(--surface-2);
+  box-shadow: 0 3px 0 var(--edge-color);
+}
+.switch::after {
+  top: 2px;
+  left: 2px;
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+}
+.switch.on {
+  background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 60%, #000);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 55%, #000);
+}
+.switch.on::after {
+  background: #fff;
+  border-color: color-mix(in srgb, var(--accent) 60%, #000);
+}
+.setting-legal a { font-weight: 800; }

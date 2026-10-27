@@ -48,3 +48,12 @@
 :is([data-theme='ink'], [data-theme='cinnabar'], [data-theme='nebula']) :is(.m-liuyao .ly-line-pos, .m-liuyao .ly-board-foot, .m-liuyao .ly-board-title) { color: var(--text); }
 .stage-badge, .stage-hint { background: color-mix(in srgb, var(--surface-strong) 88%, transparent); }
 [data-theme='paper'] :is(.stage-badge, .stage-hint) { color: var(--text-2); background: rgba(255, 255, 255, 0.9); }
+
+/* 第 39 轮：黄历详解抽屉此前没进对比度审计（m/almanac@sheet），五套皮肤共 30 处不达标。
+   星级暗星原来叠 0.5 透明度，改为实色三级字。宜忌方块固定用深绿、深红底配白字，不随皮肤的亮色 --success/--danger。
+   深色皮肤的「忌」字与凶时改用亮红，青瓷的吉时改深绿。 */
+.stars .off { opacity: 1; }
+.m-almanac .al-yj-row .al-mark { background: #2f7d4f; }
+.m-almanac .al-yj-row.ji .al-mark { background: #b8302a; }
+:is([data-theme='ink'], :root:not([data-theme])) :is(.m-almanac .al-term.ji, .m-almanac .al-hcell.bad i) { color: #ff7a70; border-color: #ff7a70; }
+[data-theme='celadon'] .m-almanac .al-hcell.good i { color: #23633d; }
