@@ -227,5 +227,27 @@
       "bad": []
     },
     "errors": []
+  },
+  {
+    "route": "home@paywall",
+    "viewport": "393x852",
+    "file": "home-paywall-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "home@paywall",
+    "viewport": "430x932",
+    "file": "home-paywall-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
   }
 ]

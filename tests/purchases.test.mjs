@@ -178,3 +178,46 @@ test('免费额度：解锁过的结果记住身份，反复打开不再计次�
   assert.equal(q.isUnlocked('liuyao:1'), false, '最旧的被挤出');
   assert.equal(q.isUnlocked('omikuji:' + (UNLOCK_KEEP + 4)), true);
 });
+
+test('取价格：失败或空列表重试一次，没取全不缓存，下次打开重新取', async () => {
+  const yearly = { identifier: PRODUCTS.yearly.id, priceString: '¥98.00', price: 98, subscriptionPeriod: { unitString: 'year', numberOfUnits: 1 } };
+  const lifetime = { identifier: PRODUCTS.lifetime.id, priceString: '¥198.00', price: 198 };
+  let mode = 'flaky';
+  const calls = [];
+  const plugin = {
+    async getProducts(o) {
+      calls.push(o.productType);
+      if (mode === 'down') throw new Error('网络断开');
+      if (mode === 'flaky' && calls.filter((t) => t === o.productType).length === 1) return { products: [] };
+      return { products: [yearly, lifetime].filter((p) => o.productIdentifiers.includes(p.identifier)) };
+    },
+    async getPurchases() { return { purchases: [] }; },
+    async addListener() { return { remove() {} }; },
+  };
+  const iap = createPurchases({ plugin, storage: memStorage(), now: () => NOW, os: 'ios', retryDelay: 1 });
+  const first = await iap.loadProducts();
+  assert.equal(first.yearly.priceString, '¥98.00', '第一次返回空列表，重试后拿到');
+  assert.equal(first.lifetime.priceString, '¥198.00');
+  assert.deepEqual(calls, ['subs', 'subs', 'inapp', 'inapp']);
+  await iap.loadProducts();
+  assert.equal(calls.length, 4, '取全之后走缓存');
+
+  calls.length = 0; mode = 'down';
+  const offline = createPurchases({ plugin, storage: memStorage(), now: () => NOW, os: 'ios', retryDelay: 1 });
+  assert.deepEqual(await offline.loadProducts(), {});
+  assert.equal(calls.length, 4, '每类各试两次');
+  mode = 'ok';
+  assert.equal((await offline.loadProducts()).yearly.priceString, '¥98.00', '没取到时不缓存空结果，恢复网络后能取到');
+});
+
+test('恢复购买：商店一直不返回时按超时失败处理，界面不会卡住', async () => {
+  const plugin = {
+    restorePurchases: () => new Promise(() => {}),
+    async getPurchases() { return { purchases: [] }; },
+    async addListener() { return { remove() {} }; },
+  };
+  const iap = createPurchases({ plugin, storage: memStorage(), now: () => NOW, os: 'ios', restoreTimeout: 20 });
+  const r = await iap.restore();
+  assert.equal(r.ok, false);
+  assert.equal(r.reason, 'timeout');
+});

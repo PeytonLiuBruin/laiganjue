@@ -20,13 +20,25 @@ if [ "${FREE_GB:-0}" -lt 6 ]; then echo "磁盘只剩 ${FREE_GB}GB，至少要 6
 npm run --silent app:sync >/dev/null
 mkdir -p "$OUT_DIR"
 
+# Xcode 开着这个工程时，xcodebuild 会卡在 NSFileCoordinator 上一直等（CPU 为 0）。
+# 默认把 ios/ 同步到缓存目录里的镜像再编译，node_modules 用软链接，镜像路径固定以复用编译缓存。
+# MIRROR=0 时直接用项目里的工程。
+PROJ=ios/App/App.xcodeproj
+if [ "${MIRROR:-1}" != 0 ]; then
+  SRC_MIRROR=${SRC_MIRROR:-$HOME/Library/Caches/lgj-uitest-src}
+  mkdir -p "$SRC_MIRROR"
+  rsync -a --delete --exclude 'xcuserdata' ios/ "$SRC_MIRROR/ios/"
+  ln -sfn "$PWD/node_modules" "$SRC_MIRROR/node_modules"
+  PROJ="$SRC_MIRROR/ios/App/App.xcodeproj"
+fi
+
 IFS='|' read -r -a DEVICES <<< "$SIMS"
 for DEV in "${DEVICES[@]}"; do
   SLUG=$(echo "$DEV" | tr 'A-Z ' 'a-z-')
   RES="$WORK/$SLUG.xcresult"
   echo "▶ $DEV"
   xcodebuild test -quiet \
-    -project ios/App/App.xcodeproj -scheme App \
+    -project "$PROJ" -scheme App \
     -destination "platform=iOS Simulator,name=$DEV" \
     -only-testing:${ONLY:-AppUITests} \
     -resultBundlePath "$RES" \
@@ -53,7 +65,7 @@ for test in json.load(open(os.path.join(src, 'manifest.json'))):
     for a in test.get('attachments', []):
         name = a.get('suggestedHumanReadableName', '')
         key = re.split(r'_\d|\.', name)[0]
-        if key in ('paywall', 'skin-offer'):
+        if key in ('paywall', 'skin-offer', 'purchase-pro', 'restore-pro', 'restore-none', 'skin-bought'):
             shutil.copy(os.path.join(src, a['exportedFileName']), os.path.join(out, f'ios-{slug}-{key}.png'))
             n += 1
         elif key.endswith('-debug') or key.endswith('-tree'):  # 失败时的现场，放到临时目录方便排查

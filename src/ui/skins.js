@@ -52,7 +52,7 @@ export function openSkinOffer(platform, theme, { openPaywall } = {}) {
   const proBtn = button('开通 Pro · 解锁全部皮肤', { variant: 'soft', block: true, cls: 'skin-pro', onClick: async () => {
     if (!openPaywall) return;
     await openPaywall(platform, { reason: '全部皮肤，外加无限深度解读' });
-    if (owned()) { toast(`已解锁「${theme.name}」`); sh.close(); }
+    if (owned()) { toast(`已解锁「${theme.name}」`, { duration: 3500 }); sh.close(); }
   } });
   const restoreBtn = h('button', { type: 'button', class: 'pw-link', onClick: restore }, '恢复购买');
   const webNote = iap?.available ? null : h('p', { class: 'pw-web' }, '网页版不提供购买。在 iPhone 上安装「来感觉」App 即可解锁皮肤。');
@@ -80,8 +80,8 @@ export function openSkinOffer(platform, theme, { openPaywall } = {}) {
     busy = true; render();
     const r = await iap.purchase(key);
     busy = false; render();
-    if (r.ok) { toast(`已解锁「${theme.name}」`); platform.haptic?.success?.(); sh.close(); }
-    else if (!r.cancelled) toast('购买没有完成，请稍后再试');
+    if (r.ok) { toast(`已解锁「${theme.name}」`, { duration: 3500 }); platform.haptic?.success?.(); sh.close(); }
+    else if (!r.cancelled) toast('购买没有完成，请稍后再试', { duration: 3500 });
   }
   async function restore() {
     if (busy) return;
@@ -89,8 +89,8 @@ export function openSkinOffer(platform, theme, { openPaywall } = {}) {
     busy = true; render();
     const r = await iap.restore();
     busy = false; render();
-    if (owned()) { toast(`已恢复「${theme.name}」`); sh.close(); }
-    else toast(r.ok ? '没有找到这套皮肤的购买记录' : '恢复失败，请检查网络后再试');
+    if (owned()) { toast(`已恢复「${theme.name}」`, { duration: 3500 }); sh.close(); }
+    else toast(r.ok ? '没有找到这套皮肤的购买记录' : '恢复失败，请检查网络后再试', { duration: 3500 });
   }
 
   let done;

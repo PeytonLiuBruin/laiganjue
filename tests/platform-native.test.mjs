@@ -98,3 +98,22 @@ test('断签提醒的本地通知：排期带时间与灵签路由，按 id 取�
   native.onNotificationTap(() => {})();
   assert.ok(calls.some((c) => c[0] === 'LocalNotifications' && c[1] === 'addListener' && c[2] === 'localNotificationActionPerformed'));
 });
+
+test('深链：冷启动时 getLaunchUrl 与 appUrlOpen 报同一链接只处理一次', async () => {
+  let listener = null;
+  const plugin = (name) => new Proxy({}, {
+    get: (_, method) => (opts, cb) => {
+      if (name === 'App' && method === 'getLaunchUrl') return Promise.resolve({ url: 'laiganjue://pro' });
+      if (method === 'addListener') { if (opts === 'appUrlOpen') listener = cb; return Promise.resolve({ remove() {} }); }
+      return Promise.resolve();
+    },
+  });
+  const native = createNative({ isNativePlatform: () => true, getPlatform: () => 'ios' }, plugin, plugin('SystemBars'));
+  const got = [];
+  native.onUrlOpen((u) => got.push(u));
+  await new Promise((r) => setTimeout(r, 0));
+  listener({ url: 'laiganjue://pro' });
+  listener({ url: 'laiganjue://skin/nebula' });
+  listener({ url: '' });
+  assert.deepEqual(got, ['laiganjue://pro', 'laiganjue://skin/nebula']);
+});

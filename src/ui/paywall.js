@@ -57,12 +57,16 @@ export function openPaywall(platform, { reason = '' } = {}) {
   const cta = button('开通 Pro', { variant: 'primary', size: 'large', block: true, cls: 'pw-cta', onClick: () => buy(selected) });
   const packBtn = h('button', { type: 'button', class: 'pw-link', onClick: () => buy('pack5') }, '不想订阅？单买 5 次深度解读');
   const restoreBtn = h('button', { type: 'button', class: 'pw-link', onClick: restore }, '恢复购买');
+  // 价格没取到时给一个重试入口（审核员或用户网络不好时，不至于整张卡都是「暂不可用」）
+  const retryBtn = h('button', { type: 'button', class: 'pw-link pw-retry', onClick: () => load() }, '价格没加载出来 · 轻点重试');
+  retryBtn.hidden = true;
+  let loading = false, loaded = false;
   const webNote = iap?.available ? null : h('p', { class: 'pw-web' }, '网页版不提供购买。在 iPhone 上安装「来感觉」App 即可解锁 Pro。');
 
   const content = h('div', { class: 'pw' },
     h('div', { class: 'pw-hero' }, h('div', { class: 'pw-mark' }, '感'), h('div', null, h('div', { class: 'pw-title' }, '来感觉 Pro'), h('div', { class: 'pw-reason' }, reason || '看得更深，玩得更好看'))),
     h('ul', { class: 'pw-benefits' }, BENEFITS.map(([g, t, d]) => h('li', null, h('span', { class: 'pw-glyph' }, g), h('div', null, h('b', null, t), h('span', null, d))))),
-    planList, cta, fine, webNote,
+    planList, retryBtn, cta, fine, webNote,
     h('div', { class: 'pw-links' }, packBtn, restoreBtn),
     h('div', { class: 'pw-legal' },
       h('a', { attrs: { href: TERMS_URL, target: '_blank', rel: 'noopener' } }, '使用条款（EULA）'),
@@ -81,8 +85,9 @@ export function openPaywall(platform, { reason = '' } = {}) {
       if (p) {
         v.price.textContent = p.priceString + (p.period ? ` / ${p.period.replace(/^每/, '')}` : '');
         if (k !== 'lifetime') v.sub.textContent = p.trialDays ? `前 ${p.trialDays} 天免费` : '';
-      } else if (iap?.available) v.price.textContent = '暂不可用';
+      } else if (iap?.available) v.price.textContent = loaded ? '暂不可用' : '…';
     }
+    retryBtn.hidden = !(iap?.available && loaded && PLANS.some((p) => !info[p.key]));
     cta.setLabel(ctaLabel(selected, info[selected]));
     cta.disabled = busy || !iap?.available || !info[selected];
     packBtn.hidden = !iap?.available || !info.pack5;
@@ -94,8 +99,8 @@ export function openPaywall(platform, { reason = '' } = {}) {
     busy = true; render();
     const r = await iap.purchase(key);
     busy = false; render();
-    if (r.ok) { toast(key === 'pack5' ? '已到账 5 次深度解读' : '欢迎加入来感觉 Pro'); platform.haptic?.success?.(); sh.close(); }
-    else if (!r.cancelled) toast('购买没有完成，请稍后再试');
+    if (r.ok) { toast(key === 'pack5' ? '已到账 5 次深度解读' : '欢迎加入来感觉 Pro', { duration: 3500 }); platform.haptic?.success?.(); sh.close(); }
+    else if (!r.cancelled) toast('购买没有完成，请稍后再试', { duration: 3500 });
   }
   async function restore() {
     if (busy) return;
@@ -103,8 +108,8 @@ export function openPaywall(platform, { reason = '' } = {}) {
     busy = true; render();
     const r = await iap.restore();
     busy = false; render();
-    if (r.ok && r.pro) { toast('已恢复来感觉 Pro'); sh.close(); }
-    else toast(r.ok ? '没有找到可恢复的购买' : '恢复失败，请检查网络后再试');
+    if (r.ok && r.pro) { toast('已恢复来感觉 Pro', { duration: 3500 }); sh.close(); }
+    else toast(r.ok ? '没有找到可恢复的购买' : '恢复失败，请检查网络后再试', { duration: 3500 });
   }
 
   let done;
@@ -113,6 +118,14 @@ export function openPaywall(platform, { reason = '' } = {}) {
   pick('yearly');
   sh.open();
   sh.el.classList.add('paywall');
-  if (iap?.available) iap.loadProducts().then((p) => { info = p || {}; render(); });
+  load();
   return result;
+
+  async function load() {
+    if (!iap?.available || loading) return;
+    loading = true; loaded = false; render();
+    let p = {};
+    try { p = await iap.loadProducts(); } catch { p = {}; }
+    info = p || {}; loading = false; loaded = true; render();
+  }
 }

@@ -90,7 +90,7 @@ export function trialDays(product) {
 
 const isCancel = (e) => /cancel|取消|userCancel|SKErrorPaymentCancelled|USER_CANCELED/i.test(String(e?.code || '') + ' ' + String(e?.message || e));
 
-export function createPurchases({ plugin, storage, now = () => Date.now(), os } = {}) {
+export function createPurchases({ plugin, storage, now = () => Date.now(), os, retryDelay = 1200, restoreTimeout = 20000 } = {}) {
   if (plugin === undefined) {
     const native = Capacitor.isNativePlatform();
     plugin = native ? registerPlugin('NativePurchases') : null;
@@ -143,20 +143,29 @@ export function createPurchases({ plugin, storage, now = () => Date.now(), os } 
     if (!available) return {};
     if (products) return products;
     const out = {};
+    // 刚启动或网络抖动时 StoreKit 可能报错或返回空列表。每类失败后隔一会儿重试一次，
+    // 只有两类都拿到产品才缓存，否则下次打开付费卡还会重新取，不会整场都是「暂不可用」。
+    let complete = true;
     for (const type of ['subs', 'inapp']) {
       const ids = Object.values(PRODUCTS).filter((p) => p.type === type).map((p) => p.id);
-      try {
-        const { products: list = [] } = await plugin.getProducts({ productIdentifiers: ids, productType: type });
-        for (const p of list) {
-          const key = keyOf(p.identifier);
-          if (!key) continue;
-          out[key] = { id: p.identifier, priceString: p.priceString, price: p.price, currencyCode: p.currencyCode, period: PRODUCTS[key].type === 'subs' ? periodLabel(p.subscriptionPeriod) : '', trialDays: trialDays(p), offerToken: p.offerToken, planIdentifier: p.planIdentifier };
+      let list = [];
+      for (let attempt = 0; attempt < 2 && !list.length; attempt++) {
+        if (attempt) await new Promise((r) => setTimeout(r, retryDelay));
+        try {
+          ({ products: list = [] } = await plugin.getProducts({ productIdentifiers: ids, productType: type }));
+        } catch (e) {
+          console.warn('[purchases] products', type, e?.message || e);
+          list = [];
         }
-      } catch (e) {
-        console.warn('[purchases] products', type, e?.message || e);
+      }
+      if (!list.length) complete = false;
+      for (const p of list) {
+        const key = keyOf(p.identifier);
+        if (!key) continue;
+        out[key] = { id: p.identifier, priceString: p.priceString, price: p.price, currencyCode: p.currencyCode, period: PRODUCTS[key].type === 'subs' ? periodLabel(p.subscriptionPeriod) : '', trialDays: trialDays(p), offerToken: p.offerToken, planIdentifier: p.planIdentifier };
       }
     }
-    if (Object.keys(out).length) products = out;
+    if (complete) products = out;
     return out;
   }
 
@@ -196,7 +205,10 @@ export function createPurchases({ plugin, storage, now = () => Date.now(), os } 
   async function restore() {
     if (!available) return { ok: false, pro: state.pro, reason: 'web' };
     try {
-      await plugin.restorePurchases();
+      // AppStore.sync 在没登录或网络卡住时可能一直不返回，界面会停在按钮变灰，20 秒后按失败处理
+      let timer;
+      const timeout = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('timeout')), restoreTimeout); });
+      try { await Promise.race([plugin.restorePurchases(), timeout]); } finally { clearTimeout(timer); }
     } catch (e) {
       console.warn('[purchases] restore', e?.message || e);
       return { ok: false, pro: state.pro, reason: String(e?.message || e) };

@@ -137,8 +137,17 @@ export function createNative(cap = Capacitor, register = registerPlugin, bars = 
     },
     minimize: () => quiet(App.minimizeApp()),
     onUrlOpen(cb) {
-      quiet(App.getLaunchUrl()?.then?.((r) => { if (r?.url) cb(r.url); }));
-      const handle = quiet(App.addListener('appUrlOpen', (e) => cb(e.url)));
+      // 冷启动时 getLaunchUrl 和 appUrlOpen 可能报同一个链接，2 秒内同一链接只处理一次，免得叠出两张付费卡
+      let last = '', at = 0;
+      const once = (url) => {
+        if (!url) return;
+        const t = Date.now();
+        if (url === last && t - at < 2000) return;
+        last = url; at = t;
+        cb(url);
+      };
+      quiet(App.getLaunchUrl()?.then?.((r) => once(r?.url)));
+      const handle = quiet(App.addListener('appUrlOpen', (e) => once(e?.url)));
       return () => quiet(handle?.then?.((h) => h.remove()));
     },
   };
