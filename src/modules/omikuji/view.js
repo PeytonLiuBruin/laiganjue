@@ -8,6 +8,8 @@ import { createRitual } from '../../ui/ritual.js';
 import { overRope } from './interaction.js';
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+// 最近所抽按签运上色，与灵签收集册同一套等级色
+const HISTORY_TONE = { gold: 'great', red: 'good', ink: 'neutral', indigo: 'low' };
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
@@ -519,7 +521,7 @@ export function mount(container, ctx) {
     if (!history.length) return;
     histWrap.append(
       h('div', { class: 'ok-history-kicker' }, TEXT.historyKicker),
-      historyBar(history.slice(-8), (x) => `${x.no} · ${(levelOf(x.level) || {}).name || ''}`),
+      historyBar(history.slice(-8), (x) => `${x.no} · ${(levelOf(x.level) || {}).name || ''}`, (x) => HISTORY_TONE[(levelOf(x.level) || {}).tone] || ''),
     );
   }
 

@@ -591,10 +591,13 @@ export function parallax(el, { max = 10 } = {}) {
   };
 }
 
-/** 简易历史小记条 */
-export function historyBar(items, format = (x) => String(x)) {
+/** 最近记录一行。toneOf 返回 great / good / fair / neutral / low / bad 时按等级上色（toon-history.css） */
+export function historyBar(items, format = (x) => String(x), toneOf = null) {
   const el = h('div', { class: 'history' });
-  for (const it of items) el.append(h('span', { class: 'history-item' }, format(it)));
+  for (const it of items) {
+    const tone = toneOf ? toneOf(it) : '';
+    el.append(h('span', { class: tone ? `history-item tone-${tone}` : 'history-item' }, format(it)));
+  }
   return el;
 }
 

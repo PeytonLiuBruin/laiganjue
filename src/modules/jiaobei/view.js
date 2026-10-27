@@ -5,6 +5,8 @@ import { createJiaobeiPhysical } from './physical.js';
 import { createRitual } from '../../ui/ritual.js';
 
 const THROW_DY = 36; // 手指上滑超过这个距离，松手即掷出
+// 最近几掷按结果上色：立筊金、圣杯红、笑杯蓝、阴杯灰
+const HISTORY_TONE = { li: 'great', sheng: 'good', xiao: 'neutral', yin: 'bad' };
 
 export function mount(container, ctx) {
   const { kit, haptic, sound, storage } = ctx;
@@ -192,7 +194,7 @@ export function mount(container, ctx) {
   }
   function renderHistory() {
     kit.clear(histEl);
-    if (history.length) histEl.append(h('span', { class: 't-kicker' }, '最近几掷'), kit.historyBar(history.slice(-6), (o) => OUTCOMES[o]?.name || ''));
+    if (history.length) histEl.append(h('span', { class: 't-kicker' }, '最近几掷'), kit.historyBar(history.slice(-6), (o) => OUTCOMES[o]?.name || '', (o) => HISTORY_TONE[o] || ''));
   }
   function reset() {
     if (busy) return;

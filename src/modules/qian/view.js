@@ -156,13 +156,16 @@ export function mount(container, ctx) {
     const albumBtn = h('button', { type: 'button', class: 'qn-album-btn', dataset: { album: s.count }, onClick: () => openAlbum() },
       h('b', null, '签纸收集册'), h('span', { class: 'qn-album-bar' }, h('i', { style: { width: `${(s.count / s.total) * 100}%` } })), h('span', { class: 'qn-album-count' }, `${s.count}/${s.total}`));
     if (history.length) {
-      hist.append(
-        h('span', { class: 't-kicker' }, HISTORY_KICKER),
-        h('div', { class: 'qn-history-row' }, history.slice(-5).reverse().map((x) => {
-          const l = getLot(x.no);
-          return button(`${lotLabel(x.no)} · ${l.level}`, { variant: 'soft', size: 'small', onClick: () => read(l, x.question, { review: true }) });
-        })),
-      );
+      // 超出一行时右侧渐隐，提示还能横滑；滑到底遮罩去掉
+      const fade = () => row.classList.toggle('more', row.scrollLeft + row.clientWidth < row.scrollWidth - 2);
+      const row = h('div', { class: 'qn-history-row', onScroll: fade }, history.slice(-5).reverse().map((x) => {
+        const l = getLot(x.no);
+        const tone = levelMeta(l.level)?.tone;
+        return h('button', { type: 'button', class: tone ? `history-item tone-${tone}` : 'history-item', onClick: () => read(l, x.question, { review: true }) }, `${lotLabel(x.no)} · ${l.level}`);
+      }));
+      hist.append(h('span', { class: 't-kicker' }, HISTORY_KICKER), row);
+      // 首次渲染时这一行可能还没挂进页面，等它有了尺寸再判断
+      if (typeof ResizeObserver === 'function') new ResizeObserver(fade).observe(row); else requestAnimationFrame(fade);
     }
     hist.append(albumBtn);
   }

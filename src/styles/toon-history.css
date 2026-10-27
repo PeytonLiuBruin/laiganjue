@@ -1,0 +1,74 @@
+/* 各玩法「最近记录」卡通化（第 37 轮）。
+   原来是 1px 细线、灰字、字距拉开的宣纸小签，在明快的舞台和厚边按钮下面显得发闷。
+   改为和收集册签格一套：2px 描边、3px 同色厚边、圆体粗字。带等级的记录（灵签、御神签、筊杯）按等级上色。 */
+.history-item,
+.m-tarot .tr-hist,
+.m-liuyao .ly-hist-item {
+  --chip-bg: #fff;
+  --chip-line: color-mix(in srgb, var(--text) 24%, transparent);
+  --chip-edge: color-mix(in srgb, var(--text) 20%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 12px;
+  min-height: 34px;
+  border-radius: 12px;
+  border: 2px solid var(--chip-line);
+  background: var(--chip-bg);
+  box-shadow: 0 3px 0 var(--chip-edge);
+  color: var(--text);
+  font: 800 13px/1.3 var(--font-round, var(--font-sans));
+  letter-spacing: .02em;
+  white-space: nowrap;
+  margin-bottom: 3px;
+}
+[data-theme='ink'] :is(.history-item, .m-tarot .tr-hist, .m-liuyao .ly-hist-item),
+[data-theme='cinnabar'] :is(.history-item, .m-tarot .tr-hist, .m-liuyao .ly-hist-item),
+[data-theme='nebula'] :is(.history-item, .m-tarot .tr-hist, .m-liuyao .ly-hist-item),
+:root:not([data-theme]) :is(.history-item, .m-tarot .tr-hist, .m-liuyao .ly-hist-item) {
+  --chip-bg: color-mix(in srgb, var(--text) 10%, transparent);
+  --chip-line: color-mix(in srgb, var(--text) 30%, transparent);
+  --chip-edge: rgba(0, 0, 0, .45);
+}
+/* 按等级上色：和收集册签格同一组 --tone（collect.css），浅色渐变底配深紫字，深色皮肤下也一样醒目 */
+.history-item[class*='tone-'] {
+  border-color: color-mix(in srgb, var(--tone) 70%, #2b2240);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tone) 26%, #fffaf0), color-mix(in srgb, var(--tone) 46%, #fffaf0));
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--tone) 60%, #2b2240);
+  color: #2b2240;
+}
+button.history-item { cursor: pointer; }
+button.history-item:active,
+.m-tarot .tr-hist:active,
+.m-liuyao .ly-hist-item:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--chip-edge); }
+button.history-item[class*='tone-']:active { box-shadow: 0 1px 0 color-mix(in srgb, var(--tone) 60%, #2b2240); }
+.m-tarot .tr-hist, .m-liuyao .ly-hist-item { min-height: 44px; border-radius: 14px; }
+.m-tarot .tr-hist b { color: var(--accent-text); font-weight: 900; }
+.m-tarot .tr-hist sup { color: var(--c-red, #e8463c); font-weight: 900; font-size: 10px; }
+.history { gap: 8px; }
+
+/* 标题行：统一为圆体粗字，不再用宋体细字和 0.3em 字距 */
+.m-qian .qn-history .t-kicker,
+.m-jiaobei .jb-history .t-kicker,
+.m-runes .rn-history .t-kicker,
+.m-omikuji .ok-history-kicker,
+.m-liuyao .ly-hist-title,
+.m-tarot .tr-hist-head {
+  font: 800 13px/1.4 var(--font-round, var(--font-sans));
+  letter-spacing: .06em;
+  color: var(--text-2);
+}
+.m-jiaobei .jb-history, .m-runes .rn-history { opacity: 1; }
+
+/* 灵签：最近的签做成可点的等级色签牌，保持 44px 触控高度，横向可滑 */
+.m-qian .qn-history-row { gap: 8px; padding: 2px 2px 5px; }
+.m-qian .qn-history-row .history-item { flex: none; min-height: 44px; border-radius: 14px; padding: 6px 14px; }
+
+/* 筊杯最近 6 掷在 393 宽下要排成一行（2 字标签收窄内边距，否则会掉一枚到第二行） */
+.m-jiaobei .jb-history .history { gap: 6px; flex-wrap: nowrap; }
+.m-jiaobei .jb-history .history-item { padding: 5px 9px; }
+/* 灵签「最近的签」超出一行时右侧 28px 渐隐，提示还能横滑（类名由 qian/view.js 按滚动位置切换） */
+.m-qian .qn-history-row.more {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
+}
