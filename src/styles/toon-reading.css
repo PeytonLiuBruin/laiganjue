@@ -48,6 +48,8 @@
 /* 玄墨皮肤的印泥红 #b8342b 在深色抽屉上只有 2.3:1（第 38 轮 contrast-audit 打开抽屉后查到），提亮成朱橙 */
 [data-theme='ink'] .result .seal,
 :root:not([data-theme]) .result .seal { --seal: #ff6a55; }
+/* 青瓷印泥红 #c04a3a 叠 0.9 透明度在水晶球抽屉 18px 的小印章上只有 3.9:1（第 40 轮），加深一档 */
+[data-theme='celadon'] .result .seal { --seal: #a8392b; }
 
 /* 抽屉底部的次按钮（分享、复制等）：白底描边厚边，按下下沉 */
 .sheet-actions .btn.ghost,
@@ -123,4 +125,33 @@
 .m-tarot .tr-read-en {
   font-weight: 700;
   letter-spacing: .1em;
+}
+/* 财运「求财吉时」、事业「面谈签约吉时」十二时辰格（第 40 轮）：原来 1px 细线、常规字重，
+   和抽屉里其他描边厚边的块不是一套。普通时辰 2px 描边加 3px 厚边，吉时用浅主色底和主色描边 */
+.m-caiyun .cy-hours,
+.m-shiye .sy-hours { gap: 8px; }
+.m-caiyun .cy-hours li,
+.m-shiye .sy-hours li {
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 3px 0 var(--edge-color);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 600;
+}
+.m-caiyun .cy-hours li b,
+.m-shiye .sy-hours li b { font-weight: 800; }
+.m-caiyun .cy-hours li.on,
+.m-shiye .sy-hours li.on {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent-text) 55%, transparent);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent-text) 32%, transparent);
+}
+.m-caiyun .cy-hours li.on i,
+.m-shiye .sy-hours li.on i { font-weight: 800; }
+.m-caiyun .cy-hours li.now,
+.m-shiye .sy-hours li.now { outline: 2px dashed color-mix(in srgb, var(--accent-text) 60%, transparent); outline-offset: 2px; }
+/* 转盘「再转的理由」5 个字，加了标签内边距后 5em 放不下会折成两行 */
+.m-wheel .result .result-section:not(.stack) { grid-template-columns: 6.4em minmax(0, 1fr); }
+@media (max-width: 360px) {
+  .m-wheel .result .result-section:not(.stack) { grid-template-columns: 1fr; }
 }

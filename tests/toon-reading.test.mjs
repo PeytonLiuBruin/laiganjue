@@ -31,3 +31,9 @@ test('各玩法抽屉自带的小标签也改为圆体粗字，不再用大字�
   assert.match(css, /\.m-runes \.rn-tag,\s*\.m-tarot \.tr-tag \{[^}]*border: 2px solid[^}]*font: 800 11px/);
   assert.match(css, /\.m-liuyao \.ly-mini \{[^}]*border: 2px solid[^}]*box-shadow: 0 3px 0/);
 });
+
+test('财运、事业的十二时辰格改为描边厚边，转盘五字标签不折行', () => {
+  assert.match(css, /\.m-caiyun \.cy-hours li,\s*\.m-shiye \.sy-hours li \{[^}]*border: 2px solid var\(--line-strong\)[^}]*box-shadow: 0 3px 0 var\(--edge-color\)/);
+  assert.match(css, /\.m-caiyun \.cy-hours li\.on,\s*\.m-shiye \.sy-hours li\.on \{[^}]*background: color-mix/);
+  assert.match(css, /\.m-wheel \.result \.result-section:not\(\.stack\) \{ grid-template-columns: 6\.4em minmax\(0, 1fr\); \}/);
+});

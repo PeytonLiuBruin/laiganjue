@@ -55,6 +55,7 @@
 - 结果抽屉（深度解读，第 38 轮，`src/styles/toon-reading.css`）：眉标圆体 800、13px、字距 .08em。等级胶囊圆角 12px、2px 描边（--accent-text 55%）、底部 3px 厚边（--accent-text 32%）、底为 --accent 12% 混抽屉底色，圆体 800、14px。标题圆体 900，不加投影（试过 3px 浅红投影，看着像重影）。副标题圆体 600。诗签框整圈 2px --line-strong、圆角 18px、底部 4px --edge-color，签诗正文仍是宋体。分段标签（签语、解曰等）是 --accent 13% 底的圆角 9px 小块，圆体 800、13px，标签列 5em，360px 以下上下排。抽屉底部次按钮（分享）白底 2px --line-strong 描边、4px 厚边、圆体 800，按下下沉 3px。印章边 3px、圆角 12px。
 - 各玩法抽屉自带的小标签（第 39 轮，`toon-reading.css` 末节）：六爻「象曰」、御神签分项名与分段标签同款（圆体 800、13px、字距 .03em、浅主色 13% 底、圆角 9px）。六爻小卦框 2px 描边、圆角 12px、3px 厚边，「本卦 / 变卦」圆体 800 12px。卢恩、塔罗正逆位胶囊 2px 描边、圆体 800 11px，逆位用 --seal。所有小标签字距不超过 .1em。
 - 设置页（第 39 轮，`src/styles/toon-settings.css`）：行标签圆体 800 16px，分隔线 2px 虚线 --line。开关 48×28，2px --line-strong 描边加 3px --edge-color 厚边，滑块 20px 白底 2px 描边。打开时底为 --accent，描边与厚边为 --accent 混 40% 到 45% 黑。
+- 十二时辰格（第 40 轮，`toon-reading.css` 末节）：财运、事业抽屉里的时辰格 2px --line-strong 描边、圆角 12px、3px --edge-color 厚边、圆体 600，时辰名 800。吉时底为 --accent 12% 混 --surface，描边 --accent-text 55%、厚边 32%，当前时辰 2px 虚线外框。转盘抽屉标签列 6.4em（「再转的理由」5 个字）。青瓷皮肤抽屉印章红 #a8392b。
 
 ## 4. 色板（CSS 变量建议）
 

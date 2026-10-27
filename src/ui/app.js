@@ -521,7 +521,7 @@ export function startApp(root) {
     } else hapticControls.append(h('span', { class: 't-faint' }, '不支持'));
     const iap = platform.purchases;
     const planName = { yearly: '年度', monthly: '月度', lifetime: '永久' };
-    const proDesc = () => (iap.pro ? `已开通 · ${planName[iap.plan] || 'Pro'}${iap.until ? ' · 续期日 ' + new Date(iap.until).toLocaleDateString('zh-CN') : ''}` : `无限解读 · 全部皮肤 · 无水印分享${iap.credits ? ` · 剩余单次解读 ${iap.credits} 次` : ''}`);
+    const proDesc = () => (iap.pro ? `已开通 · ${planName[iap.plan] || 'Pro'}${iap.until ? ' · 续期日 ' + new Date(iap.until).toLocaleDateString('zh-CN') : ''}` : `无限解读 · 全皮肤 · 去水印${iap.credits ? ` · 剩余单次解读 ${iap.credits} 次` : ''}`);
     const proDescEl = h('div', { class: 'setting-desc' }, proDesc());
     const proControls = h('div', { class: 'setting-pro' });
     const renderPro = () => {
