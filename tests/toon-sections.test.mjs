@@ -35,3 +35,13 @@ test('首页 17 个玩法都有卡通图标：实色填充、2.4 深色描边，
   assert.doesNotMatch(art, /fill-opacity="\.(0\d|1\d)"/, '不再用 8% 到 19% 的淡填充');
   assert.match(css, /\.tile \.ritual-art \{[^}]*border: 2px solid[^}]*box-shadow: 0 3px 0/);
 });
+
+test('风水罗盘页读数圆体 900，方位字距不超过 .06em，转向按钮与九宫格描边厚边', async () => {
+  const css = await readFile(new URL('../src/styles/toon-sections.css', import.meta.url), 'utf8');
+  assert.match(css, /\.m-fengshui \.fs-deg \{[^}]*font: 900/);
+  const dir = css.match(/\.m-fengshui \.fs-dir \{([^}]*)\}/)[1];
+  assert.match(dir, /font: 800/);
+  assert.ok(parseFloat(dir.match(/letter-spacing: ([.\d]+)em/)[1]) <= .06);
+  assert.match(css, /\.m-fengshui \.fs-turn \.btn \{[^}]*border: 2px solid[^}]*box-shadow: 0 3px 0/);
+  assert.match(css, /\.m-fengshui \.fs-cell \{[^}]*border: 2px solid[^}]*box-shadow: 0 3px 0/);
+});

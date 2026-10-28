@@ -6,30 +6,44 @@ const cache=new Map();
 function cached(key,build){if(!cache.has(key))cache.set(key,build());return cache.get(key);}
 const shift=(mesh,p)=>transformed(mesh,undefined,p);
 
+// 第 43 轮：2D 回退罗盘与 3D 盘面（stage/scenes/compass.js 的 COMPASS_FACE，第 26 轮）同一套四圈色带。
+// 原来是米色盘面、120 道细刻度、11px 细字，WebGL 创建失败的老机型上糊成一片。
+export const COMPASS_2D = {
+  ink: '#3a2410', red: '#d8402e', cream: '#fff4d8', jade: '#22a88f', gold: '#ffc93c', navy: '#2a3a6e', rim: '#f0a500',
+  bands: [1, .86, .64, .47, .27], R: 110,
+  font: { mountain: 12, trigram: 14, direction: 13 },
+};
 export function drawCompass(p,s){
-  const {metal,stone,accent,ink:text}=p.palette, q=axisAngle([0,1,0],-(s.angle||0)*Math.PI/180);
+  const C=COMPASS_2D, q=axisAngle([0,1,0],-(s.angle||0)*Math.PI/180);
   p.shadow([0,-24,0],136);
-  p.mesh(cached('compass-body'+metal,()=>lathe([[0,-16],[111,-16],[123,-10],[125,-3],[123,3],[113,8],[0,8]],metal)));
-  p.mesh(cached('compass-face'+stone,()=>lathe([[0,8],[111,8],[111,9],[0,9]],stone)));
-  const plate=point=>rotate(point,q), u=rotate([1,0,0],q), v=rotate([0,0,-1],q);
-  for(const r of [109,94,69,42,25])p.ring(r,10,metal,.8);
-  for(let i=0;i<120;i++){
-    const a=i/120*TAU,r=i%5===0?100:104;
-    p.line([[Math.sin(a)*r,10,-Math.cos(a)*r],[Math.sin(a)*109,10,-Math.cos(a)*109]].map(plate),i%15===0?accent:text,i%5===0?1:.6,.62);
+  p.mesh(cached('compass-body',()=>lathe([[0,-16],[111,-16],[123,-10],[125,-3],[123,3],[113,8],[0,8]],C.rim)));
+  const plate=point=>rotate(point,q), u=rotate([1,0,0],q), v=rotate([0,0,-1],q), Y=9.2;
+  const circle=(r,y=Y)=>Array.from({length:72},(_,i)=>plate([Math.sin(i/72*TAU)*r,y,-Math.cos(i/72*TAU)*r]));
+  const [b0,b1,b2,b3,b4]=C.bands.map(k=>k*C.R);
+  [[b0,C.red],[b1,C.cream],[b2,C.jade],[b3,C.gold],[b4,C.navy]].forEach(([r,color])=>p.face(circle(r),color,{stroke:C.ink,width:2}));
+  const spoke=(n,r0,r1,w)=>{for(let i=0;i<n;i++){const a=(i+.5)/n*TAU;p.face([[Math.sin(a)*r0,Y,-Math.cos(a)*r0],[Math.sin(a)*r1,Y,-Math.cos(a)*r1]].map(plate),'transparent',{stroke:C.ink,width:w});}};
+  spoke(24,b2,b1,1.2); spoke(8,b4,b2,1.6);
+  // 外圈：每山一道奶油色粗刻度，四正方位换成金色圆点
+  for(let i=0;i<24;i++){
+    const a=i/24*TAU,mid=(b0+b1)/2;
+    if(i%6===0){p.face(Array.from({length:16},(_,k)=>plate([Math.sin(a)*mid+Math.cos(k/16*TAU)*4,Y+.1,-Math.cos(a)*mid+Math.sin(k/16*TAU)*4])),C.gold,{stroke:C.ink,width:1.4});continue;}
+    p.face([[Math.sin(a)*(mid-4),Y+.1,-Math.cos(a)*(mid-4)],[Math.sin(a)*(mid+4),Y+.1,-Math.cos(a)*(mid+4)]].map(plate),'transparent',{stroke:C.cream,width:2.6});
   }
-  MOUNTAINS.forEach((label,i)=>{const a=i/24*TAU;p.text(label,plate([Math.sin(a)*82,10.4,-Math.cos(a)*82]),{size:11,color:text,u,v});});
+  const flat={u,v,stroke:null,depth:false};
+  MOUNTAINS.forEach((label,i)=>{const a=i/24*TAU,r=(b1+b2)/2;p.text(label,plate([Math.sin(a)*r,Y+.2,-Math.cos(a)*r]),{...flat,size:C.font.mountain,weight:900,color:i%6===0?C.red:C.ink});});
   DIRECTIONS.forEach((dir,i)=>{
-    const a=i/8*TAU;
-    p.text(dir.name,plate([Math.sin(a)*55,10.4,-Math.cos(a)*55]),{size:13,color:i===0?accent:text,u,v,weight:600});
+    const a=i/8*TAU,rt=(b2+b3)/2,rd=(b3+b4)/2;
+    p.text(dir.symbol,plate([Math.sin(a)*rt,Y+.2,-Math.cos(a)*rt]),{...flat,size:C.font.trigram,weight:900,color:'#ffffff',stroke:C.ink});
+    p.text(dir.name,plate([Math.sin(a)*rd,Y+.2,-Math.cos(a)*rd]),{...flat,size:C.font.direction,weight:900,color:i===0?C.red:C.ink});
   });
+  p.face(circle(b4-4,Y+.1),'transparent',{stroke:C.gold,width:1.6});
   const pointer=[
-    polygon([[0,14,-72],[-6,14,0],[6,14,0]],accent),
-    polygon([[0,14,72],[6,14,0],[-6,14,0]],metal),
-    ...lathe([[0,14],[8,14],[8,18],[0,18]],metal,32),
+    polygon([[0,14,-72],[-7,14,0],[7,14,0]],'#e8463c'),
+    polygon([[0,14,72],[7,14,0],[-7,14,0]],C.gold),
+    ...lathe([[0,14],[8,14],[8,18],[0,18]],C.gold,32),
   ];
   p.mesh(transformed(pointer,q));
-  p.line([[-5,11,-128],[0,12,-118],[5,11,-128]],accent,2.2);
-  p.glow([0,17,0],8,'#ffffff',.5);
+  p.line([[-5,11,-128],[0,12,-118],[5,11,-128]],'#e8463c',2.6);
 }
 
 function glass(p,center,radius,s,time){
@@ -59,14 +73,15 @@ function glass(p,center,radius,s,time){
   c.strokeStyle='rgba(255,255,255,.6)';c.beginPath();c.arc(pt[0],pt[1],r-2,-2.8,-.6);c.stroke();
 }
 export function drawBall(p,s,time){
-  const {metal,stone}=p.palette;
+  // 第 43 轮：底座和 3D 版（第 21 轮）一样改哑光紫配金边，原来跟着皮肤的青铜色，卡通化后是一块发亮的橙色
+  const metal='#8a5cf0',stone='#ffc93c';
   p.shadow([0,-133,0],95,.22);
   p.mesh(cached('ball-base'+metal+stone,()=>[
     ...lathe([[0,-130],[66,-130],[72,-125],[70,-119],[48,-115],[34,-104],[31,-87],[47,-80],[0,-80]],metal),
     ...lathe([[0,-129],[62,-129],[62,-126],[0,-126]],stone),
   ]));
   glass(p,[0,16,0],94,s,time);
-  p.ring(46,-79,metal,.65);
+  p.ring(46,-79,stone,.9);
 }
 
 export function drawPendulum(p,s,time){

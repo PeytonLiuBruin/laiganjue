@@ -10,7 +10,7 @@
     0 -1.5px 0 var(--btn-edge), 0 1.5px 0 var(--btn-edge), -1.5px 0 0 var(--btn-edge), 1.5px 0 0 var(--btn-edge), 0 2.5px 0 var(--btn-edge);
 }
 
-[data-theme='paper'] :is(.btn.primary, .tab.active, .wh-cap-text, .pw-mark) { text-shadow: var(--btn-outline); }
+[data-theme='paper'] :is(.btn.primary, .tab.active, .wh-cap-text) { text-shadow: var(--btn-outline); }
 [data-theme='paper'] .btn.primary, [data-theme='paper'] .view .btn.primary,
 [data-theme='paper'] .tab.active, [data-theme='paper'] .tabs .tab.active { color: #ffffff; }
 
@@ -22,7 +22,7 @@
   --btn-outline: -1px -1px 0 var(--btn-edge), 1px -1px 0 var(--btn-edge), -1px 1px 0 var(--btn-edge), 1px 1px 0 var(--btn-edge),
     0 -1.5px 0 var(--btn-edge), 0 1.5px 0 var(--btn-edge), -1.5px 0 0 var(--btn-edge), 1.5px 0 0 var(--btn-edge), 0 2.5px 0 var(--btn-edge);
 }
-[data-theme='celadon'] :is(.btn.primary, .tab.active, .wh-cap-text, .pw-mark) { text-shadow: var(--btn-outline); }
+[data-theme='celadon'] :is(.btn.primary, .tab.active, .wh-cap-text) { text-shadow: var(--btn-outline); }
 
 /* 深色皮肤：第三级文字原来只有 42% 到 45% 不透明，提到 60% 以上；选中胶囊的主色字提亮一档 */
 [data-theme='cinnabar'] { --text-3: rgba(246, 231, 210, 0.62); --accent-text: #f6d27a; }

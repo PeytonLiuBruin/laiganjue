@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/bazi@read",
+    "route": "home@paywall",
     "viewport": "393x852",
-    "file": "m-bazi-read-393x852.png",
+    "file": "home-paywall-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi@read",
+    "route": "home@paywall",
     "viewport": "430x932",
-    "file": "m-bazi-read-430x932.png",
+    "file": "home-paywall-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -22,9 +22,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi",
+    "route": "home@paywall",
     "viewport": "393x852",
-    "file": "ink-m-bazi-393x852.png",
+    "file": "ink-home-paywall-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -33,9 +33,20 @@
     "errors": []
   },
   {
-    "route": "m/bazi@read",
+    "route": "home@paywall",
+    "viewport": "430x932",
+    "file": "ink-home-paywall-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "home@paywall",
     "viewport": "393x852",
-    "file": "ink-m-bazi-read-393x852.png",
+    "file": "cinnabar-home-paywall-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -44,9 +55,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi",
+    "route": "home@paywall",
     "viewport": "430x932",
-    "file": "ink-m-bazi-430x932.png",
+    "file": "cinnabar-home-paywall-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -55,20 +66,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi@read",
-    "viewport": "430x932",
-    "file": "ink-m-bazi-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/bazi",
+    "route": "home@paywall",
     "viewport": "393x852",
-    "file": "m-bazi-393x852.png",
+    "file": "nebula-home-paywall-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -77,9 +77,20 @@
     "errors": []
   },
   {
-    "route": "m/caiyun@read",
+    "route": "home@paywall",
+    "viewport": "430x932",
+    "file": "nebula-home-paywall-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "home@paywall",
     "viewport": "393x852",
-    "file": "m-caiyun-read-393x852.png",
+    "file": "celadon-home-paywall-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -88,33 +99,20 @@
     "errors": []
   },
   {
-    "route": "m/zodiac@read",
-    "viewport": "393x852",
-    "file": "m-zodiac-read-393x852.png",
+    "route": "home@paywall",
+    "viewport": "430x932",
+    "file": "celadon-home-paywall-430x932.png",
     "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/yinyuan@read",
-    "viewport": "393x852",
-    "file": "m-yinyuan-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
+      "scrollW": 430,
+      "w": 430,
       "bad": []
     },
     "errors": []
   },
   {
-    "route": "m/shiye@read",
+    "route": "m/fengshui@tab1",
     "viewport": "393x852",
-    "file": "m-shiye-read-393x852.png",
+    "file": "m-fengshui-tab1-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -123,66 +121,9 @@
     "errors": []
   },
   {
-    "route": "m/bazi",
-    "viewport": "430x932",
-    "file": "m-bazi-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@read",
-    "viewport": "430x932",
-    "file": "m-caiyun-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/zodiac@read",
-    "viewport": "430x932",
-    "file": "m-zodiac-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/yinyuan@read",
-    "viewport": "430x932",
-    "file": "m-yinyuan-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/shiye@read",
-    "viewport": "430x932",
-    "file": "m-shiye-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@read",
+    "route": "m/fengshui@tab2",
     "viewport": "393x852",
-    "file": "ink-m-caiyun-read-393x852.png",
+    "file": "m-fengshui-tab2-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -191,22 +132,9 @@
     "errors": []
   },
   {
-    "route": "m/zodiac@read",
-    "viewport": "393x852",
-    "file": "ink-m-zodiac-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@read",
+    "route": "m/fengshui@tab1",
     "viewport": "430x932",
-    "file": "ink-m-caiyun-read-430x932.png",
+    "file": "m-fengshui-tab1-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -215,15 +143,123 @@
     "errors": []
   },
   {
-    "route": "m/zodiac@read",
+    "route": "m/fengshui@tab2",
     "viewport": "430x932",
-    "file": "ink-m-zodiac-read-430x932.png",
+    "file": "m-fengshui-tab2-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/fengshui@tab1",
+    "viewport": "393x852",
+    "file": "ink-m-fengshui-tab1-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/fengshui@tab1",
+    "viewport": "430x932",
+    "file": "ink-m-fengshui-tab1-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/fengshui",
+    "viewport": "393x852",
+    "file": "m-fengshui-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/crystal@read",
+    "viewport": "393x852",
+    "file": "m-crystal-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/fengshui",
+    "viewport": "430x932",
+    "file": "m-fengshui-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/crystal@read",
+    "viewport": "430x932",
+    "file": "m-crystal-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/fengshui",
+    "viewport": "393x852",
+    "file": "ink-m-fengshui-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/crystal@read",
+    "viewport": "393x852",
+    "file": "ink-m-crystal-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/fengshui",
+    "viewport": "430x932",
+    "file": "ink-m-fengshui-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/crystal@read",
+    "viewport": "430x932",
+    "file": "ink-m-crystal-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
     },
     "errors": []
   }

@@ -17,7 +17,7 @@
   font: 700 14px/1 var(--font-display); color: var(--accent-text); background: var(--surface-2); border: 1px solid var(--line);
 }
 .pw-benefits b { display: block; font-size: var(--fs-m); color: var(--text); }
-.pw-benefits span { font-size: var(--fs-xs); color: var(--text-2); }
+.pw-benefits li > div > span { font-size: var(--fs-xs); color: var(--text-2); }
 .pw-plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .pw-plan {
   position: relative; display: grid; gap: 4px; justify-items: center; align-content: start;

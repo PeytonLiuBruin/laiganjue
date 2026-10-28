@@ -139,3 +139,76 @@
   letter-spacing: .04em;
   color: var(--text-2);
 }
+
+/* —— 风水罗盘页（第 43 轮）：读数原来是拉丁衬线红字、方位宋体细字配 .1em 字距、转向按钮细线无厚边，
+   命卦卡与九宫格也是 1px 细线宋体。统一为圆体粗字、2px 描边加厚边 —— */
+.m-fengshui .fs-deg {
+  font: 900 46px/1.1 var(--font-round, var(--font-sans));
+  letter-spacing: -.02em;
+}
+.m-fengshui .fs-dir {
+  font: 800 18px/1.4 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+  color: var(--text);
+}
+.m-fengshui .fs-star { font-weight: 700; }
+.m-fengshui .fs-turn .btn {
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: .02em;
+  box-shadow: 0 3px 0 var(--edge-color);
+}
+.m-fengshui .fs-turn .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge-color); }
+.m-fengshui .fs-gua-card {
+  border: 2px solid var(--line-strong);
+  border-radius: 18px;
+  box-shadow: 0 4px 0 var(--edge-color);
+}
+.m-fengshui .fs-gua-symbol { font-weight: 900; }
+.m-fengshui .fs-gua-name { font: 900 20px/1.35 var(--font-round, var(--font-sans)); letter-spacing: .04em; }
+.m-fengshui .fs-gua-nature { font-weight: 700; }
+.m-fengshui .fs-gua-lucky { font-weight: 800; letter-spacing: .02em; }
+.m-fengshui .fs-grid-note { font-weight: 700; letter-spacing: .04em; }
+.m-fengshui .fs-cell {
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  box-shadow: 0 3px 0 var(--edge-color);
+}
+.m-fengshui .fs-cell b { font: 900 17px/1.3 var(--font-round, var(--font-sans)); letter-spacing: .02em; }
+.m-fengshui .fs-cell i, .m-fengshui .fs-cell-dir { font-weight: 700; letter-spacing: .02em; }
+.m-fengshui .fs-cell[data-tone='great'] {
+  border-color: color-mix(in srgb, var(--accent) 70%, #000);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 55%, #000);
+}
+.m-fengshui .fs-cell.center { border-style: dashed; box-shadow: none; }
+.m-fengshui .fs-dir-row { border-top: 2px dashed var(--line); }
+.m-fengshui .fs-dir-row b { font: 800 15px/1.4 var(--font-round, var(--font-sans)); letter-spacing: .02em; }
+.m-fengshui .fs-dir-row span { font-weight: 700; }
+@media (max-width: 380px) {
+  .m-fengshui .fs-deg { font-size: 40px; }
+  .m-fengshui .fs-cell b { font-size: 15px; }
+}
+
+/* —— 水晶球答案（第 43 轮）：原来是宋体细字配柔光，浮在球里发虚。改为圆体粗字白字深紫描边，
+   和金币「感」、主按钮同一种 Clash Royale 式描边字，不论球里星雾多亮都读得清 —— */
+.m-crystal .cr-answer-text {
+  --cr-ink: #2b2240;
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 900;
+  letter-spacing: .03em;
+  color: #fff;
+  text-shadow: 2px 0 0 var(--cr-ink), -2px 0 0 var(--cr-ink), 0 2px 0 var(--cr-ink), 0 -2px 0 var(--cr-ink),
+    1.5px 1.5px 0 var(--cr-ink), -1.5px -1.5px 0 var(--cr-ink), 1.5px -1.5px 0 var(--cr-ink), -1.5px 1.5px 0 var(--cr-ink),
+    0 4px 0 var(--cr-ink);
+}
+.m-crystal .cr-answer-text.word {
+  font-weight: 900;
+  color: #ffc93c;
+  --cr-ink: #5a1a10;
+  text-shadow: 3px 0 0 var(--cr-ink), -3px 0 0 var(--cr-ink), 0 3px 0 var(--cr-ink), 0 -3px 0 var(--cr-ink),
+    2px 2px 0 var(--cr-ink), -2px -2px 0 var(--cr-ink), 2px -2px 0 var(--cr-ink), -2px 2px 0 var(--cr-ink),
+    0 6px 0 var(--cr-ink);
+}

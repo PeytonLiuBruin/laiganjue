@@ -1,0 +1,63 @@
+/* 付费卡卡通化（第 43 轮）。
+   付费卡是收入入口，原来还是宣纸版：宋体标题、1px 细线「解 / 妆 / 印」方块、没有边框的「恢复购买」红字、未选中的方案是浅灰细边。
+   改为和首次引导卡同一套：金币「感」、圆体 900 标题、红蓝紫三色描边实色方块、方案卡 2px 描边加厚边、
+   恢复购买与条款链接改描边小按钮（最小高度 44 由 touch.css 保证）。 */
+.pw-mark {
+  width: 56px; height: 56px; border-radius: 50%;
+  font: 900 28px/1 var(--font-round); color: #e8463c;
+  background: radial-gradient(circle at 34% 28%, #fff1b0 0 14%, #ffd457 34%, #ffc93c 62%, #e3a21a 100%);
+  border: 3px solid #8a3a10; box-shadow: 0 4px 0 #8a3a10, inset 0 -5px 0 rgba(138, 58, 16, .28);
+  text-shadow: 2px 0 0 #5a1a10, -2px 0 0 #5a1a10, 0 2px 0 #5a1a10, 0 -2px 0 #5a1a10, 1.5px 1.5px 0 #5a1a10, -1.5px -1.5px 0 #5a1a10, 1.5px -1.5px 0 #5a1a10, -1.5px 1.5px 0 #5a1a10;
+}
+.pw-title { font: 900 24px/1.2 var(--font-round); letter-spacing: .02em; }
+.pw-reason { font-weight: 700; line-height: 1.45; }
+
+.pw-benefits {
+  gap: 0; padding: 4px 12px; border-radius: 18px;
+  background: var(--surface-2); border: 2px solid var(--line-strong); box-shadow: 0 4px 0 var(--edge-color);
+}
+.pw-benefits li { align-items: center; gap: 12px; padding: 10px 0; }
+.pw-benefits li + li { border-top: 2px dashed var(--line); }
+.pw-benefits .pw-glyph {
+  --g: #e8463c; --g-ink: #6e1712;
+  width: 38px; height: 38px; border-radius: 12px;
+  font: 900 20px/1 var(--font-round); color: #fff;
+  background: var(--g); border: 2px solid var(--g-ink); box-shadow: 0 3px 0 var(--g-ink);
+  text-shadow: 1.5px 0 0 var(--g-ink), -1.5px 0 0 var(--g-ink), 0 1.5px 0 var(--g-ink), 0 -1.5px 0 var(--g-ink);
+}
+.pw-benefits li:nth-child(2) .pw-glyph { --g: #3d8bff; --g-ink: #173a80; }
+.pw-benefits li:nth-child(3) .pw-glyph { --g: #9b6bff; --g-ink: #3a2380; }
+.pw-benefits b { font: 800 var(--fs-m)/1.35 var(--font-round); letter-spacing: .02em; }
+.pw-benefits li > div > span { line-height: 1.5; }
+
+.pw-plans { gap: 10px; margin-top: 4px; }
+.pw-plan {
+  border: 2px solid var(--line-strong); border-radius: 16px;
+  box-shadow: 0 4px 0 var(--edge-color); padding: 16px 6px 12px;
+}
+.pw-plan:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge-color); }
+.pw-plan.on {
+  border-color: color-mix(in srgb, var(--accent) 70%, #000);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 0 0 3px var(--glow);
+}
+.pw-plan-name { font: 800 var(--fs-m)/1.3 var(--font-round); }
+.pw-plan-name em {
+  font: 900 11px/1 var(--font-round); padding: 4px 8px;
+  border: 2px solid color-mix(in srgb, var(--accent) 55%, #000);
+}
+.pw-price { font: 900 var(--fs-s)/1.35 var(--font-round); }
+.pw-sub { font-weight: 700; }
+
+.pw-links { gap: 10px; justify-content: center; }
+.pw-link, .pw-legal a {
+  border: 2px solid var(--line-strong); border-radius: 999px; background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+  font: 800 13px/1.2 var(--font-round); color: var(--accent-text); text-decoration: none;
+  padding-inline: 14px;
+}
+.pw-link:active, .pw-legal a:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge-color); }
+.pw-legal { gap: 10px; margin-top: 2px; }
+.pw-legal > span { display: none; }
+.pw-legal a { color: var(--text-2); font-size: 12px; }
+.pw-retry { justify-self: center; }
