@@ -296,3 +296,132 @@
   /* 器物脚下一块硬边冷紫影，不再是糊开的灰圈 */
   background: radial-gradient(ellipse 34% 20% at 50% 50%, var(--toon-floor) 0 96%, transparent 100%);
 }
+
+/* —— 御神签签纸与结绳架卡通化（第 44 轮）——
+   出签后整个舞台就是这张签纸，但它还是和纸版：米色纸、柔和大投影、10px 宋体字距 .34em 的「第二十二番」，
+   等级字宋体配金色渐变，两道淡金细线，结绳架是 4px 细木杆。签筒退到后面只降到 38% 透明并模糊，像残影。
+   改为：奶油纸 2.5px 深描边加 5px 硬厚边，顶部一条朱红标签白字，等级字圆体 900 按等级上色并加深色描边，
+   分隔线改 2px 虚线，结绳架改 8px 朱漆立柱与 5px 横杆，都带深描边。签诗正文保留宋体（和灵签一致），字距收窄。 */
+.m-omikuji .ok-slip.paper-slip {
+  --ok-outline: #2b2240;
+  background: #fffaf0;
+  border: 2.5px solid var(--ok-outline);
+  border-radius: 14px;
+  box-shadow: 0 5px 0 var(--ok-outline), 0 14px 24px rgba(43, 34, 64, 0.18);
+  overflow: hidden;
+  padding-top: 0;
+}
+.m-omikuji .ok-slip-edge.top {
+  /* 顶部朱红标签：原来的淡金细线换成一条实色带，「第 N 番」写在上面 */
+  height: 8px;
+  margin: 0 -14px 0;
+  background: #e8463c;
+  opacity: 1;
+}
+.m-omikuji .ok-slip-edge.bottom {
+  height: 6px;
+  margin: 12px 18px 0;
+  border-radius: 999px;
+  background: #ffc93c;
+  border: 2px solid var(--ok-outline);
+  opacity: 1;
+}
+.m-omikuji .ok-slip-no {
+  display: block;
+  margin: 0 -14px 6px;
+  padding: 4px 0 6px;
+  background: #e8463c;
+  border-bottom: 2.5px solid var(--ok-outline);
+  color: #fff;
+  font: 800 13px/1.3 var(--font-round, var(--font-sans));
+  letter-spacing: .06em;
+}
+.m-omikuji .ok-slip-level {
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 900;
+  letter-spacing: .04em;
+  --ok-lv-ink: #2b2240;
+  text-shadow: 2px 0 0 var(--ok-lv-ink), -2px 0 0 var(--ok-lv-ink), 0 2px 0 var(--ok-lv-ink), 0 -2px 0 var(--ok-lv-ink),
+    1.5px 1.5px 0 var(--ok-lv-ink), -1.5px -1.5px 0 var(--ok-lv-ink), 1.5px -1.5px 0 var(--ok-lv-ink), -1.5px 1.5px 0 var(--ok-lv-ink),
+    0 4px 0 var(--ok-lv-ink);
+}
+/* 渐变字没法加描边，金色等级改实色金 */
+.m-omikuji .ok-tone-gold .ok-slip-level { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: #ffc93c; --ok-lv-ink: #6a3a00; }
+.m-omikuji .ok-tone-red .ok-slip-level { color: #e8463c; --ok-lv-ink: #5a1a10; }
+.m-omikuji .ok-tone-ink .ok-slip-level { color: #fff4d6; --ok-lv-ink: #2b2240; }
+.m-omikuji .ok-tone-indigo .ok-slip-level { color: #8fa9ff; --ok-lv-ink: #1c2550; }
+.m-omikuji .ok-slip-kana {
+  margin-top: 6px;
+  font: 700 11px/1.3 var(--font-round, var(--font-sans));
+  letter-spacing: .12em;
+  color: #6a5a8a;
+}
+.m-omikuji .ok-slip-waka { letter-spacing: .08em; color: #2b2240; }
+.m-omikuji .ok-slip-rule { height: 0; margin: 8px 18px; background: none; border-top: 2px dashed rgba(43, 34, 64, 0.28); }
+.m-omikuji .ok-slip-blurb { font: 800 13px/1.6 var(--font-round, var(--font-sans)); color: #2b2240; }
+.m-omikuji .ok-slip-item b { font-family: var(--font-round, var(--font-sans)); font-weight: 800; letter-spacing: .02em; }
+
+.m-omikuji .ok-rack-post {
+  width: 8px;
+  border-radius: 4px;
+  background: #e8463c;
+  border: 2px solid #2b2240;
+  box-shadow: 0 3px 0 rgba(43, 34, 64, 0.25);
+}
+.m-omikuji .ok-rack-rod,
+.m-omikuji .ok-rack-rod2 {
+  left: 6px;
+  right: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #ffc93c;
+  border: 2px solid #2b2240;
+  box-shadow: none;
+}
+.m-omikuji .ok-rack-rod2 { height: 5px; opacity: 1; }
+/* 出签后签筒整个淡出，不再半透明模糊地露在签纸旁边（和灵签第 19 轮一致） */
+/* 结绳架原来压到 45% 透明当背景，描边卡通杆子半透明会发粉，改为不透明（它在签纸之下，不抢画面） */
+.m-omikuji .ok-rack { opacity: 1; }
+.m-omikuji .ok-tube-wrap.stick-scene.ok-dim,
+.m-omikuji .ok-stick.ok-dim { opacity: 0; filter: none; pointer-events: none; transition: opacity .35s ease; }
+
+/* —— 六爻铜钱盘与卦象台卡通化（第 44 轮）——
+   舞台左边的铜钱盘是浅灰底 1px 细线框，金色铜钱放在上面发虚。右边卦象台标题是 14px 宋体字距 .25em，
+   「自下而上」10px 字距 .25em，爻位是 11px 宋体，爻条 8px 直角。
+   铜钱盘改成青绿绒布垫（金钱落在青绿上最醒目，五套皮肤都成立），2.5px 深描边加厚边，内圈白色虚线。
+   卦象台 2px 描边加 4px 厚边，标题圆体 900，爻位与脚注圆体 800 不拉字距，爻条加高到 10px 圆角。 */
+.m-liuyao .ly-mat {
+  background: #3aa898;
+  border: 2.5px solid #2b2240;
+  border-radius: 18px;
+  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, 0.12), 0 4px 0 rgba(43, 34, 64, 0.18);
+}
+.m-liuyao .ly-mat-ring {
+  inset: 9px;
+  border: 2px dashed rgba(255, 255, 255, 0.6);
+  opacity: 1;
+}
+.m-liuyao .ly-board {
+  border: 2px solid var(--line-strong);
+  box-shadow: 0 4px 0 var(--edge-color);
+}
+.m-liuyao .ly-board-title {
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: .04em;
+  text-indent: 0;
+}
+.m-liuyao .ly-board-foot {
+  font: 800 11px/1.3 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+  text-indent: 0;
+  color: var(--text-2);
+}
+.m-liuyao .ly-line-pos {
+  font: 800 12px/1 var(--font-round, var(--font-sans));
+}
+.m-liuyao .ly-bar { height: 10px; border-radius: 4px; border-width: 2px; }
+.m-liuyao .ly-line.lit .ly-bar { box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22); }
+.m-liuyao .ly-line.moving .ly-bar { box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22), 0 0 0 2px var(--glow); }
+.m-liuyao .ly-mark { font-weight: 900; font-size: 14px; }

@@ -1,8 +1,8 @@
 [
   {
-    "route": "home@paywall",
+    "route": "m/omikuji@readfull",
     "viewport": "393x852",
-    "file": "home-paywall-393x852.png",
+    "file": "m-omikuji-readfull-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,20 +11,9 @@
     "errors": []
   },
   {
-    "route": "home@paywall",
-    "viewport": "430x932",
-    "file": "home-paywall-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
+    "route": "m/liuyao@readfull",
     "viewport": "393x852",
-    "file": "ink-home-paywall-393x852.png",
+    "file": "m-liuyao-readfull-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -33,152 +22,9 @@
     "errors": []
   },
   {
-    "route": "home@paywall",
-    "viewport": "430x932",
-    "file": "ink-home-paywall-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
+    "route": "m/runes@readfull",
     "viewport": "393x852",
-    "file": "cinnabar-home-paywall-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "430x932",
-    "file": "cinnabar-home-paywall-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "393x852",
-    "file": "nebula-home-paywall-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "430x932",
-    "file": "nebula-home-paywall-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "393x852",
-    "file": "celadon-home-paywall-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@paywall",
-    "viewport": "430x932",
-    "file": "celadon-home-paywall-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui@tab1",
-    "viewport": "393x852",
-    "file": "m-fengshui-tab1-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui@tab2",
-    "viewport": "393x852",
-    "file": "m-fengshui-tab2-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui@tab1",
-    "viewport": "430x932",
-    "file": "m-fengshui-tab1-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui@tab2",
-    "viewport": "430x932",
-    "file": "m-fengshui-tab2-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui@tab1",
-    "viewport": "393x852",
-    "file": "ink-m-fengshui-tab1-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui@tab1",
-    "viewport": "430x932",
-    "file": "ink-m-fengshui-tab1-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui",
-    "viewport": "393x852",
-    "file": "m-fengshui-393x852.png",
+    "file": "m-runes-readfull-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -198,9 +44,44 @@
     "errors": []
   },
   {
-    "route": "m/fengshui",
+    "route": "m/tarot@read",
+    "viewport": "393x852",
+    "file": "m-tarot-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/omikuji@readfull",
     "viewport": "430x932",
-    "file": "m-fengshui-430x932.png",
+    "file": "m-omikuji-readfull-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/liuyao@readfull",
+    "viewport": "430x932",
+    "file": "m-liuyao-readfull-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@readfull",
+    "viewport": "430x932",
+    "file": "m-runes-readfull-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -220,31 +101,44 @@
     "errors": []
   },
   {
-    "route": "m/fengshui",
-    "viewport": "393x852",
-    "file": "ink-m-fengshui-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/crystal@read",
-    "viewport": "393x852",
-    "file": "ink-m-crystal-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/fengshui",
+    "route": "m/tarot@read",
     "viewport": "430x932",
-    "file": "ink-m-fengshui-430x932.png",
+    "file": "m-tarot-read-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/omikuji@readfull",
+    "viewport": "393x852",
+    "file": "ink-m-omikuji-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/liuyao@readfull",
+    "viewport": "393x852",
+    "file": "ink-m-liuyao-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/omikuji@readfull",
+    "viewport": "430x932",
+    "file": "ink-m-omikuji-readfull-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -253,9 +147,9 @@
     "errors": []
   },
   {
-    "route": "m/crystal@read",
+    "route": "m/liuyao@readfull",
     "viewport": "430x932",
-    "file": "ink-m-crystal-read-430x932.png",
+    "file": "ink-m-liuyao-readfull-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,

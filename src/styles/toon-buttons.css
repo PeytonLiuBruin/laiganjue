@@ -1,0 +1,28 @@
+/* 玩法页次按钮卡通化（第 44 轮）。
+   主按钮早就是红色渐变加厚边，但它旁边的次按钮（御神签「结绳架」、六爻「再起一卦」、卢恩「收回」、
+   塔罗「重来」、水晶球「擦掉」、筊杯「重新问事」等）还是透明底、没有边框的纯文字，
+   结果条里的「收好这份祝福」是浅灰平板块。用 @readfull 长图看，和厚边舞台、厚边结果卡放在一起像没做完。
+   统一为白底 2px 描边加 4px 厚边，圆体 800，按下下沉，和抽屉底部次按钮（toon-reading.css）同一套。
+   只作用在操作条、结果条操作行、塔罗操作行和卢恩「符文一览」，抽屉、设置里的小按钮不动。 */
+
+:is(.action-bar, .ritual-receipt-actions, .m-tarot .tr-actions, .m-runes .rn-more) .btn:is(.ghost, .soft):not(.primary) {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  box-shadow: 0 4px 0 var(--edge-color);
+  color: var(--text);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+:is(.action-bar, .ritual-receipt-actions, .m-tarot .tr-actions, .m-runes .rn-more) .btn:is(.ghost, .soft):not(.primary):active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--edge-color);
+}
+/* 不可用时保留形状但去掉厚边，读得出是灰掉的 */
+:is(.action-bar, .ritual-receipt-actions, .m-tarot .tr-actions, .m-runes .rn-more) .btn:is(.ghost, .soft):not(.primary):disabled {
+  box-shadow: none;
+  border-style: dashed;
+}
+/* 卢恩「符文一览」原来是悬空的一行字，改成居中的小胶囊 */
+.m-runes .rn-more .btn { border-radius: 999px; padding-inline: 18px; }

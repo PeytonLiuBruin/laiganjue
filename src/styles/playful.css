@@ -39,7 +39,10 @@
   --btn-edge: #b8302a;
   --noise-opacity: 0;
 }
-[data-theme='paper'] body { background: linear-gradient(180deg, #fffaf0 0%, #f6f9ff 45%, #eaf6ff 100%) fixed; }
+/* iOS 的 WebKit 不支持 background-attachment: fixed，会按 scroll 处理，渐变只铺满 html 一屏高后重复，
+   长页面往下滑时在一屏高处出现一道从浅天蓝跳回奶油白的硬缝（第 44 轮长图发现）。
+   不重复，底色接渐变末端色，超出一屏的部分是同色平铺，看不出接缝。 */
+[data-theme='paper'] body { background: #eaf6ff linear-gradient(180deg, #fffaf0 0%, #f6f9ff 45%, #eaf6ff 100%) no-repeat fixed; }
 [data-theme='celadon'] { --edge-color: rgba(20, 60, 45, .14); }
 
 /* —— 字体：标题用圆体粗体，签诗正文仍是宋体 —— */
