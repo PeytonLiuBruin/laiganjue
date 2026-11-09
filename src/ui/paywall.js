@@ -2,13 +2,15 @@
 // 权益列表只写已经实现的 Pro 功能（指南 2.3.1），与设置页、商店描述保持一致。
 // 合规要点（App Store 指南 3.1.1 / 3.1.2）：价格与周期来自 StoreKit 的本地化字符串，写明自动续期、
 // 试用结束后扣费与取消方式，链接使用条款与隐私政策，提供恢复购买。网页版只展示权益，不出售。
+// 3.1.2 要求实际扣款金额是最醒目的价格元素：方案卡里金额用最大的字，免费试用只作为附注，
+// 主按钮不再只写「免费试用 N 天」（会盖过金额，常见拒审理由）。
 //
 // openPaywall(platform, { reason }) → Promise<boolean>：关闭时是否已获得 Pro 或单次解读次数
 import { h, button, sheet, toast } from './kit.js';
+import { legalLink, TERMS_URL, PRIVACY_URL } from './legal.js';
 
-export const TERMS_URL = 'https://peytonliubruin.github.io/laiganjue/terms.html';
+export { TERMS_URL, PRIVACY_URL };
 export const APPLE_EULA_URL = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
-export const PRIVACY_URL = 'https://peytonliubruin.github.io/laiganjue/privacy.html';
 
 const BENEFITS = [
   ['解', '无限次深度解读', '签诗逐句解、牌阵完整解读、合婚六项展开'],
@@ -33,7 +35,7 @@ export function fineprint(plan, info = {}) {
 export function ctaLabel(plan, info = {}) {
   if (plan === 'lifetime') return info.priceString ? `${info.priceString} 永久解锁` : '永久解锁';
   if (plan === 'pack5') return info.priceString ? `${info.priceString} 购买 5 次解读` : '购买 5 次解读';
-  if (info.trialDays) return `免费试用 ${info.trialDays} 天`;
+  if (info.trialDays) return `开通 Pro · 前 ${info.trialDays} 天免费`;
   return '开通 Pro';
 }
 
@@ -69,9 +71,9 @@ export function openPaywall(platform, { reason = '' } = {}) {
     planList, retryBtn, cta, fine, webNote,
     h('div', { class: 'pw-links' }, packBtn, restoreBtn),
     h('div', { class: 'pw-legal' },
-      h('a', { attrs: { href: TERMS_URL, target: '_blank', rel: 'noopener' } }, '使用条款（EULA）'),
+      legalLink('terms', '使用条款（EULA）'),
       h('span', null, '·'),
-      h('a', { attrs: { href: PRIVACY_URL, target: '_blank', rel: 'noopener' } }, '隐私政策')),
+      legalLink('privacy', '隐私政策')),
   );
 
   function pick(key) {
@@ -83,7 +85,9 @@ export function openPaywall(platform, { reason = '' } = {}) {
     for (const [k, v] of planEls) {
       const p = info[k];
       if (p) {
-        v.price.textContent = p.priceString + (p.period ? ` / ${p.period.replace(/^每/, '')}` : '');
+        // 金额单独一行用最大的字，周期跟在后面用小字（金额是扣款时真正收的钱）
+        // --len 让长币种（HK$1,298.00）按卡片宽度缩小字号，不溢出方案卡
+        v.price.replaceChildren(h('b', { style: `--len:${[...p.priceString].length}` }, p.priceString), p.period ? h('small', null, ` / ${p.period.replace(/^每/, '')}`) : '');
         if (k !== 'lifetime') v.sub.textContent = p.trialDays ? `前 ${p.trialDays} 天免费` : '';
       } else if (iap?.available) v.price.textContent = loaded ? '暂不可用' : '…';
     }

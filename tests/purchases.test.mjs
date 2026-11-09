@@ -158,7 +158,7 @@ test('付费卡文案：价格周期、自动续期与取消方式写清楚', ()
   assert.match(t, /24 小时/);
   assert.match(t, /取消/);
   assert.match(fineprint('lifetime', {}), /不会自动续费/);
-  assert.equal(ctaLabel('yearly', yearly), '免费试用 3 天');
+  assert.equal(ctaLabel('yearly', yearly), '开通 Pro · 前 3 天免费', '主按钮不能只写免费试用（指南 3.1.2：扣款金额要比试用更醒目）');
   assert.equal(ctaLabel('monthly', { priceString: '¥18.00', period: '每月' }), '开通 Pro');
   assert.equal(ctaLabel('lifetime', { priceString: '¥198.00' }), '¥198.00 永久解锁');
 });

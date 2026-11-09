@@ -132,8 +132,8 @@ final class PaywallScreenshotTests: XCTestCase {
     /// 试用年度 → 提示欢迎并关闭付费卡 → 再打开付费卡点恢复购买，能恢复 Pro。
     func testYearlyTrialPurchaseThenRestore() throws {
         openPaywallWithPrices()
-        let trial = app.buttons.matching(NSPredicate(format: "label CONTAINS '免费试用'")).firstMatch
-        XCTAssertTrue(trial.waitForExistence(timeout: 10), "没有「免费试用」主按钮")
+        let trial = app.buttons.matching(NSPredicate(format: "label CONTAINS '天免费'")).firstMatch
+        XCTAssertTrue(trial.waitForExistence(timeout: 10), "没有「开通 Pro · 前 N 天免费」主按钮")
         trial.tap()
         let welcome = label("欢迎加入来感觉 Pro")
         let ok = welcome.waitForExistence(timeout: 30)

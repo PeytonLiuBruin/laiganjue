@@ -41,12 +41,21 @@
   background: color-mix(in srgb, var(--accent) 12%, var(--surface));
   box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 0 0 3px var(--glow);
 }
-.pw-plan-name { font: 800 var(--fs-m)/1.3 var(--font-round); }
+/* 指南 3.1.2：实际扣款金额是整张卡最醒目的价格，方案名与「前 N 天免费」都比它小一号以上 */
+.pw-plan-name { font: 800 14px/1.3 var(--font-round); color: var(--text-2); }
 .pw-plan-name em {
   font: 900 11px/1 var(--font-round); padding: 4px 8px;
   border: 2px solid color-mix(in srgb, var(--accent) 55%, #000);
 }
-.pw-price { font: 900 var(--fs-s)/1.35 var(--font-round); }
+.pw-price { font: 900 var(--fs-s)/1.35 var(--font-round); white-space: nowrap; }
+.pw-plan { container-type: inline-size; }
+.pw-price b {
+  display: block; font: 900 21px/1.15 var(--font-round); letter-spacing: -.01em; color: var(--accent-text);
+  /* 按字数和卡片宽度取字号：数字与货币符号约 0.6em 宽，留出卡片左右内边距 */
+  font-size: clamp(13px, calc((100cqi - 8px) / (var(--len, 7) * 0.6)), 21px);
+}
+@supports not (width: 1cqi) { .pw-price b { font-size: 17px; } }
+.pw-price small { font: 800 12px/1.3 var(--font-round); color: var(--text-2); }
 .pw-sub { font-weight: 700; }
 
 .pw-links { gap: 10px; justify-content: center; }
@@ -61,3 +70,10 @@
 .pw-legal > span { display: none; }
 .pw-legal a { color: var(--text-2); font-size: 12px; }
 .pw-retry { justify-self: center; }
+
+/* 使用条款 / 隐私政策：抽屉里嵌入随包附带的页面（src/ui/legal.js） */
+.legal-sheet { margin-inline: -4px; }
+.legal-frame {
+  display: block; width: 100%; height: min(68dvh, 640px); border: 2px solid var(--line-strong); border-radius: 14px;
+  background: #fff;
+}

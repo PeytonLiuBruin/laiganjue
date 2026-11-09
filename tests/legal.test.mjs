@@ -26,8 +26,21 @@ test('隐私政策写明购买由 Apple 处理，使用条款含自动续期说�
   assert.match(t, /stdeula/);
 });
 
-test('构建脚本会复制 terms.html，付费卡与设置页链接到条款', () => {
-  assert.match(read('scripts/build.mjs'), /src\/terms\.html/);
-  assert.match(read('src/ui/paywall.js'), /TERMS_URL = '.*terms\.html'/);
-  assert.match(read('src/ui/app.js'), /TERMS_URL[\s\S]*PRIVACY_URL/);
+test('构建脚本会复制 terms.html 与 privacy.html，付费卡、皮肤卡与设置页都链接到条款', () => {
+  const build = read('scripts/build.mjs');
+  assert.match(build, /src\/terms\.html/);
+  assert.match(build, /src\/privacy\.html/);
+  assert.match(read('src/ui/legal.js'), /TERMS_URL = '.*terms\.html'/);
+  for (const f of ['src/ui/paywall.js', 'src/ui/skins.js', 'src/ui/app.js']) {
+    const src = read(f);
+    assert.match(src, /legalLink\('terms'/, `${f} 缺少使用条款链接`);
+    assert.match(src, /legalLink\('privacy'/, `${f} 缺少隐私政策链接`);
+  }
+});
+
+test('条款与隐私政策在 App 内打开随包附带的页面（网站没发布或离线时也能看，指南 3.1.2 要求链接可用）', () => {
+  const legal = read('src/ui/legal.js');
+  assert.match(legal, /local: 'terms\.html'/);
+  assert.match(legal, /local: 'privacy\.html'/);
+  assert.match(legal, /preventDefault\(\)[\s\S]*openLegal/);
 });

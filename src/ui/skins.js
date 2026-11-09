@@ -5,7 +5,7 @@
 // openSkinOffer(platform, theme) → Promise<boolean>：关闭时是否已拥有这套皮肤
 // startSkinTryOn({ platform, theme, apply, revert, openPaywall }) → 试穿条 + 到时出购买卡
 import { h, button, sheet, toast } from './kit.js';
-import { TERMS_URL, PRIVACY_URL } from './paywall.js';
+import { legalLink } from './legal.js';
 
 export const FREE_THEMES = ['paper', 'ink'];
 export const PREVIEW_SECONDS = 10;
@@ -65,9 +65,9 @@ export function openSkinOffer(platform, theme, { openPaywall } = {}) {
     buyBtn, proBtn, fine, webNote,
     h('div', { class: 'pw-links' }, restoreBtn),
     h('div', { class: 'pw-legal' },
-      h('a', { attrs: { href: TERMS_URL, target: '_blank', rel: 'noopener' } }, '使用条款（EULA）'),
+      legalLink('terms', '使用条款（EULA）'),
       h('span', null, '·'),
-      h('a', { attrs: { href: PRIVACY_URL, target: '_blank', rel: 'noopener' } }, '隐私政策')),
+      legalLink('privacy', '隐私政策')),
   );
 
   function render() {

@@ -9,7 +9,8 @@ import { createZen } from './zen.js';
 import { registerModel, hasModel } from './model-slot.js';
 import { ritualArt } from './ritual-art.js';
 import { createMotionPrompt } from './motion-prompt.js';
-import { openPaywall, TERMS_URL, PRIVACY_URL } from './paywall.js';
+import { openPaywall } from './paywall.js';
+import { legalLink } from './legal.js';
 import { routeFromUrl } from './deeplink.js';
 import { createOnboardGate } from './onboard-gate.js';
 import { versionText } from './version.js';
@@ -605,9 +606,9 @@ export function startApp(root) {
       h('div', { class: 'ornament' }, icon('sparkle', { size: 18 })),
       h('p', { class: 't-faint', style: { fontSize: '12px', lineHeight: '1.8' } }, `${APP_NAME} · 玄学占卜合集。所有结果均由随机算法与传统文化文本生成，仅供娱乐与自我觉察，请勿据此做出医疗、财务、法律等重要决定。`),
       h('p', { class: 'setting-legal t-faint mt-2' },
-        h('a', { attrs: { href: TERMS_URL, target: '_blank', rel: 'noopener' } }, '使用条款'),
+        legalLink('terms', '使用条款'),
         h('span', null, ' · '),
-        h('a', { attrs: { href: PRIVACY_URL, target: '_blank', rel: 'noopener' } }, '隐私政策')),
+        legalLink('privacy', '隐私政策')),
       h('p', { class: 'setting-version t-faint mt-2', dataset: { version: '1' } }, versionText(typeof __BUILD_INFO__ !== 'undefined' ? __BUILD_INFO__ : null)),
     );
     const sh = sheet({ title: '设置', content });
