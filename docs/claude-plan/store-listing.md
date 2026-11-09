@@ -119,6 +119,12 @@ Privacy: No data is collected. Purchases are processed by Apple.
 
 `node scripts/store-shots.mjs` 生成，存放在 `docs/claude-plan/store/`：6.9 寸（1290×2796）与 6.5 寸（1242×2688）各 6 张。顺序：首页 → 灵签 → 塔罗 → 财运摇钱树 → 姻缘 → 水晶球。第 12 轮（2026-10-23）按新界面重拍：灵签固定为上签，塔罗固定为翻开的积极正位牌，并排除太阳、恋人、星星、世界这几张牌面有裸体人物的牌，免得审核或年龄分级出问题。整套约 3 到 6 分钟，主要花在软件渲染 3D 舞台和随机重抽上。
 
+**iPad 截图（第 45 轮，2026-11-09 新增）**：工程里 App 设为同时支持 iPhone 和 iPad（`TARGETED_DEVICE_FAMILY = 1,2`），这种情况下 App Store Connect 必须上传 13 寸 iPad 截图（2064×2752）才能提交审核。脚本现在多出 `ipad13-2064x2752-1.png` 到 `-6.png`，App 画面按 iPad Pro 13 寸的 1032×1376 视口截。只重拍一种尺寸可以加 `--only ipad`（或 `--only 6.9in`）。
+
+在 iPad 上 App 是居中的一栏（首页玩法卡三列），横竖屏都不横向溢出，能用，但空白较多。**待 Peyton 决定**：
+- 保留 iPad：上传上面的 iPad 截图，iPad 用户在 App Store 里直接搜得到，审核员也可能在 iPad 上测。
+- 只支持 iPhone（建议首发这样做）：把 `TARGETED_DEVICE_FAMILY` 改成 `1`，iPad 截图不用传，iPad 用户仍可以用「iPhone 版」模式安装，审核只按 iPhone 看。以后想做 iPad 专门布局时再打开。
+
 ## 8. 年龄分级问卷建议答案（第 12 轮，2026-10-23）
 
 依据 Apple 的年龄分级说明（App Store Connect Help → Age ratings，iOS 26 起为 4+ / 9+ / 13+ / 16+ / 18+）。问卷要在 App Store Connect 的「App 信息 → 年龄分级」里由 Peyton 填写，以下是逐题建议。

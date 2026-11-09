@@ -23,6 +23,7 @@ P0 上架必需 · P1 影响付费转化 · P2 体验打磨。完成后打勾并
   完成标准：`npm run e2e` 的「不支持 WebGL 时退回 2D 画布」通过（2026-10-22 发现，未改动的 HEAD 上同样失败，属于原有问题）。老 iPhone 或 WebGL 创建失败时会走这条路径。
 
 - [ ] **中国大陆上架的 App 备案（ICP 备案号）**（P0，第 25 轮新增，需要 Peyton 决定）：StoreKit 店面和主推价格都按中国区规划，而按工信部规定，在中国大陆 App Store 分发的新 App 需要在 App Store Connect 填写 App 备案号，没有备案号只能先在其他国家和地区上架。备案以开发者主体（个人或公司）通过国内云服务商或通信管理局办理，通常要几周，需要实名与手机号。完成标准：Peyton 决定首发是否包含中国大陆（不含则首发区域选港澳台、新加坡、美国等华人用户多的地区，商店文案与价格档位按美区和港区调整），若包含则拿到备案号填入 App Store Connect。上架前请在 Apple 开发者网站的最新说明里再核对一次要求。
+- [ ] **首发是否支持 iPad**（P0，第 45 轮发现，需要 Peyton 决定）：工程设为同时支持 iPhone 和 iPad，App Store Connect 提交时必须有 13 寸 iPad 截图。`store-shots.mjs` 已能生成 `ipad13-2064x2752-*.png`，iPad 上居中一栏可用但空白多。建议首发只支持 iPhone（`TARGETED_DEVICE_FAMILY = 1`，iPad 用户仍可装 iPhone 版），详见 store-listing.md 第 7 节。完成标准：Peyton 选定一种，选 iPhone 时改工程设置并删掉 iPad 截图尺寸，选 iPad 时上传 iPad 截图。
 - [ ] **隐私政策与使用条款网址可访问**：付费卡和设置页链接 `peytonliubruin.github.io/laiganjue/terms.html`，GitHub Pages 发布后才能打开。完成标准：两个网址返回 200（需要本分支合并到 Pages 发布分支，由 Peyton 决定合并时机）。
   - App 内部分已解决 ✅ 2026-11-09：付费卡、皮肤卡、设置页的条款与隐私链接改为在抽屉里打开随包附带的页面（`src/ui/legal.js`），网站没发布、离线时也能看，审核员点链接一定有内容。剩下的只是 App Store Connect 里填的两个公开网址，仍需合并后才能打开。
 - [x] **分享卡「存储图像」闪退：缺相册添加权限说明** ✅ 2026-11-09（审核预检发现）：分享卡走系统分享面板，用户点「存储图像」时 iOS 要求 Info.plist 有 `NSPhotoLibraryAddUsageDescription`，缺了 App 会立即闪退（审核员很可能会点到，属 2.1 崩溃拒审）。已加说明「把分享卡片保存到你的相册。来感觉只会添加图片，不会读取你的相册。」，只申请添加权限不申请读取。完成标准：`tests/legal.test.mjs` 检查该键存在且没有申请读取相册。真机上点一次「分享图片 → 存储图像」确认弹出权限框并保存成功（并入「分享卡真机验证」）。

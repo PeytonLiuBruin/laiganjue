@@ -1,8 +1,9 @@
-// App Store 商店截图：先用 iPhone 视口截下 App 画面，再套上明快渐变底、中文大标题与圆角机身，
-// 输出 6.9 寸（1290×2796）与 6.5 寸（1242×2688）各 6 张到 docs/claude-plan/store/。
-// 用法：node scripts/store-shots.mjs [--out docs/claude-plan/store] [--theme paper]
+// App Store 商店截图：先用 iPhone / iPad 视口截下 App 画面，再套上明快渐变底、中文大标题与圆角机身，
+// 输出 6.9 寸（1290×2796）、6.5 寸（1242×2688）与 13 寸 iPad（2064×2752）各 6 张到 docs/claude-plan/store/。
+// App 支持 iPad（TARGETED_DEVICE_FAMILY = 1,2）时 App Store Connect 必须有 13 寸 iPad 截图才能提交。
+// 用法：node scripts/store-shots.mjs [--out docs/claude-plan/store] [--theme paper] [--only ipad|6.9in|6.5in]
 import path from 'node:path';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { buildAll } from './build.mjs';
 import { createStaticServer } from './serve.mjs';
@@ -14,6 +15,7 @@ const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
 const out = path.resolve(root, opt('--out', 'docs/claude-plan/store'));
 const theme = opt('--theme', 'paper');
+const only = opt('--only', '');
 
 // 每张：路由、动作、标题、副标题、底色（取 visual-direction.md 色板）
 export const SCENES = [
@@ -26,10 +28,12 @@ export const SCENES = [
 ];
 // 商店图里可以出现的塔罗牌（正位、寓意积极、画面明亮）。太阳、恋人、星星、世界牌面有裸体人物，不放进商店图（审核与年龄分级）
 const GOOD_CARDS = ['命运之轮', '力量', '魔术师', '皇后', '圣杯三', '圣杯十', '星币十', '权杖六', '圣杯王牌', '星币王牌'];
-// 外框尺寸（逻辑像素 × 3 = 输出像素）与 App 画面尺寸
-const SIZES = [
-  { name: '6.9in-1290x2796', frame: { width: 430, height: 932 }, app: { width: 393, height: 852 }, titleH: 196, shotW: 326 },
-  { name: '6.5in-1242x2688', frame: { width: 414, height: 896 }, app: { width: 393, height: 852 }, titleH: 182, shotW: 316 },
+// 外框尺寸（逻辑像素 × scale = 输出像素）、App 画面尺寸、标题字号倍数与机身圆角
+export const SIZES = [
+  { name: '6.9in-1290x2796', frame: { width: 430, height: 932 }, scale: 3, app: { width: 393, height: 852 }, titleH: 196, shotW: 326, fs: 1, radius: 38, pad: 7 },
+  { name: '6.5in-1242x2688', frame: { width: 414, height: 896 }, scale: 3, app: { width: 393, height: 852 }, titleH: 182, shotW: 316, fs: 1, radius: 38, pad: 7 },
+  // 13 寸 iPad 竖屏：1032×1376 × 2 = 2064×2752，App 画面按 iPad Pro 13 寸的 1032×1376 视口截
+  { name: 'ipad13-2064x2752', frame: { width: 1032, height: 1376 }, scale: 2, app: { width: 1032, height: 1376 }, titleH: 250, shotW: 780, fs: 1.9, radius: 30, pad: 12 },
 ];
 
 /** 合成页 HTML（导出供测试检查）。 */
@@ -40,10 +44,10 @@ export function frameHtml(scene, size, dataUrl) {
   html,body{margin:0;width:${size.frame.width}px;height:${size.frame.height}px;overflow:hidden}
   body{background:linear-gradient(170deg,${a},${b});font-family:"SF Pro Rounded","PingFang SC",system-ui,sans-serif;color:#2b2240;position:relative}
   .t{position:absolute;left:20px;right:20px;top:${Math.round(size.titleH * 0.26)}px;text-align:center}
-  h1{margin:0;font-size:31px;font-weight:800;letter-spacing:.02em;color:#fff;text-shadow:0 3px 0 rgba(43,34,64,.28)}
-  p{margin:10px 0 0;font-size:15px;font-weight:600;color:rgba(43,34,64,.78)}
-  .phone{position:absolute;left:50%;top:${size.titleH}px;transform:translateX(-50%);width:${size.shotW}px;height:${shotH}px;border-radius:38px;padding:7px;background:#2b2240;box-shadow:0 6px 0 rgba(43,34,64,.35),0 24px 48px rgba(43,34,64,.25)}
-  .phone img{display:block;width:100%;height:100%;border-radius:31px;object-fit:cover}
+  h1{margin:0;font-size:${Math.round(31 * size.fs)}px;font-weight:800;letter-spacing:.02em;color:#fff;text-shadow:0 ${Math.round(3 * size.fs)}px 0 rgba(43,34,64,.28)}
+  p{margin:${Math.round(10 * size.fs)}px 0 0;font-size:${Math.round(15 * size.fs)}px;font-weight:600;color:rgba(43,34,64,.78)}
+  .phone{position:absolute;left:50%;top:${size.titleH}px;transform:translateX(-50%);width:${size.shotW}px;height:${shotH}px;border-radius:${size.radius}px;padding:${size.pad}px;background:#2b2240;box-shadow:0 6px 0 rgba(43,34,64,.35),0 24px 48px rgba(43,34,64,.25)}
+  .phone img{display:block;width:100%;height:100%;border-radius:${size.radius - size.pad}px;object-fit:cover}
   </style></head><body><div class="t"><h1>${scene.title}</h1><p>${scene.sub}</p></div><div class="phone"><img src="${dataUrl}"></div></body></html>`;
 }
 
@@ -137,12 +141,20 @@ async function main() {
   const base = `http://127.0.0.1:${server.address().port}/index.html`;
   const browser = await launchBrowser();
   const t0 = Date.now();
-  // 1) App 画面（393×852 @3x），每个场景截一次，两种外框共用。
+  const sizes = SIZES.filter((z) => !only || z.name.includes(only));
+  if (!sizes.length) throw new Error(`--only ${only} 没有对应的尺寸：${SIZES.map((z) => z.name).join('、')}`);
+  // 1) App 画面：同一视口与倍率的外框共用一组截图（两种 iPhone 外框都用 393×852 @3x，iPad 用 1032×1376 @2x）。
   // 每个场景开新的上下文：只改 hash 不会重载页面，上一个玩法的结果条和历史缩略图会留在 DOM 里，干扰下面的判断。
-  const shots = [];
+  const shotsBy = new Map();
+  const keyOf = (z) => `${z.app.width}x${z.app.height}@${z.scale}`;
+  for (const z of sizes) {
+    if (shotsBy.has(keyOf(z))) continue;
+    const shots = [];
+    shotsBy.set(keyOf(z), shots);
+    console.log(`画面 ${keyOf(z)}`);
   for (const s of SCENES) {
     const ts = Date.now();
-    const ctx = await browser.newContext({ viewport: SIZES[0].app, deviceScaleFactor: 3, isMobile: true, hasTouch: true, locale: 'zh-CN' });
+    const ctx = await browser.newContext({ viewport: z.app, deviceScaleFactor: z.scale, isMobile: true, hasTouch: true, locale: 'zh-CN' });
     await ctx.addInitScript((t) => { try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); localStorage.setItem('lgj:stage.fps', 'false'); localStorage.setItem('lgj:tarot:spread', JSON.stringify('single')); localStorage.setItem('lgj:hint.hurry', 'true'); } catch {} }, theme);
     ctx.setDefaultTimeout(STAGE_TIMEOUT);
     const page = await ctx.newPage();
@@ -172,10 +184,12 @@ async function main() {
     await ctx.close();
     console.log(`  ${s.route} 用时 ${((Date.now() - ts) / 1000).toFixed(1)} 秒`);
   }
+  }
   // 2) 套外框
   const files = [];
-  for (const size of SIZES) {
-    const fctx = await browser.newContext({ viewport: size.frame, deviceScaleFactor: 3 });
+  for (const size of sizes) {
+    const shots = shotsBy.get(keyOf(size));
+    const fctx = await browser.newContext({ viewport: size.frame, deviceScaleFactor: size.scale });
     const fp = await fctx.newPage();
     for (const [i, s] of SCENES.entries()) {
       await fp.setContent(frameHtml(s, size, shots[i]));
@@ -190,7 +204,12 @@ async function main() {
   await browser.close();
   server.close();
   console.log(`共用时 ${((Date.now() - t0) / 1000).toFixed(0)} 秒`);
-  await writeFile(path.join(out, 'index.json'), JSON.stringify({ generated: new Date().toISOString(), files, scenes: SCENES.map(({ route, title, sub }) => ({ route, title, sub })) }, null, 2));
+  // --only 只重拍一种尺寸时保留索引里其他尺寸的文件
+  let all = files;
+  if (only) {
+    try { all = [...new Set([...JSON.parse(await readFile(path.join(out, 'index.json'), 'utf8')).files, ...files])].sort(); } catch { /* 没有旧索引 */ }
+  }
+  await writeFile(path.join(out, 'index.json'), JSON.stringify({ generated: new Date().toISOString(), files: all, scenes: SCENES.map(({ route, title, sub }) => ({ route, title, sub })) }, null, 2));
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) await main();
