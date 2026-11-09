@@ -815,9 +815,10 @@ export function createPlatform() {
     inApp: native.isNative,
     isIOS,
     isTouch: isBrowser && (navigator.maxTouchPoints > 0 || 'ontouchstart' in window),
-    get simpleMotion() { return storage.get('motion.style', 'full') === 'gentle'; },
+    // 没在设置里选过时跟随系统「减弱动态效果」：开着就默认「轻柔」，2D 器物也少晃少翻
+    get simpleMotion() { return storage.get('motion.style', this.prefersReducedMotion ? 'gentle' : 'full') === 'gentle'; },
     setMotionStyle(value) { storage.set('motion.style', value); },
-    prefersReducedMotion: isBrowser && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    get prefersReducedMotion() { return !!(isBrowser && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); },
     motion,
     gesture,
     haptic,

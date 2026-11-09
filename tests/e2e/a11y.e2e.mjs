@@ -80,3 +80,25 @@ test('阅读字号：设置里选「特大」后示例句与结果条放大 1.25
   assert.equal(await zoomOf('.ritual-receipt .ritual-receipt-actions'), '1', '结果条里的按钮不放大');
   await context.close();
 });
+
+test('系统开了「减弱动态效果」：器物动画默认「轻柔」，自己选过「完整」后以自己的为准', async () => {
+  const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
+  await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); } catch {} });
+  const page = await context.newPage();
+  await page.goto(base + '#/', { waitUntil: 'load' });
+  const activeMotionChip = async () => {
+    await page.click('.app-header [aria-label="设置"]');
+    await page.waitForSelector('.sheet.open .settings-body');
+    const row = page.locator('.sheet.open .setting-row', { hasText: '器物动画' });
+    const label = await row.locator('.chip[aria-pressed="true"]').textContent();
+    return { row, label };
+  };
+  let { row, label } = await activeMotionChip();
+  assert.equal(label, '轻柔');
+  await row.locator('.chip', { hasText: '完整' }).click();
+  assert.equal(await page.evaluate(() => localStorage.getItem('lgj:motion.style')), '"full"');
+  await page.reload({ waitUntil: 'load' });
+  ({ label } = await activeMotionChip());
+  assert.equal(label, '完整');
+  await context.close();
+});
