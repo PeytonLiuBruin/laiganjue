@@ -70,10 +70,14 @@ For entertainment and self-reflection only.
 
 ## 4. 关键词（逗号分隔，不加空格）
 
-- 中文（53 字符）：求签,抽签,灵签,塔罗,占卜,六爻,筊杯,黄历,八字,运势,姻缘,星座,解签,算卦,水晶球,风水,每日一签
-- English（100 字符）：fortune,tarot,oracle,iching,divination,horoscope,astrology,omikuji,fengshui,bazi,luck,daily,sign,zen
+- 中文（98 字符）：求签,抽签,占卜,筊杯,黄历,老黄历,八字,运势,今日运势,星座,生肖,解签,算卦,水晶球,风水,罗盘,每日一签,桃花,合婚,月老,财运,事业,吃什么,大转盘,选择困难,骰子,抛硬币,卢恩,御神签
+- English（99 字符）：oracle,divination,horoscope,astrology,omikuji,fengshui,bazi,luck,zodiac,lunar,runes,dice,coin,wheel
 
-名称和副标题里已经出现的词不重复放进关键词。
+规则（2026-11-09 按 ASO 原则重排）：
+- App Store 把名称、副标题、关键词合在一起检索，名称和副标题里已经出现的词不再放进关键词。原稿的「灵签、塔罗、六爻、姻缘」与副标题重复、英文的 fortune、tarot、iching 与英文副标题重复，已换成新词。
+- 上限按 Apple 实际执行的 100 字符计（官方文档有一处写 100 bytes，若 App Store Connect 提示超长，从末尾的「卢恩,御神签」往前删）。原稿中文只用了 53 字符，现在用满。
+- 新增的「吃什么、大转盘、选择困难、骰子、抛硬币」对应转盘与硬币骰子玩法，是日常高频搜索词，「桃花、合婚、月老、财运、事业」对应人生三问，都是 App 里真有的功能，不写没有的功能（指南 2.3.1）。
+- 上架后每周看一次关键词排名，把没有排名的词换掉。
 
 ## 5. 分类与分级
 
