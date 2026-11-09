@@ -143,6 +143,8 @@ export async function buildAll({ out = outDir, min = minify, only = null, app = 
     // 隐私政策（App Store / TestFlight 填写用）：https://peytonliubruin.github.io/laiganjue/privacy.html
     copyFile(path.join(root, 'src/privacy.html'), path.join(out, 'privacy.html')),
     copyFile(path.join(root, 'src/terms.html'), path.join(out, 'terms.html')),
+    // 帮助与反馈（App Store Connect 的「技术支持网址」，指南 1.5）
+    copyFile(path.join(root, 'src/support.html'), path.join(out, 'support.html')),
     ...[180, 192, 512].map((s) => copyFile(path.join(root, `assets/icon-${s}.png`), path.join(out, `icon-${s}.png`)).catch(() => {})),
   ]);
   return {

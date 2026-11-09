@@ -50,6 +50,7 @@
 
 使用条款：https://peytonliubruin.github.io/laiganjue/terms.html
 隐私政策：https://peytonliubruin.github.io/laiganjue/privacy.html
+帮助与反馈：https://peytonliubruin.github.io/laiganjue/support.html
 
 ### English
 
@@ -76,6 +77,9 @@ For entertainment and self-reflection only.
 
 ## 5. 分类与分级
 
+- 技术支持网址（Support URL，必填，指南 1.5）：https://peytonliubruin.github.io/laiganjue/support.html（常见问题与反馈入口，`src/support.html`）
+- 隐私政策网址（Privacy Policy URL，必填）：https://peytonliubruin.github.io/laiganjue/privacy.html
+- 两个网址都要等本分支合并到 GitHub Pages 发布分支后才能打开，提交审核前先在浏览器里各打开一次
 - 主分类：娱乐（Entertainment），次分类：生活（Lifestyle）
 - 年龄分级预计 12+：问卷中「模拟赌博」选「无」，「成熟或暗示性主题」选「无」或「偶尔 / 轻微」（姻缘玩法），以 Peyton 实际填写为准
 - 内容版权：塔罗牌面为公有领域 Rider–Waite–Smith 图像（见 assets/tarot/ATTRIBUTION.md），签诗为传统文本

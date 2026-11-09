@@ -38,6 +38,16 @@ test('构建脚本会复制 terms.html 与 privacy.html，付费卡、皮肤卡�
   }
 });
 
+test('帮助与反馈页随网页发布，写明联系方式、恢复购买与取消订阅，设置页可打开（指南 1.5 技术支持网址）', () => {
+  assert.match(read('scripts/build.mjs'), /src\/support\.html/);
+  const s = read('src/support.html');
+  assert.match(s, /联系我们/);
+  assert.match(s, /恢复购买/);
+  assert.match(s, /取消订阅/);
+  assert.match(read('src/ui/legal.js'), /local: 'support\.html'/);
+  assert.match(read('src/ui/app.js'), /legalLink\('support'/);
+});
+
 test('条款与隐私政策在 App 内打开随包附带的页面（网站没发布或离线时也能看，指南 3.1.2 要求链接可用）', () => {
   const legal = read('src/ui/legal.js');
   assert.match(legal, /local: 'terms\.html'/);

@@ -606,6 +606,8 @@ export function startApp(root) {
       h('div', { class: 'ornament' }, icon('sparkle', { size: 18 })),
       h('p', { class: 't-faint', style: { fontSize: '12px', lineHeight: '1.8' } }, `${APP_NAME} · 玄学占卜合集。所有结果均由随机算法与传统文化文本生成，仅供娱乐与自我觉察，请勿据此做出医疗、财务、法律等重要决定。`),
       h('p', { class: 'setting-legal t-faint mt-2' },
+        legalLink('support', '帮助与反馈'),
+        h('span', null, ' · '),
         legalLink('terms', '使用条款'),
         h('span', null, ' · '),
         legalLink('privacy', '隐私政策')),
