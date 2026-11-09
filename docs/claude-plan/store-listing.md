@@ -93,7 +93,7 @@ For entertainment and self-reflection only.
 ```
 Thank you for reviewing Laiganjue.
 
-No account is required. All features work offline after install except font loading.
+No account is required. All features work offline after install (fonts and content are bundled; the app makes no third-party network requests).
 
 Motion: Most rituals can be triggered by shaking or flicking the phone. On first use, tap “开启手机体感” (Enable motion) to grant motion access. Every ritual also has a large on-screen primary button, so motion is optional.
 

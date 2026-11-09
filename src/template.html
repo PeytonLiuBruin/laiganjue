@@ -13,9 +13,12 @@
 <meta name="theme-color" content="#0b0b10">
 <meta name="description" content="来感觉 · 玄学占卜合集：筊杯、灵签、六爻、黄历、八字、风水、转盘、塔罗、卢恩、星座、水晶球、御神签、硬币骰子、落球盘。摇一摇、甩一甩，怎么好玩怎么来。">
 <title>来感觉 · 玄学占卜</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+<!-- 内置字体（assets/fonts，只含用到的字）：离线也是同一套字，不再向 Google Fonts 请求 -->
+<link rel="preload" href="fonts/NotoSerifSC-subset.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face { font-family: 'Noto Serif SC'; src: url(fonts/NotoSerifSC-subset.woff2) format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Cinzel'; src: url(fonts/Cinzel-subset.woff2) format('woff2'); font-weight: 500 700; font-style: normal; font-display: swap; }
+</style>
 <!--CSS-->
 </head>
 <body>
