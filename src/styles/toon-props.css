@@ -425,3 +425,29 @@
 .m-liuyao .ly-line.lit .ly-bar { box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22); }
 .m-liuyao .ly-line.moving .ly-bar { box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22), 0 0 0 2px var(--glow); }
 .m-liuyao .ly-mark { font-weight: 900; font-size: 14px; }
+
+/* 第 46 轮：筊杯舞台卡通化（@readfull 长图发现）。面向标签「弧面 · 阴」「平面 · 阳」是 12px 灰色细字、字距 .08em，
+   筊盘是 1px 淡线椭圆，连掷三圣杯的小印是 1px 细圈。
+   面向标签改白底 2px 描边胶囊加 3px 厚边、圆体 800，「阳」用主色字，筊盘改 2px 虚线描边，
+   小印 24px、2px 描边、圆体 900，得到的圣杯是主色实心白字加厚边。 */
+.m-jiaobei .jb-stage .jb-face-labels { height: 26px; }
+.m-jiaobei .jb-face-labels span {
+  font: 800 12px/22px var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0 10px;
+  box-shadow: 0 3px 0 var(--edge-color);
+}
+.m-jiaobei .jb-face-labels span.yang { color: var(--accent-text); }
+.m-jiaobei .jb-mat { border: 2px dashed var(--line-strong); }
+.m-jiaobei .jb-streak > span {
+  width: 24px; height: 24px;
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  font: 900 12px/1 var(--font-round, var(--font-sans));
+  box-shadow: 0 2px 0 var(--edge-color);
+}
+.m-jiaobei .jb-streak .earned { background: var(--accent); border-color: var(--accent-3, var(--accent)); color: #fff; text-shadow: var(--btn-outline, none); }

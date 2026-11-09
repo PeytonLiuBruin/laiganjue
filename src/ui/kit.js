@@ -343,10 +343,12 @@ export function sectionHead(title, kicker) {
   return h('div', { class: 'section-head' }, h('h2', { class: 't-display' }, title), kicker ? h('span', { class: 't-kicker' }, kicker) : null);
 }
 
-/** 星级 ★★★☆☆ */
+/** 星级 ★★★☆☆（第 46 轮：字符星换成描边胖星 SVG，亮星金色、暗星奶油色，都带深墨描边，样式见 toon-sections.css） */
+export const STAR_PATH = 'M12 2.4l2.95 5.98 6.6.96-4.78 4.65 1.13 6.57L12 17.46l-5.9 3.1 1.13-6.57-4.78-4.65 6.6-.96z';
 export function stars(n, max = 5) {
-  const el = h('span', { class: 'stars', attrs: { 'aria-label': `${n}/${max}` } });
-  for (let i = 0; i < max; i++) el.append(h('span', { class: i < n ? 'on' : 'off' }, '★'));
+  const el = h('span', { class: 'stars', attrs: { role: 'img', 'aria-label': `${n}/${max}` } });
+  const svg = `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="star-edge" d="${STAR_PATH}" transform="translate(0 1.6)"/><path class="star-body" d="${STAR_PATH}"/><path class="star-shine" d="M8.6 9.6l2.3-.35"/></svg>`;
+  for (let i = 0; i < max; i++) el.append(h('span', { class: i < n ? 'on' : 'off', html: svg }));
   return el;
 }
 

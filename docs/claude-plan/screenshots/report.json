@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/omikuji@readfull",
+    "route": "m/jiaobei@read",
     "viewport": "393x852",
-    "file": "m-omikuji-readfull-393x852.png",
+    "file": "m-jiaobei-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,42 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/liuyao@readfull",
+    "route": "m/zodiac@readfull",
     "viewport": "393x852",
-    "file": "m-liuyao-readfull-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/runes@readfull",
-    "viewport": "393x852",
-    "file": "m-runes-readfull-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/crystal@read",
-    "viewport": "393x852",
-    "file": "m-crystal-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot@read",
-    "viewport": "393x852",
-    "file": "m-tarot-read-393x852.png",
+    "file": "m-zodiac-readfull-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -57,9 +24,20 @@
     "errors": []
   },
   {
-    "route": "m/omikuji@readfull",
+    "route": "m/caiyun@read",
+    "viewport": "393x852",
+    "file": "m-caiyun-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/jiaobei@read",
     "viewport": "430x932",
-    "file": "m-omikuji-readfull-430x932.png",
+    "file": "m-jiaobei-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -68,42 +46,9 @@
     "errors": []
   },
   {
-    "route": "m/liuyao@readfull",
+    "route": "m/zodiac@readfull",
     "viewport": "430x932",
-    "file": "m-liuyao-readfull-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/runes@readfull",
-    "viewport": "430x932",
-    "file": "m-runes-readfull-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/crystal@read",
-    "viewport": "430x932",
-    "file": "m-crystal-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot@read",
-    "viewport": "430x932",
-    "file": "m-tarot-read-430x932.png",
+    "file": "m-zodiac-readfull-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -114,31 +59,9 @@
     "errors": []
   },
   {
-    "route": "m/omikuji@readfull",
-    "viewport": "393x852",
-    "file": "ink-m-omikuji-readfull-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/liuyao@readfull",
-    "viewport": "393x852",
-    "file": "ink-m-liuyao-readfull-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/omikuji@readfull",
+    "route": "m/caiyun@read",
     "viewport": "430x932",
-    "file": "ink-m-omikuji-readfull-430x932.png",
+    "file": "m-caiyun-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -147,13 +70,50 @@
     "errors": []
   },
   {
-    "route": "m/liuyao@readfull",
+    "route": "m/jiaobei@read",
+    "viewport": "393x852",
+    "file": "ink-m-jiaobei-read-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac@readfull",
+    "viewport": "393x852",
+    "file": "ink-m-zodiac-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/jiaobei@read",
     "viewport": "430x932",
-    "file": "ink-m-liuyao-readfull-430x932.png",
+    "file": "ink-m-jiaobei-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
       "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/zodiac@readfull",
+    "viewport": "430x932",
+    "file": "ink-m-zodiac-readfull-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   }

@@ -212,3 +212,20 @@
     2px 2px 0 var(--cr-ink), -2px -2px 0 var(--cr-ink), 2px -2px 0 var(--cr-ink), -2px 2px 0 var(--cr-ink),
     0 6px 0 var(--cr-ink);
 }
+
+/* 第 46 轮：星级卡通化。星座、财运、事业、姻缘、黄历的运势星原来是 ★ 字符，
+   亮星红色、暗星灰色细字，和金色描边钉子、描边铜钱放在一起像两套东西。
+   kit.stars() 改为输出胖星 SVG：一层深墨下沉影、一层描边星身、一道白色硬高光。
+   亮星金 #ffc93c，暗星奶油 #fff4d6，都描 2px 深墨。深色皮肤暗星改半透明白配 --line-strong 描边。 */
+.stars { gap: .1em; align-items: center; line-height: 1; vertical-align: middle; }
+.stars > span { display: inline-block; width: 1.15em; height: 1.15em; flex: none; }
+.stars svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.stars .star-edge { fill: #2b2240; }
+.stars .star-body { stroke: #2b2240; stroke-width: 2; stroke-linejoin: round; paint-order: stroke; }
+.stars .on .star-body { fill: #ffc93c; }
+.stars .off .star-body { fill: #fff4d6; }
+.stars .off .star-edge { opacity: .3; }
+.stars .star-shine { fill: none; stroke: #fffbe8; stroke-width: 1.7; stroke-linecap: round; }
+.stars .off .star-shine { display: none; }
+:is([data-theme='ink'], [data-theme='cinnabar'], [data-theme='nebula'], :root:not([data-theme])) .stars .star-edge { fill: #0d0a16; }
+:is([data-theme='ink'], [data-theme='cinnabar'], [data-theme='nebula'], :root:not([data-theme])) .stars .off .star-body { fill: rgba(255, 255, 255, 0.14); stroke: var(--line-strong); }

@@ -136,6 +136,7 @@ export function mount(container, ctx) {
     [result.a, result.b].forEach((face, i) => {
       const el = faceLabels.children[i];
       el.textContent = face === 'flat' ? '平面 · 阳' : face === 'round' ? '弧面 · 阴' : '直立';
+      el.classList.toggle('yang', face === 'flat');
       if (w && xs[i] != null) el.style.left = `${clamp(xs[i], 48, w - 48)}px`;
     });
     faceLabels.hidden = false;

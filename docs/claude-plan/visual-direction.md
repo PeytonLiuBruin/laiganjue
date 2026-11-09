@@ -106,3 +106,8 @@
 - `src/ui/stage/scenes/common.js`：MAT 里的材质颜色改为上面的色板。
 - `src/styles/themes.css`、`components.css`：2D 界面的色板、卡片厚度边、按钮。
 - `src/ui/solid-scene.js`（筊杯、硬币、骰子、六爻铜钱）、`src/ui/stick-scene.js`（灵签筒、御神签筒）、`src/modules/plinko/scene.js`（落球盘）：画布 2D 器物，同样用三段明暗、硬高光与本色加深的外轮廓（线宽约 3.4px × 场景缩放，最小 2.4px），色板与第 2 节一致。
+
+## 附：第 46 轮参数
+
+- 运势星级（`kit.stars()` 与 `toon-sections.css`）：胖星 SVG，24 单位视框。底层一枚同形深墨 #2b2240 星下移 1.6 作厚边，星身 2px 深墨描边圆角接头，亮星 #ffc93c，暗星 #fff4d6 且厚边 30%，亮星左上一道 1.7 宽 #fffbe8 硬高光。每颗 1.15em 见方，间距 .1em，大小仍由各页原来的 font-size 控制。深色皮肤厚边 #0d0a16，暗星改 rgba(255,255,255,.14) 配 --line-strong 描边。
+- 筊杯舞台（`toon-props.css`）：面向标签白底 --surface、2px --line-strong 描边胶囊、0 3px 0 厚边、圆体 800 12px 行高 22px、字距 .04em，「阳」字主色 --accent-text。筊盘 2px 虚线 --line-strong。连掷小印 24px 圆、2px 描边、圆体 900 12px、0 2px 0 厚边，得到的圣杯 --accent 实心白字套 --btn-outline。
