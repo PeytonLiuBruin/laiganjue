@@ -77,6 +77,8 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>把分享卡片保存到你的相册。来感觉只会添加图片，不会读取你的相册。</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

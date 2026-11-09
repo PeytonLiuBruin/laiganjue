@@ -54,3 +54,15 @@ test('条款与隐私政策在 App 内打开随包附带的页面（网站没发
   assert.match(legal, /local: 'privacy\.html'/);
   assert.match(legal, /preventDefault\(\)[\s\S]*openLegal/);
 });
+
+test('App 内能看到的条款、隐私、帮助页不提其他移动平台（指南 2.3.10）', () => {
+  for (const f of ['src/terms.html', 'src/privacy.html', 'src/support.html']) {
+    assert.doesNotMatch(read(f), /安卓|Android|Google Play/, `${f} 提到了其他平台`);
+  }
+});
+
+test('分享卡在系统分享面板里点「存储图像」需要相册添加权限说明，缺了会直接闪退（指南 2.1 / ITMS-90683）', () => {
+  const plist = read('ios/App/App/Info.plist');
+  assert.match(plist, /<key>NSPhotoLibraryAddUsageDescription<\/key>\s*<string>[^<]{6,}<\/string>/);
+  assert.doesNotMatch(plist, /NSPhotoLibraryUsageDescription/, '只需要「添加」权限，不要申请读取相册');
+});
