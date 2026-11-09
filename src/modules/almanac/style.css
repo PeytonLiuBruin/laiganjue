@@ -106,7 +106,7 @@
   bottom: 0;
   z-index: 12;
   margin: 0;
-  padding: 22px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 22px 0 calc(12px + var(--safe-bottom));
   background: linear-gradient(to bottom, transparent, var(--bg) 22px);
 }
 .m-almanac .hint-glyph.flick {
