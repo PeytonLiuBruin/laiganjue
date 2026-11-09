@@ -39,11 +39,12 @@ test('切换页面只播报新页面名，焦点移到标题，网页标题跟�
   assert.equal(await announcer(page), '', '首次打开不播报');
   assert.equal(await page.evaluate(() => document.getElementById('app').hasAttribute('aria-live')), false);
 
-  await page.evaluate(() => { location.hash = '#/m/coin'; });
-  await page.waitForSelector('.view-module[data-module="coin"]', { timeout: STAGE_TIMEOUT });
-  await page.waitForFunction(() => document.querySelector('[role="status"].sr-only')?.textContent === '硬币骰子');
-  assert.equal(await page.title(), '硬币骰子 · 来感觉');
-  assert.equal(await page.evaluate(() => document.activeElement?.classList.contains('hd-title')), true, '焦点在顶栏标题');
+  // 黄历只用点按，不会弹「用手机动作来玩」邀请（那个抽屉打开时焦点归抽屉，是对的）
+  await page.evaluate(() => { location.hash = '#/m/almanac'; });
+  await page.waitForSelector('.view-module[data-module="almanac"][data-ready="1"]', { timeout: STAGE_TIMEOUT });
+  await page.waitForFunction(() => document.querySelector('[role="status"].sr-only')?.textContent === '黄历');
+  assert.equal(await page.title(), '黄历 · 来感觉');
+  assert.equal(await page.evaluate(() => document.querySelector('.sheet.open') ? 'sheet' : document.activeElement?.classList.contains('hd-title')), true, '焦点在顶栏标题');
 
   await page.evaluate(() => { location.hash = '#/'; });
   await page.waitForFunction(() => document.querySelector('[role="status"].sr-only')?.textContent === '首页');
