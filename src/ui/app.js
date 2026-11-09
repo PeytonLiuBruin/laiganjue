@@ -197,7 +197,22 @@ export function startApp(root) {
     if (prompt && (storage.get('onboarded', false) || navigator.webdriver)) prompt.enter();
   }
 
+  // 读屏：单页切换不会触发「新页面」播报。每次换页更新标题、在一个隐藏的 status 区报出页名，
+  // 用户操作导致的换页再把焦点移到顶栏标题（首次打开不抢焦点）。（capacitor-accessibility 技能）
+  const routeAnnouncer = h('div', { class: 'sr-only', attrs: { role: 'status', 'aria-live': 'polite' } });
+  document.body.append(routeAnnouncer);
+  titleEl.setAttribute('tabindex', '-1');
+  let firstRoute = true;
+  function announceRoute(name) {
+    document.title = name ? `${name} · ${APP_NAME}` : `${APP_NAME} · 玄学占卜`;
+    if (firstRoute) { firstRoute = false; return; }
+    routeAnnouncer.textContent = '';
+    setTimeout(() => { routeAnnouncer.textContent = name || '首页'; }, 60);
+    try { titleEl.focus({ preventScroll: true }); } catch { /* 旧内核 */ }
+  }
+
   function setHeader(meta) {
+    announceRoute(meta ? meta.title : '');
     clear(titleEl);
     if (!meta) {
       backBtn.hidden = true;

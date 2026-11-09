@@ -5,7 +5,8 @@ function darken(hex, k) { const m = /^#([a-f\d]{6})$/i.exec(hex.trim()); if (!m)
 const circle = (c, x, y, r) => { c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); };
 
 // 卡通画风：分格彩色底槽、白色描边隔板、金色描边钉子（两段明暗 + 硬高光点）、描边小球。
-const SLOT_TINTS = ['#ffcfc7', '#ffeaa8', '#c9efd9', '#cfe7ff', '#e2d6ff', '#ffd9b8'];
+// 浅色皮肤底槽（2026-11-09）：原来是 62% 透明的浅粉、浅黄、浅绿，像褪色；改为饱和色带加深色描边，棋盘外框也加粗到实线。
+export const SLOT_TINTS = ['#ff8f7e', '#ffcf4a', '#4fd98f', '#5fb2ff', '#a98bff', '#ffa65c'];
 // 深色皮肤：同色相的宝石色，饱和但不发亮，替代原来 22% 透明度的灰褐色
 export const SLOT_TINTS_DARK = ['#8a3a4a', '#8a6a1c', '#2f7552', '#2f5f96', '#5e4aa0', '#8f5428'];
 const PEG = { lit: '#ffc93c', dark: '#e39a1e', edge: '#7a4512' };
@@ -18,12 +19,14 @@ export function paintBoard(c, board, colors) {
   for (let i = 0; i < board.count; i++) {
     const x = left + i * board.slotWidth;
     const tints = colors.dark ? SLOT_TINTS_DARK : SLOT_TINTS;
-    c.fillStyle = tints[i % tints.length]; c.globalAlpha = colors.dark ? .78 : .62;
+    c.fillStyle = tints[i % tints.length]; c.globalAlpha = colors.dark ? .78 : .9;
     c.fillRect(x + 2, dividerY + 4, board.slotWidth - 4, floor - dividerY - 4);
+    c.globalAlpha = colors.dark ? .55 : .45; c.strokeStyle = ink; c.lineWidth = 2;
+    c.strokeRect(x + 3, dividerY + 5, board.slotWidth - 6, floor - dividerY - 6);
   }
   c.globalAlpha = 1;
   c.lineCap = 'round'; c.lineJoin = 'round';
-  c.strokeStyle = ink; c.globalAlpha = .28; c.lineWidth = 2.2;
+  c.strokeStyle = ink; c.globalAlpha = colors.dark ? .6 : .72; c.lineWidth = 3.2;
   c.beginPath(); c.moveTo(left, 61); c.lineTo(left, floor); c.lineTo(right, floor); c.lineTo(right, 61); c.stroke();
   c.globalAlpha = 1;
   for (const x of board.dividers) {
@@ -39,7 +42,7 @@ export function paintBoard(c, board, colors) {
     c.fillStyle = PEG.lit; circle(c, p.x - .9, p.y - 1, p.r * .9); c.fill(); c.restore();
     c.fillStyle = '#fffbe8'; circle(c, p.x - 1.4, p.y - 1.6, .95); c.fill();
   }
-  c.strokeStyle = ink; c.globalAlpha = .28; c.lineWidth = 2;
+  c.strokeStyle = ink; c.globalAlpha = colors.dark ? .55 : .6; c.lineWidth = 2.6;
   for (const x of [165, 195]) { c.beginPath(); c.moveTo(x, 8); c.lineTo(x, 37); c.stroke(); }
   c.globalAlpha = 1;
   for (const x of [27, 333]) {

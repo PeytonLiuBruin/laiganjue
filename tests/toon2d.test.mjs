@@ -37,6 +37,17 @@ test('落球盘画布：钉子、隔板、小球都能画出来，不抛错', ()
   assert.ok(calls.filter((k) => k === 'arc').length >= board.pins.length * 3);
 });
 
+test('落球盘浅色底槽是饱和色带（饱和度 ≥ 60%），不是褪色的浅粉浅黄', async () => {
+  const { SLOT_TINTS } = await import('../src/modules/plinko/scene.js');
+  for (const hex of SLOT_TINTS) {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2;
+    const s = max === min ? 0 : (max - min) / (1 - Math.abs(2 * l - 1));
+    assert.ok(s >= 0.6, `${hex} 饱和度 ${s.toFixed(2)}`);
+    assert.ok(l >= 0.55 && l <= 0.8, `${hex} 明度 ${l.toFixed(2)} 要亮但不发白`);
+  }
+});
+
 test('深色皮肤：骰子桌垫不用白垫，落球盘底槽用不透明度较高的宝石色', async () => {
   const { isDarkTheme, plateColors } = await import('../src/ui/solid-scene.js');
   const { SLOT_TINTS_DARK } = await import('../src/modules/plinko/scene.js');

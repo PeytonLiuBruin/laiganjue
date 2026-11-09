@@ -119,9 +119,13 @@
   stroke-width: 2;
   filter: drop-shadow(0 0 7px var(--glow));
 }
-.m-wheel .wh-svg.revealed .wh-seg:not(.hit),
+/* 出结果后：没选中的扇区只降饱和、略压暗（原来整块 0.42 透明，在浅色底上发白，扇区字变成灰色虚影），
+   字保持不透明照样清楚；选中扇区放大、描边高亮。不透明度不动（降透明会透出背后的云和天空）。 */
+.m-wheel .wh-svg.revealed .wh-seg:not(.hit) {
+  filter: saturate(0.72);
+}
 .m-wheel .wh-svg.revealed .wh-label:not(.hit) {
-  opacity: 0.42;
+  font-weight: 600;
 }
 .m-wheel .wh-label {
   font-family: var(--font-display);

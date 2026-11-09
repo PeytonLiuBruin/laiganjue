@@ -425,3 +425,22 @@
 .m-liuyao .ly-line.lit .ly-bar { box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22); }
 .m-liuyao .ly-line.moving .ly-bar { box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22), 0 0 0 2px var(--glow); }
 .m-liuyao .ly-mark { font-weight: 900; font-size: 14px; }
+
+/* 落球盘（2026-11-09，TODO P2）：棋盘容器由 1px 灰细边改为 2px 描边加厚边；下方「做 / 不做 / 再想想」选项格
+   改圆体 800、2px 描边、3px 厚边，选中格是主色实底配深色描边与光晕（原来是常规字重细字、平涂红块）。 */
+.m-plinko .pl-machine {
+  border: 2px solid var(--line-strong);
+  box-shadow: 0 4px 0 var(--edge-color), inset 0 0 0 3px var(--surface);
+}
+.m-plinko .pl-slots { gap: 5px; margin-top: 2px; }
+.m-plinko .pl-slot {
+  border: 2px solid var(--line-strong); border-radius: 10px 10px 14px 14px;
+  background: var(--surface); box-shadow: 0 3px 0 var(--edge-color);
+  font: 800 13px/1.45 var(--font-round, var(--font-sans)); color: var(--text);
+}
+.m-plinko .pl-slot:not(:disabled):active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge-color); }
+.m-plinko .pl-slot.selected {
+  color: var(--accent-ink); background: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 60%, #000);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 0 0 3px var(--glow);
+}

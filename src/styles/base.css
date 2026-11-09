@@ -307,3 +307,6 @@ svg {
 body {
   -webkit-touch-callout: none;
 }
+
+/* 换页时程序把焦点移到顶栏标题（给读屏用），标题本身不可点，不画焦点框 */
+.app-header .hd-title:focus { outline: none; }

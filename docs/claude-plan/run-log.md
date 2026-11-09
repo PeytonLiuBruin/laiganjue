@@ -1360,3 +1360,40 @@ Mac 上 `npm test` 435 项全部通过（含第 28 轮未提交的 3 项，负�
 - 首发是否包含中国大陆（需 App 备案号）、小组件与断签提醒真机验证、年龄分级 13+、皮肤内购价格档位、GitHub Pages 合并时机，同前几轮。
 
 推送结果：提交 5f76206 推送成功。
+
+## 第 45 轮 · 2026-11-09（对话中手动进行，Peyton 说「继续制作，自己想如何优化，在 GitHub 上找能用的技能」）
+
+开始状态：分支 `claude/ecstatic-allen-lh1flx` 快进到 `claude/polish-ui-monetize` 的 20989c5，工作区干净。定时任务「来感觉每3小时优化」因 Mac 不在线停用，本轮在云端容器里做，截图与测试都在容器里跑（Chromium，`--no-webgl` 与 WebGL 两种）。
+
+找技能（`.claude/skills/`，提交 1eb1051）：
+- 在 GitHub 上找了和本项目相关的技能，逐个读完内容和许可证再收进来。收了 7 个：Capgo 的 capacitor-apple-review-preflight、capacitor-app-store、subscription-app-revenue、safe-area-handling、capacitor-accessibility（MIT），Anthropic 的 frontend-design（Apache 2.0），obra 的 verification-before-completion（MIT）。每个都带原许可证，来源与提交号记在 `.claude/skills/README.md`，没收的和原因也记在里面。
+- 新写 2 个来感觉自有技能：`laiganjue-round`（怎么跑一轮：读计划、挑待办、验证命令、记录推送、边界）与 `laiganjue-ios-ship`（`ios-try.sh` 用法、常见报错、CI、版本号）。
+
+用审核预检技能查出并修好的拒审风险：
+- 指南 3.1.2：付费卡上实付金额不是最显眼的字。价格改为最大最粗，套餐名降为二级文字，试用写成「开通 Pro · 前 3 天免费」，长货币（如 HK$1,298.00）按字数用容器查询缩字号，不再撑破卡片（e43a5de）。
+- 条款、隐私链接在 App 里点不开（GitHub Pages 还没合并）：改为在 App 内抽屉里打开随包的 `terms.html`、`privacy.html`（e43a5de）。
+- 指南 1.5：新增帮助与反馈页 `support.html`，联系方式用 GitHub issues，不放邮箱，设置页可打开（6b16267）。
+- 指南 2.1：分享卡「存储图像」缺相册添加权限说明，真机会闪退。补 `NSPhotoLibraryAddUsageDescription`，只要添加权限、不要读取权限（b05035a）。
+- 指南 2.3.10：App 内页面不再提安卓（b05035a）。
+- 商店关键词重排，去掉和副标题重复的词，中英文都用满 100 字符（aaa6731）。
+
+其他改进：
+- 字体随 App 内置（ab6eff9）：Noto Serif SC 与 Cinzel 裁成只含 `src/` 用到的约 3100 个字，合计约 1.1 MB，离线也是同一套字，启动不再先闪系统字，不再向 Google 请求。缺字有测试拦住，重新生成步骤写在 `assets/fonts/README.md`。隐私政策同步改写。
+- 安全区（08f3495）：统一走 `--safe-top` / `--safe-bottom`，先用 Capacitor 8 在安卓旧 WebView 注入的 `--safe-area-inset-*`，再退回 `env()`。
+- 读屏（本轮最后一批）：切换页面只播报一次新页面名，焦点移到标题，网页标题跟着变，去掉整个 App 的 aria-live。
+- 第 44 轮留下的三项 P2 全部完成：落球盘棋盘与选项格卡通化、转盘出结果不再褪色、硬币统计行与清零改描边小卡和胶囊按钮，最近几抛改成带字小铜钱。
+
+检查结果：
+- `npm test` 493 项全部通过（新增 `tests/a11y-route.test.mjs` 3 项）。本批改动后重跑 `npm run e2e` 36 项全部通过，新增 `tests/e2e/a11y.e2e.mjs`（切页播报、焦点、网页标题）1 项通过。
+- contrast-audit：转盘、硬币、落球盘 × 五套皮肤 0 处。tap-audit：硬币、落球盘、转盘 0 处。
+- smoke：首页、转盘、硬币、落球盘在 360×640 与 430×932 下 `--act` 全部 clean。
+- 截图过目：转盘前后对比、硬币整页长图、落球盘 393×852 与 430×932。
+- GitHub Actions：app.yml（安卓、iOS 模拟器、ios-try）在本轮前几个提交上通过，e2e.yml 多次被后一次推送取消，以本地 36/36 为准。
+
+遗留问题：
+- 公开的条款、隐私、帮助网址要合并到 GitHub Pages 分支后才能打开（App 内已不依赖它们）。
+- 外部条件卡住的待办同前几轮。
+
+待 Peyton 决定：
+- 是否把本分支合并（或开 PR）到 Pages 发布分支，让 App Store Connect 里填的三个网址生效。
+- 首发是否包含中国大陆（需 App 备案号）、年龄分级、小组件与断签提醒真机验证，同前几轮。
