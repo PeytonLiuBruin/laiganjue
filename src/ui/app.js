@@ -57,6 +57,10 @@ export function startApp(root) {
   /* ---------------- 皮肤 ---------------- */
   const themeListeners = new Set();
   document.documentElement.dataset.fps = storage.get('stage.fps', false) ? 'on' : 'off';
+  // 阅读字号（设置 › 阅读字号）：只放大解读抽屉与结果条，见 styles/text-size.css
+  const TEXT_SIZES = ['normal', 'lg', 'xl'];
+  const textSize = storage.get('text.size', 'normal');
+  document.documentElement.dataset.textSize = TEXT_SIZES.includes(textSize) ? textSize : 'normal';
   let theme = storage.get('theme', 'paper');
   if (!THEMES.some((t) => t.id === theme) || !canUseTheme(platform.purchases, theme)) theme = 'paper';
   // 已选定的皮肤（试穿时不写入，试穿结束据此换回）
@@ -574,9 +578,11 @@ export function startApp(root) {
     }
     const content = h(
       'div',
-      null,
+      { class: 'settings-body' },
       h('div', { class: 'setting-row setting-row-pro' }, h('div', null, h('div', { class: 'setting-label' }, '来感觉 Pro'), proDescEl), proControls),
       row('器物动画', '投掷、翻滚与翻牌', kit.chips([{ value: 'full', label: '完整' }, { value: 'gentle', label: '轻柔' }], { value: platform.simpleMotion ? 'gentle' : 'full', onChange: (v) => platform.setMotionStyle(v) }).el),
+      row('阅读字号', '放大解读、签诗与结果里的文字', kit.chips([{ value: 'normal', label: '标准' }, { value: 'lg', label: '大' }, { value: 'xl', label: '特大' }], { value: document.documentElement.dataset.textSize, onChange: (v) => { storage.set('text.size', v); document.documentElement.dataset.textSize = v; } }).el),
+      h('p', { class: 'text-size-sample', attrs: { 'aria-hidden': 'true' } }, '月下老人翻簿书，红绳一系不曾疏。'),
       row('音效', '合成音效：木块、铜钱、洗牌…', toggle(platform.sound.enabled, (v) => platform.sound.setEnabled(v))),
       reminderRow,
       row('帧率显示', '在 3D 器物舞台右上角显示每秒帧数', toggle(storage.get('stage.fps', false), (v) => { storage.set('stage.fps', v); document.documentElement.dataset.fps = v ? 'on' : 'off'; })),

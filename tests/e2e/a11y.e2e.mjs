@@ -50,3 +50,32 @@ test('切换页面只播报新页面名，焦点移到标题，网页标题跟�
   assert.match(await page.title(), /^来感觉/);
   await context.close();
 });
+
+test('阅读字号：设置里选「特大」后示例句与结果条放大 1.25 倍，重开 App 仍保留', async () => {
+  const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN' });
+  await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); } catch {} });
+  const page = await context.newPage();
+  await page.goto(base + '#/', { waitUntil: 'load' });
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.textSize), 'normal');
+  await page.click('.app-header [aria-label="设置"]');
+  await page.waitForSelector('.sheet.open .text-size-sample');
+  const zoomOf = (sel) => page.evaluate((s) => getComputedStyle(document.querySelector(s)).zoom, sel);
+  assert.equal(await zoomOf('.sheet.open .text-size-sample'), '1');
+  await page.locator('.sheet.open .chip', { hasText: '特大' }).click();
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.textSize), 'xl');
+  assert.equal(await zoomOf('.sheet.open .text-size-sample'), '1.25');
+  // 设置抽屉本身不放大，开关行不会挤成两行
+  assert.equal(await zoomOf('.sheet.open .settings-body'), '1');
+  assert.equal(await page.evaluate(() => localStorage.getItem('lgj:text.size')), '"xl"');
+
+  await page.goto(base + '#/m/coin', { waitUntil: 'load' });
+  await page.reload({ waitUntil: 'load' });
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.textSize), 'xl');
+  await page.waitForSelector('.view-module[data-module="coin"][data-ready="1"]', { timeout: STAGE_TIMEOUT });
+  await page.evaluate(() => document.querySelector('.sheet.open .icon-btn')?.click());
+  await page.locator('.view-module [data-action="primary"]').first().click();
+  await page.waitForSelector('.ritual-receipt [data-read]', { timeout: STAGE_TIMEOUT });
+  assert.equal(await zoomOf('.ritual-receipt .ritual-receipt-copy'), '1.25');
+  assert.equal(await zoomOf('.ritual-receipt .ritual-receipt-actions'), '1', '结果条里的按钮不放大');
+  await context.close();
+});

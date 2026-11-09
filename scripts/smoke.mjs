@@ -4,6 +4,7 @@
 //   node scripts/smoke.mjs --module tarot        单个模块（可逗号分隔多个）
 //   node scripts/smoke.mjs --act                 额外模拟一次"摇/甩/点主按钮"并截结果图
 //   node scripts/smoke.mjs --theme paper         指定皮肤
+//   node scripts/smoke.mjs --text-size xl        按「阅读字号 · 特大」检查（lg 为「大」）
 //   node scripts/smoke.mjs --shots dist/shots    截图目录（默认 dist/shots）
 //   node scripts/smoke.mjs --module tarot --full 指定模块但仍全量打包（默认只打包指定模块，其余占位）
 //   node scripts/smoke.mjs --module liuyao --act --until-sheet 8   多步模块：持续点主按钮直到结果抽屉出现，截 <id>-3.png
@@ -34,6 +35,8 @@ const only = opt('--module', '')
   .filter(Boolean);
 const act = flag('--act');
 const theme = opt('--theme', '');
+// --text-size lg | xl：按「设置 › 阅读字号」放大解读抽屉与结果条后再检查重叠与溢出
+const textSize = opt('--text-size', '');
 const untilSheet = Number(opt('--until-sheet', '0')) || 0;
 // --viewport 375x667 | 360x640 | 430x932 | 390x844(默认)；也可用别名 se / small / large / default
 const VIEWPORTS = { se: '375x667', small: '360x640', default: '390x844', large: '430x932', tablet: '768x1024' };
@@ -78,6 +81,11 @@ if (theme) {
       localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true');
     } catch {}
   }, theme);
+}
+if (textSize) {
+  await context.addInitScript((v) => {
+    try { localStorage.setItem('lgj:text.size', JSON.stringify(v)); } catch {}
+  }, textSize);
 }
 const page = await context.newPage();
 const report = { ok: true, base, modules: {} };

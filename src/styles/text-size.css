@@ -1,0 +1,25 @@
+/* 阅读字号（设置 › 阅读字号）：放大解读抽屉、页面上的结果条与速览，舞台、顶栏、主按钮不变。
+   用 zoom 而不是改字号：内容在原来的宽度里重新排版，不会横向溢出，图标、间距、描边按同一比例放大。
+   抽屉的滚动容器 .sheet-body 本身不缩放（否则高度跟着变大、超出屏幕），只缩放它的子元素。
+   设置抽屉是左右两栏的开关行，放大后会挤成两行，所以不缩放，只放大其中的示例句给人看效果。 */
+:root[data-text-size="lg"] .sheet-body > *,
+:root[data-text-size="lg"] .result,
+:root[data-text-size="lg"] .ritual-receipt > :not(.ritual-receipt-actions),
+:root[data-text-size="lg"] .text-size-sample { zoom: 1.12; }
+:root[data-text-size="xl"] .sheet-body > *,
+:root[data-text-size="xl"] .result,
+:root[data-text-size="xl"] .ritual-receipt > :not(.ritual-receipt-actions),
+:root[data-text-size="xl"] .text-size-sample { zoom: 1.25; }
+/* 已经随外层放大的不再叠乘 */
+:root[data-text-size] .sheet-body > * .result,
+:root[data-text-size] .sheet-body > .settings-body { zoom: 1; }
+
+.text-size-sample {
+  margin: -4px 0 10px;
+  padding: 10px 14px;
+  border: 2px dashed var(--line-strong);
+  border-radius: 12px;
+  font: 500 15px/1.8 var(--font-serif);
+  color: var(--text-1);
+  text-align: center;
+}
