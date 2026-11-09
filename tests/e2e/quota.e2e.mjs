@@ -54,8 +54,17 @@ async function driveToRead(page) {
   const primary = page.locator('.view-module [data-action="primary"]').first();
   for (let i = 0; i < 40; i++) {
     if (await readBtn.count()) return readBtn.first();
-    if (/解读/.test(await primary.textContent()) && await primary.isEnabled()) { await page.waitForTimeout(300); return primary; }
-    if (await primary.isEnabled()) await primary.click({ force: true }).catch(() => {});
+    // 读文字、看能不能点、点下去在页面里一步做完：分开做时，最后一爻可能恰好在两次读取之间掷完，
+    // 就会误点刚变成「免费展开解读」的按钮，把今天的免费次数用掉（减弱动态效果下动画更短，更容易撞上）
+    const step = await page.evaluate(() => {
+      const b = document.querySelector('.view-module [data-action="primary"]');
+      if (!b) return 'none';
+      if (/解读/.test(b.textContent)) return b.disabled ? 'wait' : 'read';
+      if (b.disabled) return 'wait';
+      b.click();
+      return 'clicked';
+    });
+    if (step === 'read') { await page.waitForTimeout(300); return primary; }
     await page.waitForTimeout(700);
   }
   throw new Error('没有走到解读入口');
