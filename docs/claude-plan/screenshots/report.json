@@ -1,18 +1,5 @@
 [
   {
-    "route": "m/tarot@read",
-    "viewport": "393x852",
-    "file": "m-tarot-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
     "route": "m/almanac@bottom",
     "viewport": "393x852",
     "file": "m-almanac-bottom-393x852.png",
@@ -20,19 +7,6 @@
       "scrollW": 393,
       "w": 393,
       "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot@read",
-    "viewport": "430x932",
-    "file": "m-tarot-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": [
-        "chip"
-      ]
     },
     "errors": []
   },
@@ -48,19 +22,6 @@
     "errors": []
   },
   {
-    "route": "m/tarot@read",
-    "viewport": "393x852",
-    "file": "ink-m-tarot-read-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
     "route": "m/almanac@bottom",
     "viewport": "393x852",
     "file": "ink-m-almanac-bottom-393x852.png",
@@ -72,22 +33,97 @@
     "errors": []
   },
   {
-    "route": "m/tarot@read",
+    "route": "m/almanac@bottom",
     "viewport": "430x932",
-    "file": "ink-m-tarot-read-430x932.png",
+    "file": "ink-m-almanac-bottom-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
     },
     "errors": []
   },
   {
-    "route": "m/almanac@bottom",
+    "route": "m/runes@readfull",
+    "viewport": "393x852",
+    "file": "m-runes-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@chip1-readfull",
+    "viewport": "393x852",
+    "file": "m-runes-chip1-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@chip2-readfull",
+    "viewport": "393x852",
+    "file": "m-runes-chip2-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@readfull",
     "viewport": "430x932",
-    "file": "ink-m-almanac-bottom-430x932.png",
+    "file": "m-runes-readfull-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@chip1-readfull",
+    "viewport": "430x932",
+    "file": "m-runes-chip1-readfull-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@chip2-readfull",
+    "viewport": "430x932",
+    "file": "m-runes-chip2-readfull-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@chip2-readfull",
+    "viewport": "393x852",
+    "file": "ink-m-runes-chip2-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@chip2-readfull",
+    "viewport": "430x932",
+    "file": "ink-m-runes-chip2-readfull-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,

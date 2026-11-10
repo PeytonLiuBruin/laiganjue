@@ -487,3 +487,40 @@
   padding: 0 10px;
   box-shadow: 0 3px 0 var(--edge-color);
 }
+
+/* 第 51 轮：卢恩翻开后石头下的符名原来是 12px 灰色宋体字，压在紫色绒布上几乎读不出，
+   逆位小标是 1px 细框。符名改白底 2px 深墨描边、2px 硬厚边的小胶囊，圆体 800 深墨字，
+   逆位小标改朱红实心小胶囊白字。五符十字石头上下挨得近，胶囊再收小一号并压到石头下沿上，不碰下一格。 */
+.m-runes .rn-stone .rn-stone-label {
+  top: calc(100% + 6px);
+  padding: 2px 9px;
+  border: 2px solid #2b2240;
+  border-radius: 999px;
+  background: #fffaf0;
+  box-shadow: 0 2px 0 #2b2240;
+  color: #2b2240;
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  /* contrast.css 给旧的奶油字加了四向深色描边，放进白胶囊里会糊成一团 */
+  text-shadow: none;
+}
+.m-runes .rn-stone .rn-stone-label i {
+  margin-left: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: #e8463c;
+  color: #fff;
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  padding: 0 5px;
+}
+.m-runes .rn-n5 .rn-stone .rn-stone-label {
+  top: calc(100% - 8px);
+  z-index: 2;
+  padding: 1px 6px;
+  font-size: 11px;
+  border-width: 1.5px;
+}

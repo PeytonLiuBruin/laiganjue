@@ -125,3 +125,7 @@
 
 附：第 50 轮参数
 - 塔罗牌面（`toon-props.css`，只作用于 `.tr-card` 里的牌，历史缩略图不变）：奶油纸 #fffaf0，2.5px #2b2240 描边，圆角 10px，`0 5px 0 #2b2240` 硬厚边加 `0 12px 18px rgba(43,34,64,.18)` 柔和投影（翻开后 `0 14px 22px .22`）。插画外 2px #2b2240 内框、圆角 5px。逆位牌 `.tr-card.reversed` 厚边与投影改为负 y，转 180° 后仍在下方。牌位标签翻开后白底 `--surface`、2px `--line-strong` 描边、`0 3px 0 --edge-color` 厚边、圆体 800 12px/20px、`--accent-text` 字、左右 10px 内边距。
+
+附：第 51 轮参数
+- 黄历时辰表当前格（`.al-hours .al-hour.now`）：底 rgba(255,252,240,.92)，`inset 0 0 0 2px --al-red` 描边加 `0 3px 0` 厚边（--al-red 70% 混黑），圆角 10px，地支字 --al-red，右上小红点 10px 加 2px #fffaf0 白圈。所有时辰格吉凶字圆体 800。详情十二时辰格当前格 2px --accent 描边、`0 3px 0 --accent-3` 厚边、圆角 10px。
+- 卢恩符名胶囊（`.rn-stone-label`）：#fffaf0 底，2px #2b2240 描边，`0 2px 0 #2b2240` 厚边，圆体 800 12px，字距 .04em，内边距 2px 9px，`text-shadow: none`。逆位小标 #e8463c 实心白字圆体 800。五符十字 1.5px 描边、11px、内边距 1px 6px，`top: calc(100% - 8px)` 压在石头下沿。

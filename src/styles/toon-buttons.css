@@ -201,3 +201,33 @@
 }
 /* 印章同步加圆角，和胶囊同一个语气 */
 .m-almanac .al-col .al-mark { border-radius: 7px; }
+
+/* 第 51 轮：黄历时辰表的当前时辰格原来是 1px 金褐细框配浅棕底，右上角一颗 6px 小红点，
+   和上面已经改成描边胶囊的宜忌词条不是一套。改成奶白底、2px 朱红描边加 3px 深红硬厚边、圆角 10px，
+   用 inset 描边不改格子尺寸，十二格不跳位。小红点加白圈放大到 10px。
+   所有时辰格的吉凶字改圆体 800，地支字不动，纸面颜色不动。 */
+.m-almanac .al-hours .al-hour { border-radius: 10px; }
+.m-almanac .al-hours .al-hour i,
+.m-almanac .al-hgrid .al-hcell i {
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+}
+.m-almanac .al-hours .al-hour.now {
+  background: rgba(255, 252, 240, 0.92);
+  box-shadow: inset 0 0 0 2px var(--al-red), 0 3px 0 color-mix(in srgb, var(--al-red) 70%, #000);
+}
+.m-almanac .al-hours .al-hour.now b { color: var(--al-red); }
+.m-almanac .al-hours .al-hour.now::after {
+  top: -4px;
+  right: -3px;
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 0 2px #fffaf0;
+}
+.m-almanac .al-hours .al-hour:active { transform: translateY(2px); }
+/* 详情里的十二时辰格同一个语气：当前格主色描边加厚边 */
+.m-almanac .al-hgrid .al-hcell { border-radius: 10px; }
+.m-almanac .al-hgrid .al-hcell.now {
+  border: 2px solid var(--accent);
+  box-shadow: 0 3px 0 var(--accent-3, var(--edge-color));
+}

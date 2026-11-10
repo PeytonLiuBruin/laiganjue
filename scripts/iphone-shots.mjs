@@ -1,5 +1,5 @@
 // iPhone 视口截图：构建 dist → 起本地服务器 → 软件 WebGL 的无头 Chromium，按 393×852 与 430×932 两种尺寸截图。
-// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl] · 动作 @read @read2 @readfull @full @bottom @sheet @sheet2 @share
+// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl] · 动作 @read @read2 @readfull @full @bottom @chipN-动作 @sheet @sheet2 @share
 // --no-webgl：关掉 WebGL，玩法页退回 2D 器物。只检查 2D 界面（设置、付费卡、黄历等）时用，Mac 负载高时也能很快截完。
 // 每张图同时检查横向溢出，结果写到 <out>/report.json。非宣纸皮肤的文件名前加皮肤名（如 nebula-home-393x852.png）。
 import path from 'node:path';
@@ -42,12 +42,15 @@ for (const vp of VIEWPORTS) {
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   for (const r of routes) {
     // 路由后可跟 @动作：home@paywall 打开付费卡、home@settings 打开设置、m/qian@read 出签后停在结果条
-    const [route, action] = r.split('@');
+    let [route, action] = r.split('@');
     const hash = route === 'home' ? '#/' : '#/' + route;
     await page.goto(base + hash);
     await page.waitForTimeout(2500);
     // 体感引导抽屉可能晚一点弹出：按两次 Esc 关掉，再等动画结束
     for (let i = 0; i < 2; i++) { await page.keyboard.press('Escape').catch(() => {}); await page.waitForTimeout(600); }
+    // m/runes@chip2-readfull：先点模式选项行第 3 项（如卢恩「五符十字」、塔罗「抉择」），再执行后面的动作（第 51 轮）
+    const chipM = /^chip(\d)(?:-(.+))?$/.exec(action || '');
+    if (chipM) { await page.locator('.view-module .chips .chip').nth(Number(chipM[1])).click().catch(() => {}); await page.waitForTimeout(1500); action = chipM[2]; }
     // m/shiye@tab1：切到第 2 个标签（事业页的青云梯、财运页的财库）再截图，文件名带 -tab1
     const tabMatch = /^tab(\d)$/.exec(action || '');
     if (tabMatch) { await page.locator('.view-module .tabs .tab').nth(Number(tabMatch[1])).click().catch(() => {}); await page.waitForTimeout(2500); }
