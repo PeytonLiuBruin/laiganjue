@@ -310,7 +310,8 @@ export function mount(container, ctx) {
       return;
     }
     const c = makeCard(draw.card);
-    if (draw.reversed) c.spin.style.transform = 'rotate(180deg)';
+    // reversed 类让牌面的硬厚边反向画，旋转 180° 后仍落在屏幕下方（第 50 轮）
+    if (draw.reversed) { c.spin.style.transform = 'rotate(180deg)'; c.el.classList.add('reversed'); }
     cardEls[idx] = c;
     sound.play('whoosh');
     haptic.light();

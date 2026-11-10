@@ -1,5 +1,5 @@
 // iPhone 视口截图：构建 dist → 起本地服务器 → 软件 WebGL 的无头 Chromium，按 393×852 与 430×932 两种尺寸截图。
-// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl] · 动作 @read @read2 @readfull @full @sheet @sheet2 @share
+// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl] · 动作 @read @read2 @readfull @full @bottom @sheet @sheet2 @share
 // --no-webgl：关掉 WebGL，玩法页退回 2D 器物。只检查 2D 界面（设置、付费卡、黄历等）时用，Mac 负载高时也能很快截完。
 // 每张图同时检查横向溢出，结果写到 <out>/report.json。非宣纸皮肤的文件名前加皮肤名（如 nebula-home-393x852.png）。
 import path from 'node:path';
@@ -108,6 +108,8 @@ for (const vp of VIEWPORTS) {
     }
     // readfull：整页长图前回到顶部，否则 sticky 顶栏会被画在当时的滚动位置、压住舞台
     if (action === 'readfull') { await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })); await page.waitForTimeout(300); }
+    // bottom：不点按钮，真实滚到页面最底再截一屏，检查底部 sticky 操作条有没有盖住最后一段内容（第 50 轮）
+    if (action === 'bottom') { await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' })); await page.waitForTimeout(600); }
     // 等平滑滚动停下再截：滚动途中截图，无头 Chromium 会把 sticky 顶栏画到半路、上方露出白带（第 32 轮用 scroll-probe 逐帧确认顶栏本身一直在 0）
     await page.waitForFunction(() => new Promise((ok) => { const y = scrollY; requestAnimationFrame(() => requestAnimationFrame(() => ok(scrollY === y))); }), null, { timeout: 5_000, polling: 100 }).catch(() => {});
     const overflow = await page.evaluate(() => {

@@ -122,3 +122,6 @@
 附：第 49 轮参数
 - 模式选项行（`kit.chips`，生辰表单分段框除外）：选项 2px 透明边框、圆体 700。选中项白底 `--surface`，2px `--line-strong` 描边，`0 3px 0 --edge-color` 厚边，`--accent-text` 字，圆体 800，按下下移 2px、厚边减到 1px。横向滚动行 `padding-bottom: 5px`。
 - 黄历宜忌词条：圆角 10px，内边距 4px 10px，圆体 700。宜：描边 `--al-green` 55%，底 rgba(255,252,240,.78)，`0 2px 0` 厚边 `--al-green` 40%，字 `--al-green`。忌：描边 `--al-red` 55%，底 rgba(255,244,238,.85)，厚边 `--al-red` 40%，字 `--al-red`。全凶日忌词条实心红底配 `--al-red` 加 30% 黑的厚边。「无」用虚线、不带厚边。「宜」「忌」印章圆角 7px。
+
+附：第 50 轮参数
+- 塔罗牌面（`toon-props.css`，只作用于 `.tr-card` 里的牌，历史缩略图不变）：奶油纸 #fffaf0，2.5px #2b2240 描边，圆角 10px，`0 5px 0 #2b2240` 硬厚边加 `0 12px 18px rgba(43,34,64,.18)` 柔和投影（翻开后 `0 14px 22px .22`）。插画外 2px #2b2240 内框、圆角 5px。逆位牌 `.tr-card.reversed` 厚边与投影改为负 y，转 180° 后仍在下方。牌位标签翻开后白底 `--surface`、2px `--line-strong` 描边、`0 3px 0 --edge-color` 厚边、圆体 800 12px/20px、`--accent-text` 字、左右 10px 内边距。

@@ -451,3 +451,39 @@
   box-shadow: 0 2px 0 var(--edge-color);
 }
 .m-jiaobei .jb-streak .earned { background: var(--accent); border-color: var(--accent-3, var(--accent)); color: #fff; text-shadow: var(--btn-outline, none); }
+
+/* 第 50 轮：塔罗翻开后的牌面卡通化（@readfull 长图发现）。塔罗全程是 DOM 牌，没有 WebGL 版，
+   翻开后牌面外只有一圈 1px 米色细框（atelier.css）和柔和投影（refinement.css），和描边厚边的舞台、角标不是一套。
+   牌面改奶油纸 2.5px 深墨描边、圆角 10px、0 5px 0 深墨硬厚边加一层柔和投影，插画外加 2px 深墨内框。
+   逆位牌整张转了 180°，厚边改向上画，转过去后仍落在屏幕下方。牌位标签「指引 · 逆位」改白底描边胶囊。
+   历史缩略图 .tr-thumb 尺寸小，不加粗描边。 */
+.m-tarot .tr-card .tr-front-art {
+  background: #fffaf0;
+  border: 2.5px solid #2b2240;
+  border-radius: 10px;
+  box-shadow: 0 5px 0 #2b2240, 0 12px 18px rgba(43, 34, 64, 0.18);
+}
+.m-tarot .tr-card.flipped .tr-front-art {
+  box-shadow: 0 5px 0 #2b2240, 0 14px 22px rgba(43, 34, 64, 0.22);
+}
+.m-tarot .tr-card.reversed .tr-front-art,
+.m-tarot .tr-card.reversed.flipped .tr-front-art {
+  box-shadow: 0 -5px 0 #2b2240, 0 -12px 18px rgba(43, 34, 64, 0.18);
+}
+.m-tarot .tr-card.reversed .tr-back-art {
+  box-shadow: 0 0 0 2.5px var(--tr-back-ink), 0 -5px 0 -1px rgba(43, 34, 64, 0.2);
+}
+.m-tarot .tr-card .tr-illustration {
+  border: 2px solid #2b2240;
+  border-radius: 5px;
+}
+.m-tarot .tr-slot-wrap.filled .tr-slot-label {
+  font: 800 12px/20px var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+  color: var(--accent-text);
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0 10px;
+  box-shadow: 0 3px 0 var(--edge-color);
+}

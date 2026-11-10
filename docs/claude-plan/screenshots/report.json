@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/tarot",
+    "route": "m/tarot@read",
     "viewport": "393x852",
-    "file": "m-tarot-393x852.png",
+    "file": "m-tarot-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -13,9 +13,9 @@
     "errors": []
   },
   {
-    "route": "m/crystal",
+    "route": "m/almanac@bottom",
     "viewport": "393x852",
-    "file": "m-crystal-393x852.png",
+    "file": "m-almanac-bottom-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -24,44 +24,9 @@
     "errors": []
   },
   {
-    "route": "m/almanac",
-    "viewport": "393x852",
-    "file": "m-almanac-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/zodiac",
-    "viewport": "393x852",
-    "file": "m-zodiac-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/runes",
-    "viewport": "393x852",
-    "file": "m-runes-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot",
+    "route": "m/tarot@read",
     "viewport": "430x932",
-    "file": "m-tarot-430x932.png",
+    "file": "m-tarot-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -72,9 +37,9 @@
     "errors": []
   },
   {
-    "route": "m/crystal",
+    "route": "m/almanac@bottom",
     "viewport": "430x932",
-    "file": "m-crystal-430x932.png",
+    "file": "m-almanac-bottom-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -83,44 +48,9 @@
     "errors": []
   },
   {
-    "route": "m/almanac",
-    "viewport": "430x932",
-    "file": "m-almanac-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/zodiac",
-    "viewport": "430x932",
-    "file": "m-zodiac-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/runes",
-    "viewport": "430x932",
-    "file": "m-runes-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot",
+    "route": "m/tarot@read",
     "viewport": "393x852",
-    "file": "ink-m-tarot-393x852.png",
+    "file": "ink-m-tarot-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -131,9 +61,9 @@
     "errors": []
   },
   {
-    "route": "m/almanac",
+    "route": "m/almanac@bottom",
     "viewport": "393x852",
-    "file": "ink-m-almanac-393x852.png",
+    "file": "ink-m-almanac-bottom-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -142,22 +72,9 @@
     "errors": []
   },
   {
-    "route": "m/zodiac",
-    "viewport": "393x852",
-    "file": "ink-m-zodiac-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot",
+    "route": "m/tarot@read",
     "viewport": "430x932",
-    "file": "ink-m-tarot-430x932.png",
+    "file": "ink-m-tarot-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -168,26 +85,13 @@
     "errors": []
   },
   {
-    "route": "m/almanac",
+    "route": "m/almanac@bottom",
     "viewport": "430x932",
-    "file": "ink-m-almanac-430x932.png",
+    "file": "ink-m-almanac-bottom-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
       "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/zodiac",
-    "viewport": "430x932",
-    "file": "ink-m-zodiac-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": [
-        "chip"
-      ]
     },
     "errors": []
   }
