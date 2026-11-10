@@ -142,3 +142,62 @@
 /* 第 48 轮：八字的生辰表单从舞台上方挪到舞台下方，折叠成一行（同姻缘），393×852 下命牌进首屏上半部。
    新用户默认展开，排过一次后收起。 */
 .m-bazi .bz-fold .bz-form { margin-bottom: 0; }
+
+/* 第 49 轮：玩法页的模式选项行（塔罗「单张指引 / 时间之流…」、水晶球「是非题 / 神谕 / 一字」、
+   黄历「最近宜…」等，都是 kit.chips）选中项是没有边框的浅粉平涂块，旁边就是描边厚边的输入框和舞台，
+   @readfull 长图里像旧版网页标签。选中项改白底 2px 描边加 3px 厚边、主色字、圆体 800，按下下沉。
+   不用红色按钮渐变，免得和上方「水晶球 / 灵摆」页签、下方主按钮抢成三条红色。
+   生辰表单里的性别切换有自己的分段框（上面那段），这里排除掉。 */
+.chips:not(:is(.bf-row2, .bz-row2) .chips) .chip {
+  border: 2px solid transparent;
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 700;
+}
+.chips:not(:is(.bf-row2, .bz-row2) .chips) .chip.active {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--accent-text);
+  font-weight: 800;
+}
+.chips:not(:is(.bf-row2, .bz-row2) .chips) .chip.active:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--edge-color);
+}
+/* 横向滚动的选项行会裁掉超出的部分，给厚边留出位置 */
+.chips.scroll:not(:is(.bf-row2, .bz-row2) .chips) { padding-bottom: 5px; }
+
+/* 第 49 轮：黄历纸面的宜忌词条原来是 10.5px 起步、3px 圆角、1px 浅褐细边的米色方块，
+   在整页最显眼的位置，和描边胶囊的其他页面放在一起最像旧版老黄历网页。
+   改成圆角 10px、2px 描边加 2px 厚边的小胶囊，圆体 700：宜是墨绿描边配奶白底，忌是朱红描边配浅粉底，
+   纸面颜色和「宜」「忌」印章不变，仍是一页老黄历，只是词条读起来像能点的按钮。 */
+.m-almanac .al-chip {
+  border: 2px solid color-mix(in srgb, var(--al-green) 55%, transparent);
+  border-radius: 10px;
+  background: rgba(255, 252, 240, 0.78);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--al-green) 40%, transparent);
+  color: var(--al-green);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 700;
+  padding: 4px 10px;
+}
+.m-almanac .al-chip.ji {
+  border-color: color-mix(in srgb, var(--al-red) 55%, transparent);
+  background: rgba(255, 244, 238, 0.85);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--al-red) 40%, transparent);
+  color: var(--al-red);
+}
+.m-almanac .al-chip:not(.empty):active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+.m-almanac .al-chip.empty {
+  border-style: dashed;
+  box-shadow: none;
+}
+.m-almanac .al-page.all-bad .al-chip.ji {
+  border-color: var(--al-red);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--al-red) 70%, #000);
+}
+/* 印章同步加圆角，和胶囊同一个语气 */
+.m-almanac .al-col .al-mark { border-radius: 7px; }

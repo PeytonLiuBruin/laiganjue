@@ -118,3 +118,7 @@
 附：第 48 轮参数
 - 风水「填上生年」胶囊：白底 `--surface`，2px `--line-strong` 描边，`0 3px 0 --edge-color` 厚边，圆角 999px，圆体 800 13px，字距 .02em，`--accent-text` 字，最小高 44px，按下下移 2px、厚边减到 1px。
 - 八字生辰：表单挪到舞台下方的 `createBirthFold`（与姻缘同款），填过生辰默认收起，新用户默认展开，排过一次后收起。
+
+附：第 49 轮参数
+- 模式选项行（`kit.chips`，生辰表单分段框除外）：选项 2px 透明边框、圆体 700。选中项白底 `--surface`，2px `--line-strong` 描边，`0 3px 0 --edge-color` 厚边，`--accent-text` 字，圆体 800，按下下移 2px、厚边减到 1px。横向滚动行 `padding-bottom: 5px`。
+- 黄历宜忌词条：圆角 10px，内边距 4px 10px，圆体 700。宜：描边 `--al-green` 55%，底 rgba(255,252,240,.78)，`0 2px 0` 厚边 `--al-green` 40%，字 `--al-green`。忌：描边 `--al-red` 55%，底 rgba(255,244,238,.85)，厚边 `--al-red` 40%，字 `--al-red`。全凶日忌词条实心红底配 `--al-red` 加 30% 黑的厚边。「无」用虚线、不带厚边。「宜」「忌」印章圆角 7px。
