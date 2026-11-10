@@ -4,6 +4,7 @@ import { computeChart, elementRatios, shareText, daysInMonth, ELEMENTS } from '.
 import { HOURS, GENDERS, DAY_MASTER, ELEMENT_INFO, SHISHEN_TEXT, TODAY_TEXT, NAYIN_TEXT, STRENGTH_TEXT, UI } from './data.js';
 import { createRitual } from '../../ui/ritual.js';
 import { createModelSlot } from '../../ui/model-slot.js';
+import { createBirthFold, describeBirth } from '../../ui/birth-form.js';
 
 const YEAR_NOW = new Date().getFullYear();
 
@@ -18,6 +19,8 @@ export function mount(container, ctx) {
   let chart = null;
   let resultSheet = null;
   let busy = false;
+  // 填过生辰（自己的或共享的）就把表单折叠成舞台下一行，首屏留给命牌。新用户默认展开，免得拿占位生辰排盘
+  let hasBirth = !!(storage.get('birth', null) || shared);
 
   /* ---------- 表单 ---------- */
   const years = [];
@@ -41,6 +44,8 @@ export function mount(container, ctx) {
     input = { ...input, [k]: v };
     if (k === 'y' || k === 'm') fillDays();
     storage.set('birth', input);
+    hasBirth = true;
+    fold.update();
     haptic.tap();
     if (chart && !busy) {
       chart = null;
@@ -61,6 +66,12 @@ export function mount(container, ctx) {
     h('p', { class: 'bz-note' }, UI.hourNote),
   );
   const setFormDisabled = (v) => form.querySelectorAll('select, button').forEach((el) => { el.disabled = v; });
+  const fold = createBirthFold({
+    cls: 'bz-fold',
+    summary: () => (hasBirth ? `我的生辰 · ${describeBirth(input)}` : `先填生辰 · 现按 ${describeBirth(input)}`),
+    content: form,
+    open: !hasBirth,
+  });
 
   /* ---------- 舞台：四柱 ---------- */
   const st = stage({ cls: 'bz-stage', badge: UI.badgeIdle, hint: UI.stageHint });
@@ -73,7 +84,7 @@ export function mount(container, ctx) {
 
   const primaryBtn = button(UI.primary, { variant: 'primary', size: 'large', primary: true, onClick: () => compute() });
   // 先把界面挂上，再创建命牌模型：模型在已连接的舞台里初始化，首帧就能画出来。
-  container.append(ritual.progress, form, h('div', { class: 'mt-3' }, st.el), kit.actionBar(primaryBtn), ritual.receipt, barsEl, todayEl);
+  container.append(ritual.progress, st.el, fold.el, kit.actionBar(primaryBtn), ritual.receipt, barsEl, todayEl);
   const slot = createModelSlot(ctx, { id: 'bazi.pillars', label: '四柱命牌', hint: UI.stageHint });
   slot.el.classList.add('bz-slot');
   st.scene.append(slot.el, pillarsEl);
@@ -98,6 +109,10 @@ export function mount(container, ctx) {
       setFormDisabled(false);
       return;
     }
+    // 排过一次就算填过：记下生辰并收起表单，结果出来时舞台和小结在一屏里
+    if (!hasBirth) { hasBirth = true; storage.set('birth', input); }
+    fold.update();
+    fold.setOpen(false);
     haptic.light();
     sound.play('flip');
     st.setBadge(`${chart.lunarText} · ${chart.shengXiao}年生`);

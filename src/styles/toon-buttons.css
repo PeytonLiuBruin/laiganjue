@@ -118,3 +118,27 @@
 [data-theme='paper'] :is(.birth-form .bf-row2, .m-bazi .bz-form .bz-row2) .chip.active { color: #fff; text-shadow: var(--btn-outline); }
 /* 青瓷主色偏浅，和它的主按钮一样给白字加深色描边 */
 [data-theme='celadon'] :is(.birth-form .bf-row2, .m-bazi .bz-form .bz-row2) .chip.active { text-shadow: var(--btn-outline); }
+
+/* 第 48 轮：风水罗盘读数下的「填上生年，看此方对你的吉凶」原来是红字配点状下划线，像网页链接。
+   改成和「去填生辰」同一套白底 2px 描边胶囊加 3px 厚边，主色字，按下下沉，点按区域 44pt。 */
+.m-fengshui .btn.fs-fill {
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 6px 16px;
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--accent-text);
+  font-family: var(--font-round, var(--font-sans));
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.m-fengshui .btn.fs-fill:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge-color); }
+
+/* 第 48 轮：八字的生辰表单从舞台上方挪到舞台下方，折叠成一行（同姻缘），393×852 下命牌进首屏上半部。
+   新用户默认展开，排过一次后收起。 */
+.m-bazi .bz-fold .bz-form { margin-bottom: 0; }

@@ -114,3 +114,7 @@
 - 舞台下小卡（第 47 轮，`toon-buttons.css`）：财运与事业的生辰行、生辰折叠卡、手机体感卡统一 2px --line-strong 描边加 0 4px 0 --edge-color 厚边，卡内文字 --text 圆体 800。「去填生辰」「修改」「收起」白底 --surface、2px 描边胶囊、0 3px 0 厚边、--accent-text 字、圆体 800，按下下沉 2px。
 - 舞台角标与提示（第 47 轮）：`.stage-badge`、`.stage-hint` 2px --line-strong 描边胶囊、0 2px 0 厚边、内边距 3px 11px、圆体 800、字距 .04em，底色沿用 contrast.css 的 88% 到 90% 不透明。
 - 表单控件（第 47 轮）：`.input`、`.select`、`.textarea` 2px --line-strong 描边加 0 3px 0 厚边，值圆体 700，占位字 600，聚焦时描边 --accent、厚边 --accent-3。性别分段框 2px 描边、3px 内边距与间隔，选项圆体 800、圆角 9px、高 40px，选中项 --btn-top 到 --btn-bottom 渐变、内侧 3px --btn-edge 厚边、--accent-ink 字，宣纸与青瓷白字套 --btn-outline。
+
+附：第 48 轮参数
+- 风水「填上生年」胶囊：白底 `--surface`，2px `--line-strong` 描边，`0 3px 0 --edge-color` 厚边，圆角 999px，圆体 800 13px，字距 .02em，`--accent-text` 字，最小高 44px，按下下移 2px、厚边减到 1px。
+- 八字生辰：表单挪到舞台下方的 `createBirthFold`（与姻缘同款），填过生辰默认收起，新用户默认展开，排过一次后收起。

@@ -11,9 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/caiyun@readfull",
+    "route": "m/bazi@read",
     "viewport": "393x852",
-    "file": "m-caiyun-readfull-393x852.png",
+    "file": "m-bazi-read-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -22,20 +22,9 @@
     "errors": []
   },
   {
-    "route": "m/yinyuan",
+    "route": "m/fengshui",
     "viewport": "393x852",
-    "file": "m-yinyuan-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/liuyao",
-    "viewport": "393x852",
-    "file": "m-liuyao-393x852.png",
+    "file": "m-fengshui-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -55,9 +44,9 @@
     "errors": []
   },
   {
-    "route": "m/caiyun@readfull",
+    "route": "m/bazi@read",
     "viewport": "430x932",
-    "file": "m-caiyun-readfull-430x932.png",
+    "file": "m-bazi-read-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -66,64 +55,9 @@
     "errors": []
   },
   {
-    "route": "m/yinyuan",
+    "route": "m/fengshui",
     "viewport": "430x932",
-    "file": "m-yinyuan-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/liuyao",
-    "viewport": "430x932",
-    "file": "m-liuyao-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/bazi",
-    "viewport": "393x852",
-    "file": "ink-m-bazi-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@readfull",
-    "viewport": "393x852",
-    "file": "ink-m-caiyun-readfull-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/bazi",
-    "viewport": "430x932",
-    "file": "ink-m-bazi-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@readfull",
-    "viewport": "430x932",
-    "file": "ink-m-caiyun-readfull-430x932.png",
+    "file": "m-fengshui-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
