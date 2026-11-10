@@ -155,3 +155,22 @@ Privacy: No data is collected. Purchases are processed by Apple.
 按这些答案，App 会被评为 **13+**（不频繁的性内容或裸露、写实暴力、酒精提及都落在 13+）。占卜、星座、黄历本身不在问卷里，不影响分级。
 
 如果希望评到 9+：需要把有裸体人物的塔罗牌换成自绘或打码的牌面（工作量大，而且 RWS 牌面是塔罗玩法的卖点），不建议。13+ 对 18 到 30 岁的目标用户没有影响。
+
+## 9. 无障碍营养标签建议（第 45 轮，2026-11-10）
+
+App Store Connect 里「App 无障碍」（Accessibility Nutrition Labels）目前是**自愿填写**，Apple 说以后会改成提交必填，但没给日期。规则是：用户必须能用这项功能完成 App 的**全部常用任务**，才能勾选。按设备分开填（iPhone、iPad 各一份）。下面按 Apple 的评估标准逐项对照来感觉的现状。
+
+| 标签 | 建议 | 依据 |
+|---|---|---|
+| 足够的对比度（Sufficient Contrast） | **可以勾选**（建议先在真机上快速看一遍） | 默认界面文字对比度达到 4.5:1，`contrast-audit` 五套皮肤 0 处不达标。Apple 另要求按钮、开关等非文字元素 3:1，这一项没有自动审计，靠描边加厚边设计，肉眼看是清楚的 |
+| 深色界面（Dark Interface） | 暂不勾选 | 免费的「玄墨」皮肤是深色的，Apple 接受 App 内自带的深色方案。但启动画面是浅色奶油底（`#f4ecdc`），用深色皮肤的人每次打开都会先闪一下亮屏，Apple 特别提到短暂的亮闪也会造成不适。改成跟随皮肤的启动底色后可以勾选 |
+| 减弱动态效果（Reduced Motion） | 暂不勾选 | 第 45 轮起已跟随系统「减弱动态效果」自动切到「轻柔」，3D 舞台的视差倾斜会关掉。但 Apple 点名的「旋转」效果还在：转盘在轻柔模式下只是转得更快，筊杯、硬币仍会翻滚。要勾选需要给这些动作换成淡入淡出之类的替代动画 |
+| 更大字体（Larger Text） | 不勾选 | Apple 要求文字能放大到 200% 以上，「阅读字号」最大 125%，而且只放大解读和结果，不包括首页和按钮 |
+| 旁白（VoiceOver） | 暂不勾选 | 第 45 轮修好了开关没有名字、玩法页没有标题、器物画布没有描述等问题，axe-core 审计 21 个页面 0 处。但「全部常用任务能用旁白完成」必须在 iPhone 上打开旁白实际走一遍（摇签、出结果、读解读、购买）才能确认 |
+| 语音控制（Voice Control） | 暂不勾选 | 同上，需要真机验证 |
+| 不单靠颜色区分（Differentiate Without Color Alone） | 可以考虑 | 吉凶等级都有文字（上吉签、圣杯等），颜色只是辅助。没有做过专门审计 |
+| 字幕、口述影像（Captions / Audio Descriptions） | 不适用，不勾选 | App 里没有视频或有对白的音频 |
+
+首发建议：只勾「足够的对比度」，其余等真机验证或改完再加。勾错了会让依赖这些功能的用户下载后失望，不勾不影响审核。
+
+来源：[Overview of Accessibility Nutrition Labels](https://developer.apple.com/help/app-store-connect/manage-app-accessibility/overview-of-accessibility-nutrition-labels)、[Reduced Motion 评估标准](https://developer.apple.com/help/app-store-connect/manage-app-accessibility/reduced-motion-evaluation-criteria)、[Dark Interface 评估标准](https://developer.apple.com/help/app-store-connect/manage-app-accessibility/dark-interface-evaluation-criteria)、[Sufficient Contrast 评估标准](https://developer.apple.com/help/app-store-connect/manage-app-accessibility/sufficient-contrast-evaluation-criteria)。
