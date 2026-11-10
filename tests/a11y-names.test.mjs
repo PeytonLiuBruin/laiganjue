@@ -58,3 +58,13 @@ test('器物画布重摆时恢复玩法给的描述，不留下没名字的 role
   assert.equal(attrs.get('aria-label'), '两枚朱红色月牙筊杯');
   scene.dispose?.();
 });
+
+test('axe-core 只在开发时用：src/ 不引用，不会打进 App', async () => {
+  const { readdirSync, statSync } = await import('node:fs');
+  const walk = (d) => readdirSync(d).flatMap((f) => { const p = `${d}/${f}`; return statSync(p).isDirectory() ? walk(p) : [p]; });
+  const root = new URL('../src', import.meta.url).pathname;
+  const hits = walk(root).filter((p) => /\.(m?js|cjs)$/.test(p) && /axe-core/.test(readFileSync(p, 'utf8')));
+  assert.deepEqual(hits, []);
+  const pkg = JSON.parse(read('package.json'));
+  assert.ok(pkg.devDependencies['axe-core'] && !pkg.dependencies?.['axe-core'], 'axe-core 在 devDependencies');
+});

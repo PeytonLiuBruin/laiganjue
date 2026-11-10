@@ -41,6 +41,8 @@ node scripts/smoke.mjs --act --until-sheet 8 --viewport 390x844     # 17 个玩�
 node scripts/smoke.mjs --act --until-sheet 8 --viewport 360x640     # 小屏再跑一次
 node scripts/contrast-audit.mjs --routes <改过的页面>              # 文字对比度 WCAG AA，五套皮肤 0 处
 node scripts/tap-audit.mjs --routes <改过的页面>                   # 可点元素 ≥ 44pt
+node scripts/a11y-audit.mjs --routes <改过的页面>                  # axe-core：读屏名字、标题、键盘可达，0 类问题
+node scripts/smoke.mjs --act --text-size xl --viewport 360x640      # 「阅读字号 · 特大」下不溢出、不重叠
 node scripts/iphone-shots.mjs --routes <改过的页面> --clean        # 393×852 与 430×932 截图，逐张看
 npm run e2e                                # 改了交互、3D 舞台或付费流程时跑
 ```

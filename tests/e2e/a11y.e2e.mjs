@@ -9,6 +9,7 @@ import { buildAll } from '../../scripts/build.mjs';
 import { createStaticServer } from '../../scripts/serve.mjs';
 import { launchBrowser } from '../../scripts/browser.mjs';
 import { STAGE_TIMEOUT } from '../../scripts/stage-timeout.mjs';
+import { runAxe, openRoute } from '../../scripts/a11y-audit.mjs';
 
 const out = path.join(os.tmpdir(), `lgj-a11y-${process.pid}`);
 
@@ -102,3 +103,16 @@ test('系统开了「减弱动态效果」：器物动画默认「轻柔」，�
   assert.equal(label, '完整');
   await context.close();
 });
+
+// 整套 21 个页面用 node scripts/a11y-audit.mjs 跑；这里挑最常见的 4 个状态守住回归
+for (const spec of ['home@settings', 'home@paywall', 'm/qian@sheet', 'm/jiaobei']) {
+  test(`axe 无障碍规则：${spec} 没有问题（读屏名字、标题、键盘可达）`, { timeout: 180_000 }, async () => {
+    const context = await browser.newContext({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, locale: 'zh-CN' });
+    await context.addInitScript(() => { try { localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); } catch {} });
+    const page = await context.newPage();
+    await openRoute(page, base, spec);
+    const found = await runAxe(page);
+    assert.deepEqual(found.map((v) => `${v.id}: ${v.nodes[0] || ''}`), []);
+    await context.close();
+  });
+}

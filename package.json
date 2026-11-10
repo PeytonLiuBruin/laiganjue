@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.2",
+    "axe-core": "4.10.3",
     "esbuild": "0.28.2",
     "playwright": "1.63.0"
   },
