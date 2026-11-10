@@ -129,10 +129,11 @@ export function actionBar(...buttons) {
 }
 
 /** 单选芯片。items: [{value, label}] 或 字符串数组 */
-export function chips(items, { value, onChange, scroll = false } = {}) {
+export function chips(items, { value, onChange, scroll = false, label = '' } = {}) {
   const norm = items.map((it) => (typeof it === 'string' ? { value: it, label: it } : it));
   let current = value ?? norm[0]?.value;
-  const el = h('div', { class: ['chips', scroll && 'scroll'] });
+  // label：整组的名字（如「闲置几分钟后进入」），读屏先念组名再念「3，按钮，已选」
+  const el = h('div', { class: ['chips', scroll && 'scroll'], attrs: label ? { role: 'group', 'aria-label': label } : {} });
   const buttons = norm.map((it) => h('button', {
     type: 'button',
     class: 'chip',
@@ -251,8 +252,9 @@ export function select(options, { value, onChange } = {}) {
   return el;
 }
 
-export function toggle(on, onChange) {
-  const el = h('button', { type: 'button', class: ['switch', on && 'on'], attrs: { role: 'switch', 'aria-checked': on ? 'true' : 'false' } });
+/** 开关。label：读屏念出的名字（开关本身没有文字，不给名字时 VoiceOver 只会念「开关，开」） */
+export function toggle(on, onChange, label = '') {
+  const el = h('button', { type: 'button', class: ['switch', on && 'on'], attrs: { role: 'switch', 'aria-checked': on ? 'true' : 'false', ...(label ? { 'aria-label': label } : {}) } });
   el.addEventListener('click', () => {
     const next = !el.classList.contains('on');
     el.classList.toggle('on', next);
@@ -394,7 +396,8 @@ export function toast(msg, { duration = 1800 } = {}) {
  * → {el, open(), close(), setContent(node), body}
  */
 export function sheet({ title = '', content = null, actions = null, onClose, dismissible = true } = {}) {
-  const body = h('div', { class: 'sheet-body' });
+  // tabindex：外接键盘（iPad、电脑网页）也能把焦点放进抽屉正文，用方向键滚动长解读
+  const body = h('div', { class: 'sheet-body', attrs: { tabindex: '0' } });
   if (content) append(body, [content]);
   const closeBtn = h('button', { type: 'button', class: 'icon-btn', attrs: { 'aria-label': '关闭' }, onClick: () => api.close() }, icon('close'));
   const el = h(

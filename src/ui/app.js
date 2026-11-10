@@ -227,6 +227,9 @@ export function startApp(root) {
       zenBtn.hidden = true;
       titleEl.append(h('span', null, meta.title));
     }
+    // 玩法页的顶栏标题当作一级标题，读屏可按标题跳转（首页正文里已有自己的一级标题）
+    if (meta) { titleEl.setAttribute('role', 'heading'); titleEl.setAttribute('aria-level', '1'); }
+    else { titleEl.removeAttribute('role'); titleEl.removeAttribute('aria-level'); }
   }
 
   /* ---------------- 模块上下文 ---------------- */
@@ -514,7 +517,12 @@ export function startApp(root) {
   /* ---------------- 设置抽屉 ---------------- */
   function openSettings() {
     const pm = platform.motion;
-    const row = (label, desc, control) => h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, label), h('div', { class: 'setting-desc' }, desc)), control);
+    // 开关和选项组本身没有标题文字，用这一行的标题给读屏一个名字
+    const row = (label, desc, control) => {
+      if (control?.getAttribute('role') === 'switch' && !control.hasAttribute('aria-label')) control.setAttribute('aria-label', label);
+      if (control?.classList.contains('chips')) { control.setAttribute('role', 'group'); control.setAttribute('aria-label', label); }
+      return h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, label), h('div', { class: 'setting-desc' }, desc)), control);
+    };
     const motionState = () => ({ idle: '未开启', granted: pm.live ? '已开启 · 传感器正常' : '已开启', denied: platform.inApp ? '未能开启，请返回玩法页重试' : '已拒绝（请在浏览器设置中允许"运动与方向"）', unsupported: platform.inApp ? '此设备不支持' : '此设备/浏览器不支持' })[pm.state];
     const motionDesc = h('div', { class: 'setting-desc' }, motionState());
     const motionControl =
@@ -537,7 +545,7 @@ export function startApp(root) {
         hapticDesc.textContent = sent ? '已发出震动；无感觉时可检查手机的震动设置' : '震动未触发，请检查手机设置';
       } });
       test.disabled = !hp.enabled;
-      hapticControls.append(toggle(hp.enabled, (v) => { hp.setEnabled(v); test.disabled = !v; if (v) hp.settle(); }), test);
+      hapticControls.append(toggle(hp.enabled, (v) => { hp.setEnabled(v); test.disabled = !v; if (v) hp.settle(); }, '震动反馈'), test);
     } else hapticControls.append(h('span', { class: 't-faint' }, '不支持'));
     const iap = platform.purchases;
     const planName = { yearly: '年度', monthly: '月度', lifetime: '永久' };
@@ -574,6 +582,7 @@ export function startApp(root) {
         } else toast('已开启，今晚 9 点前没来会提醒你');
       });
       sw.dataset.setting = 'reminder';
+      sw.setAttribute('aria-label', '连续天数提醒');
       reminderRow = h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '连续天数提醒'), remDesc), sw);
     }
     const content = h(
@@ -593,7 +602,7 @@ export function startApp(root) {
         'div',
         { class: 'setting-row' },
         h('div', null, h('div', { class: 'setting-label' }, '屏保 · 静观'), h('div', { class: 'setting-desc' }, '闲置后自动进入：大字时间、农历宜忌、一句古语，屏幕保持常亮')),
-        toggle(storage.get('zen.auto', true), (v) => storage.set('zen.auto', v)),
+        toggle(storage.get('zen.auto', true), (v) => storage.set('zen.auto', v), '闲置后自动进入屏保'),
       ),
       h(
         'div',
@@ -606,7 +615,7 @@ export function startApp(root) {
             { value: 5, label: '5' },
             { value: 10, label: '10' },
           ],
-          { value: Number(storage.get('zen.minutes', 3)) || 3, onChange: (v) => storage.set('zen.minutes', v) },
+          { value: Number(storage.get('zen.minutes', 3)) || 3, onChange: (v) => storage.set('zen.minutes', v), label: '闲置几分钟后进入屏保' },
         ).el,
       ),
       h(
