@@ -23,9 +23,13 @@ P0 上架必需 · P1 影响付费转化 · P2 体验打磨。完成后打勾并
   完成标准：`npm run e2e` 的「不支持 WebGL 时退回 2D 画布」通过（2026-10-22 发现，未改动的 HEAD 上同样失败，属于原有问题）。老 iPhone 或 WebGL 创建失败时会走这条路径。
 
 - [ ] **中国大陆上架的 App 备案（ICP 备案号）**（P0，第 25 轮新增，需要 Peyton 决定）：StoreKit 店面和主推价格都按中国区规划，而按工信部规定，在中国大陆 App Store 分发的新 App 需要在 App Store Connect 填写 App 备案号，没有备案号只能先在其他国家和地区上架。备案以开发者主体（个人或公司）通过国内云服务商或通信管理局办理，通常要几周，需要实名与手机号。完成标准：Peyton 决定首发是否包含中国大陆（不含则首发区域选港澳台、新加坡、美国等华人用户多的地区，商店文案与价格档位按美区和港区调整），若包含则拿到备案号填入 App Store Connect。上架前请在 Apple 开发者网站的最新说明里再核对一次要求。
-- [ ] **隐私政策与使用条款网址可访问**：付费卡和设置页链接 `peytonliubruin.github.io/laiganjue/terms.html`，GitHub Pages 发布后才能打开。完成标准：两个网址返回 200（需要本分支合并到 Pages 发布分支，由 Peyton 决定合并时机）。
+- [ ] **隐私政策、使用条款与支持页网址可访问**：付费卡和设置页链接 `peytonliubruin.github.io/laiganjue/terms.html`，App Store Connect 要填 `privacy.html` 与 `support.html`（第 52 轮新增），GitHub Pages 发布后才能打开。完成标准：三个网址返回 200（需要本分支合并到 Pages 发布分支，由 Peyton 决定合并时机）。
 - [x] **年龄分级问卷的建议答案** ✅ 2026-10-23（第 12 轮，store-listing.md 第 8 节逐题建议，结论 13+：塔罗古典裸体、宝剑牌的写实暴力与武器、古诗里的酒都按「不频繁」如实勾选。在 App Store Connect 里填写由 Peyton 操作）（第 12 轮发现）：App 内的 RWS 塔罗牌面（太阳、恋人、星星、世界等）是古典画风的裸体人物，另有占卜、运势类内容。App Store Connect 的年龄分级问卷要如实回答，答错可能被拒或被要求改分级。完成标准：store-listing.md 新增一节，逐题给出建议答案和理由（真正提交由 Peyton 在 App Store Connect 操作）。
 - [x] **iOS 模拟器编译确认隐私清单打包进 App** ✅ 2026-10-22（第 3 轮，App.app 根目录有 PrivacyInfo.xcprivacy）：完成标准：`xcodebuild` 后 App 包内有 PrivacyInfo.xcprivacy。
+- [x] **只上 iPhone，免得审核要 iPad 截图** ✅ 2026-11-10（第 52 轮整理上架清单时发现：App、小组件、UI 测试三个目标都是 `TARGETED_DEVICE_FAMILY = "1,2"`，也就是同时上 iPad。这样 App Store Connect 必须上传 13 寸 iPad 截图，审核员也会在 iPad 上按 iPad 布局审（指南 2.4.1），而 App 只为 iPhone 竖屏设计、商店图也只有 iPhone。改为 `1`，iPad 用户仍能以兼容模式安装。同时 Info.plist 的设备能力从老模板的 `armv7` 改为 `arm64`（部署目标 iOS 15，设备全是 arm64），删掉用不到的 iPad 方向。`tests/ios-launch.test.mjs` 2 项，模拟器编译见 run-log）
+- [x] **支持网址页面** ✅ 2026-11-10（第 52 轮，App Store Connect 的「支持网址」是必填项，之前只有隐私政策和使用条款。新增 `src/support.html`，构建时复制到 `support.html`：联系方式（GitHub 项目页，与隐私政策一致）、换手机后恢复购买、取消订阅、退款走 reportaproblem.apple.com、体感没反应、小组件怎么加、仅供娱乐，中英两段。顺带查到审核备注写的按钮「开启手机体感」在 App 里实际叫「开启体感」，审核员照着找会找不到，已改。`tests/legal.test.mjs` 新增 1 项，会检查按钮文字和 App 一致。`scripts/legal-shots.mjs` 截三页浅深两套两种尺寸，无横向溢出）
+- [x] **上架清单** ✅ 2026-11-10（第 52 轮，新增 `docs/claude-plan/launch-checklist.md`：按提交顺序列出 17 步，标明哪些已在代码里、哪些要 Peyton 在 Apple 后台或真机上做，附常见被拒原因自查。monetization.md 第 6 节过时的材料表换成指向清单，store-listing.md 第 5 节年龄分级从 12+ 更正为 13+ 并补上三个网址）
+- [ ] **按现在的界面重拍商店截图**（P0，第 52 轮发现）：`docs/claude-plan/store/` 里的 12 张是第 21 轮拍的，之后第 36 到 51 轮把付费卡、结果条、抽屉、按钮、星级、历史记录都卡通化了，商店图和装上后看到的界面对不上。完成标准：`node scripts/store-shots.mjs` 重跑（Mac 负载高时可加 `LGJ_STAGE_TIMEOUT=240000`），12 张逐张过目，塔罗仍是积极正位牌，尺寸核对 1290×2796 与 1242×2688。第 52 轮试跑：Mac 负载 30 到 45，首页 62 秒，灵签 17 分钟仍没抽到上签就停掉了，旧图没被覆盖。负载低于 15 时再跑，或给脚本加「只拍某几张」的参数分批拍。
 
 ## P1
 

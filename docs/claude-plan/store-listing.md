@@ -77,7 +77,9 @@ For entertainment and self-reflection only.
 ## 5. 分类与分级
 
 - 主分类：娱乐（Entertainment），次分类：生活（Lifestyle）
-- 年龄分级预计 12+：问卷中「模拟赌博」选「无」，「成熟或暗示性主题」选「无」或「偶尔 / 轻微」（姻缘玩法），以 Peyton 实际填写为准
+- 年龄分级 13+：逐题建议见第 8 节（第 12 轮），以 Peyton 实际填写为准
+- 设备：只上 iPhone（第 52 轮把工程改为 `TARGETED_DEVICE_FAMILY = 1`）。App Store Connect 只需要 iPhone 截图，iPad 用户仍可以用兼容模式安装
+- 网址：隐私政策 `https://peytonliubruin.github.io/laiganjue/privacy.html`，支持网址（必填）`https://peytonliubruin.github.io/laiganjue/support.html`（第 52 轮新增 `src/support.html`），使用条款 `…/terms.html`。三个都要等本分支合并到 GitHub Pages 发布分支后才能打开
 - 内容版权：塔罗牌面为公有领域 Rider–Waite–Smith 图像（见 assets/tarot/ATTRIBUTION.md），签诗为传统文本
 
 ## 6. 审核备注（App Review Information → Notes）
@@ -87,7 +89,7 @@ Thank you for reviewing Laiganjue.
 
 No account is required. All features work offline after install except font loading.
 
-Motion: Most rituals can be triggered by shaking or flicking the phone. On first use, tap “开启手机体感” (Enable motion) to grant motion access. Every ritual also has a large on-screen primary button, so motion is optional.
+Motion: Most rituals can be triggered by shaking or flicking the phone. On first use, tap “开启体感” (Enable motion) to grant motion access. Every ritual also has a large on-screen primary button, so motion is optional.
 
 In-App Purchases (all in the “来感觉 Pro” subscription group unless noted):
 - laiganjue.pro.monthly (auto-renewable)

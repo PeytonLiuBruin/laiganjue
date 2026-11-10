@@ -31,3 +31,14 @@ test('构建脚本会复制 terms.html，付费卡与设置页链接到条款', 
   assert.match(read('src/ui/paywall.js'), /TERMS_URL = '.*terms\.html'/);
   assert.match(read('src/ui/app.js'), /TERMS_URL[\s\S]*PRIVACY_URL/);
 });
+
+test('支持页（App Store Connect 必填的 Support URL）有联系方式、恢复购买、取消订阅与退款说明，并随构建复制', () => {
+  const s = read('src/support.html');
+  assert.match(s, /github\.com\/PeytonLiuBruin\/laiganjue\/issues/);
+  assert.match(s, /恢复购买/);
+  assert.match(s, /取消订阅/);
+  assert.match(s, /reportaproblem\.apple\.com/);
+  assert.match(s, /开启体感/, '按钮文字要和 App 里一致');
+  assert.match(read('src/ui/motion-prompt.js'), /'开启体感'/);
+  assert.match(read('scripts/build.mjs'), /src\/support\.html/);
+});
