@@ -524,3 +524,58 @@
   font-size: 11px;
   border-width: 1.5px;
 }
+
+/* —— 灵签签纸卡通化（第 53 轮）——
+   重拍商店截图时发现：第 2 张商店图的主角就是这张签纸，它还是和纸版，米色纸、1px 淡棕细边、内框淡线、
+   12px 字距 .16em 的棕色签号、宋体标题和 1px 细框小印章，夹在描边厚边的舞台和红色厚边按钮之间显旧。
+   改为和御神签同一套：奶油纸 2.5px 深描边加 5px 硬厚边，顶部朱红标签白字签号，标题圆体 900，
+   印章改朱红实心白字描边厚边。签诗正文保留宋体（灵签与御神签一致），字距收窄。 */
+.m-qian .qn-paper {
+  --qn-ink: #2b2240;
+  --qn-pad: 22px;
+  background: #fffaf0;
+  color: var(--qn-ink);
+  border: 2.5px solid var(--qn-ink);
+  border-radius: 14px;
+  box-shadow: 0 5px 0 var(--qn-ink), 0 14px 24px rgba(43, 34, 64, 0.18);
+  padding: 0 var(--qn-pad) 20px;
+  overflow: hidden;
+}
+@media (max-width: 650px) { .m-qian .qn-paper { --qn-pad: 16px; } }
+.m-qian .qn-paper::after { display: none; }
+.m-qian .qn-paper-no {
+  display: block;
+  margin: 0 calc(-1 * var(--qn-pad)) 4px;
+  padding: 6px 0 7px;
+  background: #e8463c;
+  border-bottom: 2.5px solid var(--qn-ink);
+  color: #fff;
+  font: 800 13px/1.3 var(--font-round, var(--font-sans));
+  letter-spacing: .06em;
+  text-shadow: none;
+}
+.m-qian .qn-paper h2 {
+  margin: 12px 0 10px;
+  font: 900 23px/1.4 var(--font-round, var(--font-sans));
+  letter-spacing: .06em;
+  color: var(--qn-ink);
+  text-shadow: none;
+}
+.m-qian .qn-poem {
+  letter-spacing: .08em;
+  color: var(--qn-ink);
+  padding-top: 10px;
+  border-top: 2px dashed rgba(43, 34, 64, 0.28);
+}
+.m-qian .qn-seal {
+  margin-top: 12px;
+  padding: 4px 14px 5px;
+  font: 900 18px/1.2 var(--font-round, var(--font-sans));
+  letter-spacing: .08em;
+  color: #fff;
+  background: #e8463c;
+  border: 2.5px solid var(--qn-ink);
+  border-radius: 10px;
+  box-shadow: 0 3px 0 var(--qn-ink);
+  text-shadow: none;
+}

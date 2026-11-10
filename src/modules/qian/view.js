@@ -74,6 +74,12 @@ export function mount(container, ctx) {
     guide.lastChild.textContent = text;
   }
 
+  // 商店截图脚本用：网页预览里 dev.lot 写了签号就抽这支签（App 里 Capacitor 原生环境下永远忽略）
+  function devLot() {
+    if (globalThis.Capacitor?.isNativePlatform?.()) return null;
+    const no = Number(storage.get('dev.lot', 0));
+    return no ? getLot(no) : null;
+  }
   async function shake(intensity = 20, { continuous = false, replay = true } = {}) {
     if (busy || reading || phase !== 'idle' || !ritual.alive) return;
     asked = question;
@@ -82,7 +88,7 @@ export function mount(container, ctx) {
     ritual.step(1); setGuide('shake', continuous ? SENSOR_HINT : SHAKING_HINT); st.setBadge(SHAKING_BADGE);
     if (!await bundle.draw({ power: intensity / 20, continuous, replay })) { if (ritual.alive) { st.setBadge(IDLE_BADGE); setGuide('shake', IDLE_HINT); lock(false); } return; }
     if (!await ritual.pause(320)) return;
-    lot = drawLot(ctx.rng.random); bundle.setLabel(lotLabel(lot)); picked.hidden = false;
+    lot = devLot() || drawLot(ctx.rng.random); bundle.setLabel(lotLabel(lot)); picked.hidden = false;
     sound.play('tick'); haptic.light();
     phase = 'drawn'; ritual.step(2); setGuide('tap', DRAWN_HINT); st.setBadge(lotLabel(lot));
     primary.setLabel(TAKE_LABEL); lock(false);
