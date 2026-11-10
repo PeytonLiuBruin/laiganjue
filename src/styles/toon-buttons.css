@@ -26,3 +26,95 @@
 }
 /* 卢恩「符文一览」原来是悬空的一行字，改成居中的小胶囊 */
 .m-runes .rn-more .btn { border-radius: 999px; padding-inline: 18px; }
+
+/* 第 47 轮：舞台下面的三张小卡（生辰行、生辰折叠卡、手机体感卡）与舞台角标。
+   @readfull 长图里财运、事业、姻缘都有：「去填生辰」「修改」是没有边框的浅粉平涂胶囊，
+   生辰行与体感卡是 1px 细边，舞台左上角「丁亥日 · 中签」是 12px、字距 .08em 的半透明细字小签，
+   叠在白云上几乎分不出边界。和描边厚边的结果卡、次按钮放在同一屏里最显旧。 */
+
+/* 三张小卡：2px 描边加 4px 厚边，和结果条速览卡同一套 */
+:is(.m-caiyun .cy-profile, .m-shiye .sy-profile, .birth-fold-toggle, .motion-entry) {
+  border: 2px solid var(--line-strong);
+  box-shadow: 0 4px 0 var(--edge-color);
+}
+.birth-fold-toggle:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge-color); }
+:is(.m-caiyun .cy-profile, .m-shiye .sy-profile) > span,
+.birth-fold-text {
+  color: var(--text);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+/* 「去填生辰」「修改」「收起」：白底 2px 描边胶囊加 3px 厚边，主色字，按下下沉 */
+:is(.m-caiyun .cy-profile, .m-shiye .sy-profile) .btn,
+.birth-fold-caret {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--accent-text);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+:is(.m-caiyun .cy-profile, .m-shiye .sy-profile) .btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--edge-color);
+}
+.birth-fold-caret { padding: 4px 14px; }
+
+/* 舞台角标与底部提示：描边胶囊、圆体 800、字距收窄，压在云上也读得出边界 */
+.stage-badge,
+.stage-hint {
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  box-shadow: 0 2px 0 var(--edge-color);
+  padding: 3px 11px;
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+/* 第 47 轮：输入框、下拉框与生辰表单的性别切换。
+   八字、姻缘、财运、事业的年月日时辰下拉框，六爻、塔罗、水晶球的「所问之事」输入框都是 1px 淡线白框，
+   性别「男 / 女」是 1px 细线分段框里一块浅灰底，和描边厚边的卡片、按钮放在一起像系统默认控件。
+   改为 2px 描边加 3px 厚边，值用圆体 700，聚焦时主色描边，选中的性别是主色实心块白字。 */
+.input,
+.select,
+.textarea {
+  border: 2px solid var(--line-strong);
+  box-shadow: 0 3px 0 var(--edge-color);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 700;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 3px 0 var(--accent-3, var(--accent));
+}
+.input::placeholder,
+.textarea::placeholder { font-weight: 600; }
+:is(.birth-form .bf-row2, .m-bazi .bz-form .bz-row2) .chips {
+  border: 2px solid var(--line-strong);
+  box-shadow: 0 3px 0 var(--edge-color);
+  padding: 3px;
+  gap: 3px;
+}
+:is(.birth-form .bf-row2, .m-bazi .bz-form .bz-row2) .chip {
+  min-height: 40px;
+  border-radius: 9px;
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+}
+/* 选中态和选中页签同一套：按钮渐变、深色厚边、--accent-ink 字，宣纸皮肤白字加深色描边 */
+:is(.birth-form .bf-row2, .m-bazi .bz-form .bz-row2) .chip.active {
+  background: linear-gradient(180deg, var(--btn-top), var(--btn-bottom));
+  color: var(--accent-ink);
+  box-shadow: inset 0 -3px 0 var(--btn-edge);
+  font-weight: 800;
+}
+[data-theme='paper'] :is(.birth-form .bf-row2, .m-bazi .bz-form .bz-row2) .chip.active { color: #fff; text-shadow: var(--btn-outline); }
+/* 青瓷主色偏浅，和它的主按钮一样给白字加深色描边 */
+[data-theme='celadon'] :is(.birth-form .bf-row2, .m-bazi .bz-form .bz-row2) .chip.active { text-shadow: var(--btn-outline); }

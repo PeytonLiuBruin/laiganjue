@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/jiaobei@read",
+    "route": "m/bazi",
     "viewport": "393x852",
-    "file": "m-jiaobei-read-393x852.png",
+    "file": "m-bazi-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,22 +11,9 @@
     "errors": []
   },
   {
-    "route": "m/zodiac@readfull",
+    "route": "m/caiyun@readfull",
     "viewport": "393x852",
-    "file": "m-zodiac-readfull-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@read",
-    "viewport": "393x852",
-    "file": "m-caiyun-read-393x852.png",
+    "file": "m-caiyun-readfull-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -35,44 +22,9 @@
     "errors": []
   },
   {
-    "route": "m/jiaobei@read",
-    "viewport": "430x932",
-    "file": "m-jiaobei-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/zodiac@readfull",
-    "viewport": "430x932",
-    "file": "m-zodiac-readfull-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/caiyun@read",
-    "viewport": "430x932",
-    "file": "m-caiyun-read-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/jiaobei@read",
+    "route": "m/yinyuan",
     "viewport": "393x852",
-    "file": "ink-m-jiaobei-read-393x852.png",
+    "file": "m-yinyuan-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -81,22 +33,20 @@
     "errors": []
   },
   {
-    "route": "m/zodiac@readfull",
+    "route": "m/liuyao",
     "viewport": "393x852",
-    "file": "ink-m-zodiac-readfull-393x852.png",
+    "file": "m-liuyao-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
     },
     "errors": []
   },
   {
-    "route": "m/jiaobei@read",
+    "route": "m/bazi",
     "viewport": "430x932",
-    "file": "ink-m-jiaobei-read-430x932.png",
+    "file": "m-bazi-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -105,15 +55,79 @@
     "errors": []
   },
   {
-    "route": "m/zodiac@readfull",
+    "route": "m/caiyun@readfull",
     "viewport": "430x932",
-    "file": "ink-m-zodiac-readfull-430x932.png",
+    "file": "m-caiyun-readfull-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/yinyuan",
+    "viewport": "430x932",
+    "file": "m-yinyuan-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/liuyao",
+    "viewport": "430x932",
+    "file": "m-liuyao-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi",
+    "viewport": "393x852",
+    "file": "ink-m-bazi-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/caiyun@readfull",
+    "viewport": "393x852",
+    "file": "ink-m-caiyun-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi",
+    "viewport": "430x932",
+    "file": "ink-m-bazi-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/caiyun@readfull",
+    "viewport": "430x932",
+    "file": "ink-m-caiyun-readfull-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
     },
     "errors": []
   }
