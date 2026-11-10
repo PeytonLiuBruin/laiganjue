@@ -17,7 +17,10 @@ function drawStamp(c, text) {
   c.font = `900 ${text.length > 1 ? 82 : 150}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'middle';
   [...text].forEach((ch, i) => c.fillText(ch, w / 2, text.length > 1 ? 88 + i * 84 : w / 2));
   for (let i = 0; i < 260; i++) { c.globalAlpha = r() * .5; c.beginPath(); c.arc(r() * w, r() * w, r() * 2.2, 0, Math.PI * 2); c.fill(); }
-  c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+  // 镂空处补纸色：印文翘起后背后是天空，字里透出天色会发虚
+  c.globalAlpha = 1; c.globalCompositeOperation = 'destination-over';
+  c.fillStyle = '#fff6e6'; c.beginPath(); rr(14, 14, w - 28, w - 28, 18); c.fill();
+  c.globalCompositeOperation = 'source-over';
 }
 
 export default {
@@ -102,7 +105,10 @@ export default {
         tas.rotation.z = Math.sin(t * 1.7) * .1 * api.wind.strength + (1 - k) * 2;
         if (impacted || s.revealed) stampMix = damp(stampMix, 1, 5, dt);
         stamp.material.opacity = stampMix;
-        stamp.scale.setScalar(Math.max(.001, backOut(stampMix)));
+        stamp.scale.setScalar(Math.max(.001, backOut(stampMix)) * (1 + aside * .3));
+        // 揭晓：印挪开后印文从纸面翘起朝向镜头，平躺时镜头俯角太小，两字印文被压成一条看不清
+        stamp.rotation.x = -Math.PI / 2 + aside * .78;
+        stamp.position.set(-.14 * aside, -.882 + aside * .3, aside * .1);
         mix = damp(mix, s.revealed ? 1 : 0, 2.5, dt);
         glow.set('ring', mix * (.7 + .3 * Math.sin(t * 2.4)));
       },

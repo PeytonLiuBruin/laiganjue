@@ -132,6 +132,7 @@ export function createStage(el, ctx, id, fallbackFactory = null) {
 function buildCore(el, ctx, def, canvas, fpsEl) {
   const root = document.documentElement;
   let atm = atmosphereFor(root.dataset.theme);
+  const t0 = performance.now(), timing = {};
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, stencil: false, powerPreference: 'high-performance' });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -199,9 +200,12 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
       world.add(g); return g;
     },
   };
+  timing.setup = Math.round(performance.now() - t0);
   const built = def.build(api);
+  timing.build = Math.round(performance.now() - t0) - timing.setup;
   // 手游卡通风格：三段明暗、硬高光、边缘光、描边（天空与水面不处理）
   const toon = toonifyScene(scene, { rimColor: atm.rim, outlineRoot: world, skip: (o) => o === sky.mesh || o === water.object });
+  timing.toon = Math.round(performance.now() - t0) - timing.setup - timing.build;
   built.onQuality?.(level);
   // 动作弹性与揭晓金星（主角由场景的 hero 指定，pivot 是主角自身坐标里不动的高度）
   const heroes = [].concat(built.hero || []).map((h) => (h.isObject3D ? { object: h, pivot: def.pivot || 0 } : h));
@@ -310,7 +314,8 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
   // 着色器在后台并行编译（支持时），编完再出第一帧，避免卡住界面
   const parallel = typeof renderer.compileAsync === 'function' && renderer.extensions.has('KHR_parallel_shader_compile');
   const compiling = parallel ? renderer.compileAsync(scene, camera).catch(() => {}) : new Promise((r) => setTimeout(() => { try { renderer.compile(scene, camera); } catch {} r(); }, 0));
-  compiling.then(() => { if (!alive) return; compiled = true; render(); el.dataset.compiled = '1'; last = null; schedule(); });
+  const tc = performance.now();
+  compiling.then(() => { if (!alive) return; timing.compile = Math.round(performance.now() - tc); compiled = true; const tr = performance.now(); render(); timing.firstFrame = Math.round(performance.now() - tr); el.dataset.compiled = '1'; last = null; schedule(); });
 
   return {
     get time() { return time; }, get fps() { return fps; }, get level() { return level; },
@@ -373,6 +378,7 @@ function buildCore(el, ctx, def, canvas, fpsEl) {
         undesignated: glowing.filter((m) => !m.userData.glow).map((m) => m.type), glowing: glowing.length,
         meshes, toon, heroes: bounce.count, bounce: bounce.sample(time), stars: stars.active, toneMapping: renderer.toneMapping, shadows: renderer.shadowMap.enabled, quality: level,
         calls: renderer.info.render.calls, triangles: renderer.info.render.triangles,
+        programs: renderer.info.programs?.length ?? 0, materials: mats.size, timing: { ...timing },
       };
     },
     dispose() {
