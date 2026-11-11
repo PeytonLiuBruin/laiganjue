@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/qian@read",
+    "route": "home@settings",
     "viewport": "393x852",
-    "file": "m-qian-read-393x852.png",
+    "file": "home-settings-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,20 @@
     "errors": []
   },
   {
-    "route": "m/qian@read",
+    "route": "home@settings-end",
+    "viewport": "393x852",
+    "file": "home-settings-end-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "home@settings",
     "viewport": "430x932",
-    "file": "m-qian-read-430x932.png",
+    "file": "home-settings-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -22,9 +33,20 @@
     "errors": []
   },
   {
-    "route": "m/qian@read",
+    "route": "home@settings-end",
+    "viewport": "430x932",
+    "file": "home-settings-end-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "home@settings",
     "viewport": "393x852",
-    "file": "ink-m-qian-read-393x852.png",
+    "file": "ink-home-settings-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -33,9 +55,9 @@
     "errors": []
   },
   {
-    "route": "m/qian@read",
+    "route": "home@settings",
     "viewport": "430x932",
-    "file": "ink-m-qian-read-430x932.png",
+    "file": "ink-home-settings-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,

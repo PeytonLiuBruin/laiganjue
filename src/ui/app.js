@@ -558,7 +558,7 @@ export function startApp(root) {
     }
     const content = h(
       'div',
-      null,
+      { class: 'settings-body' },
       h('div', { class: 'setting-row setting-row-pro' }, h('div', null, h('div', { class: 'setting-label' }, '来感觉 Pro'), proDescEl), proControls),
       row('器物动画', '投掷、翻滚与翻牌', kit.chips([{ value: 'full', label: '完整' }, { value: 'gentle', label: '轻柔' }], { value: platform.simpleMotion ? 'gentle' : 'full', onChange: (v) => platform.setMotionStyle(v) }).el),
       row('音效', '合成音效：木块、铜钱、洗牌…', toggle(platform.sound.enabled, (v) => platform.sound.setEnabled(v))),
@@ -566,7 +566,7 @@ export function startApp(root) {
       row('帧率显示', '在 3D 器物舞台右上角显示每秒帧数', toggle(storage.get('stage.fps', false), (v) => { storage.set('stage.fps', v); document.documentElement.dataset.fps = v ? 'on' : 'off'; })),
       h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '震动反馈'), hapticDesc), hapticControls),
       h('div', { class: 'setting-row' }, h('div', null, h('div', { class: 'setting-label' }, '体感（摇一摇 / 甩一甩）'), motionDesc), motionControl),
-      h('div', { class: 'mt-4' }, gestureHint('shake', '轻摇后收住 = 洗牌 / 摇签 / 掷骰'), gestureHint('toss', '向上轻甩后收住 = 掷筊 / 掷钱'), gestureHint('flick', '屏幕上快速上滑 = 同样效果'), gestureHint('tilt', '倾斜或转动 = 罗盘 / 灵摆')),
+      h('div', { class: 'setting-gestures mt-4' }, gestureHint('shake', '轻摇后收住 = 洗牌 / 摇签 / 掷骰'), gestureHint('toss', '向上轻甩后收住 = 掷筊 / 掷钱'), gestureHint('flick', '屏幕上快速上滑 = 同样效果'), gestureHint('tilt', '倾斜或转动 = 罗盘 / 灵摆')),
       h(
         'div',
         { class: 'setting-row' },

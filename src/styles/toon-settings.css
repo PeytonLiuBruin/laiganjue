@@ -35,3 +35,76 @@
   border-color: color-mix(in srgb, var(--accent) 60%, #000);
 }
 .setting-legal a { font-weight: 800; }
+
+/* 第 55 轮：设置抽屉里剩下的旧样式。
+   @readfull 截图里「恢复购买」「试一下」「重看新手引导」是没有边框的纯文字，像散落的说明字，
+   「现在进入屏保」是浅灰平涂块，四行体感手势是居中的灰色细字，图标随动画左右错位，
+   右上角关闭按钮是浅灰平涂方块。和描边厚边的开关、选项行放在一起最显旧。
+   改为：次按钮白底 2px 描边加 3px 厚边、圆体 800，按下下沉，不可用时虚线描边去厚边；
+   体感手势收进一张描边厚边小卡，左对齐，图标放进 34px 描边小方块，行间 2px 虚线；
+   所有抽屉的关闭按钮 2px 描边加 3px 厚边。 */
+.settings-body .btn:is(.ghost, .soft):not(.primary) {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--text);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.settings-body .btn:is(.ghost, .soft):not(.primary):active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--edge-color);
+}
+.settings-body .btn:is(.ghost, .soft):not(.primary):disabled {
+  box-shadow: none;
+  border-style: dashed;
+  color: var(--text-2);
+}
+/* 行内的小按钮做成胶囊，保证 44pt 点按高度 */
+.settings-body :is(.setting-pro, .setting-haptic-controls) .btn:is(.ghost, .soft) {
+  border-radius: 999px;
+  min-height: 44px;
+  padding-inline: 16px;
+}
+.settings-body .btn.soft svg { color: var(--accent-text); }
+
+.settings-body .setting-gestures {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 16px;
+  box-shadow: 0 4px 0 var(--edge-color);
+  padding: 2px 14px;
+  margin-bottom: 8px;
+}
+.settings-body .setting-gestures .hint {
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  text-align: left;
+  text-wrap: pretty;
+  border-bottom: 2px dashed var(--line);
+  color: var(--text);
+  font: 700 14px/1.45 var(--font-round, var(--font-sans));
+  letter-spacing: .02em;
+}
+.settings-body .setting-gestures .hint:last-child { border-bottom: 0; }
+.settings-body .setting-gestures .hint-glyph {
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  padding: 5px;
+  border: 2px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.sheet-head .icon-btn {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--text);
+}
+.sheet-head .icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge-color); }
