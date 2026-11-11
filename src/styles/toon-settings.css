@@ -108,3 +108,91 @@
   color: var(--text);
 }
 .sheet-head .icon-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge-color); }
+
+/* 第 56 轮：皮肤抽屉卡通化。
+   @readfull 复查里皮肤抽屉最显旧：色球是带柔光的光滑渐变球，正是要去掉的塑料感；
+   色卡是 1px 浅灰细边，选中只是一圈细红线加淡光晕，「免费」是浅灰小字块。
+   改为：色球赛璐珞两段色加硬高光（见 app.js toonSwatch），2.5px 深墨描边加硬下沉影；
+   色卡白底 2px 描边加 4px 厚边、名字圆体 800，按下下沉；选中卡主色描边、主色厚边、右上角主色描边勾；
+   「免费」改描边小胶囊，和金色「Pro · 试穿」同一套画法。试穿条与单套购买卡里的色球一起变。 */
+.swatch-ball {
+  box-sizing: border-box;
+  border: 2.5px solid var(--c-ink, #2b2240);
+  box-shadow: 0 3px 0 rgba(43, 34, 64, .28);
+}
+.theme-grid { gap: 12px; }
+.theme-swatch {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 18px;
+  box-shadow: 0 4px 0 var(--edge-color);
+  padding: 12px 6px 12px;
+  margin-bottom: 4px;
+  color: var(--text);
+  font: 800 15px/1.2 var(--font-round, var(--font-sans));
+  letter-spacing: .08em;
+  transition: transform var(--dur-fast), box-shadow var(--dur-fast);
+}
+.theme-swatch:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--edge-color);
+}
+.theme-swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 60%, #000);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  color: var(--text);
+}
+.theme-swatch.active::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent) 60%, #000);
+  background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 18px no-repeat;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 55%, #000);
+}
+.theme-swatch .swatch-tag {
+  font: 800 11px/1 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+  padding: 5px 9px;
+}
+.theme-swatch .swatch-tag.is-free,
+.theme-swatch .swatch-tag.is-owned {
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--line-strong);
+  padding: 3px 9px;
+}
+.theme-swatch .swatch-tag.is-locked {
+  border: 2px solid var(--c-gold-deep, #d8901e);
+  padding: 3px 9px;
+}
+/* 单套皮肤购买卡的「开通 Pro · 解锁全部皮肤」原来是无边框平涂块，深色皮肤下像一块暗底色。
+   改为和设置抽屉次按钮同一套：白底（深色皮肤为面板色）描边厚边、圆体 800。 */
+.skin-offer .btn.skin-pro {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--text);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 800;
+  margin-bottom: 3px;
+}
+.skin-offer .btn.skin-pro:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--edge-color);
+}
+
+/* 第 56 轮：首次引导卡的三行说明原来是浅灰底 1px 细边的平块，夹在描边金币和厚边「开始」按钮之间显得发虚。
+   改为白底 2px 描边加 3px 厚边，和设置抽屉的体感手势卡同一套画法。 */
+.onboard-row {
+  background: var(--surface);
+  border: 2px solid var(--line-strong);
+  box-shadow: 0 3px 0 var(--edge-color);
+}

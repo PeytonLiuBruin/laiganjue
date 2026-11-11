@@ -132,3 +132,8 @@
 附：第 51 轮参数
 - 黄历时辰表当前格（`.al-hours .al-hour.now`）：底 rgba(255,252,240,.92)，`inset 0 0 0 2px --al-red` 描边加 `0 3px 0` 厚边（--al-red 70% 混黑），圆角 10px，地支字 --al-red，右上小红点 10px 加 2px #fffaf0 白圈。所有时辰格吉凶字圆体 800。详情十二时辰格当前格 2px --accent 描边、`0 3px 0 --accent-3` 厚边、圆角 10px。
 - 卢恩符名胶囊（`.rn-stone-label`）：#fffaf0 底，2px #2b2240 描边，`0 2px 0 #2b2240` 厚边，圆体 800 12px，字距 .04em，内边距 2px 9px，`text-shadow: none`。逆位小标 #e8463c 实心白字圆体 800。五符十字 1.5px 描边、11px、内边距 1px 6px，`top: calc(100% - 8px)` 压在石头下沿。
+
+附：第 56 轮参数
+- 皮肤色球（`app.js` 的 `toonSwatch(base, shade, hl)`）：两层径向渐变，底层 `circle at 41% 38%` 底色 0 到 57%、阴影色 59% 起（硬边月牙），上层 `ellipse 19% 13% at 34% 27%` 高光 0 到 86%、96% 透明。玄墨 #3b3554/#1c1929 金高光 #ffc93c，朱砂 #e8452f/#a8261a 金高光 #ffd36b，星穹 #7a68f5/#4335b3，宣纸 #fff4d9/#f0c97e，青瓷 #93dcc2/#4cab8e，后三者白高光。`.swatch-ball` 2.5px #2b2240 描边，`0 3px 0 rgba(43,34,64,.28)` 硬下沉影。
+- 皮肤色卡（`toon-settings.css`）：--surface 底，2px --line-strong 描边，圆角 18px，`0 4px 0 --edge-color` 厚边，名字圆体 800 15px 字距 .08em，按下下移 3px。选中卡 --accent 描边，`0 4px 0` --accent 60% 混黑厚边，底色 --accent 7%，右上角 26px 圆形勾（--accent 底、2px 深色描边、白色 3.4 粗对勾 SVG、2px 下沉影）。「免费」「已解锁」--surface 底 2px --line-strong 描边胶囊，「Pro · 试穿」金底加 2px --c-gold-deep 描边，标签字圆体 800 11px。
+- 新手引导说明行：--surface 底，2px --line-strong 描边，`0 3px 0 --edge-color` 厚边。

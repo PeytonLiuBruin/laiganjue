@@ -1,5 +1,5 @@
 // 皮肤商店截图：皮肤抽屉、试穿条、单套皮肤购买卡、Pro 用户的皮肤抽屉，393×852 与 430×932 两种尺寸。
-// 用法：node scripts/skin-shots.mjs [--out docs/claude-plan/screenshots]
+// 用法：node scripts/skin-shots.mjs [--out docs/claude-plan/screenshots] [--theme ink] [--no-webgl]（第 56 轮加 --theme 与 --no-webgl，非宣纸皮肤文件名前加皮肤名）
 // 输出 skins-<步骤>-<尺寸>.png，并检查横向溢出与文字截断，结果追加到 <out>/skins-report.json。
 import path from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -12,6 +12,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
 const out = path.resolve(root, opt('--out', 'docs/claude-plan/screenshots'));
+const theme = opt('--theme', 'paper');
 const VIEWPORTS = [{ name: '393x852', width: 393, height: 852 }, { name: '430x932', width: 430, height: 932 }];
 
 await mkdir(out, { recursive: true });
@@ -20,7 +21,8 @@ await buildAll({ out: dist, min: false });
 const server = createStaticServer(dist);
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = `http://127.0.0.1:${server.address().port}/index.html`;
-const browser = await launchBrowser();
+// --no-webgl：玩法页退回 2D 器物，只看抽屉与卡片时用，Mac 负载高时也能截完（第 56 轮）
+const browser = await launchBrowser({ webgl: !args.includes('--no-webgl') });
 const report = [];
 
 const check = (page) => page.evaluate(() => {
@@ -40,14 +42,14 @@ const check = (page) => page.evaluate(() => {
 for (const vp of VIEWPORTS) {
   for (const pro of [false, true]) {
     const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'zh-CN', reducedMotion: 'reduce' });
-    await context.addInitScript((pro) => {
+    await context.addInitScript(({ pro, theme }) => {
       try {
         localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false');
-        localStorage.setItem('lgj:theme', '"paper"');
+        localStorage.setItem('lgj:theme', JSON.stringify(theme));
         localStorage.setItem('lgj:stage.fps', 'false');
         if (pro) localStorage.setItem('lgj:dev.pro', 'true');
       } catch {}
-    }, pro);
+    }, { pro, theme });
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
@@ -59,7 +61,7 @@ for (const vp of VIEWPORTS) {
     await page.waitForSelector('.sheet.open .theme-grid');
     await page.waitForTimeout(500);
     const shot = async (step) => {
-      const file = `skins-${step}-${vp.name}.png`;
+      const file = `${theme === 'paper' ? '' : theme + '-'}skins-${step}-${vp.name}.png`;
       await page.screenshot({ path: path.join(out, file) });
       report.push({ file, ...(await check(page)), errors: [...errors] });
       console.log('shot', file);

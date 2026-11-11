@@ -20,12 +20,16 @@ import { dayKey } from '../platform/quota.js';
 
 export const APP_NAME = '来感觉';
 export const APP_TAGLINE = 'ORACLE · 日常灵感';
+// 皮肤色球（第 56 轮）：原来是径向渐变的光滑球，像塑料珠子。改为卡通赛璐珞画法：
+// 底色圆偏左上，右下露出一道阴影月牙，左上一块硬边高光（玄墨、朱砂用金色高光呼应鎏金），描边与厚边由 CSS 的 .swatch-ball 加。
+export const toonSwatch = (base, shade, hl = '#ffffff') =>
+  `radial-gradient(ellipse 19% 13% at 34% 27%, ${hl} 0 86%, transparent 96%), radial-gradient(circle at 41% 38%, ${base} 0 57%, ${shade} 59%)`;
 export const THEMES = [
-  { id: 'ink', name: '玄墨', swatch: 'radial-gradient(circle at 30% 30%, #d4af5a, #0b0b10 65%)' },
-  { id: 'cinnabar', name: '朱砂', pro: true, blurb: '朱红漆器配鎏金，喜庆浓烈', swatch: 'radial-gradient(circle at 30% 30%, #e2b04a, #3a1414 40%, #1a0a0a 75%)' },
-  { id: 'nebula', name: '星穹', pro: true, blurb: '紫色星空舞台，器物泛着星光', swatch: 'radial-gradient(circle at 30% 30%, #e6dcff, #4b3fa0 40%, #090a18 75%)' },
-  { id: 'paper', name: '宣纸', swatch: 'radial-gradient(circle at 30% 30%, #fffaf0, #f1e7d3 50%, #8a5a1c 100%)' },
-  { id: 'celadon', name: '青瓷', pro: true, blurb: '青瓷釉色，清爽如雨后', swatch: 'radial-gradient(circle at 30% 30%, #f2f8f3, #cfe3d6 50%, #2f7d68 100%)' },
+  { id: 'ink', name: '玄墨', swatch: toonSwatch('#3b3554', '#1c1929', '#ffc93c') },
+  { id: 'cinnabar', name: '朱砂', pro: true, blurb: '朱红漆器配鎏金，喜庆浓烈', swatch: toonSwatch('#e8452f', '#a8261a', '#ffd36b') },
+  { id: 'nebula', name: '星穹', pro: true, blurb: '紫色星空舞台，器物泛着星光', swatch: toonSwatch('#7a68f5', '#4335b3') },
+  { id: 'paper', name: '宣纸', swatch: toonSwatch('#fff4d9', '#f0c97e') },
+  { id: 'celadon', name: '青瓷', pro: true, blurb: '青瓷釉色，清爽如雨后', swatch: toonSwatch('#93dcc2', '#4cab8e') },
 ];
 
 const MOTION_GESTURES = new Set(['shake', 'toss', 'tilt']);
