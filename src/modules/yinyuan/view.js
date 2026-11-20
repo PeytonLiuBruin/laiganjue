@@ -184,7 +184,7 @@ export function mount(container, ctx) {
       { label: UI.sections.today, node: h('div', { class: 'yy-sec' }, h('span', { class: 'yy-sheet-stars' }, stars(p.daily.stars), h('em', null, `${p.daily.index}`)), h('p', null, p.daily.text), h('p', { class: 'yy-tip' }, `${UI.sections.tip}：${p.daily.tip}`)) },
       { label: UI.sections.palace, node: h('div', { class: 'yy-sec' }, h('p', null, h('b', null, `${p.palace} · ${p.palaceText.title}。`), p.palaceText.text)) },
       { label: UI.sections.star, node: h('div', { class: 'yy-sec' }, h('p', null, h('b', null, `${p.star.text.title}。`), p.star.text.text)) },
-      { label: UI.sections.years, node: h('div', { class: 'yy-sec' }, yearList, h('p', { class: 'yy-notes' }, notes.length ? notes.map((n) => `${n.short}：${n.text}`).join(' ') : UI.noHighlight)), stack: true },
+      { label: UI.sections.years, node: h('div', { class: 'yy-sec' }, yearList, notes.length ? h('ul', { class: 'yy-notes yy-notes-list' }, notes.map((n) => h('li', null, h('b', null, n.short), h('span', null, n.text)))) : h('p', { class: 'yy-notes' }, UI.noHighlight)), stack: true },
       { label: UI.sections.taohua, node: h('div', { class: 'yy-sec' }, h('p', null, UI.taoHuaText.replace('{dir}', p.taoHuaDirection)), p.hasTaoHua ? h('p', null, UI.taoHuaBorn) : null) },
     ];
     const card = resultCard({

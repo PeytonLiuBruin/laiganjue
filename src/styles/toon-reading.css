@@ -211,3 +211,79 @@
 [data-theme='cinnabar'] :is(.m-runes .rn-tag.rev, .m-tarot .tr-tag.rev),
 [data-theme='nebula'] :is(.m-runes .rn-tag.rev, .m-tarot .tr-tag.rev),
 :root:not([data-theme]) :is(.m-runes .rn-tag.rev, .m-tarot .tr-tag.rev) { --seal: #ff7a66; }
+
+/* 第 59 轮：六爻动爻与分项、御神签十二项目改成和灵签分述同一套描边厚边小卡。
+   原来动爻是左边 2px 红竖线加浅底的引文条，分项是没描边的浅蓝平涂块配宋体小字，十二项目是 2px 虚线隔开的两栏小字，
+   和第 58 轮灵签分述的白底厚边小卡不是一套画法 */
+.m-liuyao .ly-mv { gap: 10px; }
+.m-liuyao .ly-mv-rule b { font: 800 15px/1.6 var(--font-round, var(--font-sans)); color: var(--text); }
+.m-liuyao .ly-mv-item {
+  padding: 9px 12px 10px;
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+}
+.m-liuyao .ly-mv-head { flex-wrap: wrap; gap: 4px 6px; margin-bottom: 4px; }
+.m-liuyao .ly-mv-head b { font: 800 14px/1.5 var(--font-round, var(--font-sans)); color: var(--text); }
+.m-liuyao .ly-mv-mark {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border: 2px solid color-mix(in srgb, var(--accent-text) 60%, var(--c-ink, #2b2240));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--accent-text);
+  font: 900 12px/1 var(--font-round, var(--font-sans));
+}
+.m-liuyao .ly-mv-text { color: var(--text); font-weight: 600; line-height: 1.65; }
+.m-liuyao .ly-aspects { gap: 10px; }
+.m-liuyao .ly-aspect,
+.m-omikuji .ok-item {
+  gap: 5px;
+  padding: 9px 11px 10px;
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+}
+.m-liuyao .ly-aspect b,
+.m-omikuji .ok-item-k {
+  align-self: flex-start;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent-text);
+  font: 800 12px/1.6 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+}
+.m-liuyao .ly-aspect span,
+.m-omikuji .ok-item-v { color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.6; }
+.m-omikuji .ok-items { gap: 10px; margin-top: 6px; }
+@media (max-width: 340px) {
+  .m-omikuji .ok-items { grid-template-columns: minmax(0, 1fr); }
+}
+/* 第 59 轮：姻缘「感情流年」下的图例原来是一整段 13px 灰字（「夫妻宫逢合：… 天喜临门：…」连成一段），读不出是哪几条。
+   改成一条一行，前面一枚和流年条同款的主色小胶囊，行间 2px 虚线 */
+.m-yinyuan .yy-notes-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 0; }
+.m-yinyuan .yy-notes-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0 9px;
+  border-top: 2px dashed var(--line);
+}
+.m-yinyuan .yy-notes-list li:first-child { border-top: 0; }
+.m-yinyuan .yy-notes-list b {
+  align-self: flex-start;
+  padding: 0 8px;
+  border: 2px solid color-mix(in srgb, var(--accent-text) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent-text);
+  font: 800 12px/1.6 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+}
+.m-yinyuan .yy-notes-list span { color: var(--text-2); font-size: 14px; font-weight: 600; line-height: 1.6; }
