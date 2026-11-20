@@ -155,3 +155,59 @@
 @media (max-width: 360px) {
   .m-wheel .result .result-section:not(.stack) { grid-template-columns: 1fr; }
 }
+
+/* 结果抽屉印章与灵签分述卡通化（第 58 轮 @readfull 复查灵签解读抽屉发现）。
+   印章原来是 2 到 3px 细红框、红字、正片叠底加 0.9 透明，像盖在宣纸上的旧印，和签纸上第 53 轮改好的
+   朱红实心白字印章不是一套。分述六项原来是 1px 灰色顶线隔开的两栏小字，标签 12px 宋体字距 .12em。
+   印章改朱红实心、白字圆体、2.5px 深墨描边加 3px 硬厚边与一道顶部硬高光（不透明，不再正片叠底），
+   印泥色 #d63a30 对白字 4.66:1，水晶球 18px 的小印章也达标。分段标签加一圈主色描边与 2px 下沉影。
+   分述每项改白底描边厚边小卡，项名改主色浅底胶囊圆体 800。 */
+.result .seal {
+  --seal-fill: #d63a30;
+  background: var(--seal-fill);
+  color: #fff;
+  border: 2.5px solid var(--c-ink, #2b2240);
+  border-radius: 12px;
+  box-shadow: 0 3px 0 var(--c-ink, #2b2240), inset 0 3px 0 rgba(255, 255, 255, 0.3);
+  font-family: var(--font-round, var(--font-sans));
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+[data-theme='celadon'] .result .seal { --seal-fill: #a8392b; }
+.result .seal.stamp { animation-name: seal-stamp-solid; }
+@keyframes seal-stamp-solid {
+  0% { transform: rotate(-8deg) scale(2.2); opacity: 0; }
+  60% { transform: rotate(-8deg) scale(0.92); opacity: 1; }
+  100% { transform: rotate(-8deg) scale(1); opacity: 1; }
+}
+.result .result-section-label {
+  padding: 1px 8px;
+  border: 2px solid color-mix(in srgb, var(--accent-text) 50%, transparent);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--accent-text) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--sheet-bg, var(--surface)));
+}
+.m-qian .qn-items { gap: 10px; margin-top: 6px; }
+.m-qian .qn-item {
+  gap: 5px;
+  padding: 9px 11px 10px;
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+}
+.m-qian .qn-item b {
+  align-self: flex-start;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent-text);
+  font: 800 12px/1.6 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+}
+.m-qian .qn-item span { color: var(--text); font-weight: 600; line-height: 1.6; }
+/* 深色皮肤里塔罗、卢恩的「逆位」小胶囊用的是印泥红 --seal（玄墨 #b8342b），在深色抽屉上只有 2.6:1（第 58 轮 contrast-audit 抽到逆位牌时查到），
+   和第 38 轮印章的处理一样提亮成朱橙，对玄墨、朱砂、星云三种抽屉底都在 5.5:1 以上 */
+[data-theme='ink'] :is(.m-runes .rn-tag.rev, .m-tarot .tr-tag.rev),
+[data-theme='cinnabar'] :is(.m-runes .rn-tag.rev, .m-tarot .tr-tag.rev),
+[data-theme='nebula'] :is(.m-runes .rn-tag.rev, .m-tarot .tr-tag.rev),
+:root:not([data-theme]) :is(.m-runes .rn-tag.rev, .m-tarot .tr-tag.rev) { --seal: #ff7a66; }
