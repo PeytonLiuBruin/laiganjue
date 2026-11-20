@@ -180,7 +180,7 @@ export function mount(container, ctx) {
     if (busy || reading || albumSheet) return;
     haptic.tap();
     const s = albumStats(album);
-    const levels = h('div', { class: 'qn-album-levels' }, s.byLevel.map((x) => h('span', { class: `qn-album-level tone-${x.tone}${x.total && x.have === x.total ? ' done' : ''}` }, h('b', null, x.id), ` ${x.have}/${x.total}`)));
+    const levels = h('div', { class: 'qn-album-levels' }, s.byLevel.map((x) => h('span', { class: `qn-album-level tone-${x.tone}${x.total && x.have === x.total ? ' done' : ''}${x.have ? '' : ' none'}` }, h('b', null, x.id), ` ${x.have}/${x.total}`)));
     // 徽章行：5 枚，点亮的是金色描边圆章，没到的是灰色虚线圆和所需数量。刚解锁的那枚跳一下。
     const fresh = storage.get('badgeNew', '');
     if (fresh) storage.set('badgeNew', '');
