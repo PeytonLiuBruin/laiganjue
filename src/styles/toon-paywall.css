@@ -61,3 +61,7 @@
 .pw-legal > span { display: none; }
 .pw-legal a { color: var(--text-2); font-size: 12px; }
 .pw-retry { justify-self: center; }
+
+/* 第 61 轮：年度格折合每月小字。扣款价格 .pw-price 仍是格里最大最醒目的价格（指南 3.1.2），这行只做参考 */
+.pw-eq { font: 800 11px/1.3 var(--font-round); color: var(--text-2); text-align: center; white-space: nowrap; }
+.pw-eq[hidden] { display: none; }

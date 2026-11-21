@@ -1,5 +1,5 @@
 // iPhone 视口截图：构建 dist → 起本地服务器 → 软件 WebGL 的无头 Chromium，按 393×852 与 430×932 两种尺寸截图。
-// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl] · 动作 @read @read2 @readfull @full @bottom @chipN-动作 @sheet @sheet2 @share
+// 用法：node scripts/iphone-shots.mjs [--routes home,m/yinyuan,m/caiyun] [--out docs/claude-plan/screenshots] [--theme paper] [--clean] [--no-webgl] · 动作 @read @read2 @readfull @full @bottom @chipN-动作 @sheet @sheet2 @share @paywall @paywall-priced
 // --no-webgl：关掉 WebGL，玩法页退回 2D 器物。只检查 2D 界面（设置、付费卡、黄历等）时用，Mac 负载高时也能很快截完。
 // 每张图同时检查横向溢出，结果写到 <out>/report.json。非宣纸皮肤的文件名前加皮肤名（如 nebula-home-393x852.png）。
 import path from 'node:path';
@@ -55,6 +55,16 @@ for (const vp of VIEWPORTS) {
     const tabMatch = /^tab(\d)$/.exec(action || '');
     if (tabMatch) { await page.locator('.view-module .tabs .tab').nth(Number(tabMatch[1])).click().catch(() => {}); await page.waitForTimeout(2500); }
     if (action === 'paywall') { await page.evaluate(() => { window.__lgj.openPaywall({ reason: '今天的免费深度解读已用完，开通 Pro 不限次数' }); }); await page.waitForTimeout(900); }
+    // home@paywall-priced：换上只在截图里用的假商店，价格同 Products.storekit 中国区档位，看取到价格后的方案格（第 61 轮）
+    if (action === 'paywall-priced') {
+      await page.evaluate(() => {
+        const p = (priceString, price, period, trialDays = 0) => ({ priceString, price, currencyCode: 'CNY', period, trialDays });
+        const products = { yearly: p('¥98.00', 98, '每年', 3), monthly: p('¥18.00', 18, '每月'), lifetime: p('¥198.00', 198, ''), pack5: p('¥12.00', 12, '') };
+        window.__lgj.platform.purchases = { available: true, pro: false, credits: 0, loadProducts: async () => products, purchase: async () => ({ ok: false, cancelled: true }), restore: async () => ({ ok: true, pro: false }) };
+        window.__lgj.openPaywall({ reason: '今天的免费深度解读已用完，开通 Pro 不限次数' });
+      });
+      await page.waitForTimeout(900);
+    }
     if (action === 'settings' || action === 'settings-end') { await page.click('.app-header [aria-label="设置"]'); await page.waitForTimeout(900); }
     if (action === 'settings-end') { await page.locator('.setting-legal').scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(500); }
     if (action === 'stars') {

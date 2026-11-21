@@ -15,7 +15,7 @@ import { launchBrowser } from './browser.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
-const DEFAULT_ROUTES = 'home,home@settings,home@paywall,home@skins,m/qian,m/tarot,m/almanac,m/zodiac,m/liuyao,m/bazi,m/yinyuan,m/caiyun,m/coin,m/jiaobei,m/runes,m/omikuji,m/wheel,m/crystal,m/plinko,m/fengshui,m/shiye';
+const DEFAULT_ROUTES = 'home,home@settings,home@paywall,home@paywall-priced,home@skins,m/qian,m/tarot,m/almanac,m/zodiac,m/liuyao,m/bazi,m/yinyuan,m/caiyun,m/coin,m/jiaobei,m/runes,m/omikuji,m/wheel,m/crystal,m/plinko,m/fengshui,m/shiye';
 const routes = opt('--routes', DEFAULT_ROUTES).split(',');
 const themes = opt('--themes', 'paper,celadon,ink,cinnabar,nebula').split(',');
 const STAGE = args.includes('--stage');
@@ -45,6 +45,16 @@ for (const theme of themes) {
     await page.evaluate((t) => { document.documentElement.dataset.theme = t; }, theme);
     if (action === 'settings') { await page.click('.app-header [aria-label="设置"]').catch(() => {}); await page.waitForTimeout(700); }
     if (action === 'paywall') { await page.evaluate(() => { window.__lgj?.openPaywall?.({ reason: '审计' }); }); await page.waitForTimeout(700); }
+    // 取到价格后的付费卡（年度格多一行折合每月、徽标写省多少），假商店同 iphone-shots.mjs 的 @paywall-priced（第 61 轮）
+    if (action === 'paywall-priced') {
+      await page.evaluate(() => {
+        const p = (priceString, price, period, trialDays = 0) => ({ priceString, price, currencyCode: 'CNY', period, trialDays });
+        const products = { yearly: p('¥98.00', 98, '每年', 3), monthly: p('¥18.00', 18, '每月'), lifetime: p('¥198.00', 198, ''), pack5: p('¥12.00', 12, '') };
+        window.__lgj.platform.purchases = { available: true, pro: false, credits: 0, loadProducts: async () => products, purchase: async () => ({ ok: false, cancelled: true }), restore: async () => ({ ok: true, pro: false }) };
+        window.__lgj.openPaywall({ reason: '审计' });
+      });
+      await page.waitForTimeout(700);
+    }
     if (action === 'skins') { await page.click('.app-header button[aria-label="换皮肤"]').catch(() => {}); await page.waitForTimeout(700); }
     if (action === 'sheet') {
       // m/qian@sheet：一直点主按钮或「展开解读」，直到结果抽屉（深度解读）打开

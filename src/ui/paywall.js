@@ -37,6 +37,33 @@ export function ctaLabel(plan, info = {}) {
   return '开通 Pro';
 }
 
+/**
+ * 年度折合每月（第 61 轮）：用 StoreKit 的本地化价格字符串替换其中的数字，保留货币符号与位置。
+ * 只作为年度格里的小字，扣款金额（priceString / 年）仍是最醒目的价格（指南 3.1.2）。取不到数字时返回空串。
+ */
+export function monthlyEquivalent(info = {}) {
+  const y = info.yearly;
+  const price = Number(y?.price);
+  if (!y?.priceString || !(price > 0)) return '';
+  const m = /\d[\d.,\s]*\d|\d/.exec(y.priceString);
+  if (!m) return '';
+  const raw = m[0].trimEnd();
+  const hasDec = /[.,]\d{2}$/.test(raw);
+  let num = hasDec ? (Math.round((price / 12) * 100) / 100).toFixed(2) : String(Math.round(price / 12));
+  if (/,\d{2}$/.test(raw)) num = num.replace('.', ',');
+  return y.priceString.replace(raw, num);
+}
+
+/** 年度比按月续 12 个月省多少（整数百分比，向下取整）。两边币种不同、取不到价格或不足 10% 时返回 0。 */
+export function yearlySavings(info = {}) {
+  const y = Number(info.yearly?.price), mo = Number(info.monthly?.price);
+  if (!(y > 0 && mo > 0)) return 0;
+  const a = info.yearly.currencyCode, b = info.monthly.currencyCode;
+  if (a && b && a !== b) return 0;
+  const pct = Math.floor((1 - y / (mo * 12)) * 100);
+  return pct >= 10 ? pct : 0;
+}
+
 export function openPaywall(platform, { reason = '' } = {}) {
   const iap = platform.purchases;
   const before = () => !!iap?.pro || (iap?.credits || 0) > 0;
@@ -47,10 +74,13 @@ export function openPaywall(platform, { reason = '' } = {}) {
   for (const p of PLANS) {
     const price = h('span', { class: 'pw-price' }, iap?.available ? '…' : '—');
     const sub = h('span', { class: 'pw-sub' }, p.note || '');
+    const eq = h('span', { class: 'pw-eq' });
+    eq.hidden = true;
+    const badge = p.badge ? h('em', null, p.badge) : null;
     const el = h('button', { type: 'button', class: 'pw-plan', attrs: { role: 'radio', 'aria-checked': 'false' }, dataset: { plan: p.key }, onClick: () => pick(p.key) },
-      h('span', { class: 'pw-plan-name' }, p.name, p.badge ? h('em', null, p.badge) : null),
-      price, sub);
-    planEls.set(p.key, { el, price, sub, plan: p });
+      h('span', { class: 'pw-plan-name' }, p.name, badge),
+      price, eq, sub);
+    planEls.set(p.key, { el, price, sub, eq, badge, plan: p });
     planList.append(el);
   }
   const fine = h('p', { class: 'pw-fine' });
@@ -87,6 +117,13 @@ export function openPaywall(platform, { reason = '' } = {}) {
         if (k !== 'lifetime') v.sub.textContent = p.trialDays ? `前 ${p.trialDays} 天免费` : '';
       } else if (iap?.available) v.price.textContent = loaded ? '暂不可用' : '…';
     }
+    // 年度格：折合每月小字，徽标按实际价格写「省 N%」，算不出来时仍是「最划算」
+    const y = planEls.get('yearly');
+    const eqText = monthlyEquivalent(info);
+    y.eq.textContent = eqText ? `约 ${eqText} / 月` : '';
+    y.eq.hidden = !eqText;
+    const save = yearlySavings(info);
+    if (y.badge) y.badge.textContent = save ? `省 ${save}%` : y.plan.badge;
     retryBtn.hidden = !(iap?.available && loaded && PLANS.some((p) => !info[p.key]));
     cta.setLabel(ctaLabel(selected, info[selected]));
     cta.disabled = busy || !iap?.available || !info[selected];
