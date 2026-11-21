@@ -1,5 +1,5 @@
-// 结果抽屉（深度解读）的 iPhone 截图：灵签收集册回看、水晶球、筊杯、六爻、御神签、姻缘六个抽屉（后三个另截一张滚到底），2D 画布回退，不需要 WebGL。
-// 用法：node scripts/reading-shots.mjs [--out docs/claude-plan/screenshots] [--theme paper,ink]（需先 npm run build 生成 dist）
+// 结果抽屉（深度解读）的 iPhone 截图：灵签收集册回看，加上 --routes 里的抽屉（默认水晶球、筊杯、六爻、御神签、姻缘、黄历，除水晶球与筊杯外另截滚到中段与底部各一张），2D 画布回退，不需要 WebGL。
+// 用法：node scripts/reading-shots.mjs [--out docs/claude-plan/screenshots] [--theme paper,ink] [--routes m/almanac,m/tarot]（需先 npm run build 生成 dist）
 import path from 'node:path';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +11,7 @@ const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const out = path.resolve(root, arg('--out', 'docs/claude-plan/screenshots'));
 const themes = arg('--theme', 'paper,ink').split(',');
+const routes = arg('--routes', 'm/crystal,m/jiaobei,m/liuyao,m/omikuji,m/yinyuan,m/almanac').split(',');
 await mkdir(out, { recursive: true });
 const server = createStaticServer(path.join(root, 'dist'));
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
@@ -25,7 +26,7 @@ const check = (page, name) => page.evaluate(() => {
   if (document.documentElement.scrollWidth > innerWidth + 1) r.push('横向溢出');
   for (const el of document.querySelectorAll('.sheet.open .result *, .sheet.open .sheet-actions *')) {
     if (el.scrollWidth > el.clientWidth + 1 && !['visible', 'auto', 'scroll'].includes(getComputedStyle(el).overflow)) r.push('截断：' + el.className + ' ' + el.textContent.slice(0, 12));
-    const b = el.getBoundingClientRect(); if (b.width && b.right > innerWidth + 1) r.push('出界：' + el.className);
+    const b = el.getBoundingClientRect(); if (b.width && b.right > innerWidth + 1 && !el.closest('[style*="overflow"], .al-picks, .chips, .chip-row') && getComputedStyle(el.parentElement).overflowX === 'visible') r.push('出界：' + el.className);
   }
   return r;
 }).then((bad) => bad.forEach((b) => problems.push(`${name}: ${b}`)));
@@ -67,12 +68,16 @@ for (const theme of themes) {
     await scrollEnd(page); await page.waitForTimeout(400);
     await page.screenshot({ path: path.join(out, `reading-qian-end-${tag}.png`) });
     await check(page, `灵签分述 ${tag}`);
-    for (const route of ['m/crystal', 'm/jiaobei', 'm/liuyao', 'm/omikuji', 'm/yinyuan']) {
+    for (const route of routes) {
       await openSheet(page, route);
       if (!(await page.locator('.sheet.open .result').count())) { problems.push(`${route} ${tag}: 没打开结果抽屉`); continue; }
       await page.screenshot({ path: path.join(out, `reading-${route.slice(2)}-${tag}.png`) });
       await check(page, `${route} ${tag}`);
       if (route !== 'm/crystal' && route !== 'm/jiaobei') {
+        await page.evaluate(() => { const s = [...document.querySelectorAll('.sheet.open')].pop(); const b = s.querySelector('.sheet-body') || s; b.scrollTop = b.scrollHeight * 0.45; });
+        await page.waitForTimeout(400);
+        await page.screenshot({ path: path.join(out, `reading-${route.slice(2)}-mid-${tag}.png`) });
+        await check(page, `${route} 中段 ${tag}`);
         await scrollEnd(page); await page.waitForTimeout(400);
         await page.screenshot({ path: path.join(out, `reading-${route.slice(2)}-end-${tag}.png`) });
         await check(page, `${route} 分项 ${tag}`);

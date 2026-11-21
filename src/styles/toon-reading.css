@@ -287,3 +287,85 @@
   letter-spacing: .04em;
 }
 .m-yinyuan .yy-notes-list span { color: var(--text-2); font-size: 14px; font-weight: 600; line-height: 1.6; }
+/* 第 60 轮：黄历详解的「细目」与宜忌词条。原来左侧名目是 13px 灰字、行间 1px 虚线，
+   吉神、凶煞、宜忌词条是 1px 细边胶囊配常规字重，和上面描边厚边的卦象台、小卡不是一套。
+   名目改主色描边小胶囊，词条改 2px 描边加 3px 厚边的圆体胶囊，按下下沉 */
+.m-almanac .al-dl-row {
+  grid-template-columns: 82px minmax(0, 1fr);
+  padding: 11px 0;
+  border-top: 2px dashed var(--line);
+}
+.m-almanac .al-dl-row:first-child { border-top: 0; }
+.m-almanac .al-dl-label {
+  justify-self: start;
+  margin-top: 2px;
+  padding: 0 8px;
+  border: 2px solid color-mix(in srgb, var(--accent-text) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent-text);
+  font: 800 12px/1.6 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.m-almanac .al-dl-text { color: var(--text); font-weight: 600; line-height: 1.7; }
+.m-almanac .al-pz b { font: 800 15px/1.6 var(--font-round, var(--font-sans)); letter-spacing: .06em; }
+.m-almanac .al-pz span { font-weight: 600; }
+.m-almanac .al-terms { gap: 8px 7px; padding-bottom: 3px; }
+.m-almanac .al-term {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--text);
+  font: 800 13px/1 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+  transition: transform var(--dur-fast), box-shadow var(--dur-fast);
+}
+.m-almanac .al-term:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge-color); }
+.m-almanac .al-term.yi,
+.m-almanac .al-term.jishen {
+  border-color: color-mix(in srgb, var(--accent-text) 55%, var(--line-strong));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  color: var(--accent-text);
+}
+.m-almanac .al-term.ji { border-color: var(--danger); color: var(--danger); }
+.m-almanac .al-term.xiongsha { background: var(--surface-2, var(--surface)); color: var(--text-2); }
+/* 同一轮：时辰吉凶上方「此刻 丑时」原来是左边 2px 竖线加浅底的引文条配宋体字，改成和六爻动爻同款描边厚边小卡 */
+.m-almanac .al-now {
+  gap: 4px;
+  margin-bottom: 12px;
+  padding: 10px 12px 11px;
+  border: 2px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.65;
+}
+.m-almanac .al-now b {
+  align-self: flex-start;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  font: 800 13px/1.7 var(--font-round, var(--font-sans));
+  letter-spacing: .02em;
+}
+/* 同一轮：抽屉底部「择日」事项行原来是 1px 浅边、浅色平涂底的方块，改成和上面词条同款的描边厚边胶囊，
+   这一行横向滚动，底部留 5px 给厚边 */
+.m-almanac .al-picks { padding-bottom: 5px; }
+.m-almanac .al-pick {
+  min-height: 40px;
+  padding: 0 15px;
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+  color: var(--accent-text);
+  font: 800 14px/1 var(--font-round, var(--font-sans));
+  letter-spacing: .04em;
+}
+.m-almanac .al-pick:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge-color); }
