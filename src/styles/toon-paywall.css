@@ -65,3 +65,45 @@
 /* 第 61 轮：年度格折合每月小字。扣款价格 .pw-price 仍是格里最大最醒目的价格（指南 3.1.2），这行只做参考 */
 .pw-eq { font: 800 11px/1.3 var(--font-round); color: var(--text-2); text-align: center; white-space: nowrap; }
 .pw-eq[hidden] { display: none; }
+
+/* 第 62 轮：连续使用第 3 天的试用提示卡通化。原来是无边框的浅金平涂条、32px 高的「看看」、28px 的 ×，
+   夹在描边厚边的「展开解读」下面像旧版网页提示。改为和结果条同一套：2px 描边加 4px 厚边、圆体 800，
+   「看看」金币色描边胶囊，「看看」与 × 都至少 44px 高。 */
+.ritual-nudge {
+  margin-top: 14px; padding: 6px 4px 6px 14px; gap: 6px;
+  border-radius: 16px; background: var(--surface-2);
+  border: 2px solid var(--line-strong); box-shadow: 0 4px 0 var(--edge-color);
+  font: 800 13px/1.4 var(--font-round); color: var(--text);
+}
+.ritual-nudge-text { display: flex; flex-direction: column; gap: 1px; }
+.ritual-nudge-text b { font: 900 14px/1.3 var(--font-round); }
+.ritual-nudge-text small { font: 800 12px/1.35 var(--font-round); color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ritual-nudge-go {
+  min-height: 44px; padding: 0 16px; border-radius: var(--r-pill, 999px);
+  border: 2px solid #8a3a10; background: #ffc93c; color: #3a1a08;
+  font: 900 14px/1 var(--font-round); letter-spacing: .04em;
+  box-shadow: 0 3px 0 #8a3a10, inset 0 -3px 0 rgba(138, 58, 16, .22);
+}
+.ritual-nudge-go:active { transform: translateY(3px); box-shadow: 0 0 0 #8a3a10; }
+.ritual-nudge-x {
+  width: 44px; height: 44px; border-radius: 50%; opacity: 1;
+  color: var(--text-2); font: 800 20px/1 var(--font-round);
+}
+
+/* 第 62 轮：试穿条的「解锁」只有 28px 高、× 30px，在 iPhone 上不好点，字是常规黑体。
+   两个按钮都至少 44px，「解锁」改金币色描边胶囊配圆体 900（同试用提示的「看看」），倒计时圆体 900。 */
+.skin-try { padding: 4px 4px 4px 8px; }
+.skin-try-text { font: 800 13px/1.2 var(--font-round); }
+.skin-try-count { font: 900 14px/1 var(--font-round); }
+.skin-try-unlock {
+  min-height: 44px; padding: 0 16px;
+  border: 2px solid #8a3a10; background: #ffc93c; color: #3a1a08;
+  font: 900 14px/1 var(--font-round); letter-spacing: .04em;
+  box-shadow: 0 3px 0 #8a3a10, inset 0 -3px 0 rgba(138, 58, 16, .22);
+}
+.skin-try-unlock:active { transform: translateY(3px); box-shadow: 0 0 0 #8a3a10; }
+.skin-try-close { width: 44px; height: 44px; font: 800 20px/1 var(--font-round); }
+
+/* 第 62 轮：选中的年度格底色是主色混 12%，玄墨下「前 3 天免费」用 --text-3 只有 4.45。选中格里的小字改用 --text-2。
+   （contrast-audit 修好认 color-mix 渐变后才查出来） */
+.pw-plan.on .pw-sub { color: var(--text-2); }

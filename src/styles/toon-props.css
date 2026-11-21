@@ -579,3 +579,15 @@
   box-shadow: 0 3px 0 var(--qn-ink);
   text-shadow: none;
 }
+
+/* 第 62 轮：签纸顶上的番号条和「上上 / 中平」印章是白字压在 #e8463c 上，对比度 3.91，13px 与 18px 都不到 4.5。
+   照按钮的画法给白字加一圈签纸墨色描边，红底和描边都不变，字更跳，contrast-audit 按描边计算达标。 */
+.m-qian .qn-paper-no,
+.m-qian .qn-seal {
+  text-shadow: 1.5px 0 0 var(--qn-ink), -1.5px 0 0 var(--qn-ink), 0 1.5px 0 var(--qn-ink), 0 -1.5px 0 var(--qn-ink),
+    1px 1px 0 var(--qn-ink), -1px -1px 0 var(--qn-ink), 1px -1px 0 var(--qn-ink), -1px 1px 0 var(--qn-ink);
+}
+
+/* 第 62 轮：玄墨皮肤下塔罗牌位名胶囊的底是 4.5% 透明白，压在青蓝舞台上，金色字对比度只有 4.03。
+   玄墨下改用不透明的 --bg-3 作底，胶囊样子不变。 */
+[data-theme='ink'] .m-tarot .tr-slot-wrap.filled .tr-slot-label { background: var(--bg-3); }

@@ -1,6 +1,6 @@
 // Shared pacing: bring the physical scene into view, then let the reader decide
 // when to open the longer interpretation. No result sheet is opened by a timer.
-import { openPaywall } from './paywall.js';
+import { openPaywall, nudgeCopy } from './paywall.js';
 
 export function createRitual(ctx, stage, labels) {
   const { h, button, clear } = ctx.kit;
@@ -170,16 +170,23 @@ export function createRitual(ctx, stage, labels) {
     return { read };
   }
   // 连续使用第 3 天起，在结果条底部出现一次温和的年度试用提示，7 天内不重复，Pro 不出现。
+  // 第 62 轮：网页版不卖东西，不出提示也不记「已提示」，免得把 7 天额度用在点不了购买的地方。
+  // 文案先写不带优惠的一句，取到 StoreKit 价格后再换成试用天数或折合每月（nudgeCopy）。
   function trialNudge() {
-    const streak = ctx.platform?.streak;
-    if (!streak) return;
+    const streak = ctx.platform?.streak, iap = ctx.platform?.purchases;
+    if (!streak || !iap?.available) return;
     const n = streak.visit();
     if (!streak.shouldNudge()) return;
     streak.markNudged();
-    const go = h('button', { type: 'button', class: 'ritual-nudge-go', onClick: () => openPaywall(ctx.platform, { reason: `已经连续来了 ${n} 天，年度 Pro 可以先免费试用` }) }, '看看');
+    let copy = nudgeCopy(n);
+    // 两行：上行连续天数，下行优惠，免得窄屏把「前 3 天免费」从中间折断
+    const offer = h('small', null, copy.offer);
+    const label = h('span', { class: 'ritual-nudge-text' }, h('b', null, copy.lead), offer);
+    const go = h('button', { type: 'button', class: 'ritual-nudge-go', onClick: () => openPaywall(ctx.platform, { reason: copy.reason }) }, '看看');
     const close = h('button', { type: 'button', class: 'ritual-nudge-x', attrs: { 'aria-label': '不再显示' }, onClick: () => note.remove() }, '×');
-    const note = h('div', { class: 'ritual-nudge', attrs: { role: 'note' } }, h('span', null, `连续 ${n} 天来感觉了 · 年度 Pro 可免费试用`), go, close);
+    const note = h('div', { class: 'ritual-nudge', attrs: { role: 'note' } }, label, go, close);
     receipt.append(note);
+    Promise.resolve(iap.loadProducts?.()).then((p) => { if (p && alive) { copy = nudgeCopy(n, p); offer.textContent = copy.offer; } }).catch(() => {});
   }
   function clearResult() { receipt.hidden = true; clear(receipt); refreshReadLabel = null; if (hurrying) setHurry(false); }
   ctx.addCleanup(() => {

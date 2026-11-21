@@ -67,10 +67,22 @@ for (const theme of themes) {
       }
       await page.waitForTimeout(700);
     }
-    if (action === 'read') {
+    // m/qian@nudge：假商店加「昨天已连续 2 天」，出结果后审计第 3 天的试用提示条（同 iphone-shots.mjs，第 62 轮）
+    if (action === 'nudge') {
+      await page.evaluate(() => {
+        const p = (priceString, price, period, trialDays = 0) => ({ priceString, price, currencyCode: 'CNY', period, trialDays });
+        const products = { yearly: p('¥98.00', 98, '每年', 3), monthly: p('¥18.00', 18, '每月'), lifetime: p('¥198.00', 198, ''), pack5: p('¥12.00', 12, '') };
+        window.__lgj.platform.purchases = { available: true, pro: false, credits: 0, loadProducts: async () => products, purchase: async () => ({ ok: false, cancelled: true }), restore: async () => ({ ok: true, pro: false }) };
+        const d = new Date(Date.now() - 86400000);
+        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        localStorage.setItem('lgj:streak', JSON.stringify({ last: k, count: 2, nudged: null }));
+      });
+    }
+    if (action === 'read' || action === 'nudge') {
       // m/bazi@read：点主按钮直到结果条出来，审计排在结果条下面的小节（八字五行分布、星座档案等）
       const primary = page.locator('.view-module [data-action="primary"]').first();
-      for (let i = 0; i < 8 && !(await page.locator('.view-module .ritual-receipt').count()); i++) {
+      const done = action === 'nudge' ? '.view-module .ritual-nudge' : '.view-module .ritual-receipt';
+      for (let i = 0; i < 8 && !(await page.locator(done).count()); i++) {
         await primary.click({ force: true }).catch(() => {});
         await page.waitForTimeout(1200);
       }
@@ -130,13 +142,20 @@ async function sampleInPage({ b64, fg }) {
 
 /* 在页面里运行，不能引用外部变量 */
 function auditInPage() {
+  // 第 62 轮：color-mix() 算出来的颜色在计算样式里是 color(srgb r g b / a)（0 到 1），原来认不出，
+  // 渐变底（如按等级上色的记录胶囊）被跳过，误把外层深色背景当成文字背景。
   const parse = (s) => {
     const m = s && s.match(/rgba?\(([^)]+)\)/);
-    if (!m) return null;
-    const p = m[1].split(/[\s,/]+/).filter(Boolean).map(Number);
-    return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
+    if (m) {
+      const p = m[1].split(/[\s,/]+/).filter(Boolean).map(Number);
+      return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1];
+    }
+    const c = s && s.match(/color\(srgb ([^)]+)\)/);
+    if (!c) return null;
+    const q = c[1].split(/[\s/]+/).filter(Boolean).map(Number);
+    return [q[0] * 255, q[1] * 255, q[2] * 255, q.length > 3 ? q[3] : 1];
   };
-  const stops = (img) => (img.match(/rgba?\([^)]+\)/g) || []).map(parse);
+  const stops = (img) => (img.match(/rgba?\([^)]+\)|color\(srgb [^)]+\)/g) || []).map(parse);
   const over = (top, bot) => { const a = top[3]; return [0, 1, 2].map((i) => top[i] * a + bot[i] * (1 - a)).concat(1); };
   const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
   const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };

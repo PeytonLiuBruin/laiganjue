@@ -72,3 +72,8 @@ button.history-item[class*='tone-']:active { box-shadow: 0 1px 0 color-mix(in sr
   -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
   mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
 }
+
+/* 第 62 轮：塔罗记录里的「逆」是 10px #e8463c 压在白底上，对比度 3.91。浅色皮肤改深一号朱红 #c62f26（5.47），
+   深色皮肤的记录胶囊是半透明深底，改亮一号 #ff7a6e。 */
+.m-tarot .tr-hist sup { color: #c62f26; }
+:is([data-theme='ink'], [data-theme='cinnabar'], [data-theme='nebula']) .m-tarot .tr-hist sup { color: #ff7a6e; }

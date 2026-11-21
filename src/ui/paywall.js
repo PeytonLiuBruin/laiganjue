@@ -64,6 +64,21 @@ export function yearlySavings(info = {}) {
   return pct >= 10 ? pct : 0;
 }
 
+/**
+ * 连续使用提示的文案（第 62 轮，monetization.md 第 4 节第 4 条）。
+ * 试用天数和折合价都从 StoreKit 取：年度产品配了试用才写「前 N 天免费」，没配就写折合每月，
+ * 价格也取不到时只写「看看来感觉 Pro」，不写商店里没有的优惠（指南 3.1.2）。
+ */
+export function nudgeCopy(days, info = {}) {
+  const lead = `连续 ${days} 天来感觉了`;
+  const pack = (offer, reason) => ({ lead, offer, text: `${lead} · ${offer}`, reason: `已经连续来了 ${days} 天，${reason}` });
+  const trial = Math.floor(Number(info.yearly?.trialDays) || 0);
+  if (trial > 0) return pack(`年度 Pro 前 ${trial} 天免费`, `年度 Pro 可以先免费试用 ${trial} 天`);
+  const eq = monthlyEquivalent(info);
+  if (eq) return pack(`年度 Pro 约 ${eq} / 月`, `年度 Pro 折合约 ${eq} / 月`);
+  return pack('看看来感觉 Pro', '看看来感觉 Pro');
+}
+
 export function openPaywall(platform, { reason = '' } = {}) {
   const iap = platform.purchases;
   const before = () => !!iap?.pro || (iap?.credits || 0) > 0;
