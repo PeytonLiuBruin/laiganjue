@@ -27,6 +27,8 @@
 | 构建号自动递增（`ios-try.sh --testflight` 按时间生成 CURRENT_PROJECT_VERSION） | ✅ |
 | 内购：付费卡显示本地化价格、周期、自动续期、试用说明、条款与隐私链接、恢复购买、关闭按钮 | ✅ 第 2、35、43 轮，模拟器 UI 测试通过 |
 | 小组件扩展 `io.github.peytonliubruin.laiganjue.widget` | ✅ 模拟器编译通过，真机签名见第四节 |
+| Release 真机配置无签名编译（`generic/platform=iOS`，Xcode 27），安装包含隐私清单、小组件、隐私与支持页，版本 1.0 构建号 1 | ✅ 第 65 轮，本项目代码 0 条警告 |
+| 小组件与主 App 版本号、构建号、最低系统版本一致（防 ITMS-90473） | ✅ 第 65 轮，`tests/ios-launch.test.mjs` |
 
 ## 三、App Store Connect 里填写
 
@@ -38,7 +40,7 @@
 | 8 | 分类：娱乐，次分类生活 | store-listing.md 第 5 节 |
 | 9 | 年龄分级问卷 | store-listing.md 第 8 节逐题建议，结论 13+ 👤 |
 | 10 | App 隐私「营养标签」：选「不收集数据」 | 购买由 Apple 处理，App 不联网收集任何东西 👤 |
-| 11 | 6.9 寸截图 6 张（1290×2796） | `docs/claude-plan/store/`，第 53 与 58 轮按现在的界面重拍完，6.5 寸 6 张（1242×2688）同目录，上传由 Peyton 做 👤 |
+| 11 | 6.9 寸截图 7 张（1290×2796） | `docs/claude-plan/store/`，第 53 与 58 轮按现在的界面重拍完，第 63 轮加第 7 张皮肤展示（用不用由 Peyton 定），6.5 寸 7 张（1242×2688）同目录，上传由 Peyton 做 👤 |
 | 12 | 审核备注 | store-listing.md 第 6 节，直接粘贴 |
 | 13 | 内购产品勾选「随此版本提交」 | 第一个版本必须和内购一起送审 👤 |
 

@@ -1907,3 +1907,31 @@ Mac 上 `npm test` 435 项全部通过（含第 28 轮未提交的 3 项，负�
 - 上架清单里标 👤 的各步，同前几轮。
 
 推送结果：提交 21ad653 推送成功。
+
+## 第 65 轮 · 2026-11-22 14:55 UTC 起（PST 06:55，定时任务）
+
+开始状态：分支正确，本地与远端都在 d592a23，fetch 后没有新提交，不需要 pull。.lock 是 2026-11-22T11:55:16Z（不是 idle，距今 3 小时，超过 150 分钟），按过期锁处理，写入本轮时间。Mac 负载约 2.4。
+
+发现第 64 轮中断：.lock 的时间晚于第 63 轮收尾，工作区多出 `src/modules/jiaobei/model.js`、`src/modules/jiaobei/physical.js`、`src/ui/solid-scene.js` 改动与未跟踪的 `tests/jiaobei-toon-face.test.mjs`（04:02 PST 写入，代码注释写着「第 64 轮」），内容是给筊杯平面加外弧亮带与内弧暗带，run-log 没有第 64 轮记录，也没有提交。`/Users/simpenguin/lgj-wt` 里有同样的改动。按规则不是本轮的改动原样保留，和第 45 轮的未提交改动一起记进 TODO 等 Peyton 决定。本轮在新建的干净 worktree `/Users/simpenguin/lgj-wt64`（HEAD d592a23，node_modules 软链到主目录）里改和测，再把本轮文件复制回主目录，`TODO.md` 照前几轮用 `git hash-object` 加 `update-index` 只提交「HEAD 加本轮三行」，工作区那份末尾追加同样三行。
+
+完成的待办（2 项）：
+- ✅「上架清单自查：Release 真机配置能编过」（P0，第 63 轮计划）：`build:app`、`cap sync ios` 后 Xcode 27 按 `generic/platform=iOS` Release 无签名编译 BUILD SUCCEEDED，15 条警告全部来自第三方插件。安装包 6.4MB，隐私清单、小组件、隐私与支持页齐全，Info.plist 版本、出口合规、设备、最低系统都对。小组件不用需要声明理由的 API。launch-checklist.md 第二节补两行，第三节截图数改为 7 张。
+- ✅「小组件与主 App 版本号一致的检查」（P1，自查时新增）：`tests/ios-launch.test.mjs` 加 1 项，防止以后只改 App 版本导致上传报 ITMS-90473，临时改版本验证过会失败。
+
+改动文件：`tests/ios-launch.test.mjs`，`docs/claude-plan/launch-checklist.md`，`TODO.md` 三行，截图，本记录。
+
+检查结果：
+- 干净 worktree `npm test` 549 项全部通过，`npm run build` 通过。Mac 工作区（含第 45、64 轮未提交改动）556 项全部通过。
+- 本轮没有改界面，截图用 `iphone-shots.mjs` 拍首页、筊杯、付费卡两种尺寸（393×852、430×932），脚本报告无溢出、无报错，过目没问题。筊杯舞台这次是 2D 退回版，平面确实是一整片单色，正是第 64 轮想改的地方。上一轮 2 张旧截图已用 git rm 换掉。
+
+遗留问题：
+- 第 45 轮与第 64 轮的未提交改动都在等 Peyton 决定。
+- 外部条件卡住的待办同前几轮（备案、Pages 发布、真机验证、小组件签名）。
+
+下一轮计划：能在本地推进的上架项基本做完。下一轮用 `xcodebuild test` 在模拟器上跑一次已有的 AppUITests（付费卡 UI 测试），确认 Xcode 27 下仍通过，再按 monetization.md 核对付费墙出现时机的文案与现在的界面是否一致。
+
+待 Peyton 决定：
+- 第 45 轮（落球盘、转盘、硬币页卡通化）与第 64 轮（筊杯平面高光）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
+- App Store Connect 里年度订阅要不要配 3 天免费试用（代码两种都支持）。
+- 商店截图第 7 张（皮肤）用不用。
+- 上架清单里标 👤 的各步，同前几轮。
