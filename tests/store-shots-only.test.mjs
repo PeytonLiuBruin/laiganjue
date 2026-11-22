@@ -32,3 +32,14 @@ test('灵签 dev.lot 只在网页预览生效，App 原生环境忽略', () => {
   assert.match(fn, /return null/);
   assert.match(src, /lot = devLot\(\) \|\| drawLot\(/);
 });
+
+test('第 7 张展示 Pro 皮肤：皮肤抽屉、按没买 Pro 的用户拍，不出现价格（第 63 轮）', () => {
+  assert.ok(SCENES.length <= 10, 'App Store 每种尺寸最多 10 张');
+  const last = SCENES[6];
+  assert.equal(last.action, 'skins');
+  assert.equal(last.theme, 'ink', '用免费皮肤，免得付费皮肤显示「已解锁」');
+  assert.equal(last.init['lgj:dev.skins'], false, '按没买 Pro 的用户拍');
+  for (const s of SCENES) assert.doesNotMatch(s.title + s.sub, /[¥$]\s*\d/, '标题与副标题里不写价格');
+  const src = readFileSync(new URL('../scripts/store-shots.mjs', import.meta.url), 'utf8');
+  assert.match(src, /t: s\.theme \|\| theme/);
+});

@@ -1,5 +1,5 @@
 // App Store 商店截图：先用 iPhone 视口截下 App 画面，再套上明快渐变底、中文大标题与圆角机身，
-// 输出 6.9 寸（1290×2796）与 6.5 寸（1242×2688）各 6 张到 docs/claude-plan/store/。
+// 输出 6.9 寸（1290×2796）与 6.5 寸（1242×2688）各 7 张到 docs/claude-plan/store/。
 // 用法：node scripts/store-shots.mjs [--out docs/claude-plan/store] [--theme paper] [--only 1,3]
 // --only 只重拍第几张（1 起，逗号分隔），其余旧图保留。Mac 负载高时可以分批拍。
 import path from 'node:path';
@@ -29,6 +29,9 @@ export const SCENES = [
   { route: 'm/caiyun', stage: true, title: '摇钱树，摇出今日财运', sub: '3D 卡通器物，手感十足', bg: ['#ffc93c', '#fff1b8'] },
   { route: 'm/yinyuan', stage: true, title: '姻缘线，看看缘分', sub: '正缘画像与合婚六项分析', bg: ['#ff6a8a', '#ffd0dc'] },
   { route: 'm/crystal', stage: true, title: '水晶球，问一个问题', sub: '不用注册，打开就能玩', bg: ['#3fcf8e', '#c6f5df'] },
+  // 第 63 轮：第 7 张展示 Pro 皮肤（不放付费卡，价格按地区不同，截图里写死价格容易和商店对不上）。
+  // 关掉 dev.skins，按没买 Pro 的新用户真实看到的样子拍：用免费的玄墨，付费皮肤标「Pro · 试穿」而不是「已解锁」
+  { route: 'home', action: 'skins', theme: 'ink', init: { 'lgj:dev.skins': false }, title: '五套皮肤，换个心情', sub: '宣纸 · 玄墨免费，青瓷 · 朱砂 · 星穹随 Pro 解锁', bg: ['#5b7cff', '#c9d6ff'] },
 ];
 // 商店图里可以出现的塔罗牌（正位、寓意积极、画面明亮）。太阳、恋人、星星、世界牌面有裸体人物，不放进商店图（审核与年龄分级）
 const GOOD_CARDS = ['命运之轮', '力量', '魔术师', '皇后', '圣杯三', '圣杯十', '星币十', '权杖六', '圣杯王牌', '星币王牌'];
@@ -155,7 +158,7 @@ async function main() {
     // 某一张卡住（负载高时舞台编译超时）只记下来跳过，不让前面拍好的几张白费
     try {
       ctx = await browser.newContext({ viewport: SIZES[0].app, deviceScaleFactor: 3, isMobile: true, hasTouch: true, locale: 'zh-CN' });
-      await ctx.addInitScript(({ t, extra }) => { try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); localStorage.setItem('lgj:stage.fps', 'false'); localStorage.setItem('lgj:tarot:spread', JSON.stringify('single')); localStorage.setItem('lgj:hint.hurry', 'true'); for (const [k, v] of Object.entries(extra)) localStorage.setItem(k, JSON.stringify(v)); } catch {} }, { t: theme, extra: s.init || {} });
+      await ctx.addInitScript(({ t, extra }) => { try { localStorage.setItem('lgj:theme', JSON.stringify(t)); localStorage.setItem('lgj:dev.skins', 'true'); localStorage.setItem('lgj:onboarded', 'true'); localStorage.setItem('lgj:zen.auto', 'false'); localStorage.setItem('lgj:stage.fps', 'false'); localStorage.setItem('lgj:tarot:spread', JSON.stringify('single')); localStorage.setItem('lgj:hint.hurry', 'true'); for (const [k, v] of Object.entries(extra)) localStorage.setItem(k, JSON.stringify(v)); } catch {} }, { t: s.theme || theme, extra: s.init || {} });
       ctx.setDefaultTimeout(STAGE_TIMEOUT);
       const page = await ctx.newPage();
       await page.goto(base + (s.route === 'home' ? '#/' : '#/' + s.route), { waitUntil: 'domcontentloaded', timeout: STAGE_TIMEOUT });
@@ -175,6 +178,11 @@ async function main() {
           : s.lucky ? await drawGood(page, (v) => s.lucky.test(v.name)) : await playUntilResult(page);
         if (!ok) console.warn(`警告：${s.route} 没拿到合适的结果，商店图需要人工重拍`);
         await alignTabs(page);
+      }
+      if (s.action === 'skins') {
+        await page.click('.app-header button[aria-label="换皮肤"]');
+        await waitFor(page, () => !!document.querySelector('.sheet.open'), null, 10_000);
+        await page.waitForTimeout(900);
       }
       // 收起授权卡会改变舞台尺寸，画布重设大小后要等下一帧才有画面。软件渲染一帧很慢，这里主动推进并画一帧再截图
       await page.waitForTimeout(1000);
