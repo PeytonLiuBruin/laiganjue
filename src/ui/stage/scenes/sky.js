@@ -14,6 +14,9 @@ const GlassShader = {
 };
 const BRANCHES = [...'子丑寅卯辰巳午未申酉戌亥'];
 // 第 27 轮：十二支原来是浅灰细字，手机上看不见。改成奶油圆章配深棕粗字，当前生肖的那枚染金放大
+// 星仪卡通化（第 69 轮）：青铜浑仪在卡通光照下是一团橙褐色，36 道细刻度在手机上糊成锯齿。
+// 三道环改哑光亮金加粗，奶油色内沿，刻度减到 12 道并放大成朱红块，子午环朱红，底座青绿。
+export const SKY_TOON = { ring: '#ffc93c', ringTube: .046, trim: '#fff4d8', tick: '#d8402e', ticks: 12, tickSize: [.034, .1, .034], meridian: '#d8402e', meridianTube: .05, stand: '#22a88f' };
 export const SKY_BRANCH = { badge: '#fff4d8', ring: '#3a2410', text: '#3a2410', on: '#ffc93c', size: .2, onSize: .26, px: 128, font: 78 };
 function branchTexture(ch) {
   const { px, badge, ring, text, font } = SKY_BRANCH;
@@ -33,23 +36,24 @@ export default {
   build(api) {
     const { world, glow } = api;
     world.add(plinth(api, { radius: .9, height: .48, seed: 101, top: -1.0 }));
-    const bronze = MAT.bronze(), gold = MAT.gold();
-    const stand = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [.44, 0], [.47, .05], [.36, .1], [.22, .16], [.12, .3], [.1, .5], [.14, .56], [.08, .6], [0, .6]].map(([x, y]) => new THREE.Vector2(x, y)), 64), bronze);
+    const T = SKY_TOON;
+    const ringMat = MAT.matte(T.ring), trimMat = MAT.matte(T.trim), tickMat = MAT.matte(T.tick);
+    const stand = new THREE.Mesh(new THREE.LatheGeometry([[0, 0], [.44, 0], [.47, .05], [.36, .1], [.22, .16], [.12, .3], [.1, .5], [.14, .56], [.08, .6], [0, .6]].map(([x, y]) => new THREE.Vector2(x, y)), 64), MAT.matte(T.stand));
     stand.position.y = -1.0; world.add(api.shadows(stand));
     const center = new THREE.Vector3(0, .12, 0);
     const rig = new THREE.Group(); rig.position.copy(center); world.add(rig);
-    const ringGeo = new THREE.TorusGeometry(1.0, .032, 12, 160), trimGeo = new THREE.TorusGeometry(1.0, .01, 6, 160);
-    const tickGeo = new THREE.BoxGeometry(.012, .07, .02);
+    const ringGeo = new THREE.TorusGeometry(1.0, T.ringTube, 12, 160), trimGeo = new THREE.TorusGeometry(1.0 - T.ringTube, .012, 6, 160);
+    const tickGeo = new THREE.BoxGeometry(...T.tickSize);
     const rings = [[.42, 0, 0], [0, 1.02, 0], [1.1, .3, 0]].map(([x, y, z], i) => {
       const g = new THREE.Group(); g.rotation.set(x, y, z);
-      const r = new THREE.Mesh(ringGeo, bronze); g.add(r);
-      const trim = new THREE.Mesh(trimGeo, gold); trim.position.z = .03; g.add(trim);
-      const ticks = new THREE.InstancedMesh(tickGeo, gold, 36), m = new THREE.Matrix4();
-      for (let k = 0; k < 36; k++) { const a = k / 36 * Math.PI * 2; m.makeRotationZ(a - Math.PI / 2); m.setPosition(Math.cos(a) * .96, Math.sin(a) * .96, 0); ticks.setMatrixAt(k, m); }
+      const r = new THREE.Mesh(ringGeo, ringMat); g.add(r);
+      const trim = new THREE.Mesh(trimGeo, trimMat); g.add(trim);
+      const ticks = new THREE.InstancedMesh(tickGeo, tickMat, T.ticks), m = new THREE.Matrix4();
+      for (let k = 0; k < T.ticks; k++) { const a = k / T.ticks * Math.PI * 2; m.makeRotationZ(a - Math.PI / 2); m.setPosition(Math.cos(a) * 1.0, Math.sin(a) * 1.0, 0); ticks.setMatrixAt(k, m); }
       g.add(ticks); rig.add(g); return g;
     });
     api.shadows(rig, true, false);
-    const meridian = new THREE.Mesh(new THREE.TorusGeometry(1.08, .04, 12, 160, Math.PI * 1.25), bronze); meridian.rotation.set(0, 0, -Math.PI * .125); meridian.position.copy(center); world.add(api.shadows(meridian));
+    const meridian = new THREE.Mesh(new THREE.TorusGeometry(1.08, T.meridianTube, 12, 160, Math.PI * 1.25), MAT.matte(T.meridian)); meridian.rotation.set(0, 0, -Math.PI * .125); meridian.position.copy(center); world.add(api.shadows(meridian));
     const globe = new THREE.Mesh(new THREE.SphereGeometry(.84, 48, 32), new THREE.ShaderMaterial({ ...GlassShader, uniforms: THREE.UniformsUtils.clone(GlassShader.uniforms), transparent: true, depthWrite: false }));
     globe.position.copy(center); world.add(globe);
 
@@ -72,7 +76,7 @@ export default {
     // 生肖：中央玉章 + 十二地支
     const medal = new THREE.Group(); medal.position.copy(center); world.add(medal);
     const jadeDisc = new THREE.Mesh(new THREE.CylinderGeometry(.36, .36, .07, 64), MAT.jade('#3fae80')); jadeDisc.rotation.x = Math.PI / 2; medal.add(jadeDisc);
-    const medalRim = new THREE.Mesh(new THREE.TorusGeometry(.36, .02, 10, 64), gold); medal.add(medalRim);
+    const medalRim = new THREE.Mesh(new THREE.TorusGeometry(.36, .02, 10, 64), ringMat); medal.add(medalRim);
     const glyphTex = textTexture('子', { size: 170, color: '#ffe3a0', stroke: '#6b4512' });
     const glyphMat = new THREE.MeshStandardMaterial({ map: glyphTex, transparent: true, metalness: .4, roughness: .35, emissive: '#ffcf70', emissiveMap: glyphTex, emissiveIntensity: 0 });
     const glyphPlane = new THREE.Mesh(new THREE.PlaneGeometry(.5, .5), glyphMat); glyphPlane.position.z = .04; medal.add(glyphPlane);

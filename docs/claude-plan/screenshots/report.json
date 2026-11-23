@@ -1,45 +1,53 @@
 [
   {
-    "route": "settings@paywall-priced",
+    "route": "m/zodiac",
     "viewport": "393x852",
-    "file": "settings-paywall-priced-393x852.png",
+    "file": "m-zodiac-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
-      "bad": []
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   },
   {
-    "route": "m/qian@nudge",
+    "route": "m/zodiac@tab1",
     "viewport": "393x852",
-    "file": "m-qian-nudge-393x852.png",
+    "file": "m-zodiac-tab1-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
-      "bad": []
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   },
   {
-    "route": "settings@paywall-priced",
+    "route": "m/zodiac",
     "viewport": "430x932",
-    "file": "settings-paywall-priced-430x932.png",
+    "file": "m-zodiac-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": []
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   },
   {
-    "route": "m/qian@nudge",
+    "route": "m/zodiac@tab1",
     "viewport": "430x932",
-    "file": "m-qian-nudge-430x932.png",
+    "file": "m-zodiac-tab1-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": []
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   }

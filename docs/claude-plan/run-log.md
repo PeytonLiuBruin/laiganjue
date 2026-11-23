@@ -1968,3 +1968,32 @@ Mac 上 `npm test` 435 项全部通过（含第 28 轮未提交的 3 项，负�
 - 上架清单里标 👤 的各步，同前几轮。
 
 推送结果：提交 fc86845 推送成功。干净 worktree 553 项、Mac 主目录（含第 45、64 轮未提交改动）560 项全部通过。
+
+## 第 69 轮 · 2026-11-23 05:55 UTC 起（PST 21:55，定时任务）
+
+开始状态：分支正确，本地与远端都在 5c6d6a1，fetch 后没有新提交，不需要 pull。.lock 是 2026-11-23T02:55:10Z（不是 idle，距今 3 小时，超过 150 分钟），按过期锁处理，写入本轮时间。Mac 负载 1 分钟 5.3，15 分钟 25。
+
+发现第 68 轮中断：.lock 停在 02:55 UTC，run-log 没有第 68 轮记录，也没有提交。它复用了 `/Users/simpenguin/lgj-wt67`，改了 `scripts/paywall-shot.sh`，新增未跟踪的 `tests/paywall-shot-guard.test.mjs` 与 7 张 `ios-iphone-17-*` 模拟器截图（19:24 PST 前后），`cap sync` 还顺带改了 `android/capacitor.settings.gradle` 与 `Package.swift`。看来又是在模拟器跑 AppUITests 时中断。按规则原样保留，没有动 lgj-wt67。主目录第 45、64 轮的未提交改动也照旧保留。本轮在新建的干净 worktree `/Users/simpenguin/lgj-wt69`（HEAD 5c6d6a1，node_modules 软链到主目录）里改和测。
+
+本轮也被 Mac 负载打断一次：8 张 WebGL 整页长图拍了约 12 分钟，期间桥接断开约 15 分钟，恢复后接着做完。截图改用 nohup 后台跑。
+
+完成的待办（1 项，加 1 项流程记录）：
+- ✅「星仪浑仪卡通化」（P2，本轮复查发现并完成）：先按 TODO 用 WebGL 拍硬币页骰子、二选一与筊杯、星座整页长图。骰子与二选一金币在卡通标准内，筊杯平面单色的问题正是第 64 轮未提交改动要解决的。最显旧的是星座页星仪：青铜浑仪成了一团橙褐色，36 道细刻度糊成锯齿。`sky.js` 新增参数 `SKY_TOON`，三道环改哑光亮金 #ffc93c 并加粗，奶油内沿，刻度 12 道朱红粗块，子午环朱红，底座青绿，生肖玉章金圈改哑光亮金。`tests/toon-sky.test.mjs` 3 项，visual-direction.md 第 2 节加一行。
+- 新增 P2「AppUITests 与 WebGL 截图只在 Mac 空闲时跑」，把第 66、68 两轮中断的原因和以后的做法写清楚。
+
+改动文件：`src/ui/stage/scenes/sky.js`，`tests/toon-sky.test.mjs`（新），`docs/claude-plan/visual-direction.md` 一行，`TODO.md` 两行，截图，本记录。
+
+检查结果：
+- 干净 worktree `npm test` 556 项全部通过，`npm run build` 通过。
+- 截图用 `iphone-shots.mjs` 开 WebGL 拍星座页西方星座与东方生肖，393×852 与 430×932 各两张，脚本报告无横向溢出、无报错（chip 标记是可横向滚动的星座选项行，属于预期）。过目：三道金环、朱红子午环、青绿底座在浅蓝天空和水面前清楚分层，不再是橙褐一团，生肖模式里玉章与十二地支圆章没有被新环挡住。刻度块偏小，远看像红点，可以接受。上一轮 4 张旧截图已用 git rm 换掉。
+
+遗留问题：
+- 第 45、64、66、68 轮的未提交改动都在等 Peyton 决定。
+- 外部条件卡住的待办同前几轮（备案、Pages 发布、真机验证、小组件签名）。
+
+下一轮计划：不跑模拟器，截图默认 `--no-webgl`。做「硬币页清零与统计行」或「转盘选中浅色扇区」之前要先等第 45 轮改动有结论，因为它们碰同一批文件，所以下一轮先挑不碰这些文件的 P2 项，例如用 `--no-webgl` 复查设置页和皮肤抽屉，找最显旧的一处改掉。
+
+待 Peyton 决定：
+- 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
+- AppUITests 要不要由定时任务跑（已经两次拖垮 Mac），还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
+- App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。
