@@ -2052,3 +2052,28 @@ Mac 上 `npm test` 435 项全部通过（含第 28 轮未提交的 3 项，负�
 - 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
 - AppUITests 要不要由定时任务跑，还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
 - App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。
+
+## 第 72 轮 · 2026-11-23 17:55 UTC 起（PST 09:55，定时任务）
+
+开始状态：分支正确，本地与远端都在 1b4487e，fetch 后没有新提交，不需要 pull。.lock 是 idle，写入本轮时间。Mac 负载 1 分钟 2.5 到 3.7。主目录第 45、64 轮的未提交改动照旧保留（`git status` 与上一轮相同），TODO 里没有看到「同意提交」。本轮在新建的干净 worktree `/Users/simpenguin/lgj-wt72`（HEAD 1b4487e，node_modules 软链到主目录）里改和测，没有跑模拟器，截图全部关 WebGL。中途桥接断开约 8 分钟，恢复后继续，没有丢改动。
+
+完成的待办（1 项，第 71 轮计划里的两处候选合成一项）：
+- ✅「灵签分享卡 2D 回退里的细签与抽屉标题」：没有 WebGL 时灵签舞台掉出来的签平躺后只剩一道细线，签号是 14px 小字，截进分享卡像一根火柴。`stick-scene.js` 掉出来的那根签加粗到 12 × 9、签头加长，签号改白底深墨描边厚边胶囊、圆体 900 朱红字。抽屉标题「解锁更多」「设置」「分享」改圆体 900、18px、字距 .02em。`tests/toon-stick-label.test.mjs` 3 项，visual-direction.md 第 3 节加一行。
+
+改动文件：`src/ui/stick-scene.js`，`src/styles/playful.css`（没有动主目录有未提交改动的 `index.css`），`tests/toon-stick-label.test.mjs`（新），`TODO.md` 一行，`visual-direction.md` 一行，截图，本记录。
+
+检查结果：
+- 干净 worktree `npm test` 566 项全部通过，`npm run build` 通过。
+- 截图全部 `--no-webgl`：付费卡、设置抽屉、灵签分享卡（宣纸与玄墨），393×852 与 430×932，`iphone-shots.mjs` 报告无横向溢出、无报错。过目：掉出来的签明显变粗，签号胶囊清楚、不压签，玄墨皮肤分享卡同样正常。抽屉标题字重变化在无头浏览器的回退字体下不太明显，字距收紧可见，真机 PingFang 下会更清楚。上一轮 4 张屏保截图已用 git rm 换掉。
+
+遗留问题：
+- 第 45、64、66、68 轮的未提交改动都在等 Peyton 决定。
+- 外部条件卡住的待办同前几轮（备案、Pages 发布、真机验证、小组件签名）。
+- 御神签用同一个 `stick-scene.js`，掉出来的签也一起变粗，本轮没有单独截御神签分享卡，下一轮补看一眼。
+
+下一轮计划：补拍御神签 `m/omikuji@share` 两种尺寸确认胖签与胶囊正常，再继续 `--no-webgl` 复查不碰第 45、64 轮文件的 2D 界面。Mac 负载低且 Peyton 同意时再跑 AppUITests。
+
+待 Peyton 决定：
+- 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
+- AppUITests 要不要由定时任务跑，还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
+- App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。

@@ -4,6 +4,11 @@ import { createPainter } from './models/painter.js';
 
 // 卡通色板（visual-direction.md）：灵签筒是朱漆圆筒配金箍（第 34 轮由暖木改，土棕在三段明暗下发闷），御神签筒是朱红六角筒配金箍，签条为亮竹黄、签头朱红。
 const wood = '#d8402e', lacquer = '#e8463c', bamboo = '#f6d68a', bamboo2 = '#ecbf62', red = '#e8463c', gold = '#ffc93c';
+// 签条尺寸：筒里的签细一些才插得下，掉出来平躺的那根加粗，俯角下仍是一根胖签。
+export const STICK_IN = { w: 5.8, d: 3.8, tip: 18 };
+export const STICK_FREE = { w: 12, d: 9, tip: 26 };
+// 签号胶囊：白底、深墨描边、下沉厚边、圆体 900 朱红字（visual-direction.md 第 3 节）。
+export const LABEL_CHIP = { size: 16, padX: 10, h: 28, line: 2, edge: 3, ink: '#2b2240', fill: '#ffffff', text: '#d8402e' };
 const meshes = new Map();
 function tubeMesh(half, closed) {
   const key = String(closed);
@@ -18,6 +23,18 @@ function tubeMesh(half, closed) {
   const inside = closed ? [] : lathe([[radius-4,-half+5],[radius-4,half-1]], '#7a1a14', n);
   const mesh = [...body, ...inside, ...rings]; meshes.set(key, mesh); return mesh;
 }
+function labelChip(c, [x, y], text) {
+  const k = LABEL_CHIP;
+  c.save();
+  c.font = `900 ${k.size}px "PingFang SC", "Noto Sans SC", "Hiragino Sans GB", sans-serif`;
+  c.textAlign = 'center'; c.textBaseline = 'middle';
+  const w = c.measureText(text).width + k.padX * 2, h = k.h, r = h / 2, left = x - w / 2, top = y - h / 2;
+  const pill = (dy) => { c.beginPath(); if (c.roundRect) c.roundRect(left, top + dy, w, h, r); else c.rect(left, top + dy, w, h); };
+  pill(k.edge); c.fillStyle = k.ink; c.fill();
+  pill(0); c.fillStyle = k.fill; c.fill(); c.lineWidth = k.line; c.strokeStyle = k.ink; c.stroke();
+  c.fillStyle = k.text; c.fillText(text, x, y + 1);
+  c.restore();
+}
 export function paintStickScene(c, width, height, sim, label = '') {
   c.clearRect(0, 0, width, height);
   const p = createPainter(c, width, height, { pitch: .21 });
@@ -28,8 +45,10 @@ export function paintStickScene(c, width, height, sim, label = '') {
   for (const b of sim.bodies) {
     if (sim.kind === 'omikuji' && b !== sim.selected) continue;
     const s = sim.pose(b), q = axisAngle([0,0,1], s.r), position = [s.x, s.y, s.z];
-    const stick = box(5.8, b.length, 3.8, b.id % 3 ? bamboo : bamboo2);
-    const tip = transformed(box(6, 18, 4), [0,0,0,1], [0,b.length/2-9,0]).map(f => ({...f,color:red}));
+    // 第 72 轮：掉出来的那根签平躺时只剩一道细线，分享卡里像根火柴，加粗到 STICK_FREE 并加长朱红签头。
+    const fat = b === sim.selected && b.free, dim = fat ? STICK_FREE : STICK_IN;
+    const stick = box(dim.w, b.length, dim.d, b.id % 3 ? bamboo : bamboo2);
+    const tip = transformed(box(dim.w + .2, dim.tip, dim.d + .2), [0,0,0,1], [0,b.length/2-dim.tip/2,0]).map(f => ({...f,color:red}));
     faces.push(...transformed([...stick, ...tip], q, position));
   }
   p.mesh(faces);
@@ -39,8 +58,8 @@ export function paintStickScene(c, width, height, sim, label = '') {
   title.forEach((ch,i) => p.text(ch, add(labelPos, rotate([0,(title.length/2-.5-i)*22,0],tq)), {size:21,color:'#fff4d6',u,v,weight:800}));
   if (label && sim.selected.free) {
     const s = sim.pose(sim.selected);
-    // A small upright number beside the resting stick avoids illegible 5px type.
-    p.text(label, [s.x, -148, s.z], {size:14,color:'#2b2240',weight:800,stroke:'#ffffff',depth:false});
+    // 签号不写在签上（5px 看不清），在平躺的签下方放一枚描边厚边胶囊。
+    labelChip(c, p.project([s.x, -150, s.z]), label);
   }
   return p;
 }

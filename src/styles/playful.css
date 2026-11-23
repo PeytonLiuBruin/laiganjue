@@ -57,6 +57,8 @@
 .ritual-receipt h2 { font-family: var(--font-round); font-weight: 800; letter-spacing: .03em; }
 .result .result-title { font-family: var(--font-round); font-weight: 800; letter-spacing: .04em; }
 .sheet-title { font-family: var(--font-round); font-weight: 800; }
+/* 第 72 轮：抽屉标题（「解锁更多」「设置」等）原来 800 字重配 .06em 字距，比下面圆体 900 的卡片标题还细还散，改 900、字距 .02em、18px，和全 App 卡通标题一致 */
+.sheet-head .sheet-title { font-weight: 900; letter-spacing: .02em; font-size: 18px; }
 body { line-height: 1.6; }
 
 /* —— 卡片：纯白、圆角 20、底部 4px 同色深一档的厚度边，像手游按钮 —— */
