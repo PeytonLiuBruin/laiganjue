@@ -24,11 +24,13 @@ export const APP_TAGLINE = 'ORACLE · 日常灵感';
 // 底色圆偏左上，右下露出一道阴影月牙，左上一块硬边高光（玄墨、朱砂用金色高光呼应鎏金），描边与厚边由 CSS 的 .swatch-ball 加。
 export const toonSwatch = (base, shade, hl = '#ffffff') =>
   `radial-gradient(ellipse 19% 13% at 34% 27%, ${hl} 0 86%, transparent 96%), radial-gradient(circle at 41% 38%, ${base} 0 57%, ${shade} 59%)`;
+// 抽屉里的顺序（第 70 轮）：默认的宣纸排第一，两套免费在前，三套 Pro 在后，
+// 原来宣纸夹在第 4 格，新用户打开抽屉先看到一排 Pro 标签，找不到自己正在用的那套。
 export const THEMES = [
+  { id: 'paper', name: '宣纸', swatch: toonSwatch('#fff4d9', '#f0c97e') },
   { id: 'ink', name: '玄墨', swatch: toonSwatch('#3b3554', '#1c1929', '#ffc93c') },
   { id: 'cinnabar', name: '朱砂', pro: true, blurb: '朱红漆器配鎏金，喜庆浓烈', swatch: toonSwatch('#e8452f', '#a8261a', '#ffd36b') },
   { id: 'nebula', name: '星穹', pro: true, blurb: '紫色星空舞台，器物泛着星光', swatch: toonSwatch('#7a68f5', '#4335b3') },
-  { id: 'paper', name: '宣纸', swatch: toonSwatch('#fff4d9', '#f0c97e') },
   { id: 'celadon', name: '青瓷', pro: true, blurb: '青瓷釉色，清爽如雨后', swatch: toonSwatch('#93dcc2', '#4cab8e') },
 ];
 

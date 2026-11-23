@@ -196,3 +196,10 @@
   border: 2px solid var(--line-strong);
   box-shadow: 0 3px 0 var(--edge-color);
 }
+
+/* 第 70 轮：设置行里的分段选项（器物动画「完整 / 轻柔」、屏保「1 / 3 / 5 / 10」分钟）没选中的一项只是一行灰字，
+   看不出能点。只在设置行里给未选中项加 2px 浅描边胶囊，不加厚边，和选中项的厚边区分。玩法页的模式选项行保持第 49 轮的样子。 */
+.setting-row .chips .chip.chip:not(.active) { /* 叠一次 .chip 提高优先级，盖过后导入的 toon-buttons 透明边 */
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}

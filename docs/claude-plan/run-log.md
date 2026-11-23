@@ -1997,3 +1997,33 @@ Mac 上 `npm test` 435 项全部通过（含第 28 轮未提交的 3 项，负�
 - 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
 - AppUITests 要不要由定时任务跑（已经两次拖垮 Mac），还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
 - App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。
+
+推送结果（第 69 轮补记）：提交 fb4adf3 已在远端。
+
+## 第 70 轮 · 2026-11-23 10:25 UTC 起（PST 02:25，定时任务，原定 08:54 UTC，晚了约 1.5 小时触发）
+
+开始状态：分支正确，本地与远端都在 fb4adf3，fetch 后没有新提交，不需要 pull。.lock 是 idle，写入本轮时间。Mac 负载 1 分钟 2.7，15 分钟 2.9，很空闲。主目录第 45、64 轮的未提交改动照旧保留，TODO 里没有看到「同意提交」。本轮在新建的干净 worktree `/Users/simpenguin/lgj-wt70`（HEAD fb4adf3，node_modules 软链到主目录）里改和测。
+
+没有跑 AppUITests：Mac 负载虽低，但 TODO 里「AppUITests 与 WebGL 截图只在 Mac 空闲时跑」还在等 Peyton 决定由谁来跑，凌晨两点跑模拟器万一又拖垮 Mac 也没人管，本轮按第 69 轮计划只做 `--no-webgl` 的界面复查。
+
+完成的待办（2 项，都是本轮复查新发现的 P2）：
+- ✅「皮肤抽屉顺序与 Pro 卡字体」：默认的宣纸原来排在第 4 格，打开抽屉先看到玄墨和两套 Pro，改为宣纸、玄墨、朱砂、星穹、青瓷。Pro 卡标题从宋体改圆体 900，卡片加 3px 金色厚边，和抽屉里其他卡片统一。`tests/skin-sheet-order.test.mjs` 2 项。
+- ✅「设置页分段选项未选中项太素」：「轻柔」和屏保分钟数 1、5、10 没选中时只是灰字，现在加 2px 浅描边胶囊、不加厚边。规则只作用于设置行，玩法页模式选项行不变。第一次写的选择器和 `toon-buttons.css` 优先级相同又后导入，被透明边盖掉，截图发现后叠一次 `.chip` 提高优先级再拍，修好。
+
+改动文件：`src/ui/app.js`（THEMES 顺序），`src/styles/paywall.css`，`src/styles/toon-settings.css`，`tests/skin-sheet-order.test.mjs`（新），`TODO.md` 两行，截图，本记录。
+
+检查结果：
+- 干净 worktree `npm test` 558 项全部通过，`npm run build` 通过。
+- 截图全部 `--no-webgl`：设置页两屏与皮肤抽屉，393×852 与 430×932，`iphone-shots.mjs` 与 `skin-shots.mjs` 都报告无横向溢出、无截断、无报错。过目：宣纸带勾排第一，两套免费在前，Pro 卡标题圆体，厚边清楚。分钟数四个胶囊等宽排一行，430 宽也不折行。上一轮 4 张星座截图已用 git rm 换掉。
+
+遗留问题：
+- 第 45、64、66、68 轮的未提交改动都在等 Peyton 决定。
+- 外部条件卡住的待办同前几轮（备案、Pages 发布、真机验证、小组件签名）。
+- 皮肤抽屉 5 套排 3 列，第二行右边空一格，暂时可以接受，以后加第 6 套皮肤时自然补齐。
+
+下一轮计划：继续 `--no-webgl` 复查不碰第 45、64 轮文件的 2D 界面，优先看历史记录页与签册，找最显旧的一处改掉。Mac 负载低且 Peyton 同意时再跑 AppUITests。
+
+待 Peyton 决定：
+- 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
+- AppUITests 要不要由定时任务跑，还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
+- App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。

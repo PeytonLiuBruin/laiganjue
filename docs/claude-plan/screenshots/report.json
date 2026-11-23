@@ -1,53 +1,45 @@
 [
   {
-    "route": "m/zodiac",
+    "route": "home@settings",
     "viewport": "393x852",
-    "file": "m-zodiac-393x852.png",
+    "file": "home-settings-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
     },
     "errors": []
   },
   {
-    "route": "m/zodiac@tab1",
+    "route": "home@settings-end",
     "viewport": "393x852",
-    "file": "m-zodiac-tab1-393x852.png",
+    "file": "home-settings-end-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
     },
     "errors": []
   },
   {
-    "route": "m/zodiac",
+    "route": "home@settings",
     "viewport": "430x932",
-    "file": "m-zodiac-430x932.png",
+    "file": "home-settings-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
     },
     "errors": []
   },
   {
-    "route": "m/zodiac@tab1",
+    "route": "home@settings-end",
     "viewport": "430x932",
-    "file": "m-zodiac-tab1-430x932.png",
+    "file": "home-settings-end-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": [
-        "chip"
-      ]
+      "bad": []
     },
     "errors": []
   }
