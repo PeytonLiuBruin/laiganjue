@@ -48,6 +48,24 @@ export const ZEN_LINES = [
   '慢慢来，比较快',
 ];
 
+/* 第 71 轮卡通化：原来是 0.25 到 0.4 的发丝细环、宋体细字配 .3em 大字距、渐变时间字、带透明度的太极，
+   和 App 其余描边厚边的界面不是一套，时间字还压在八卦环上。改为一块白色表盘（粗描边加厚边），
+   时辰字放在外圈色带里，当前时辰是主色圆章，中心一枚内盘只放时间和日期，农历与宜忌挪到表盘下方的描边胶囊。
+   半径都是 viewBox 100 里的单位，表盘在 393 宽下约 361px，1 单位约 3.6px。 */
+export const ZEN_TOON = {
+  plate: 47, // 表盘外沿
+  edge: 1.6, // 表盘底部厚边下移量
+  band: 36.5, // 时辰色带内沿（虚线）
+  branch: 42, // 时辰字所在半径
+  branchSize: 4.6,
+  chip: 4.3, // 当前时辰圆章半径
+  bagua: 31.8,
+  core: 27, // 中心内盘，时间和日期都在里面
+  coin: 2.4, // 表盘边上走动的金币（当前时刻）
+  coinFill: '#ffc93c',
+  coinInk: '#8a3a10',
+};
+
 const BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 const TRIGRAMS = ['☰', '☱', '☲', '☳', '☴', '☵', '☶', '☷'];
 
@@ -76,7 +94,8 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
     const yijiEl = h('div', { class: 'zen-yiji' });
     const lineEl = h('div', { class: 'zen-line' });
     const hintEl = h('div', { class: 'zen-hint' }, '轻触任意处返回');
-    const center = h('div', { class: 'zen-center' }, timeEl, dateEl, lunarEl, yijiEl);
+    const center = h('div', { class: 'zen-center' }, timeEl, dateEl);
+    const info = h('div', { class: 'zen-info' }, lunarEl, yijiEl);
     const emblem = fromHTML(
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 20 20" class="zen-emblem" aria-hidden="true"><g class="zen-taiji">
         <circle r="9" class="zen-taiji-bg"/>
@@ -85,8 +104,8 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
         <circle cx="0" cy="4.5" r="1.5" class="zen-taiji-light"/>
       </g></svg>`,
     );
-    el = h('div', { class: 'zen', attrs: { role: 'dialog', 'aria-label': '屏保' } }, canvas, ring.el, emblem, center, lineEl, hintEl);
-    el.__refs = { timeEl, dateEl, lunarEl, yijiEl, lineEl, hintEl, center, ring };
+    el = h('div', { class: 'zen', attrs: { role: 'dialog', 'aria-label': '屏保' } }, canvas, ring.el, emblem, center, info, lineEl, hintEl);
+    el.__refs = { timeEl, dateEl, lunarEl, yijiEl, lineEl, hintEl, center, info, ring };
     // 退出：轻触（进入后 400ms 内忽略，避免进入手势立刻触发退出）
     el.addEventListener('pointerdown', (e) => {
       if (performance.now() - enteredAt < 400) return;
@@ -96,53 +115,56 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
     return el;
   }
 
-  /** 日晷环：外圈十二时辰（子在下=夜半，午在上=正午），中圈八卦慢转，中心太极 */
+  /** 日晷表盘（第 71 轮卡通化）：外圈十二时辰（子在下=夜半，午在上=正午），中圈八卦慢转，中心内盘放时间 */
   function buildDial() {
     const size = 100;
     const c = size / 2;
-    const rOuter = 47;
-    const rInner = 33;
-    let inner = '';
-    // 外圈刻度与时辰
-    for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * Math.PI * 2 + Math.PI / 2; // 0h 在底部
-      const isHour = i % 2 === 0;
-      const r1 = rOuter - (isHour ? 3 : 1.6);
-      inner += `<line x1="${c + Math.cos(a) * r1}" y1="${c + Math.sin(a) * r1}" x2="${c + Math.cos(a) * rOuter}" y2="${c + Math.sin(a) * rOuter}" class="zen-tick${isHour ? ' major' : ''}"/>`;
+    const T = ZEN_TOON;
+    const at = (deg, r) => [(c + Math.cos(deg) * r).toFixed(2), (c + Math.sin(deg) * r).toFixed(2)];
+    let marks = '';
+    // 时辰之间的小圆点（代替原来 24 道发丝刻度）
+    for (let i = 0; i < 12; i++) {
+      const [x, y] = at(((i + 0.5) / 12) * Math.PI * 2 + Math.PI / 2, T.branch);
+      marks += `<circle cx="${x}" cy="${y}" r="0.9" class="zen-dot"/>`;
     }
     for (let i = 0; i < 12; i++) {
       // 子时 23:00–01:00，中心在 0h → 底部
-      const a = (i / 12) * Math.PI * 2 + Math.PI / 2;
-      const r = rOuter - 8.5;
-      inner += `<text x="${c + Math.cos(a) * r}" y="${c + Math.sin(a) * r}" class="zen-branch" data-i="${i}" text-anchor="middle" dominant-baseline="central">${BRANCHES[i]}</text>`;
+      const [x, y] = at((i / 12) * Math.PI * 2 + Math.PI / 2, T.branch);
+      marks += `<circle cx="${x}" cy="${y}" r="${T.chip}" class="zen-chip" data-i="${i}"/>`;
+      marks += `<text x="${x}" y="${y}" class="zen-branch" data-i="${i}" text-anchor="middle" dominant-baseline="central">${BRANCHES[i]}</text>`;
     }
     // 八卦环（旋转组）
     let bagua = '';
     for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2 - Math.PI / 2;
-      bagua += `<text x="${c + Math.cos(a) * rInner}" y="${c + Math.sin(a) * rInner}" class="zen-trigram" text-anchor="middle" dominant-baseline="central" transform="rotate(${(i / 8) * 360} ${c + Math.cos(a) * rInner} ${c + Math.sin(a) * rInner})">${TRIGRAMS[i]}</text>`;
+      const [x, y] = at((i / 8) * Math.PI * 2 - Math.PI / 2, T.bagua);
+      bagua += `<text x="${x}" y="${y}" class="zen-trigram" text-anchor="middle" dominant-baseline="central" transform="rotate(${(i / 8) * 360} ${x} ${y})">${TRIGRAMS[i]}</text>`;
     }
     const svgEl = fromHTML(
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" class="zen-dial" aria-hidden="true">
-        <circle cx="${c}" cy="${c}" r="${rOuter}" class="zen-circle"/>
-        <circle cx="${c}" cy="${c}" r="${rOuter - 12}" class="zen-circle faint"/>
-        ${inner}
-        <g class="zen-bagua">${bagua}<circle cx="${c}" cy="${c}" r="${rInner - 5.5}" class="zen-circle faint"/></g>
-        <circle class="zen-now" r="1.6" cx="${c}" cy="${c + rOuter}"/>
+        <circle cx="${c}" cy="${c + T.edge}" r="${T.plate}" class="zen-plate-edge"/>
+        <circle cx="${c}" cy="${c}" r="${T.plate}" class="zen-plate"/>
+        <circle cx="${c}" cy="${c}" r="${T.band}" class="zen-band"/>
+        ${marks}
+        <g class="zen-bagua">${bagua}</g>
+        <circle cx="${c}" cy="${c + T.edge * 0.8}" r="${T.core}" class="zen-core-edge"/>
+        <circle cx="${c}" cy="${c}" r="${T.core}" class="zen-core"/>
+        <circle class="zen-now" r="${T.coin}" cx="${c}" cy="${c + T.plate}"/>
       </svg>`,
     );
     const wrap = h('div', { class: 'zen-ring' }, svgEl);
     const now = svgEl.querySelector('.zen-now');
     const branches = Array.from(svgEl.querySelectorAll('.zen-branch'));
+    const chips = Array.from(svgEl.querySelectorAll('.zen-chip'));
     return {
       el: wrap,
       update(date) {
         const hours = date.getHours() + date.getMinutes() / 60 + date.getSeconds() / 3600;
-        const a = (hours / 24) * Math.PI * 2 + Math.PI / 2; // 0h 底部
-        now.setAttribute('cx', (c + Math.cos(a) * rOuter).toFixed(2));
-        now.setAttribute('cy', (c + Math.sin(a) * rOuter).toFixed(2));
+        const [x, y] = at((hours / 24) * Math.PI * 2 + Math.PI / 2, T.plate); // 0h 底部
+        now.setAttribute('cx', x);
+        now.setAttribute('cy', y);
         const shichen = Math.floor(((date.getHours() + 1) % 24) / 2);
         branches.forEach((b, i) => b.classList.toggle('active', i === shichen));
+        chips.forEach((b, i) => b.classList.toggle('active', i === shichen));
       },
     };
   }
@@ -150,7 +172,7 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
   /* ---------- 内容刷新 ---------- */
   function refresh(force = false) {
     const now = new Date();
-    const { timeEl, dateEl, lunarEl, yijiEl, ring, center } = el.__refs;
+    const { timeEl, dateEl, lunarEl, yijiEl, ring, center, info } = el.__refs;
     ring.update(now);
     const minute = now.getMinutes();
     if (!force && minute === lastMinute) return;
@@ -158,18 +180,22 @@ export function createZen({ platform, onEnter, onExit, getAccent }) {
     timeEl.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
     try {
       const a = almanacSummary(now);
-      dateEl.textContent = `${now.getMonth() + 1}月${now.getDate()}日 · ${a.week}${a.jieqi ? ' · ' + a.jieqi : ''}`;
-      lunarEl.textContent = `${a.yearGanZhi}年 ${a.lunarText} · ${a.dayGanZhi}日 · ${BRANCHES[Math.floor(((now.getHours() + 1) % 24) / 2)]}时`;
+      // 内盘只放日期与星期（节气放进下方胶囊，免得在短屏上伸出内盘）
+      dateEl.textContent = `${now.getMonth() + 1}月${now.getDate()}日 · ${a.week}`;
+      lunarEl.textContent = `${a.jieqi ? a.jieqi + ' · ' : ''}${a.yearGanZhi}年 ${a.lunarText} · ${a.dayGanZhi}日 · ${BRANCHES[Math.floor(((now.getHours() + 1) % 24) / 2)]}时`;
       const yi = a.yi.find((x) => x !== '诸事不宜') || '静坐';
       const ji = a.ji.find((x) => x !== '诸事不宜') || '躁进';
-      yijiEl.textContent = `宜 ${yi} · 忌 ${ji}`;
+      clear(yijiEl);
+      yijiEl.append(h('b', { class: 'zen-yi' }, '宜'), ` ${yi}`, h('b', { class: 'zen-ji' }, '忌'), ` ${ji}`);
     } catch {
       dateEl.textContent = now.toLocaleDateString('zh-CN');
     }
     // 防烙印：每分钟整体微移
     if (!reduce) {
       const r = seeded(`${now.getHours()}:${minute}`);
-      center.style.transform = `translate(${(r() - 0.5) * 12}px, ${(r() - 0.5) * 12}px)`;
+      const shift = `translate(${(r() - 0.5) * 12}px, ${(r() - 0.5) * 12}px)`;
+      center.style.transform = shift;
+      info.style.transform = shift;
     }
   }
 

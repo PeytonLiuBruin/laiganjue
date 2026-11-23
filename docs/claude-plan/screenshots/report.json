@@ -1,46 +1,34 @@
 [
   {
-    "route": "home@settings",
+    "route": "zen",
+    "theme": "paper",
     "viewport": "393x852",
-    "file": "home-settings-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
+    "file": "zen-393x852.png",
+    "overflowX": 0,
     "errors": []
   },
   {
-    "route": "home@settings-end",
+    "route": "zen",
+    "theme": "paper",
+    "viewport": "430x932",
+    "file": "zen-430x932.png",
+    "overflowX": 0,
+    "errors": []
+  },
+  {
+    "route": "zen",
+    "theme": "ink",
     "viewport": "393x852",
-    "file": "home-settings-end-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
+    "file": "ink-zen-393x852.png",
+    "overflowX": 0,
     "errors": []
   },
   {
-    "route": "home@settings",
+    "route": "zen",
+    "theme": "ink",
     "viewport": "430x932",
-    "file": "home-settings-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "home@settings-end",
-    "viewport": "430x932",
-    "file": "home-settings-end-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": []
-    },
+    "file": "ink-zen-430x932.png",
+    "overflowX": 0,
     "errors": []
   }
 ]

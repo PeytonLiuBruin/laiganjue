@@ -24,12 +24,18 @@
 .zen-active body {
   overflow: hidden;
 }
+/* 第 71 轮卡通化：背景换成和 2D 舞台同一片晴空（深色皮肤是夜空），表盘是白色描边厚边圆盘，
+   时间放进中心内盘，农历与宜忌挪到表盘下方两枚描边胶囊，古语与提示也用圆体。参数见 zen.js 的 ZEN_TOON。
+   --zr 是表盘直径：短屏（含刘海与底部横条）按可用高度收小，保证表盘、胶囊、古语三段不重叠。 */
+.zen {
+  --zr: min(92vw, 620px, calc(100vh - 380px - var(--safe-top, 0px) - var(--safe-bottom, 0px)));
+  --zen-ink: #2b2240;
+}
 .zen::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--stage-bg);
-  opacity: 0.9;
+  background: linear-gradient(180deg, var(--toon-sky-1, #8fd3ff) 0%, var(--toon-sky-2, #d4f0ff) 100%);
 }
 .zen-canvas {
   position: absolute;
@@ -40,8 +46,8 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: min(92vw, 92vh, 620px);
-  height: min(92vw, 92vh, 620px);
+  width: var(--zr);
+  height: var(--zr);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
@@ -50,69 +56,101 @@
   height: 100%;
   overflow: visible;
 }
-.zen-circle {
+.zen-plate-edge {
+  fill: var(--edge-color);
+}
+.zen-plate {
+  fill: var(--surface);
+  stroke: var(--line-strong);
+  stroke-width: 0.8;
+}
+.zen-band {
   fill: none;
   stroke: var(--line-strong);
-  stroke-width: 0.35;
+  stroke-width: 0.6;
+  stroke-dasharray: 1.4 1.6;
+  stroke-linecap: round;
 }
-.zen-circle.faint {
-  stroke: var(--line);
-  stroke-width: 0.25;
+.zen-dot {
+  fill: var(--line-strong);
 }
-.zen-tick {
-  stroke: var(--line);
-  stroke-width: 0.3;
+.zen-chip {
+  fill: transparent;
+  stroke: transparent;
+  transition: fill 1s, stroke 1s;
 }
-.zen-tick.major {
-  stroke: var(--line-strong);
-  stroke-width: 0.4;
+.zen-chip.active {
+  /* 固定朱红配白字：玄墨、星穹的主色是浅金浅紫，白字在上面看不清 */
+  fill: #e8463c;
+  stroke: #7a1a14;
+  stroke-width: 0.6;
 }
 .zen-branch {
-  font-family: var(--font-display);
-  font-size: 3.6px;
-  fill: var(--text-3);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 900;
+  font-size: 4.6px;
+  fill: var(--text-2);
   letter-spacing: 0;
   transition: fill 1s;
 }
 .zen-branch.active {
-  fill: var(--accent);
+  fill: #fff;
 }
 .zen-trigram {
-  font-size: 3.2px;
-  fill: var(--text-3);
+  font-size: 4.2px;
+  font-weight: 700;
+  fill: var(--accent-text);
 }
 .zen-bagua {
   transform-origin: 50px 50px;
   transform-box: view-box;
   animation: zen-rotate 600s linear infinite;
 }
+.zen-core-edge {
+  fill: var(--edge-color);
+}
+.zen-core {
+  fill: var(--surface-2, var(--surface));
+  stroke: var(--line-strong);
+  stroke-width: 0.7;
+}
 .zen-emblem {
   position: absolute;
   top: calc(9vh + var(--safe-top));
   left: 50%;
-  width: 34px;
-  height: 34px;
-  margin-left: -17px;
-  opacity: 0.8;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  overflow: visible;
+  filter: drop-shadow(0 3px 0 var(--edge-color));
 }
 .zen-taiji {
   animation: zen-breathe 7s ease-in-out infinite;
   transform-box: fill-box;
   transform-origin: center;
 }
+/* 太极固定黑白两色、深墨描边，不随皮肤变透明 */
 .zen-taiji-bg {
-  fill: var(--text);
-  opacity: 0.9;
+  fill: var(--zen-ink);
+  stroke: var(--zen-ink);
+  stroke-width: 1.1;
 }
 .zen-taiji-dark {
-  fill: var(--bg);
+  fill: #fff;
 }
 .zen-taiji-light {
-  fill: var(--text);
+  fill: var(--zen-ink);
 }
+/* 当前时刻：表盘边上一枚描边金币 */
 .zen-now {
-  fill: var(--accent);
-  filter: drop-shadow(0 0 2px var(--glow));
+  fill: #ffc93c;
+  stroke: #8a3a10;
+  stroke-width: 0.7;
+}
+[data-theme='ink'] .zen-taiji-bg,
+[data-theme='cinnabar'] .zen-taiji-bg,
+[data-theme='nebula'] .zen-taiji-bg {
+  stroke: #fff4d6;
 }
 @keyframes zen-rotate {
   to {
@@ -123,11 +161,9 @@
   0%,
   100% {
     transform: scale(1);
-    opacity: 0.85;
   }
   50% {
     transform: scale(1.06);
-    opacity: 1;
   }
 }
 
@@ -138,47 +174,78 @@
   padding: 0 24px;
 }
 .zen-time {
-  font-family: var(--font-latin-display);
-  font-weight: 500;
-  font-size: clamp(64px, 19vw, 132px);
+  font-family: var(--font-round, var(--font-sans));
+  font-weight: 900;
+  font-size: calc(var(--zr) * 0.15);
   line-height: 1;
-  letter-spacing: 0.06em;
-  background: linear-gradient(160deg, var(--text) 20%, var(--accent-2) 60%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 .zen-date {
-  margin-top: 14px;
-  font-family: var(--font-display);
-  font-size: clamp(13px, 3.6vw, 17px);
-  letter-spacing: 0.3em;
+  margin-top: calc(var(--zr) * 0.018);
+  font: 800 max(11px, calc(var(--zr) * 0.035)) / 1.3 var(--font-round, var(--font-sans));
+  letter-spacing: 0.02em;
   color: var(--text-2);
+  white-space: nowrap;
 }
-.zen-lunar {
-  margin-top: 8px;
-  font-size: clamp(11px, 3vw, 13px);
-  letter-spacing: 0.22em;
-  color: var(--text-3);
+.zen-info {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: calc(50% + var(--zr) / 2 + 12px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: transform 2s ease;
+  pointer-events: none;
+}
+.zen-lunar,
+.zen-yiji {
+  max-width: 100%;
+  padding: 5px 14px;
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+  font: 800 13px/1.4 var(--font-round, var(--font-sans));
+  letter-spacing: 0.03em;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .zen-yiji {
-  margin-top: 18px;
-  font-family: var(--font-display);
-  font-size: clamp(12px, 3.2vw, 14px);
-  letter-spacing: 0.28em;
-  color: var(--accent-text);
-  opacity: 0.85;
+  color: var(--text);
+}
+.zen-yi,
+.zen-ji {
+  display: inline-block;
+  min-width: 1.6em;
+  margin-right: 4px;
+  padding: 0 5px;
+  border-radius: 7px;
+  font-weight: 900;
+  color: #fff;
+  text-align: center;
+}
+.zen-yi {
+  background: #22a88f;
+}
+.zen-ji {
+  margin-left: 12px;
+  background: #d8402e;
 }
 .zen-line {
   position: absolute;
   left: 24px;
   right: 24px;
-  bottom: calc(12vh + var(--safe-bottom));
+  bottom: calc(7vh + var(--safe-bottom) + 8px);
   text-align: center;
-  font-family: var(--font-serif);
-  font-size: clamp(14px, 3.8vw, 18px);
-  letter-spacing: 0.2em;
-  color: var(--text-2);
+  font: 800 clamp(15px, 4vw, 18px) / 1.5 var(--font-round, var(--font-sans));
+  letter-spacing: 0.06em;
+  color: var(--text);
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 1.4s ease, transform 1.4s ease;
@@ -190,27 +257,36 @@
 }
 .zen-hint {
   position: absolute;
-  bottom: calc(24px + var(--safe-bottom));
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 11px;
-  letter-spacing: 0.3em;
-  color: var(--text-3);
+  bottom: calc(12px + var(--safe-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border: 2px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--edge-color);
+  font: 800 12px/1.4 var(--font-round, var(--font-sans));
+  letter-spacing: 0.04em;
+  color: var(--text-2);
+  white-space: nowrap;
   transition: opacity 1.2s;
 }
 .zen-hint.fade {
   opacity: 0;
 }
 @media (orientation: landscape) and (max-height: 500px) {
-  .zen-ring {
-    width: min(92vh, 620px);
-    height: min(92vh, 620px);
+  .zen {
+    --zr: min(84vh, 620px);
   }
-  .zen-time {
-    font-size: clamp(48px, 14vh, 96px);
+  .zen-info {
+    top: auto;
+    left: calc(50% + var(--zr) / 2 + 12px);
+    right: 12px;
+    bottom: calc(6vh + var(--safe-bottom));
   }
   .zen-line {
+    left: 12px;
+    right: calc(50% + var(--zr) / 2 + 12px);
     bottom: calc(6vh + var(--safe-bottom));
   }
 }
