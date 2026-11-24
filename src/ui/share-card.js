@@ -73,18 +73,38 @@ export function poemRows(line, maxWidth, measure) {
   return rows;
 }
 
-/** 正文排版：签诗行标 poem（深墨粗字），其余按宽度折行，总共最多 max 行，超出的最后一行以「…」收尾。 */
+export const KEY_GAP = 24;
+/**
+ * 结论行（第 75 轮）：八字「四柱：乙亥 壬午 庚辰」整行深墨粗字，塔罗「指引 · 圣杯三— 庆祝 / 友谊」牌名粗字、关键词灰字跟在同一行，
+ * 放不下时关键词折到下一行（cont，不再多空 16）。不是结论行返回 null。
+ */
+export function keyRows(line, maxWidth, mBody, mPoem) {
+  const s = String(line).trim();
+  const pillars = s.match(/^四柱[：:]\s*(.+)$/);
+  if (pillars) return clampLines(wrapText('四柱　' + pillars[1].trim(), maxWidth, mPoem), 1, mPoem, maxWidth).map((t) => ({ t, poem: true }));
+  const card = s.match(/^([^—：:]{1,16}?)\s*—\s*(.+)$/);
+  if (!card) return null;
+  const head = clampLines(wrapText(card[1], maxWidth, mPoem), 1, mPoem, maxWidth)[0], tail = card[2].trim();
+  if (mPoem(head) + KEY_GAP + mBody(tail) <= maxWidth) return [{ t: head, poem: true, tail }];
+  return [{ t: head, poem: true }, ...wrapText(tail, maxWidth, mBody).map((t) => ({ t, poem: false, cont: true }))];
+}
+
+/** 正文排版：签诗与结论行标 poem（深墨粗字），其余按宽度折行，总共最多 max 行，超出的最后一行以「…」收尾。 */
 export function layoutBody(lines, maxWidth, mBody, mPoem, max = 9) {
   const items = lines.flatMap((l) => {
     const p = poemRows(l, maxWidth, mPoem);
-    return p ? p.map((t) => ({ t, poem: true })) : wrapText(l, maxWidth, mBody).map((t) => ({ t, poem: false }));
+    if (p) return p.map((t) => ({ t, poem: true }));
+    return keyRows(l, maxWidth, mBody, mPoem) || wrapText(l, maxWidth, mBody).map((t) => ({ t, poem: false }));
   });
   if (items.length <= max) return items;
-  const kept = items.slice(0, max), last = kept[max - 1];
+  const kept = items.slice(0, max), { tail, ...last } = kept[max - 1];
   const m = last.poem ? mPoem : mBody;
   kept[max - 1] = { ...last, t: clampLines([last.t, ''], 1, m, maxWidth)[0] };
   return kept;
 }
+
+/** 两行之间要不要多空 16：诗句或结论行结束、转到普通解读时空一下，结论行自己折下来的关键词不空。 */
+export const gapBefore = (items, i) => i > 0 && (items[i - 1].poem || items[i - 1].cont) && !items[i].poem && !items[i].cont;
 
 /** 当前页面上最大的那块可见器物画面（WebGL 舞台或 2D 画布），抽屉里的不算。 */
 export function captureStage(root = document) {
@@ -150,7 +170,7 @@ export function drawShareCard({ heading, sub = '', lines = [], image = null, wat
   const mPoem = measureWith(font(42, 800));
   const bodyLines = layoutBody(lines, inner, mBody, mPoem, 9);
   // 每行高度：诗句 64、解读 60，诗句结束转到解读时多空 16
-  const rowH = (it, i) => (it.poem ? 64 : 60) + (i > 0 && bodyLines[i - 1].poem && !it.poem ? 16 : 0);
+  const rowH = (it, i) => (it.poem ? 64 : 60) + (gapBefore(bodyLines, i) ? 16 : 0);
   const bodyH = bodyLines.reduce((s, it, i) => s + rowH(it, i), 0);
   const textH = headLines.length * 84 + (subLines.length ? 18 + subLines.length * 58 : 0) + (bodyLines.length ? 56 + bodyH : 0);
   const cardY = 196, cardH = 48 + imgH + 52 + textH + 56;
@@ -219,9 +239,15 @@ export function drawShareCard({ heading, sub = '', lines = [], image = null, wat
     y += 22; g.strokeStyle = 'rgba(43,34,64,.14)'; g.lineWidth = 3; g.setLineDash([12, 12]);
     g.beginPath(); g.moveTo(ix, y); g.lineTo(ix + inner, y); g.stroke(); g.setLineDash([]); y += 34;
     bodyLines.forEach((it, i) => {
-      if (i > 0 && bodyLines[i - 1].poem && !it.poem) y += 16;
+      if (gapBefore(bodyLines, i)) y += 16;
       g.font = it.poem ? font(42, 800) : font(38, 500); g.fillStyle = it.poem ? C.ink : C.soft;
-      g.fillText(it.t, ix, y); y += it.poem ? 64 : 60;
+      g.fillText(it.t, ix, y);
+      if (it.tail) {
+        // 关键词灰字跟在牌名后面，底边对齐粗字（粗字 42、灰字 38，往下挪 3 像素）
+        const tx = ix + g.measureText(it.t).width + KEY_GAP;
+        g.font = font(38, 500); g.fillStyle = C.soft; g.fillText(it.tail, tx, y + 3);
+      }
+      y += it.poem ? 64 : 60;
     });
   }
 

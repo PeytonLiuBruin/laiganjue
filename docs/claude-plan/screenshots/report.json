@@ -1,8 +1,8 @@
 [
   {
-    "route": "m/liuyao@readfull",
+    "route": "m/bazi@share",
     "viewport": "393x852",
-    "file": "m-liuyao-readfull-393x852.png",
+    "file": "m-bazi-share-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,9 +11,33 @@
     "errors": []
   },
   {
-    "route": "m/liuyao@readfull",
+    "route": "m/tarot@share",
+    "viewport": "393x852",
+    "file": "m-tarot-share-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@share",
+    "viewport": "393x852",
+    "file": "m-runes-share-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/bazi@share",
     "viewport": "430x932",
-    "file": "m-liuyao-readfull-430x932.png",
+    "file": "m-bazi-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -22,20 +46,22 @@
     "errors": []
   },
   {
-    "route": "m/liuyao@readfull",
-    "viewport": "393x852",
-    "file": "ink-m-liuyao-readfull-393x852.png",
+    "route": "m/tarot@share",
+    "viewport": "430x932",
+    "file": "m-tarot-share-430x932.png",
     "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
+      "scrollW": 430,
+      "w": 430,
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   },
   {
-    "route": "m/liuyao@readfull",
+    "route": "m/runes@share",
     "viewport": "430x932",
-    "file": "ink-m-liuyao-readfull-430x932.png",
+    "file": "m-runes-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
