@@ -2186,3 +2186,29 @@ Mac 上 `npm test` 435 项全部通过（含第 28 轮未提交的 3 项，负�
 - 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
 - AppUITests 要不要由定时任务跑，还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
 - App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。
+
+## 第 77 轮 · 2026-11-24 20:55 UTC 起（PST 12:55，定时任务）
+
+开始状态：主目录分支正确，`git fetch` 后远端在 0a07fdd（第 76 轮从 worktree 推送），主目录 HEAD 停在 3c52073，落后 2 个提交。主目录第 45、64 轮的未提交改动照旧保留（`git status` 与上一轮相同），TODO 里没有看到「同意提交」，所以主目录没有 pull。.lock 是 idle，写入本轮时间。Mac 负载 1 分钟约 5.2。本轮沿用干净的 worktree `/Users/simpenguin/lgj-wt72`（HEAD 0a07fdd，已是最新），没有跑模拟器，截图全部关 WebGL、nohup 后台拍。
+
+完成的待办（1 项）：
+- ✅「星座分享卡星级用字符★☆灰字」：`share-card.js` 新增 `isStarRow`、`drawStarText`。星级行（「爱情 ★★★☆☆  事业 ★★★★☆」）标签改深墨粗字，★☆ 画成金色描边胖星与奶油暗星，每颗占一个字宽，排版宽度不变，放不下时在两组之间断开。财运、事业分享卡副标题里的星串也一起换成胖星。星座文案里的半角双引号（今日一句与星座简介共十几处）全部改成「」。
+- 新测试 `tests/toon-share-stars.test.mjs` 4 项。visual-direction.md 第 3 节加一行。TODO 新增「财运、事业分享卡的签名句和解读混在一起折行」。
+
+改动文件：`src/ui/share-card.js`，`src/modules/zodiac/data.js`，`tests/toon-share-stars.test.mjs`（新），`TODO.md`，`visual-direction.md`，截图，本记录。没有动主目录有未提交改动的文件。
+
+检查结果：
+- worktree `npm test` 588 项全部通过，`npm run build` 通过。
+- 截图全部 `--no-webgl`：星座、财运分享抽屉，393×852 与 430×932，`iphone-shots.mjs` 报告 4 张页面宽度都等于视口、无报错（星座的 `chip` 标记是横滑选项条，改动前就有）。过目：星座卡三行星级是金色胖星，和配图里的星星一套画法，标签深墨粗字，今日一句的引号是「」。财运卡副标题「11月24日 · ★★★★☆ 财气渐旺」星串变成胖星，红字没被影响。仓库里换上星座、财运两种尺寸与两张原图共 6 张，上一轮卢恩、黄历 6 张已用 git rm 换掉。
+
+遗留问题：
+- 第 45、64、66、68 轮的未提交改动都在等 Peyton 决定。
+- 主目录因为这些未提交改动一直没法 pull，落后远端几个提交，Peyton 处理完那几处改动后 `git pull` 一下即可。
+- 外部条件卡住的待办同前几轮（备案、Pages 发布、真机验证、小组件签名）。
+
+下一轮计划：做「财运、事业分享卡的签名句和解读混在一起折行」，再 `--no-webgl` 复查风水分享卡。Mac 负载低且 Peyton 同意时再跑 AppUITests。
+
+待 Peyton 决定：
+- 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
+- AppUITests 要不要由定时任务跑，还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
+- App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。

@@ -92,9 +92,25 @@ export function keyRows(line, maxWidth, mBody, mPoem) {
   return [{ t: head, poem: true }, ...wrapText(tail, maxWidth, mBody).map((t) => ({ t, poem: false, cont: true }))];
 }
 
+const STAR_RUN = /([★☆]+)/;
+/**
+ * 星级行（第 77 轮）：星座、生肖「爱情 ★★★☆☆  事业 ★★★★☆」整行都是「标签 + 星串」时算星级行，
+ * 标签深墨粗字，星串画成金色描边胖星（见 drawStarText），和配图、页面里的 kit.stars() 一套画法。
+ */
+export function isStarRow(line) {
+  const s = String(line).trim();
+  return /[★☆]{3,}/.test(s) && /^(?:[^★☆\s]{1,4}\s*[★☆]{3,}\s*)+$/.test(s);
+}
+
 /** 正文排版：签诗与结论行标 poem（深墨粗字），其余按宽度折行，总共最多 max 行，超出的最后一行以「…」收尾。 */
 export function layoutBody(lines, maxWidth, mBody, mPoem, max = 9) {
   const items = lines.flatMap((l) => {
+    if (isStarRow(l)) {
+      // 放不下时在两组之间断开，不把一串星拆到两行
+      const one = l.trim();
+      if (mPoem(one) <= maxWidth) return [{ t: one, poem: true }];
+      return one.split(/\s{2,}/).map((t) => ({ t, poem: true }));
+    }
     const p = poemRows(l, maxWidth, mPoem);
     if (p) return p.map((t) => ({ t, poem: true }));
     return keyRows(l, maxWidth, mBody, mPoem) || wrapText(l, maxWidth, mBody).map((t) => ({ t, poem: false }));
@@ -139,6 +155,41 @@ function roundRect(g, x, y, w, hh, r) {
 }
 
 const font = (size, weight = 700) => `${weight} ${size}px ${FONT}`;
+
+/** 五角胖星路径：外径 r、内径 r*.5，尖头朝上。 */
+function starPath(g, cx, cy, r) {
+  g.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rr = i & 1 ? r * .5 : r;
+    g[i ? 'lineTo' : 'moveTo'](cx + Math.cos(a) * rr, cy + Math.sin(a) * rr);
+  }
+  g.closePath();
+}
+
+/**
+ * 按当前字体画一行字，其中的 ★ ☆ 换成描边胖星（第 77 轮）：亮星金 #ffc93c、暗星奶油 #fff4d6，
+ * 深墨描边、金褐下沉影、白色小高光，和 kit.stars() 同一套。每颗星占一个「★」字宽，排版宽度不变。
+ * textBaseline 需为 top，size 是字号。返回画完后的 x。
+ */
+export function drawStarText(g, text, x, y, size) {
+  const color = g.fillStyle;
+  for (const seg of String(text).split(STAR_RUN)) {
+    if (!seg) continue;
+    if (!/^[★☆]+$/.test(seg)) { g.fillStyle = color; g.fillText(seg, x, y); x += g.measureText(seg).width; continue; }
+    const adv = g.measureText('★').width, r = size * .44, cy = y + size * .56;
+    for (const ch of seg) {
+      const cx = x + adv / 2, on = ch === '★';
+      g.lineJoin = 'round';
+      g.fillStyle = on ? '#b86a12' : 'rgba(43,34,64,.18)'; starPath(g, cx, cy + size * .09, r); g.fill();
+      g.fillStyle = on ? '#ffc93c' : '#fff4d6'; starPath(g, cx, cy, r); g.fill();
+      g.strokeStyle = on ? C.ink : 'rgba(43,34,64,.55)'; g.lineWidth = Math.max(2.5, size * .08); g.stroke();
+      if (on) { g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.ellipse(cx - r * .22, cy - r * .3, r * .16, r * .1, -.6, 0, Math.PI * 2); g.fill(); }
+      x += adv;
+    }
+  }
+  g.fillStyle = color;
+  return x;
+}
 
 /** 签册徽章：白底胶囊 + 金色描边圆章（徽章名首字）+「签册 · 名字」，右端对齐到 right。 */
 export function drawBadge(g, name, right, cy) {
@@ -237,14 +288,14 @@ export function drawShareCard({ heading, sub = '', lines = [], image = null, wat
   g.textBaseline = 'top';
   g.font = font(64, 800); g.fillStyle = C.ink;
   for (const l of headLines) { g.fillText(l, ix, y); y += 84; }
-  if (subLines.length) { y += 18; g.font = font(40, 700); g.fillStyle = C.red; for (const l of subLines) { g.fillText(l, ix, y); y += 58; } }
+  if (subLines.length) { y += 18; g.font = font(40, 700); g.fillStyle = C.red; for (const l of subLines) { drawStarText(g, l, ix, y, 40); y += 58; } }
   if (bodyLines.length) {
     y += 22; g.strokeStyle = 'rgba(43,34,64,.14)'; g.lineWidth = 3; g.setLineDash([12, 12]);
     g.beginPath(); g.moveTo(ix, y); g.lineTo(ix + inner, y); g.stroke(); g.setLineDash([]); y += 34;
     bodyLines.forEach((it, i) => {
       if (gapBefore(bodyLines, i)) y += 16;
       g.font = it.poem ? font(42, 800) : font(38, 500); g.fillStyle = it.poem ? C.ink : C.soft;
-      g.fillText(it.t, ix, y);
+      drawStarText(g, it.t, ix, y, it.poem ? 42 : 38);
       if (it.tail) {
         // 关键词灰字跟在牌名后面，底边对齐粗字（粗字 42、灰字 38，往下挪 3 像素）
         const tx = ix + g.measureText(it.t).width + KEY_GAP;

@@ -1,8 +1,21 @@
 [
   {
-    "route": "m/runes@share",
+    "route": "m/zodiac@share",
     "viewport": "393x852",
-    "file": "m-runes-share-393x852.png",
+    "file": "m-zodiac-share-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": [
+        "chip"
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "m/caiyun@share",
+    "viewport": "393x852",
+    "file": "m-caiyun-share-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -11,31 +24,22 @@
     "errors": []
   },
   {
-    "route": "m/almanac@share",
-    "viewport": "393x852",
-    "file": "m-almanac-share-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/runes@share",
+    "route": "m/zodiac@share",
     "viewport": "430x932",
-    "file": "m-runes-share-430x932.png",
+    "file": "m-zodiac-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
-      "bad": []
+      "bad": [
+        "chip"
+      ]
     },
     "errors": []
   },
   {
-    "route": "m/almanac@share",
+    "route": "m/caiyun@share",
     "viewport": "430x932",
-    "file": "m-almanac-share-430x932.png",
+    "file": "m-caiyun-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
