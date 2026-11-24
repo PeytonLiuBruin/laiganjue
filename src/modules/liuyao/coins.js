@@ -3,7 +3,7 @@ import { createSolidScene } from '../../ui/solid-scene.js';
 import { COIN } from './core.js';
 import { UI } from './data.js';
 
-export const COIN_VIEW = { ground: .78, worldWidth: 260 };
+export const COIN_VIEW = { ground: .63, worldWidth: 260 };
 export function coinFaces(values) {
   if (values.length !== 3 || values.some(v => v !== COIN.ZI && v !== COIN.HUA)) throw new Error('需要三枚铜钱的字面或花面');
   return values.map(v => v === COIN.ZI ? 'heads' : 'tails');

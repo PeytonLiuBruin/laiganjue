@@ -405,6 +405,11 @@
   border: 2px solid var(--line-strong);
   box-shadow: 0 4px 0 var(--edge-color);
 }
+/* 第 74 轮：深色皮肤的 --surface 只有 5% 白，卦板透出背后夜空的星点和地平线，
+   上爻旁边像多了两颗白点。深色皮肤卦板改用不透明的 --surface-strong。 */
+:is([data-theme='ink'], [data-theme='cinnabar'], [data-theme='nebula']) .m-liuyao .ly-board {
+  background: var(--surface-strong);
+}
 .m-liuyao .ly-board-title {
   font-family: var(--font-round, var(--font-sans));
   font-weight: 900;
