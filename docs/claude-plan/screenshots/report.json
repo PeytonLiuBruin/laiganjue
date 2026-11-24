@@ -1,29 +1,5 @@
 [
   {
-    "route": "m/bazi@share",
-    "viewport": "393x852",
-    "file": "m-bazi-share-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": []
-    },
-    "errors": []
-  },
-  {
-    "route": "m/tarot@share",
-    "viewport": "393x852",
-    "file": "m-tarot-share-393x852.png",
-    "overflow": {
-      "scrollW": 393,
-      "w": 393,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
     "route": "m/runes@share",
     "viewport": "393x852",
     "file": "m-runes-share-393x852.png",
@@ -35,9 +11,20 @@
     "errors": []
   },
   {
-    "route": "m/bazi@share",
+    "route": "m/almanac@share",
+    "viewport": "393x852",
+    "file": "m-almanac-share-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/runes@share",
     "viewport": "430x932",
-    "file": "m-bazi-share-430x932.png",
+    "file": "m-runes-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -46,22 +33,9 @@
     "errors": []
   },
   {
-    "route": "m/tarot@share",
+    "route": "m/almanac@share",
     "viewport": "430x932",
-    "file": "m-tarot-share-430x932.png",
-    "overflow": {
-      "scrollW": 430,
-      "w": 430,
-      "bad": [
-        "chip"
-      ]
-    },
-    "errors": []
-  },
-  {
-    "route": "m/runes@share",
-    "viewport": "430x932",
-    "file": "m-runes-share-430x932.png",
+    "file": "m-almanac-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,

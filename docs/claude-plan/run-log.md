@@ -2159,3 +2159,30 @@ Mac 上 `npm test` 435 项全部通过（含第 28 轮未提交的 3 项，负�
 - 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
 - AppUITests 要不要由定时任务跑，还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
 - App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。
+
+## 第 76 轮 · 2026-11-24 14:40 UTC 起（PST 06:40，定时任务，原定 11:54 UTC，晚了约 2.8 小时触发）
+
+开始状态：主目录分支正确，`git fetch` 后远端在 b46b36f（第 75 轮从 worktree 推送），主目录 HEAD 还停在 3c52073。主目录第 45、64 轮的未提交改动照旧保留（`git status` 与上一轮相同），TODO 里没有看到「同意提交」，所以主目录没有 pull（有本地改动的 TODO.md、visual-direction.md 远端也改过，硬拉会冲突）。.lock 是 idle，写入本轮时间。Mac 负载 1 分钟约 4.6。本轮沿用干净的 worktree `/Users/simpenguin/lgj-wt72`（HEAD b46b36f，pull 后已是最新），没有跑模拟器，截图全部关 WebGL、nohup 一次拍一组。
+
+完成的待办（2 项）：
+- ✅「卢恩分享卡没有 WebGL 时退回『卢』字黄圆盘」：`share-art.js` 新增 `runeLayout`、`runeArt`，按当次抽到的符文画暖沙色厚边符石，朱红刻痕带褐色刻槽暗边，逆位整块倒转，≤3 块时石头下方带白色名字胶囊。卢恩页分享改为 `image: () => captureStage() || runeArt(model.items)`，原生 App 有 3D 舞台时仍拍舞台。
+- ✅ 新发现顺手修好「黄历分享卡宜忌短词被拆到两行」：拍黄历分享卡看到「修饰垣墙 平」「治道涂」断开。`share-card.js` 的 `wrapText` 对空格隔开的 2 到 5 字汉字词整词折行，普通长句照旧逐字折满。
+- 新测试 `tests/rune-share-art.test.mjs` 4 项（1 到 6 块符石不出界不重叠、单块够大，无符文返回 null，卢恩页先拍舞台再退配图，宜忌整词折行且长句仍逐字折满）。visual-direction.md 第 3 节加一行。TODO 新增「星座分享卡星级用字符★☆灰字」。
+
+改动文件：`src/ui/share-art.js`，`src/ui/share-card.js`，`src/modules/runes/view.js`，`tests/rune-share-art.test.mjs`（新），`TODO.md`，`visual-direction.md`，截图，本记录。没有动主目录有未提交改动的文件。
+
+检查结果：
+- worktree `npm test` 584 项全部通过，`npm run build` 通过。
+- 截图全部 `--no-webgl`：卢恩分享抽屉与黄历分享抽屉，393×852 与 430×932，`iphone-shots.mjs` 报告 4 张页面宽度都等于视口、无报错。过目：卢恩分享卡上是一块带厚边和高光的暖色符石，朱红贝卡诺刻痕清楚，名字胶囊不出框，不再是写字的黄圆盘。黄历「平治道涂」整词落到下一行。顺带拍了星座分享卡，发现字符星级的问题，已记 TODO。仓库里换上卢恩、黄历两种尺寸与两张原图共 6 张，上一轮八字、塔罗 6 张已用 git rm 换掉。
+
+遗留问题：
+- 第 45、64、66、68 轮的未提交改动都在等 Peyton 决定。
+- 主目录因为这些未提交改动一直没法 pull，落后远端几个提交，Peyton 处理完那几处改动后 `git pull` 一下即可。
+- 外部条件卡住的待办同前几轮（备案、Pages 发布、真机验证、小组件签名）。
+
+下一轮计划：做「星座分享卡星级用字符★☆灰字」，再 `--no-webgl` 复查六爻、御神签以外还没看过的分享卡（风水、财运）。Mac 负载低且 Peyton 同意时再跑 AppUITests。
+
+待 Peyton 决定：
+- 第 45 轮（落球盘、转盘、硬币页卡通化）、第 64 轮（筊杯平面高光）、第 66 轮（lgj-wt66 里的 paywall-shot.sh 修复）、第 68 轮（lgj-wt67 里的 paywall-shot.sh 与守卫测试）的未提交改动是否由下一轮提交，在 TODO 对应项后面写上「同意提交」即可，也可以自己提交或丢弃。
+- AppUITests 要不要由定时任务跑，还是你在 Mac 空闲时自己跑一次 `bash scripts/paywall-shot.sh`。
+- App Store Connect 里年度订阅要不要配 3 天免费试用，商店截图第 7 张（皮肤）用不用，上架清单里标 👤 的各步，同前几轮。

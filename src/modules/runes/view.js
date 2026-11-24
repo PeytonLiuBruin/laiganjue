@@ -7,6 +7,8 @@ import { stoneFlight } from '../../core/stone-motion.js';
 import { getSpread, drawForSpread, interpret, receiptOf, shareText, initState, reduceState, packDraw, unpackDraw, RUNES, dateLabel } from './core.js';
 import { SPREAD_CHIPS, UI_TEXT, AETTS, shakeLevel } from './data.js';
 import { dateKey } from '../../core/rng.js';
+import { captureStage } from '../../ui/share-card.js';
+import { runeArt } from '../../ui/share-art.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const STONE_SIZE = { 1: 88, 3: 70, 5: 54 };
@@ -616,7 +618,8 @@ export function mount(container, ctx) {
           variant: 'ghost',
           icon: 'share',
           onClick: async () => {
-            const r = await ctx.share(shareText(model));
+            // 有 3D 舞台就拍舞台，没有（无 WebGL）再画符石配图，免得退回黄圆盘
+            const r = await ctx.share(shareText(model), { image: () => captureStage() || runeArt(model.items) });
             toast(r === 'shared' ? '已分享' : r === 'copied' ? '已复制到剪贴板' : '分享失败');
           },
         }),

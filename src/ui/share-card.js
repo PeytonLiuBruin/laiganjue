@@ -23,9 +23,12 @@ export function parseShare(text) {
   return { heading: rows[0], sub: '', lines: rows.slice(1) };
 }
 
-/** 按宽度折行。measure(s) 返回像素宽。中文逐字折，连续的英文单词与数字尽量不拆，行首不放标点。 */
+/**
+ * 按宽度折行。measure(s) 返回像素宽。中文逐字折，连续的英文单词与数字尽量不拆，行首不放标点。
+ * 用空格隔开的短词（黄历宜忌「修饰垣墙 平治道涂」、四柱「乙亥 壬午」）2 到 5 字整词不拆（第 76 轮）。
+ */
 export function wrapText(text, maxWidth, measure) {
-  const tokens = String(text).match(/[A-Za-z0-9'’.\-]+\s*|\s+|./gu) || [];
+  const tokens = String(text).match(/[A-Za-z0-9'’.\-]+\s*|(?<=^|[\s：:])[㐀-鿿]{2,5}(?=\s|$)\s*|\s+|./gu) || [];
   const out = [];
   let line = '';
   for (const tok of tokens) {

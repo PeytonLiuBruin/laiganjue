@@ -220,3 +220,70 @@ export function zodiacArt(f, doc = document) {
   g.textAlign = 'left';
   return c;
 }
+
+/* ------------------------------ 卢恩 ------------------------------ */
+// 没有 WebGL 舞台时（老机型、省电模式）卢恩分享卡原本退回写着「卢」字的黄圆盘，像占位图。
+// 这里按当次抽到的符文画暖色符石：厚度边 + 深色描边 + 朱红刻痕，逆位整块倒过来。
+const STONE_RATIO = 0.8; // 宽 / 高
+
+/** n 块符石在 1200×864 里的位置：一排居中，≤3 块时石头下方留名字条。 */
+export function runeLayout(n, { w = ART_W, h = ART_H } = {}) {
+  n = Math.max(1, n | 0);
+  const rows = n <= 5 ? 1 : 2, perRow = Math.ceil(n / rows);
+  const showLabel = n <= 3, label = showLabel ? 110 : 0;
+  const gap = n <= 3 ? 70 : 34, padX = 70, padY = 70, depth = 16, rowGap = 40;
+  const byH = (h - padY * 2 - (label + depth) * rows - rowGap * (rows - 1)) / rows;
+  const byW = (w - padX * 2 - gap * (perRow - 1)) / perRow / STONE_RATIO;
+  const sh = Math.floor(Math.min(byH, byW, 520)), sw = Math.floor(sh * STONE_RATIO);
+  const blockH = rows * (sh + depth + label) + rowGap * (rows - 1);
+  let y0 = (h - blockH) / 2;
+  const rects = [];
+  for (let r = 0, i = 0; r < rows; r++) {
+    const count = Math.min(perRow, n - i), rowW = count * sw + (count - 1) * gap;
+    let x = (w - rowW) / 2;
+    for (let k = 0; k < count; k++, i++) { rects.push({ x: Math.round(x), y: Math.round(y0), w: sw, h: sh }); x += sw + gap; }
+    y0 += sh + depth + label + rowGap;
+  }
+  return { rects, showLabel, depth };
+}
+
+/** items: [{ rune: { path, zh, name }, reversed, position? }]（卢恩 interpret() 的 model.items） */
+export function runeArt(items, doc = document) {
+  const list = (items || []).filter((it) => it?.rune?.path);
+  if (!list.length) return null;
+  const { c, g } = base(doc, '#2fbf9b', '#c9f5e4');
+  for (const [x, y, r] of [[150, 150, 24], [1060, 180, 30], [170, 720, 18], [1040, 690, 22]]) star(g, x, y, r);
+  const { rects, showLabel, depth } = runeLayout(list.length);
+  list.forEach((it, i) => {
+    const { x, y, w, h } = rects[i];
+    const rad = Math.round(w * .3);
+    // 地面阴影 + 厚度边 + 石面
+    g.fillStyle = 'rgba(20,80,60,.22)'; g.beginPath(); g.ellipse(x + w / 2, y + h + depth + 6, w * .48, 18, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#9a6b34'; rr(g, x, y + depth, w, h, rad); g.fill();
+    g.lineWidth = 6; g.strokeStyle = INK; g.stroke();
+    const face = g.createLinearGradient(x, y, x + w * .4, y + h);
+    face.addColorStop(0, '#fff1d2'); face.addColorStop(.5, '#f3d9a4'); face.addColorStop(1, '#e2b875');
+    g.fillStyle = face; rr(g, x, y, w, h, rad); g.fill(); g.stroke();
+    // 左上角一块高光，卡通石头的「亮面」
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(x + w * .3, y + h * .17, w * .16, h * .05, -.4, 0, Math.PI * 2); g.fill();
+    // 刻痕：符文 path 在 100×160 的格子里，放到石面中间约 62% 高
+    const s = (h * .62) / 160, gx = x + w / 2, gy = y + h / 2;
+    g.save(); g.translate(gx, gy); if (it.reversed) g.rotate(Math.PI); g.scale(s, s); g.translate(-50, -80);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    try {
+      const p = new Path2D(it.rune.path);
+      g.translate(0, 3); g.lineWidth = 15; g.strokeStyle = 'rgba(110,50,10,.45)'; g.stroke(p); // 刻槽暗边
+      g.translate(0, -3); g.lineWidth = 11; g.strokeStyle = RED; g.stroke(p);
+    } catch { /* Path2D 不可用时只留石头 */ }
+    g.restore();
+    if (showLabel) {
+      const name = `${it.rune.zh}${it.reversed ? ' · 逆' : ''}`;
+      g.font = font(list.length === 1 ? 52 : 42); g.textAlign = 'center'; g.textBaseline = 'middle';
+      const tw = Math.min(w + 60, g.measureText(name).width + 64), ty = y + h + depth + 22;
+      tile(g, x + w / 2 - tw / 2, ty, tw, 70, 35, { fill: '#fff', depth: 7, stroke: 4 });
+      g.fillStyle = INK; g.fillText(name, x + w / 2, ty + 36);
+      g.textAlign = 'left';
+    }
+  });
+  return c;
+}
