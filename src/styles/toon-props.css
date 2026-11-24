@@ -425,6 +425,27 @@
 .m-liuyao .ly-line.lit .ly-bar { box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22); }
 .m-liuyao .ly-line.moving .ly-bar { box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22), 0 0 0 2px var(--glow); }
 .m-liuyao .ly-mark { font-weight: 900; font-size: 14px; }
+/* 第 73 轮：阴爻在约 50px 宽的卦板上中间只空出 10px，厚边阴影又连成一条，远看和阳爻分不清。
+   阴爻改成左右两块各 36% 的独立圆角块，各自带厚边阴影，中间留 28% 空档。 */
+.m-liuyao .ly-line.lit.yin .ly-bar,
+.m-liuyao .ly-line.lit.moving.yin .ly-bar { position: relative; background: none; box-shadow: none; }
+.m-liuyao .ly-line.lit.yin .ly-bar::before,
+.m-liuyao .ly-line.lit.yin .ly-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 36%;
+  border-radius: 4px;
+  background: var(--text);
+  box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22);
+}
+.m-liuyao .ly-line.lit.yin .ly-bar::before { left: 0; }
+.m-liuyao .ly-line.lit.yin .ly-bar::after { right: 0; }
+.m-liuyao .ly-line.lit.moving.yin .ly-bar::before,
+.m-liuyao .ly-line.lit.moving.yin .ly-bar::after { background: var(--accent); box-shadow: 0 2px 0 rgba(43, 34, 64, 0.22), 0 0 0 2px var(--glow); }
+.m-liuyao .ly-mini-line.yin { background: linear-gradient(90deg, var(--text) 0 36%, transparent 36% 64%, var(--text) 64% 100%); }
+.m-liuyao .ly-mini-line.yin.moving { background: linear-gradient(90deg, var(--accent) 0 36%, transparent 36% 64%, var(--accent) 64% 100%); }
 
 /* 第 46 轮：筊杯舞台卡通化（@readfull 长图发现）。面向标签「弧面 · 阴」「平面 · 阳」是 12px 灰色细字、字距 .08em，
    筊盘是 1px 淡线椭圆，连掷三圣杯的小印是 1px 细圈。

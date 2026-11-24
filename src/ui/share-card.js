@@ -50,6 +50,42 @@ export function clampLines(lines, max, measure, maxWidth) {
   return kept;
 }
 
+const HAN = /^[㐀-鿿]{3,9}$/;
+/**
+ * 签诗行（第 73 轮）：御神签的「甲 / 乙 / 丙 / 丁」两句一行、中间全角空格，灵签的「七言，七言。」整句一行。
+ * 返回诗句行数组，不是签诗返回 null。只认纯汉字短句，所以风水「坎·文曲 / …」、塔罗关键词不会被当成诗。
+ * 诗句单独成行，不再和解读一起逐字折行，免得最后一个字落到下一行。
+ */
+export function poemRows(line, maxWidth, measure) {
+  const s = String(line).trim();
+  if (!s.includes('/')) {
+    const m = s.match(/^([㐀-鿿]{4,9})[，,]([㐀-鿿]{4,9})[。.]?$/);
+    if (!m) return null;
+    return measure(s) <= maxWidth ? [s] : [m[1] + '，', m[2] + '。'];
+  }
+  const segs = s.split('/').map((t) => t.trim());
+  if (segs.length < 2 || segs.length > 6 || !segs.every((t) => HAN.test(t))) return null;
+  const rows = [];
+  for (let i = 0; i < segs.length; i += 2) {
+    const pair = segs.slice(i, i + 2), joined = pair.join('　');
+    if (measure(joined) <= maxWidth) rows.push(joined); else rows.push(...pair);
+  }
+  return rows;
+}
+
+/** 正文排版：签诗行标 poem（深墨粗字），其余按宽度折行，总共最多 max 行，超出的最后一行以「…」收尾。 */
+export function layoutBody(lines, maxWidth, mBody, mPoem, max = 9) {
+  const items = lines.flatMap((l) => {
+    const p = poemRows(l, maxWidth, mPoem);
+    return p ? p.map((t) => ({ t, poem: true })) : wrapText(l, maxWidth, mBody).map((t) => ({ t, poem: false }));
+  });
+  if (items.length <= max) return items;
+  const kept = items.slice(0, max), last = kept[max - 1];
+  const m = last.poem ? mPoem : mBody;
+  kept[max - 1] = { ...last, t: clampLines([last.t, ''], 1, m, maxWidth)[0] };
+  return kept;
+}
+
 /** 当前页面上最大的那块可见器物画面（WebGL 舞台或 2D 画布），抽屉里的不算。 */
 export function captureStage(root = document) {
   let best = null, area = 0;
@@ -111,8 +147,12 @@ export function drawShareCard({ heading, sub = '', lines = [], image = null, wat
   const mHead = measureWith(font(64, 800)), mSub = measureWith(font(40, 700)), mBody = measureWith(font(38, 500));
   const headLines = clampLines(wrapText(heading, inner, mHead), 2, mHead, inner);
   const subLines = sub ? clampLines(wrapText(sub, inner, mSub), 2, mSub, inner) : [];
-  const bodyLines = clampLines(lines.flatMap((l) => wrapText(l, inner, mBody)), 9, mBody, inner);
-  const textH = headLines.length * 84 + (subLines.length ? 18 + subLines.length * 58 : 0) + (bodyLines.length ? 56 + bodyLines.length * 60 : 0);
+  const mPoem = measureWith(font(42, 800));
+  const bodyLines = layoutBody(lines, inner, mBody, mPoem, 9);
+  // 每行高度：诗句 64、解读 60，诗句结束转到解读时多空 16
+  const rowH = (it, i) => (it.poem ? 64 : 60) + (i > 0 && bodyLines[i - 1].poem && !it.poem ? 16 : 0);
+  const bodyH = bodyLines.reduce((s, it, i) => s + rowH(it, i), 0);
+  const textH = headLines.length * 84 + (subLines.length ? 18 + subLines.length * 58 : 0) + (bodyLines.length ? 56 + bodyH : 0);
   const cardY = 196, cardH = 48 + imgH + 52 + textH + 56;
   const H = Math.max(1350, cardY + cardH + 10 + 190);
   canvas.width = CARD_W; canvas.height = H;
@@ -178,8 +218,11 @@ export function drawShareCard({ heading, sub = '', lines = [], image = null, wat
   if (bodyLines.length) {
     y += 22; g.strokeStyle = 'rgba(43,34,64,.14)'; g.lineWidth = 3; g.setLineDash([12, 12]);
     g.beginPath(); g.moveTo(ix, y); g.lineTo(ix + inner, y); g.stroke(); g.setLineDash([]); y += 34;
-    g.font = font(38, 500); g.fillStyle = C.soft;
-    for (const l of bodyLines) { g.fillText(l, ix, y); y += 60; }
+    bodyLines.forEach((it, i) => {
+      if (i > 0 && bodyLines[i - 1].poem && !it.poem) y += 16;
+      g.font = it.poem ? font(42, 800) : font(38, 500); g.fillStyle = it.poem ? C.ink : C.soft;
+      g.fillText(it.t, ix, y); y += it.poem ? 64 : 60;
+    });
   }
 
   // 底部：一句话 + 去哪下载

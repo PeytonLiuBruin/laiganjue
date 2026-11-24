@@ -1,8 +1,8 @@
 [
   {
-    "route": "home@paywall-priced",
+    "route": "m/omikuji@share",
     "viewport": "393x852",
-    "file": "home-paywall-priced-393x852.png",
+    "file": "m-omikuji-share-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -22,9 +22,9 @@
     "errors": []
   },
   {
-    "route": "home@settings",
+    "route": "m/liuyao@readfull",
     "viewport": "393x852",
-    "file": "home-settings-393x852.png",
+    "file": "m-liuyao-readfull-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -33,9 +33,9 @@
     "errors": []
   },
   {
-    "route": "home@paywall-priced",
+    "route": "m/omikuji@share",
     "viewport": "430x932",
-    "file": "home-paywall-priced-430x932.png",
+    "file": "m-omikuji-share-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -55,9 +55,9 @@
     "errors": []
   },
   {
-    "route": "home@settings",
+    "route": "m/liuyao@readfull",
     "viewport": "430x932",
-    "file": "home-settings-430x932.png",
+    "file": "m-liuyao-readfull-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
@@ -66,9 +66,9 @@
     "errors": []
   },
   {
-    "route": "m/qian@share",
+    "route": "m/omikuji@share",
     "viewport": "393x852",
-    "file": "ink-m-qian-share-393x852.png",
+    "file": "ink-m-omikuji-share-393x852.png",
     "overflow": {
       "scrollW": 393,
       "w": 393,
@@ -77,9 +77,31 @@
     "errors": []
   },
   {
-    "route": "m/qian@share",
+    "route": "m/liuyao@readfull",
+    "viewport": "393x852",
+    "file": "ink-m-liuyao-readfull-393x852.png",
+    "overflow": {
+      "scrollW": 393,
+      "w": 393,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/omikuji@share",
     "viewport": "430x932",
-    "file": "ink-m-qian-share-430x932.png",
+    "file": "ink-m-omikuji-share-430x932.png",
+    "overflow": {
+      "scrollW": 430,
+      "w": 430,
+      "bad": []
+    },
+    "errors": []
+  },
+  {
+    "route": "m/liuyao@readfull",
+    "viewport": "430x932",
+    "file": "ink-m-liuyao-readfull-430x932.png",
     "overflow": {
       "scrollW": 430,
       "w": 430,
